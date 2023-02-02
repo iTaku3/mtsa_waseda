@@ -1,0 +1,196 @@
+//HumanoidLTL_462_Humanoid automatically_translated 
+
+set ControlledActions = {leftmotor.fwd, leftmotor.bwd, leftmotor.stop, leftmotor.turn_fwd, leftmotor.turn_bwd, leftmotor.calib_turn, leftmotor.calib_fwd, leftmotor.dance, rightmotor.fwd, rightmotor.bwd, rightmotor.stop, rightmotor.turn_fwd, rightmotor.turn_bwd, rightmotor.calib_turn, rightmotor.calib_fwd, rightmotor.dance, headmotor.fwd, headmotor.bwd, headmotor.stop, headmotor.dance, outputmovemode.fwd, outputmovemode.bwd, outputmovemode.turn_left_1, outputmovemode.turn_left_2, outputmovemode.dance, tick, prev_662_53, not_prev_662_53, prev_663_54, not_prev_663_54}
+set UncontrolledActions = {obstacle.clear, obstacle.blocked, inputmovemode.fwd, inputmovemode.bwd, inputmovemode.turn_left_1, inputmovemode.turn_left_2, inputmovemode.dance, button.free, button.pressed, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Obstacle_Actions = {obstacle.clear, obstacle.blocked}
+fluent OBSTACLE_CLEAR = <obstacle.clear, Obstacle_Actions\{obstacle.clear}>
+fluent OBSTACLE_BLOCKED = <obstacle.blocked, Obstacle_Actions\{obstacle.blocked}>
+
+set InputMoveMode_Actions = {inputmovemode.fwd, inputmovemode.bwd, inputmovemode.turn_left_1, inputmovemode.turn_left_2, inputmovemode.dance}
+fluent INPUTMOVEMODE_FWD = <inputmovemode.fwd, InputMoveMode_Actions\{inputmovemode.fwd}>
+fluent INPUTMOVEMODE_BWD = <inputmovemode.bwd, InputMoveMode_Actions\{inputmovemode.bwd}>
+fluent INPUTMOVEMODE_TURN_LEFT_1 = <inputmovemode.turn_left_1, InputMoveMode_Actions\{inputmovemode.turn_left_1}>
+fluent INPUTMOVEMODE_TURN_LEFT_2 = <inputmovemode.turn_left_2, InputMoveMode_Actions\{inputmovemode.turn_left_2}>
+fluent INPUTMOVEMODE_DANCE = <inputmovemode.dance, InputMoveMode_Actions\{inputmovemode.dance}>
+
+set Button_Actions = {button.free, button.pressed}
+fluent BUTTON_FREE = <button.free, Button_Actions\{button.free}>
+fluent BUTTON_PRESSED = <button.pressed, Button_Actions\{button.pressed}>
+
+set LeftMotor_Actions = {leftmotor.fwd, leftmotor.bwd, leftmotor.stop, leftmotor.turn_fwd, leftmotor.turn_bwd, leftmotor.calib_turn, leftmotor.calib_fwd, leftmotor.dance}
+fluent LEFTMOTOR_FWD = <leftmotor.fwd, LeftMotor_Actions\{leftmotor.fwd}>
+fluent LEFTMOTOR_BWD = <leftmotor.bwd, LeftMotor_Actions\{leftmotor.bwd}>
+fluent LEFTMOTOR_STOP = <leftmotor.stop, LeftMotor_Actions\{leftmotor.stop}>
+fluent LEFTMOTOR_TURN_FWD = <leftmotor.turn_fwd, LeftMotor_Actions\{leftmotor.turn_fwd}>
+fluent LEFTMOTOR_TURN_BWD = <leftmotor.turn_bwd, LeftMotor_Actions\{leftmotor.turn_bwd}>
+fluent LEFTMOTOR_CALIB_TURN = <leftmotor.calib_turn, LeftMotor_Actions\{leftmotor.calib_turn}>
+fluent LEFTMOTOR_CALIB_FWD = <leftmotor.calib_fwd, LeftMotor_Actions\{leftmotor.calib_fwd}>
+fluent LEFTMOTOR_DANCE = <leftmotor.dance, LeftMotor_Actions\{leftmotor.dance}>
+
+set RightMotor_Actions = {rightmotor.fwd, rightmotor.bwd, rightmotor.stop, rightmotor.turn_fwd, rightmotor.turn_bwd, rightmotor.calib_turn, rightmotor.calib_fwd, rightmotor.dance}
+fluent RIGHTMOTOR_FWD = <rightmotor.fwd, RightMotor_Actions\{rightmotor.fwd}>
+fluent RIGHTMOTOR_BWD = <rightmotor.bwd, RightMotor_Actions\{rightmotor.bwd}>
+fluent RIGHTMOTOR_STOP = <rightmotor.stop, RightMotor_Actions\{rightmotor.stop}>
+fluent RIGHTMOTOR_TURN_FWD = <rightmotor.turn_fwd, RightMotor_Actions\{rightmotor.turn_fwd}>
+fluent RIGHTMOTOR_TURN_BWD = <rightmotor.turn_bwd, RightMotor_Actions\{rightmotor.turn_bwd}>
+fluent RIGHTMOTOR_CALIB_TURN = <rightmotor.calib_turn, RightMotor_Actions\{rightmotor.calib_turn}>
+fluent RIGHTMOTOR_CALIB_FWD = <rightmotor.calib_fwd, RightMotor_Actions\{rightmotor.calib_fwd}>
+fluent RIGHTMOTOR_DANCE = <rightmotor.dance, RightMotor_Actions\{rightmotor.dance}>
+
+set HeadMotor_Actions = {headmotor.fwd, headmotor.bwd, headmotor.stop, headmotor.dance}
+fluent HEADMOTOR_FWD = <headmotor.fwd, HeadMotor_Actions\{headmotor.fwd}>
+fluent HEADMOTOR_BWD = <headmotor.bwd, HeadMotor_Actions\{headmotor.bwd}>
+fluent HEADMOTOR_STOP = <headmotor.stop, HeadMotor_Actions\{headmotor.stop}>
+fluent HEADMOTOR_DANCE = <headmotor.dance, HeadMotor_Actions\{headmotor.dance}>
+
+set OutputMoveMode_Actions = {outputmovemode.fwd, outputmovemode.bwd, outputmovemode.turn_left_1, outputmovemode.turn_left_2, outputmovemode.dance}
+fluent OUTPUTMOVEMODE_FWD = <outputmovemode.fwd, OutputMoveMode_Actions\{outputmovemode.fwd}>
+fluent OUTPUTMOVEMODE_BWD = <outputmovemode.bwd, OutputMoveMode_Actions\{outputmovemode.bwd}>
+fluent OUTPUTMOVEMODE_TURN_LEFT_1 = <outputmovemode.turn_left_1, OutputMoveMode_Actions\{outputmovemode.turn_left_1}>
+fluent OUTPUTMOVEMODE_TURN_LEFT_2 = <outputmovemode.turn_left_2, OutputMoveMode_Actions\{outputmovemode.turn_left_2}>
+fluent OUTPUTMOVEMODE_DANCE = <outputmovemode.dance, OutputMoveMode_Actions\{outputmovemode.dance}>
+
+set PREV_662_53_Actions = {prev_662_53, not_prev_662_53}
+fluent PREV_662_53 = <prev_662_53, PREV_662_53_Actions\{prev_662_53}>
+
+set PREV_663_54_Actions = {prev_663_54, not_prev_663_54}
+fluent PREV_663_54 = <prev_663_54, PREV_663_54_Actions\{prev_663_54}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && !PREV_662_53))
+minimal || Initial_0_min =  Initial_0.
+//property divided into 1 subproperties.
+ltl_property Initial_1 = (!tick W (tick && !PREV_663_54))
+minimal || Initial_1_min =  Initial_1.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min ||  Initial_1_min).
+
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> ((INPUTMOVEMODE_FWD && OBSTACLE_BLOCKED) -> ((OUTPUTMOVEMODE_TURN_LEFT_1 && LEFTMOTOR_CALIB_TURN) && RIGHTMOTOR_CALIB_TURN)))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> ((INPUTMOVEMODE_BWD && OBSTACLE_CLEAR) -> ((OUTPUTMOVEMODE_FWD && LEFTMOTOR_FWD) && RIGHTMOTOR_BWD)))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+ltl_property G2 = [](tick -> (((INPUTMOVEMODE_FWD && BUTTON_FREE) && PREV_662_53) -> (LEFTMOTOR_CALIB_FWD && RIGHTMOTOR_CALIB_FWD)))
+minimal ||G2_min = G2.
+
+//property divided into 1 subproperties.
+ltl_property G3 = [](tick -> ((((INPUTMOVEMODE_FWD && OBSTACLE_CLEAR) && BUTTON_FREE) && PREV_663_54) -> (LEFTMOTOR_FWD && RIGHTMOTOR_FWD)))
+minimal ||G3_min = G3.
+
+//property divided into 1 subproperties.
+ltl_property G4 = [](tick -> (OBSTACLE_BLOCKED -> !OUTPUTMOVEMODE_FWD))
+minimal ||G4_min = G4.
+
+//property divided into 1 subproperties.
+ltl_property G5 = [](tick -> (INPUTMOVEMODE_TURN_LEFT_1 <-> OUTPUTMOVEMODE_TURN_LEFT_2))
+minimal ||G5_min = G5.
+
+//property divided into 1 subproperties.
+ltl_property G6 = [](tick -> (INPUTMOVEMODE_TURN_LEFT_1 -> (LEFTMOTOR_FWD && RIGHTMOTOR_TURN_FWD)))
+minimal ||G6_min = G6.
+
+//property divided into 1 subproperties.
+ltl_property G7 = [](tick -> (INPUTMOVEMODE_TURN_LEFT_2 -> (LEFTMOTOR_BWD && RIGHTMOTOR_TURN_BWD)))
+minimal ||G7_min = G7.
+
+//property divided into 1 subproperties.
+ltl_property G8 = [](tick -> (!(INPUTMOVEMODE_TURN_LEFT_1 || INPUTMOVEMODE_TURN_LEFT_2) -> !((LEFTMOTOR_TURN_BWD || RIGHTMOTOR_TURN_BWD) || (LEFTMOTOR_TURN_FWD && RIGHTMOTOR_TURN_FWD))))
+minimal ||G8_min = G8.
+
+//property divided into 1 subproperties.
+ltl_property G9 = [](tick -> ((INPUTMOVEMODE_TURN_LEFT_1 || INPUTMOVEMODE_TURN_LEFT_2) -> HEADMOTOR_STOP))
+minimal ||G9_min = G9.
+
+//property divided into 1 subproperties.
+ltl_property G10 = [](tick -> ((INPUTMOVEMODE_TURN_LEFT_2 && OBSTACLE_CLEAR) -> OUTPUTMOVEMODE_FWD))
+minimal ||G10_min = G10.
+
+//property divided into 1 subproperties.
+ltl_property G11 = [](tick -> ((INPUTMOVEMODE_DANCE && OUTPUTMOVEMODE_DANCE) -> ((RIGHTMOTOR_STOP && LEFTMOTOR_DANCE) && HEADMOTOR_DANCE)))
+minimal ||G11_min = G11.
+
+//property divided into 1 subproperties.
+ltl_property G12 = [](tick -> (BUTTON_FREE -> (((OUTPUTMOVEMODE_BWD <-> INPUTMOVEMODE_BWD) && (OUTPUTMOVEMODE_DANCE <-> INPUTMOVEMODE_DANCE) && (OUTPUTMOVEMODE_FWD <-> INPUTMOVEMODE_FWD) && (OUTPUTMOVEMODE_TURN_LEFT_1 <-> INPUTMOVEMODE_TURN_LEFT_1) && (OUTPUTMOVEMODE_TURN_LEFT_2 <-> INPUTMOVEMODE_TURN_LEFT_2)) || !INPUTMOVEMODE_DANCE)))
+minimal ||G12_min = G12.
+
+//property divided into 1 subproperties.
+ltl_property G13 = [](tick -> (((BUTTON_PRESSED && INPUTMOVEMODE_FWD) && OBSTACLE_CLEAR) -> ((OUTPUTMOVEMODE_DANCE && LEFTMOTOR_CALIB_TURN) && RIGHTMOTOR_CALIB_TURN)))
+minimal ||G13_min = G13.
+
+//property divided into 1 subproperties.
+ltl_property G14 = [](tick -> (((BUTTON_PRESSED && INPUTMOVEMODE_DANCE) && OBSTACLE_CLEAR) -> ((OUTPUTMOVEMODE_FWD && LEFTMOTOR_CALIB_FWD) && RIGHTMOTOR_CALIB_FWD)))
+minimal ||G14_min = G14.
+
+//property divided into 1 subproperties.
+ltl_property G15 = [](tick -> (!(BUTTON_PRESSED || INPUTMOVEMODE_DANCE) -> !OUTPUTMOVEMODE_DANCE))
+minimal ||G15_min = G15.
+
+
+//property divided into 2 subproperties.
+ltl_property G16 = [](tick -> (X(!tick W (tick && !PREV_662_53)) || INPUTMOVEMODE_TURN_LEFT_2))
+minimal ||G16_min = G16.
+ltl_property G17 = [](tick -> (!INPUTMOVEMODE_TURN_LEFT_2 || X(!tick W (tick && PREV_662_53))))
+minimal ||G17_min = G17.
+
+
+//property divided into 2 subproperties.
+ltl_property G18 = [](tick -> (X(!tick W (tick && !PREV_663_54)) || !INPUTMOVEMODE_TURN_LEFT_2))
+minimal ||G18_min = G18.
+ltl_property G19 = [](tick -> (INPUTMOVEMODE_TURN_LEFT_2 || X(!tick W (tick && PREV_663_54))))
+minimal ||G19_min = G19.
+
+fluent True = <tick, tock>
+assert G_l0 = (True || !True)
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> ((INPUTMOVEMODE_FWD && PREV_662_53) -> OBSTACLE_CLEAR))
+minimal ||A0_min = A0.
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min || G0_min || G1_min || G2_min || G3_min || G4_min || G5_min || G6_min || G7_min || G8_min || G9_min || G10_min || G11_min || G12_min || G13_min || G14_min || G15_min || G16_min || G17_min || G18_min || G19_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = ((A_clock) -> ([]<>G_l0))
+assert ASM =   (A_clock)
+assert GNT = ([]<>G_l0)
+progress Time  = {tick}

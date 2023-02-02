@@ -1,0 +1,68 @@
+const N = 2
+range B = 1..N
+set Toolset = {drill,oven,press}
+set BlankAlpha = {[B].{start, ready, exit, end}}
+set ArmAlpha = { [B].{ready, exit}, {begin,end}.Toolset.[B] }
+set ToolsAlpha  = { {begin,putdown,process,pickup,end}.Toolset.[B] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+
+set ControllableActions = {[B].ready, {putdown,pickup}.Toolset.[B]}
+
+//There is an issue here. If any of the ELEMs doesn't have every tool, 
+//it's impossible to yrbuild a controller. It's an alphabets issue.
+ELEM_EVEN(C=1) = (
+		when (C%2==0)[C].start -> [C].ready -> 
+				putdown['press][C] -> putdown['oven][C] -> putdown['drill][C] -> 
+				[C].exit -> [C].end -> ELEM_EVEN
+		| [C].idle -> ELEM_EVEN).
+ELEM_ODD(C=1) = (
+		when (C%2==1)[C].start -> [C].ready -> 
+				putdown['oven][C] -> putdown['press][C] -> putdown['drill][C] -> 
+				[C].exit -> [C].end -> ELEM_ODD
+		| [C].idle -> ELEM_ODD).
+||ELEMENTS = (
+		forall[b:B] ELEM_EVEN(b) || 
+		forall[b:B] ELEM_ODD(b)
+		).
+
+
+TOOL(T='any) = (putdown[T][id:B] -> begin[T][id] -> 
+		process[T][id] -> end[T][id] -> pickup[T][id] -> TOOL). 
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([id:B].ready -> PICKED_UP[id]
+		| pickup[t:Toolset][id:B] -> PICKED_UP[id]),
+PICKED_UP[id:B] = (putdown[t:Toolset][id] -> IDLE
+               | [id].exit -> IDLE).
+
+||Plant = (
+		ELEMENTS ||
+		TOOLS || 
+		ARM
+//		|| S1
+).
+
+ltl_property S1 = [](! exists[b:B][c:B] (PROCESSING['drill][c] && PROCESSING['press][b]))
+
+//controllerSpec tryouts
+fluent ENDED[b:B] = <[b].end, Alphabet\{[b].end}> initially 1
+fluent IN_PROD[b:B] = <[b].start,  Alphabet\{[b].start}>//end>
+fluent PROCESSING[t:Toolset][b:B] = <begin[t][b], end[t][b]>
+
+assert A_1 = IN_PROD[1]
+assert A_2 = IN_PROD[2]
+
+assert G1_3 = ENDED[1]
+assert G2_3 = ENDED[2]
+
+controller ||C = (Plant)~{Objective}.
+
+||Comp = (C||Plant).
+
+controllerSpec Objective = {
+safety = {S1}
+assumption = {A_1, A_2}
+liveness = {G1_3, G2_3}
+controllable = {ControllableActions}
+}

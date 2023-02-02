@@ -1,0 +1,97 @@
+//Test 4
+/*
+set Cont = {c1, c2,g}
+
+M = (a->G1),
+G1= (g->M | c2->G),
+G = (a->(c1->M | g->G)).
+
+fluent A = <a, {c1, c2,g}>
+fluent G = <g, {c1, c2,a}>
+assert A1 = A
+assert G1 = G
+assert Test = ([]<>A1 -> []<>G1)
+
+assert TestA1 = []<>A1
+||MM = M.
+
+controller ||CM = M~{Obj}.
+ 
+controllerSpec Obj = {
+safety = {}
+assumption = {A1}
+liveness = {G1}
+controllable = {Cont}
+}
+*/
+//Test 3 documentar!!!
+
+set Cont = {c1, c2,g}
+M = (c1->M | c2->G | a->M ),
+G = (g->T),
+T = (a->G).
+
+fluent A = <a, {c1, c2,g}>
+fluent G = <g, {c1, c2,a}>
+assert A1 = A
+assert G1 = G
+assert Test = ([]<>A1 -> []<>G1)
+
+assert TestA1 = []<>A1
+||MM = M.
+
+controller ||CM = M~{Obj}.
+ 
+controllerSpec Obj = {
+safety = {}
+assumption = {A1}
+liveness = {G1}
+controllable = {Cont}
+}
+ 
+
+//Test 2
+/*
+set Cont = {b,g}
+M = (a->B | g->M),
+B= (b->c->B).
+
+fluent A = <a, {b,c,g}>
+fluent G = <g, {a,b,c}>
+assert A1 = A
+assert G1 = G
+
+assert TestA1 = []<>A1
+||MM = M.
+
+controller ||CM = M~{Obj}.
+ 
+controllerSpec Obj = {
+safety = {}
+assumption = {A1}
+liveness = {G1}
+controllable = {Cont}
+}
+*/
+//Test 1
+/*
+fluent Afluent = <a, {b, k, n}>
+fluent Bfluent = <b, {a, k, n}>
+
+assert A = Afluent
+assert B = Bfluent
+
+set Controllable = {b}
+
+controllerSpec G1 = {
+safety = {}
+failure = {}
+assumption = {A}
+liveness = {B}
+controllable = {Controllable} 
+}
+
+controller M = (a->b->M | k->n->M)~{G1}.
+
+minimal ||C = M.
+*/

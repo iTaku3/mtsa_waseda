@@ -1,0 +1,3416 @@
+const N = 2
+range ProductCount = 1..N
+set ProductTypes = {a, b}
+set Toolset = {drill, press, oven}//, stappler}
+set ProductsTypeA = {{a}.[ProductCount]}
+set ProductsTypeB = {{b}.[ProductCount]}
+set ProductTypesSet = {ProductsTypeA, ProductsTypeB}
+set BlankAlpha = {[ProductTypesSet].{inTray, getInTray, putOutTray}, {put}.Toolset.[ProductTypesSet]}
+set ArmAlpha = { [ProductTypesSet].{getInTray, putOutTray}, {put, get}.Toolset.[ProductTypesSet] }
+set ToolsAlpha  = { {put,process,get}.Toolset.[ProductTypesSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+set ControllableActions = {[ProductTypesSet].{getInTray,putOutTray}, {put,get}.Toolset.[ProductTypesSet]}
+set UncontrollableActions = {Alphabet\ControllableActions}
+
+INIT_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> END).
+TRY_TOOL(T='any, C=1) = (put[T][C] -> END).
+FINISH_PRODUCT(C=1) = ([C].putOutTray -> END).
+
+PRODUCT_A(C=1)= INIT_PRODUCT(C);
+				TRY_TOOL('oven,C);
+//				TRY_TOOL('stappler,C);
+				TRY_TOOL('drill,C);
+				TRY_TOOL('press,C);
+				FINISH_PRODUCT(C);
+				PRODUCT_A.
+
+PRODUCT_B(C=N/2+1)= INIT_PRODUCT(C);
+					TRY_TOOL('drill,C);
+					TRY_TOOL('press,C);
+					TRY_TOOL('oven,C);
+//					TRY_TOOL('stappler,C);
+					FINISH_PRODUCT(C);
+					PRODUCT_B.
+
+compose ||PRODUCT_PROCESS = (forall[a:ProductsTypeA] PRODUCT_A(a) || forall[b:ProductsTypeB] PRODUCT_B(b)).
+
+RAW_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> TOOLS_AVAIL 
+					| [C].idle -> RAW_PRODUCT),
+TOOLS_AVAIL = (put[t:Toolset][C] -> get[t].[C] -> TOOLS_AVAIL 
+				| [C].putOutTray -> RAW_PRODUCT).
+
+||RAW_PRODUCTS = forall[p:ProductTypesSet] RAW_PRODUCT(p).
+
+TOOL(T='any) = (put[T][e:ProductTypesSet] -> process[T][e] -> get[T][e] -> TOOL). 
+
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([e:ProductTypesSet].getInTray -> PICKED_UP[e]
+		| get[t:Toolset][e:ProductTypesSet] -> PICKED_UP[e]),
+PICKED_UP[e:ProductTypesSet] = (put[t:Toolset][e] -> IDLE
+               | [e].putOutTray -> IDLE).
+
+||ENV = ( RAW_PRODUCTS || TOOLS || ARM).
+
+ltl_property CANT_PROCESS_SIMULTANEOSLY = [](! exists[a:ProductTypesSet][b:ProductTypesSet] (TOOL_PROCESS[a]['drill] && TOOL_PROCESS[b]['press]))
+
+fluent ADDED_TO_OUTTRAY[e:ProductTypesSet] = <[e].putOutTray, Alphabet\{[e].putOutTray}>
+//The ending action needs to be getInTray, so the controller can't postpone an element indefinitely
+fluent ADDED_TO_INTRAY[e:ProductTypesSet] = <[e].inTray, [e].getInTray>
+fluent TOOL_PROCESS[e:ProductTypesSet][t:Toolset] = <put[t][e], get[t][e]>
+fluent BEING_PROCESSED[e:ProductTypesSet] = <[e].getInTray, [e].putOutTray>
+
+assert ASSUME_ON_A1 = (ADDED_TO_INTRAY['a[1]] || BEING_PROCESSED['a[1]])
+assert ASSUME_ON_B1 = (ADDED_TO_INTRAY['b[1]] || BEING_PROCESSED['b[1]])
+assert ASSUME_ON_A2 = (ADDED_TO_INTRAY['a[2]] || BEING_PROCESSED['a[2]])
+assert ASSUME_ON_B2 = (ADDED_TO_INTRAY['b[2]] || BEING_PROCESSED['b[2]])
+
+assert GOAL_FOR_A = exists[e:ProductsTypeA] ADDED_TO_OUTTRAY[e]
+assert GOAL_FOR_B = exists[e:ProductsTypeB] ADDED_TO_OUTTRAY[e]
+assert ASSUME_ON_A = exists[e:ProductsTypeA] (ADDED_TO_INTRAY[e] || BEING_PROCESSED[e])
+assert ASSUME_ON_B = exists[e:ProductsTypeB] (ADDED_TO_INTRAY[e] || BEING_PROCESSED[e])
+
+assert FALSE = (GOAL_FOR_B && !GOAL_FOR_B)
+
+controller ||C = (ENV)~{Objective}.
+checkCompatibility ||Compatible = (ENV)~{Objective}.
+controllerSpec Objective = {
+	safety = {CANT_PROCESS_SIMULTANEOSLY, PRODUCT_PROCESS}
+	assumption = {ASSUME_ON_A1, ASSUME_ON_B1, ASSUME_ON_A2, ASSUME_ON_B2}
+//with these, there is no controller ASSUME_ON_A, ASSUME_ON_B} the env can flood the controller with idles of the element which is not being processed.
+	liveness = {GOAL_FOR_A, GOAL_FOR_B}
+	controllable = {ControllableActions}
+}
+
+EXP= Q0,
+	Q0	= ({a, b}[1..2].idle -> Q0
+		  |b[1].inTray -> Q34
+		  |a[1].inTray -> Q140
+		  |b[2].inTray -> Q455
+		  |a[2].inTray -> Q854),
+	Q1	= ({a[1].idle, b[2].idle} -> Q1
+		  |process.press.b[1] -> Q192
+		  |a[1].inTray -> Q736
+		  |b[2].inTray -> Q820),
+	Q2	= ({a[2].idle, b[1..2].idle} -> Q2
+		  |a[2].inTray -> Q60
+		  |process.press.a[1] -> Q179
+		  |b[1].inTray -> Q637
+		  |b[2].inTray -> Q755),
+	Q3	= ({a[2].idle, b[1].idle} -> Q3
+		  |a[2].inTray -> Q575
+		  |process.oven.a[1] -> Q948
+		  |b[1].inTray -> Q961),
+	Q4	= (b[1..2].idle -> Q4
+		  |put.press.a[1] -> Q116
+		  |b[2].inTray -> Q411
+		  |b[1].inTray -> Q701),
+	Q5	= (b[1].idle -> Q5
+		  |put.press.b[2] -> Q619
+		  |b[1].inTray -> Q970),
+	Q6	= (b[2].idle -> Q6
+		  |b[2].inTray -> Q428
+		  |put.press.b[1] -> Q736),
+	Q7	= (b[1].idle -> Q7
+		  |b[1].inTray -> Q427
+		  |process.drill.b[2] -> Q535),
+	Q8	= ({a[1].idle, b[2].idle} -> Q8
+		  |b[2].inTray -> Q481
+		  |put.drill.a[2] -> Q729
+		  |a[1].inTray -> Q929),
+	Q9	= (a[2].idle -> Q9
+		  |a[2].inTray -> Q143
+		  |process.drill.a[1] -> Q406),
+	Q10	= (put.oven.a[1] -> Q254),
+	Q11	= ({a, b}[2].idle -> Q11
+		  |put.press.a[1] -> Q637
+		  |a[2].inTray -> Q682
+		  |b[2].inTray -> Q829),
+	Q12	= ({a, b}[1].idle -> Q12
+		  |a[1].inTray -> Q245
+		  |b[1].inTray -> Q481
+		  |put.drill.a[2] -> Q684),
+	Q13	= ({a[2].idle, b[1].idle} -> Q13
+		  |a[2].inTray -> Q619
+		  |b[1].inTray -> Q833
+		  |process.press.b[2] -> Q851),
+	Q14	= ({a[1].idle, b[1..2].idle} -> Q14
+		  |a[1].inTray -> Q582
+		  |process.drill.a[2] -> Q674
+		  |b[2].inTray -> Q684
+		  |b[1].inTray -> Q729),
+	Q15	= ({a[2].idle, b[1].idle} -> Q91
+		  |get.oven.a[1] -> Q267
+		  |a[2].inTray -> Q432
+		  |b[1].inTray -> Q694),
+	Q16	= (get.press.a[2] -> Q496),
+	Q17	= (a[2].idle -> Q17
+		  |a[2].inTray -> Q226
+		  |process.oven.b[1] -> Q800
+		  |get.drill.b[2] -> Q842),
+	Q18	= ({a[2].idle, b[1].idle} -> Q13
+		  |a[2].inTray -> Q619
+		  |b[1].inTray -> Q833
+		  |process.press.b[2] -> Q851),
+	Q19	= (a[2].idle -> Q217
+		  |b[1].getInTray -> Q693
+		  |a[2].inTray -> Q698
+		  |b[2].getInTray -> Q815
+		  |a[1].getInTray -> Q934),
+	Q20	= (b[2].idle -> Q20
+		  |b[2].inTray -> Q497
+		  |a[1].putOutTray -> Q858),
+	Q21	= ({a, b}[1].idle -> Q21
+		  |b[1].inTray -> Q165
+		  |a[2].putOutTray -> Q439
+		  |a[1].inTray -> Q589),
+	Q22	= (b[1..2].idle -> Q22
+		  |b[2].inTray -> Q137
+		  |put.oven.a[1] -> Q650
+		  |b[1].inTray -> Q930),
+	Q23	= ({a[1].idle, b[1..2].idle} -> Q23
+		  |a[1].inTray -> Q622
+		  |process.drill.a[2] -> Q636
+		  |b[1].inTray -> Q685
+		  |b[2].inTray -> Q723),
+	Q24	= (a[2].idle -> Q24
+		  |process.press.b[1] -> Q365
+		  |a[2].inTray -> Q544),
+	Q25	= (a[2].idle -> Q25
+		  |a[2].inTray -> Q158
+		  |process.drill.a[1] -> Q596),
+	Q26	= ({a[1].idle, b[2].idle} -> Q26
+		  |b[2].inTray -> Q541
+		  |put.drill.a[2] -> Q685
+		  |a[1].inTray -> Q913),
+	Q27	= (b[2].putOutTray -> Q41),
+	Q28	= ({a, b}[1].idle -> Q28
+		  |b[1].inTray -> Q191
+		  |a[1].inTray -> Q571
+		  |a[2].putOutTray -> Q628),
+	Q29	= (b[2].inTray -> Q24
+		  |{a, b}[2].idle -> Q29
+		  |a[2].inTray -> Q736
+		  |process.press.b[1] -> Q785),
+	Q30	= (b[1..2].idle -> Q30
+		  |b[2].inTray -> Q126
+		  |put.oven.a[1] -> Q671
+		  |b[1].inTray -> Q888),
+	Q31	= (b[2].idle -> Q31
+		  |b[2].inTray -> Q516
+		  |a[1].putOutTray -> Q834),
+	Q32	= ({a[1..2].idle, b[2].idle} -> Q32
+		  |a[2].inTray -> Q149
+		  |a[1].inTray -> Q583
+		  |b[2].inTray -> Q673
+		  |b[1].putOutTray -> Q920),
+	Q33	= ({a[1].idle, b[1..2].idle} -> Q33
+		  |b[2].inTray -> Q376
+		  |a[2].getInTray -> Q529
+		  |b[1].inTray -> Q538
+		  |a[1].inTray -> Q947),
+	Q34	= ({a[1..2].idle, b[2].idle} -> Q34
+		  |a[1].inTray -> Q163
+		  |a[2].inTray -> Q538
+		  |b[2].inTray -> Q713),
+	Q35	= (b[1].inTray -> Q20
+		  |b[1..2].idle -> Q35
+		  |b[2].inTray -> Q117
+		  |a[1].putOutTray -> Q731),
+	Q36	= ({a, b}[2].idle -> Q36
+		  |get.oven.a[1] -> Q136
+		  |b[2].inTray -> Q694
+		  |a[2].inTray -> Q922),
+	Q37	= (a[1..2].idle -> Q37
+		  |a[1].inTray -> Q221
+		  |a[2].inTray -> Q345
+		  |get.oven.b[1] -> Q657),
+	Q38	= ({a[2].idle, b[1].idle} -> Q53
+		  |b[1].inTray -> Q263
+		  |a[2].inTray -> Q535
+		  |get.drill.b[2] -> Q679),
+	Q39	= ({a, b}[1].idle -> Q39
+		  |a[1].inTray -> Q107
+		  |put.oven.a[2] -> Q266
+		  |b[1].inTray -> Q642),
+	Q40	= (b[1].idle -> Q40
+		  |b[1].inTray -> Q206
+		  |put.oven.a[2] -> Q798),
+	Q41	= (b[2].idle -> Q41
+		  |a[2].getInTray -> Q503
+		  |b[2].inTray -> Q675
+		  |a[1].getInTray -> Q930),
+	Q42	= (b[2].putOutTray -> Q86),
+	Q43	= ({a[1].idle, b[1..2].idle} -> Q33
+		  |b[2].inTray -> Q376
+		  |a[2].getInTray -> Q529
+		  |b[1].inTray -> Q538
+		  |a[1].inTray -> Q947),
+	Q44	= ({a[1..2].idle, b[2].idle} -> Q44
+		  |a[2].inTray -> Q168
+		  |a[1].inTray -> Q585
+		  |b[2].inTray -> Q657
+		  |b[1].putOutTray -> Q897),
+	Q45	= (b[1].putOutTray -> Q748),
+	Q46	= ({a[2].idle, b[1].idle} -> Q46
+		  |a[2].inTray -> Q560
+		  |b[1].inTray -> Q859
+		  |process.oven.a[1] -> Q974),
+	Q47	= ({a, b}[2].idle -> Q47
+		  |get.oven.a[1] -> Q120
+		  |b[2].inTray -> Q774
+		  |a[2].inTray -> Q946),
+	Q48	= ({a[1..2].idle, b[1].idle} -> Q48
+		  |a[1].inTray -> Q298
+		  |a[2].inTray -> Q376
+		  |b[1].inTray -> Q713),
+	Q49	= (a[1..2].idle -> Q49
+		  |a[2].inTray -> Q153
+		  |a[1].inTray -> Q200
+		  |get.oven.b[1] -> Q673),
+	Q50	= (b[2].idle -> Q50
+		  |b[2].inTray -> Q339
+		  |put.press.b[1] -> Q719),
+	Q51	= ({a, b}[1].idle -> Q51
+		  |a[1].inTray -> Q100
+		  |put.oven.a[2] -> Q301
+		  |b[1].inTray -> Q323),
+	Q52	= (process.drill.b[2] -> Q17
+		  |a[2].idle -> Q52
+		  |a[2].inTray -> Q462
+		  |process.oven.b[1] -> Q590),
+	Q53	= ({a[2].idle, b[1].idle} -> Q53
+		  |b[1].inTray -> Q263
+		  |a[2].inTray -> Q535
+		  |get.drill.b[2] -> Q679),
+	Q54	= ({a, b}[2].idle -> Q54
+		  |a[2].inTray -> Q701
+		  |b[2].inTray -> Q808
+		  |put.press.a[1] -> Q853),
+	Q55	= (get.press.a[2] -> Q508),
+	Q56	= (a[1].idle -> Q56
+		  |get.oven.b[2] -> Q114
+		  |get.drill.b[1] -> Q454
+		  |a[1].inTray -> Q769),
+	Q57	= ({a[1].idle, b[2].idle} -> Q57
+		  |b[2].inTray -> Q323
+		  |a[1].inTray -> Q485
+		  |put.oven.a[2] -> Q595),
+	Q58	= (b[1].inTray -> Q31
+		  |b[1..2].idle -> Q58
+		  |b[2].inTray -> Q169
+		  |a[1].putOutTray -> Q680),
+	Q59	= ({a[1..2].idle, b[1].idle} -> Q59
+		  |a[1].inTray -> Q132
+		  |b[1].inTray -> Q446
+		  |get.drill.b[2] -> Q928
+		  |a[2].inTray -> Q940),
+	Q60	= (b[1..2].idle -> Q60
+		  |b[1].inTray -> Q430
+		  |process.press.a[1] -> Q483
+		  |b[2].inTray -> Q764),
+	Q61	= (b[1].putOutTray -> Q761),
+	Q62	= (a[1].idle -> Q62
+		  |a[1].inTray -> Q495
+		  |process.press.b[2] -> Q794),
+	Q63	= (b[2].idle -> Q78
+		  |process.press.b[1] -> Q337
+		  |b[2].inTray -> Q530),
+	Q64	= (b[2].idle -> Q64
+		  |put.press.a[1] -> Q378
+		  |b[2].inTray -> Q502),
+	Q65	= ({a, b}[2].idle -> Q65
+		  |b[2].inTray -> Q103
+		  |process.oven.b[1] -> Q373
+		  |a[2].inTray -> Q621),
+	Q66	= ({a[1].idle, b[1..2].idle} -> Q66
+		  |b[2].inTray -> Q142
+		  |put.press.a[2] -> Q463
+		  |a[1].inTray -> Q547
+		  |b[1].inTray -> Q847),
+	Q67	= (b[1].idle -> Q67
+		  |b[1].inTray -> Q68
+		  |process.press.a[1] -> Q798
+		  |process.oven.a[2] -> Q864),
+	Q68	= (process.press.a[1] -> Q567
+		  |process.oven.a[2] -> Q579),
+	Q69	= (get.drill.a[1] -> Q4
+		  |b[1..2].idle -> Q69
+		  |b[2].inTray -> Q420
+		  |b[1].inTray -> Q926),
+	Q70	= ({a[1..2].idle, b[2].idle} -> Q70
+		  |a[1].inTray -> Q80
+		  |a[2].inTray -> Q104
+		  |process.press.b[1] -> Q435
+		  |b[2].inTray -> Q917),
+	Q71	= (a[2].idle -> Q71
+		  |a[2].inTray -> Q555
+		  |process.drill.b[1] -> Q573),
+	Q72	= (a[1..2].idle -> Q72
+		  |get.press.b[2] -> Q641
+		  |a[2].inTray -> Q794
+		  |a[1].inTray -> Q876),
+	Q73	= (a[1..2].idle -> Q73
+		  |put.drill.b[1] -> Q604
+		  |a[1].inTray -> Q693
+		  |a[2].inTray -> Q954),
+	Q74	= ({a[2].idle, b[1].idle} -> Q74
+		  |b[1].inTray -> Q815
+		  |a[2].inTray -> Q878
+		  |put.drill.b[2] -> Q921),
+	Q75	= ({a[1].idle, b[2].idle} -> Q75
+		  |process.drill.b[1] -> Q119
+		  |b[2].inTray -> Q714
+		  |a[1].inTray -> Q825),
+	Q76	= (process.oven.a[1] -> Q556
+		  |process.press.a[2] -> Q725),
+	Q77	= (a[1].idle -> Q77
+		  |a[1].inTray -> Q515
+		  |process.press.b[2] -> Q779),
+	Q78	= (b[2].idle -> Q78
+		  |process.press.b[1] -> Q337
+		  |b[2].inTray -> Q530),
+	Q79	= (b[1].idle -> Q79
+		  |b[1].inTray -> Q254
+		  |process.oven.a[1] -> Q354
+		  |get.drill.a[2] -> Q744),
+	Q80	= ({a, b}[2].idle -> Q80
+		  |b[2].inTray -> Q96
+		  |a[2].inTray -> Q719
+		  |process.press.b[1] -> Q771),
+	Q81	= (a[1..2].idle -> Q81
+		  |get.press.b[2] -> Q655
+		  |a[2].inTray -> Q779
+		  |a[1].inTray -> Q895),
+	Q82	= (a[2].idle -> Q82
+		  |process.drill.b[1] -> Q534
+		  |a[2].inTray -> Q572),
+	Q83	= ({a[1].idle, b[1..2].idle} -> Q83
+		  |put.press.a[2] -> Q450
+		  |a[1].inTray -> Q536
+		  |b[2].inTray -> Q818
+		  |b[1].inTray -> Q835),
+	Q84	= (a[2].inTray -> Q1
+		  |a[1].inTray -> Q29
+		  |{a[1..2].idle, b[2].idle} -> Q84
+		  |process.press.b[1] -> Q421
+		  |b[2].inTray -> Q780),
+	Q85	= ({a[1].idle, b[2].idle} -> Q85
+		  |a[1].inTray -> Q503
+		  |put.oven.a[2] -> Q584
+		  |b[2].inTray -> Q642),
+	Q86	= (b[2].idle -> Q41
+		  |b[1].getInTray -> Q393
+		  |a[2].getInTray -> Q503
+		  |b[2].inTray -> Q675
+		  |a[1].getInTray -> Q930),
+	Q87	= (b[1..2].idle -> Q87
+		  |get.drill.a[1] -> Q95
+		  |b[2].inTray -> Q396
+		  |b[1].inTray -> Q899),
+	Q88	= ({a[2].idle, b[1].idle} -> Q88
+		  |a[2].inTray -> Q349
+		  |b[1].inTray -> Q793
+		  |get.oven.b[2] -> Q871),
+	Q89	= (a[2].idle -> Q89
+		  |a[2].inTray -> Q111
+		  |process.oven.b[1] -> Q200
+		  |b[2].getInTray -> Q790),
+	Q90	= (a[1..2].idle -> Q90
+		  |put.drill.b[1] -> Q618
+		  |a[1].inTray -> Q734
+		  |a[2].inTray -> Q762),
+	Q91	= ({a[2].idle, b[1].idle} -> Q91
+		  |get.oven.a[1] -> Q267
+		  |a[2].inTray -> Q432
+		  |b[1].inTray -> Q694),
+	Q92	= ({a[1].idle, b[1..2].idle} -> Q92
+		  |a[1].inTray -> Q207
+		  |get.press.a[2] -> Q740
+		  |b[1].inTray -> Q866
+		  |b[2].inTray -> Q965),
+	Q93	= (b[1].idle -> Q93
+		  |process.drill.a[2] -> Q354
+		  |b[1].inTray -> Q760),
+	Q94	= (put.oven.b[2] -> Q363),
+	Q95	= (put.press.a[1] -> Q60
+		  |b[1..2].idle -> Q95
+		  |b[2].inTray -> Q431
+		  |b[1].inTray -> Q682),
+	Q96	= (a[2].idle -> Q96
+		  |process.press.b[1] -> Q336
+		  |a[2].inTray -> Q530),
+	Q97	= (a[2].inTray -> Q27
+		  |a[2].idle -> Q97
+		  |b[2].putOutTray -> Q397),
+	Q98	= (b[1].idle -> Q98
+		  |a[1].putOutTray -> Q251
+		  |b[1].inTray -> Q533),
+	Q99	= (a[1].idle -> Q99
+		  |put.press.a[2] -> Q505
+		  |a[1].inTray -> Q932),
+	Q100	= (b[1].idle -> Q100
+		  |b[1].inTray -> Q366
+		  |put.oven.a[2] -> Q816),
+	Q101	= (process.oven.b[1] -> Q230),
+	Q102	= (a[2].inTray -> Q42
+		  |a[2].idle -> Q102
+		  |b[2].putOutTray -> Q512),
+	Q103	= (a[2].inTray -> Q101
+		  |a[2].idle -> Q103
+		  |process.oven.b[1] -> Q221),
+	Q104	= ({a[1].idle, b[2].idle} -> Q104
+		  |process.press.b[1] -> Q215
+		  |a[1].inTray -> Q719
+		  |b[2].inTray -> Q783),
+	Q105	= (get.oven.b[1] -> Q935
+		  |process.drill.b[2] -> Q972),
+	Q106	= ({a[2].idle, b[1].idle} -> Q106
+		  |a[2].inTray -> Q334
+		  |b[1].inTray -> Q742
+		  |get.oven.b[2] -> Q910),
+	Q107	= (b[1].idle -> Q107
+		  |b[1].inTray -> Q353
+		  |put.oven.a[2] -> Q839),
+	Q108	= ({a[1].idle, b[1..2].idle} -> Q108
+		  |a[1].inTray -> Q182
+		  |get.press.a[2] -> Q788
+		  |b[1].inTray -> Q881
+		  |b[2].inTray -> Q960),
+	Q109	= (process.oven.b[1] -> Q202
+		  |put.press.b[2] -> Q322),
+	Q110	= (b[1].idle -> Q7
+		  |b[1].inTray -> Q427
+		  |process.drill.b[2] -> Q535),
+	Q111	= (process.oven.b[1] -> Q223),
+	Q112	= (get.oven.b[1] -> Q122),
+	Q113	= ({a[2].idle, b[1].idle} -> Q113
+		  |b[1].inTray -> Q805
+		  |a[2].inTray -> Q896
+		  |put.drill.b[2] -> Q939),
+	Q114	= (a[1].idle -> Q114
+		  |b[2].putOutTray -> Q380
+		  |a[1].inTray -> Q841),
+	Q115	= ({a[1].idle, b[2].idle} -> Q115
+		  |process.drill.b[1] -> Q234
+		  |b[2].inTray -> Q730
+		  |a[1].inTray -> Q786),
+	Q116	= (b[1..2].idle -> Q116
+		  |b[1].inTray -> Q413
+		  |process.press.a[1] -> Q464
+		  |b[2].inTray -> Q845),
+	Q117	= (b[1].idle -> Q117
+		  |b[1].inTray -> Q497
+		  |a[1].putOutTray -> Q894),
+	Q118	= (a[1..2].idle -> Q118
+		  |a[1].inTray -> Q336
+		  |get.press.b[1] -> Q574
+		  |a[2].inTray -> Q651),
+	Q119	= ({a[1].idle, b[2].idle} -> Q119
+		  |a[1].inTray -> Q302
+		  |b[2].inTray -> Q385
+		  |get.drill.b[1] -> Q517),
+	Q120	= ({a, b}[2].idle -> Q120
+		  |a[2].inTray -> Q293
+		  |put.drill.a[1] -> Q546
+		  |b[2].inTray -> Q927),
+	Q121	= ({a[1].idle, b[1..2].idle} -> Q121
+		  |b[2].inTray -> Q266
+		  |process.oven.a[2] -> Q537
+		  |b[1].inTray -> Q584
+		  |a[1].inTray -> Q633),
+	Q122	= (b[1].putOutTray -> Q776),
+	Q123	= ({a[2].idle, b[1].idle} -> Q123
+		  |b[1].inTray -> Q263
+		  |a[2].inTray -> Q535
+		  |get.drill.b[2] -> Q679),
+	Q124	= (b[2].idle -> Q124
+		  |get.press.a[2] -> Q543
+		  |b[2].inTray -> Q707),
+	Q125	= (b[2].idle -> Q125
+		  |a[2].getInTray -> Q503
+		  |b[2].inTray -> Q675
+		  |a[1].getInTray -> Q930),
+	Q126	= (b[1].idle -> Q126
+		  |b[1].inTray -> Q316
+		  |put.oven.a[1] -> Q560),
+	Q127	= (b[1].idle -> Q127
+		  |get.drill.a[1] -> Q602
+		  |b[1].inTray -> Q843
+		  |process.oven.a[2] -> Q975),
+	Q128	= ({a, b}[1].idle -> Q128
+		  |b[1].inTray -> Q306
+		  |put.press.b[2] -> Q409
+		  |a[1].inTray -> Q860),
+	Q129	= (put.drill.b[1] -> Q115
+		  |{a[1].idle, b[2].idle} -> Q129
+		  |a[1].inTray -> Q440
+		  |b[2].inTray -> Q954),
+	Q130	= (a[2].getInTray -> Q39
+		  |{a, b}[1].idle -> Q141
+		  |b[2].getInTray -> Q257
+		  |a[1].inTray -> Q660
+		  |b[1].inTray -> Q767),
+	Q131	= (b[2].inTray -> Q71
+		  |{a, b}[2].idle -> Q248
+		  |process.drill.b[1] -> Q782
+		  |a[2].inTray -> Q825),
+	Q132	= ({a[2].idle, b[1].idle} -> Q132
+		  |b[1].inTray -> Q282
+		  |a[2].inTray -> Q557
+		  |get.drill.b[2] -> Q670),
+	Q133	= (put.drill.a[2] -> Q423),
+	Q134	= (b[2].idle -> Q134
+		  |b[2].inTray -> Q533
+		  |a[1].putOutTray -> Q877),
+	Q135	= (a[2].idle -> Q135
+		  |a[2].inTray -> Q386
+		  |process.press.a[1] -> Q721),
+	Q136	= ({a, b}[2].idle -> Q136
+		  |a[2].inTray -> Q276
+		  |b[2].inTray -> Q942
+		  |put.drill.a[1] -> Q966),
+	Q137	= (b[1].idle -> Q137
+		  |b[1].inTray -> Q300
+		  |put.oven.a[1] -> Q575),
+	Q138	= (b[2].idle -> Q138
+		  |b[1].getInTray -> Q440
+		  |b[2].inTray -> Q698),
+	Q139	= (a[1].inTray -> Q176
+		  |{a[1..2].idle, b[2].idle} -> Q208
+		  |b[1].getInTray -> Q414
+		  |a[2].inTray -> Q526
+		  |b[2].inTray -> Q737),
+	Q140	= ({a[2].idle, b[1..2].idle} -> Q140
+		  |b[1].inTray -> Q163
+		  |b[2].inTray -> Q298
+		  |a[1].getInTray -> Q848
+		  |a[2].inTray -> Q947),
+	Q141	= (a[2].getInTray -> Q39
+		  |{a, b}[1].idle -> Q141
+		  |a[1].inTray -> Q660
+		  |b[1].inTray -> Q767),
+	Q142	= ({a, b}[1].idle -> Q142
+		  |a[1].inTray -> Q484
+		  |put.press.a[2] -> Q581
+		  |b[1].inTray -> Q903),
+	Q143	= (process.drill.a[1] -> Q299),
+	Q144	= ({a[1].idle, b[1..2].idle} -> Q144
+		  |b[2].inTray -> Q301
+		  |process.oven.a[2] -> Q552
+		  |b[1].inTray -> Q595
+		  |a[1].inTray -> Q608),
+	Q145	= (b[2].idle -> Q145
+		  |b[2].inTray -> Q375
+		  |put.oven.b[1] -> Q603),
+	Q146	= (put.drill.b[1] -> Q75
+		  |{a[1].idle, b[2].idle} -> Q146
+		  |a[1].inTray -> Q393
+		  |b[2].inTray -> Q762),
+	Q147	= (a[1].inTray -> Q123
+		  |{a[1..2].idle, b[1].idle} -> Q147
+		  |b[1].inTray -> Q470
+		  |get.drill.b[2] -> Q916
+		  |a[2].inTray -> Q964),
+	Q148	= (process.oven.a[1] -> Q124
+		  |b[2].idle -> Q148
+		  |get.press.a[2] -> Q403
+		  |b[2].inTray -> Q725),
+	Q149	= ({a[1].idle, b[2].idle} -> Q149
+		  |b[1].putOutTray -> Q434
+		  |a[1].inTray -> Q473
+		  |b[2].inTray -> Q593),
+	Q150	= (a[2].idle -> Q150
+		  |a[2].inTray -> Q361
+		  |process.press.a[1] -> Q711),
+	Q151	= (a[2].idle -> Q151
+		  |process.drill.b[2] -> Q412
+		  |b[1].putOutTray -> Q837
+		  |a[2].inTray -> Q935),
+	Q152	= ({a[2].idle, b[1..2].idle} -> Q152
+		  |b[1].inTray -> Q176
+		  |b[2].inTray -> Q328
+		  |a[2].inTray -> Q943),
+	Q153	= (a[1].idle -> Q153
+		  |a[1].inTray -> Q223
+		  |get.oven.b[1] -> Q593
+		  |b[2].getInTray -> Q933),
+	Q154	= (b[2].idle -> Q154
+		  |b[2].inTray -> Q578
+		  |process.press.a[2] -> Q951),
+	Q155	= ({a[2].idle, b[1..2].idle} -> Q155
+		  |b[2].inTray -> Q199
+		  |b[1].inTray -> Q262
+		  |a[2].inTray -> Q464
+		  |get.press.a[1] -> Q592),
+	Q156	= ({a[1].idle, b[2].idle} -> Q156
+		  |get.press.b[1] -> Q329
+		  |a[1].inTray -> Q337
+		  |b[2].inTray -> Q651),
+	Q157	= ({a[1..2].idle, b[1].idle} -> Q157
+		  |b[1].inTray -> Q566
+		  |a[2].inTray -> Q678
+		  |a[1].inTray -> Q871
+		  |b[2].putOutTray -> Q919),
+	Q158	= (process.drill.a[1] -> Q269),
+	Q159	= (put.press.a[1] -> Q68
+		  |process.oven.a[2] -> Q502),
+	Q160	= (a[1].idle -> Q160
+		  |process.oven.b[2] -> Q274
+		  |a[1].inTray -> Q381),
+	Q161	= (put.drill.a[2] -> Q401),
+	Q162	= (b[2].idle -> Q162
+		  |b[2].inTray -> Q321
+		  |put.oven.b[1] -> Q621),
+	Q163	= (a[2].inTray -> Q125
+		  |{a, b}[2].idle -> Q163
+		  |b[2].inTray -> Q612
+		  |a[1].getInTray -> Q814),
+	Q164	= ({a[1..2].idle, b[2].idle} -> Q164
+		  |a[2].inTray -> Q329
+		  |b[2].inTray -> Q574
+		  |a[1].inTray -> Q688
+		  |put.oven.b[1] -> Q775),
+	Q165	= (a[1].idle -> Q165
+		  |a[1].inTray -> Q496
+		  |a[2].putOutTray -> Q789),
+	Q166	= (a[1].inTray -> Q112
+		  |a[1].idle -> Q166
+		  |get.oven.b[1] -> Q665),
+	Q167	= ({a[1..2].idle, b[2].idle} -> Q167
+		  |a[2].inTray -> Q347
+		  |b[2].inTray -> Q548
+		  |a[1].inTray -> Q700
+		  |put.oven.b[1] -> Q821),
+	Q168	= ({a[1].idle, b[2].idle} -> Q168
+		  |b[1].putOutTray -> Q416
+		  |a[1].inTray -> Q459
+		  |b[2].inTray -> Q607),
+	Q169	= (b[1].idle -> Q169
+		  |b[1].inTray -> Q516
+		  |a[1].putOutTray -> Q907),
+	Q170	= (a[1].idle -> Q170
+		  |a[1].inTray -> Q514
+		  |b[1].putOutTray -> Q553
+		  |process.press.b[2] -> Q665),
+	Q171	= (put.press.a[2] -> Q556),
+	Q172	= (a[1..2].idle -> Q172
+		  |a[1].inTray -> Q365
+		  |get.press.b[1] -> Q548
+		  |a[2].inTray -> Q638),
+	Q173	= (b[2].idle -> Q173
+		  |b[2].inTray -> Q424
+		  |get.drill.a[2] -> Q754
+		  |a[1].getInTray -> Q831),
+	Q174	= ({a[1..2].idle, b[1].idle} -> Q174
+		  |b[1].inTray -> Q524
+		  |a[2].inTray -> Q645
+		  |b[2].putOutTray -> Q791
+		  |a[1].inTray -> Q910),
+	Q175	= (get.oven.b[2] -> Q27),
+	Q176	= (a[2].inTray -> Q138
+		  |{a, b}[2].idle -> Q176
+		  |b[2].inTray -> Q624
+		  |b[1].getInTray -> Q649),
+	Q177	= ({a[1].idle, b[2].idle} -> Q156
+		  |get.press.b[1] -> Q329
+		  |a[1].inTray -> Q337
+		  |b[2].inTray -> Q651),
+	Q178	= (a[1].inTray -> Q5
+		  |{a, b}[1].idle -> Q178
+		  |b[1].inTray -> Q325
+		  |put.press.b[2] -> Q398),
+	Q179	= ({a[2].idle, b[1..2].idle} -> Q179
+		  |b[2].inTray -> Q211
+		  |b[1].inTray -> Q284
+		  |a[2].inTray -> Q483
+		  |get.press.a[1] -> Q614),
+	Q180	= (b[2].idle -> Q180
+		  |b[2].inTray -> Q591
+		  |process.press.a[2] -> Q976),
+	Q181	= (b[1].idle -> Q181
+		  |a[1].getInTray -> Q317
+		  |b[1].inTray -> Q423
+		  |process.drill.a[2] -> Q792),
+	Q182	= (b[1..2].idle -> Q182
+		  |b[2].inTray -> Q235
+		  |get.press.a[2] -> Q286
+		  |b[1].inTray -> Q976),
+	Q183	= ({a[1].idle, b[2].idle} -> Q195
+		  |b[2].inTray -> Q743
+		  |a[1].inTray -> Q803
+		  |process.oven.a[2] -> Q819),
+	Q184	= (b[1].inTray -> Q16
+		  |b[1].idle -> Q184
+		  |get.press.a[2] -> Q589),
+	Q185	= (a[1].idle -> Q185
+		  |a[1].inTray -> Q339
+		  |put.press.b[1] -> Q783),
+	Q186	= (a[1].idle -> Q186
+		  |a[1].inTray -> Q433
+		  |get.oven.a[2] -> Q541),
+	Q187	= (put.drill.b[1] -> Q572),
+	Q188	= (b[1].inTray -> Q72
+		  |{a[1..2].idle, b[1].idle} -> Q188
+		  |a[2].inTray -> Q279
+		  |get.press.b[2] -> Q513
+		  |a[1].inTray -> Q851),
+	Q189	= ({a[1..2].idle, b[1].idle} -> Q48
+		  |a[1].inTray -> Q298
+		  |a[2].inTray -> Q376
+		  |b[1].inTray -> Q713
+		  |b[2].getInTray -> Q827),
+	Q190	= (b[1].inTray -> Q163
+		  |{a[2].idle, b[1..2].idle} -> Q190
+		  |b[2].inTray -> Q298
+		  |a[1].getInTray -> Q848
+		  |a[2].inTray -> Q947),
+	Q191	= (a[1].idle -> Q191
+		  |a[1].inTray -> Q508
+		  |a[2].putOutTray -> Q778),
+	Q192	= ({a[1].idle, b[2].idle} -> Q192
+		  |get.press.b[1] -> Q347
+		  |a[1].inTray -> Q436
+		  |b[2].inTray -> Q638),
+	Q193	= (get.oven.b[2] -> Q42),
+	Q194	= (a[1].idle -> Q194
+		  |a[1].inTray -> Q428
+		  |put.press.b[1] -> Q820),
+	Q195	= ({a[1].idle, b[2].idle} -> Q195
+		  |b[2].inTray -> Q743
+		  |a[1].inTray -> Q803
+		  |process.oven.a[2] -> Q819),
+	Q196	= (b[1..2].idle -> Q196
+		  |b[2].inTray -> Q245
+		  |put.drill.a[2] -> Q582
+		  |b[1].inTray -> Q929),
+	Q197	= (a[1].idle -> Q197
+		  |a[1].inTray -> Q451
+		  |get.oven.a[2] -> Q481),
+	Q198	= (b[1].idle -> Q198
+		  |b[1].inTray -> Q368
+		  |a[2].putOutTray -> Q471
+		  |process.oven.a[1] -> Q883),
+	Q199	= ({a[2].idle, b[1].idle} -> Q199
+		  |a[2].inTray -> Q326
+		  |b[1].inTray -> Q711
+		  |get.press.a[1] -> Q945),
+	Q200	= (a[2].idle -> Q200
+		  |a[2].inTray -> Q223
+		  |get.oven.b[1] -> Q828),
+	Q201	= (a[1].inTray -> Q176
+		  |{a[1..2].idle, b[2].idle} -> Q201
+		  |b[1].getInTray -> Q414
+		  |a[2].inTray -> Q526
+		  |b[2].inTray -> Q737),
+	Q202	= (put.press.b[2] -> Q394),
+	Q203	= (b[2].idle -> Q203
+		  |b[2].inTray -> Q496
+		  |a[2].putOutTray -> Q498),
+	Q204	= (a[2].idle -> Q204
+		  |put.drill.b[2] -> Q590
+		  |a[2].inTray -> Q962),
+	Q205	= (a[1].idle -> Q205
+		  |a[1].inTray -> Q363
+		  |process.oven.b[2] -> Q372),
+	Q206	= (put.oven.a[2] -> Q567),
+	Q207	= (b[2].inTray -> Q184
+		  |b[1..2].idle -> Q207
+		  |get.press.a[2] -> Q344
+		  |b[1].inTray -> Q951),
+	Q208	= (a[1].inTray -> Q176
+		  |{a[1..2].idle, b[2].idle} -> Q208
+		  |b[1].getInTray -> Q414
+		  |a[2].inTray -> Q526
+		  |b[2].inTray -> Q737),
+	Q209	= (b[1].inTray -> Q76
+		  |b[1].idle -> Q209
+		  |process.press.a[2] -> Q647
+		  |process.oven.a[1] -> Q656),
+	Q210	= (a[1].idle -> Q210
+		  |a[1].inTray -> Q451
+		  |get.oven.a[2] -> Q481),
+	Q211	= ({a[2].idle, b[1].idle} -> Q211
+		  |a[2].inTray -> Q314
+		  |b[1].inTray -> Q721
+		  |get.press.a[1] -> Q925),
+	Q212	= (a[2].inTray -> Q112
+		  |a[2].idle -> Q212
+		  |get.oven.b[1] -> Q911),
+	Q213	= ({a[2].idle, b[1].idle} -> Q213
+		  |b[1].inTray -> Q406
+		  |a[2].inTray -> Q420
+		  |get.drill.a[1] -> Q466),
+	Q214	= (b[1..2].idle -> Q214
+		  |b[2].inTray -> Q224
+		  |put.drill.a[2] -> Q622
+		  |b[1].inTray -> Q913),
+	Q215	= ({a[1].idle, b[2].idle} -> Q215
+		  |get.press.b[1] -> Q329
+		  |a[1].inTray -> Q337
+		  |b[2].inTray -> Q651),
+	Q216	= (get.oven.b[2] -> Q705
+		  |process.press.b[1] -> Q857),
+	Q217	= (a[2].idle -> Q217
+		  |b[1].getInTray -> Q693
+		  |a[2].inTray -> Q698
+		  |b[2].getInTray -> Q815),
+	Q218	= (put.drill.b[2] -> Q478),
+	Q219	= (get.oven.b[1] -> Q168
+		  |{a[1].idle, b[2].idle} -> Q219
+		  |b[2].inTray -> Q345
+		  |a[1].inTray -> Q426),
+	Q220	= (a[2].idle -> Q240
+		  |a[2].inTray -> Q405
+		  |process.oven.a[1] -> Q694),
+	Q221	= (a[2].idle -> Q221
+		  |a[2].inTray -> Q230
+		  |get.oven.b[1] -> Q807),
+	Q222	= (a[2].inTray -> Q94
+		  |a[2].idle -> Q222
+		  |put.oven.b[2] -> Q278),
+	Q223	= (get.oven.b[1] -> Q61),
+	Q224	= (b[1].inTray -> Q133
+		  |put.drill.a[2] -> Q181
+		  |b[1].idle -> Q224),
+	Q225	= (b[1].inTray -> Q27
+		  |b[1].idle -> Q225
+		  |b[2].putOutTray -> Q781),
+	Q226	= (process.oven.b[1] -> Q972),
+	Q227	= (put.drill.b[1] -> Q261),
+	Q228	= (process.oven.a[2] -> Q197
+		  |a[1].idle -> Q242
+		  |a[1].inTray -> Q313),
+	Q229	= (b[1].idle -> Q229
+		  |b[1].inTray -> Q401
+		  |process.drill.a[2] -> Q749),
+	Q230	= (get.oven.b[1] -> Q45),
+	Q231	= (b[2].idle -> Q231
+		  |b[2].inTray -> Q508
+		  |a[2].putOutTray -> Q617),
+	Q232	= ({a[2].idle, b[1].idle} -> Q232
+		  |get.press.b[2] -> Q520
+		  |a[2].inTray -> Q697
+		  |b[1].inTray -> Q895),
+	Q233	= ({a[2].idle, b[1].idle} -> Q233
+		  |a[2].inTray -> Q396
+		  |get.drill.a[1] -> Q482
+		  |b[1].inTray -> Q596),
+	Q234	= ({a[1].idle, b[2].idle} -> Q234
+		  |a[1].inTray -> Q292
+		  |b[2].inTray -> Q331
+		  |get.drill.b[1] -> Q559),
+	Q235	= (b[1].inTray -> Q55
+		  |b[1].idle -> Q235
+		  |a[1].getInTray -> Q346
+		  |get.press.a[2] -> Q571),
+	Q236	= (a[1].inTray -> Q42
+		  |a[1].idle -> Q236
+		  |b[2].putOutTray -> Q869),
+	Q237	= (a[2].idle -> Q237
+		  |put.oven.b[2] -> Q255
+		  |a[2].inTray -> Q956),
+	Q238	= (a[2].inTray -> Q116
+		  |process.press.a[1] -> Q155
+		  |{a[2].idle, b[1..2].idle} -> Q238
+		  |b[2].inTray -> Q706
+		  |b[1].inTray -> Q853),
+	Q239	= (put.oven.a[1] -> Q209
+		  |b[1].idle -> Q239
+		  |b[1].inTray -> Q260
+		  |process.press.a[2] -> Q346),
+	Q240	= (a[2].idle -> Q240
+		  |a[2].inTray -> Q405
+		  |process.oven.a[1] -> Q694),
+	Q241	= (put.drill.b[2] -> Q427),
+	Q242	= (process.oven.a[2] -> Q197
+		  |a[1].idle -> Q242
+		  |a[1].inTray -> Q313),
+	Q243	= (b[1].inTray -> Q42
+		  |b[1].idle -> Q243
+		  |b[2].putOutTray -> Q758),
+	Q244	= (b[2].inTray -> Q68
+		  |b[2].idle -> Q244
+		  |process.oven.a[2] -> Q378
+		  |process.press.a[1] -> Q507),
+	Q245	= (b[1].inTray -> Q161
+		  |put.drill.a[2] -> Q229
+		  |b[1].idle -> Q245),
+	Q246	= (a[1].idle -> Q210
+		  |a[1].inTray -> Q451
+		  |get.oven.a[2] -> Q481),
+	Q247	= (put.drill.b[1] -> Q555),
+	Q248	= (b[2].inTray -> Q71
+		  |{a, b}[2].idle -> Q248
+		  |process.drill.b[1] -> Q782
+		  |a[2].inTray -> Q825),
+	Q249	= (get.oven.b[1] -> Q149
+		  |b[2].inTray -> Q153
+		  |{a[1].idle, b[2].idle} -> Q249
+		  |a[1].inTray -> Q351),
+	Q250	= (a[2].idle -> Q250
+		  |get.oven.b[2] -> Q371
+		  |a[2].inTray -> Q769),
+	Q251	= (get.oven.a[2] -> Q12
+		  |b[1].inTray -> Q197
+		  |{a, b}[1].idle -> Q486
+		  |a[1].inTray -> Q625),
+	Q252	= (a[1..2].idle -> Q252
+		  |a[2].inTray -> Q306
+		  |put.press.b[2] -> Q509
+		  |a[1].inTray -> Q667),
+	Q253	= (put.oven.a[2] -> Q843),
+	Q254	= (process.oven.a[1] -> Q873
+		  |get.drill.a[2] -> Q953),
+	Q255	= (a[2].idle -> Q255
+		  |a[2].inTray -> Q381
+		  |process.oven.b[2] -> Q742),
+	Q256	= (a[2].inTray -> Q160
+		  |a[1].inTray -> Q255
+		  |a[1..2].idle -> Q256
+		  |process.oven.b[2] -> Q901),
+	Q257	= ({a, b}[1].idle -> Q257
+		  |put.drill.b[2] -> Q415
+		  |b[1].inTray -> Q519
+		  |a[1].inTray -> Q896),
+	Q258	= (b[1].inTray -> Q158
+		  |b[1].idle -> Q258
+		  |process.drill.a[1] -> Q396
+		  |a[2].getInTray -> Q822),
+	Q259	= (get.drill.a[2] -> Q142
+		  |{a, b}[1].idle -> Q259
+		  |b[1].inTray -> Q643
+		  |a[1].inTray -> Q749),
+	Q260	= (put.oven.a[1] -> Q76
+		  |process.press.a[2] -> Q613),
+	Q261	= (get.oven.b[2] -> Q735
+		  |process.drill.b[1] -> Q769),
+	Q262	= ({a, b}[2].idle -> Q262
+		  |get.press.a[1] -> Q594
+		  |a[2].inTray -> Q653
+		  |b[2].inTray -> Q711),
+	Q263	= (a[2].idle -> Q263
+		  |get.drill.b[2] -> Q634
+		  |a[2].inTray -> Q971),
+	Q264	= (get.drill.b[2] -> Q5
+		  |b[1].idle -> Q309
+		  |b[1].inTray -> Q971),
+	Q265	= (a[1..2].idle -> Q265
+		  |a[2].inTray -> Q331
+		  |a[1].inTray -> Q534
+		  |get.drill.b[1] -> Q880),
+	Q266	= ({a, b}[1].idle -> Q266
+		  |process.oven.a[2] -> Q709
+		  |b[1].inTray -> Q784
+		  |a[1].inTray -> Q839),
+	Q267	= ({a[2].idle, b[1].idle} -> Q267
+		  |a[2].inTray -> Q404
+		  |put.drill.a[1] -> Q598
+		  |b[1].inTray -> Q942),
+	Q268	= ({a, b}[1].idle -> Q268
+		  |put.drill.b[2] -> Q392
+		  |b[1].inTray -> Q569
+		  |a[1].inTray -> Q878),
+	Q269	= (get.drill.a[1] -> Q390),
+	Q270	= (a[1..2].idle -> Q270
+		  |a[2].inTray -> Q325
+		  |put.press.b[2] -> Q488
+		  |a[1].inTray -> Q634),
+	Q271	= (process.oven.a[2] -> Q532
+		  |process.drill.a[1] -> Q843),
+	Q272	= (process.drill.a[1] -> Q127
+		  |b[1].inTray -> Q271
+		  |b[1].idle -> Q272
+		  |process.oven.a[2] -> Q652),
+	Q273	= (b[2].idle -> Q273
+		  |put.press.a[2] -> Q295
+		  |process.oven.a[1] -> Q479
+		  |b[2].inTray -> Q953),
+	Q274	= (a[1].inTray -> Q175
+		  |a[1].idle -> Q274
+		  |get.oven.b[2] -> Q772),
+	Q275	= (put.oven.b[2] -> Q160
+		  |a[1].idle -> Q275
+		  |a[1].inTray -> Q956),
+	Q276	= (b[2].idle -> Q276
+		  |b[2].inTray -> Q315
+		  |put.drill.a[1] -> Q626),
+	Q277	= (get.oven.b[1] -> Q32
+		  |b[2].inTray -> Q49
+		  |a[2].inTray -> Q249
+		  |{a[1..2].idle, b[2].idle} -> Q277
+		  |a[1].inTray -> Q352),
+	Q278	= (a[2].idle -> Q278
+		  |a[2].inTray -> Q363
+		  |process.oven.b[2] -> Q793
+		  |b[1].getInTray -> Q826),
+	Q279	= ({a, b}[1].idle -> Q279
+		  |a[1].inTray -> Q710
+		  |b[1].inTray -> Q794
+		  |get.press.b[2] -> Q863),
+	Q280	= ({a, b}[1].idle -> Q280
+		  |b[1].inTray -> Q659
+		  |a[1].inTray -> Q792
+		  |get.drill.a[2] -> Q818),
+	Q281	= (b[2].inTray -> Q191
+		  |a[1].inTray -> Q231
+		  |{a[1].idle, b[2].idle} -> Q281
+		  |a[2].putOutTray -> Q528),
+	Q282	= (a[2].idle -> Q282
+		  |get.drill.b[2] -> Q667
+		  |a[2].inTray -> Q957),
+	Q283	= ({a[1..2].idle, b[1].idle} -> Q283
+		  |a[1].inTray -> Q328
+		  |a[2].inTray -> Q402
+		  |b[1].inTray -> Q737
+		  |b[2].getInTray -> Q806),
+	Q284	= ({a, b}[2].idle -> Q284
+		  |get.press.a[1] -> Q576
+		  |a[2].inTray -> Q639
+		  |b[2].inTray -> Q721),
+	Q285	= (process.oven.a[2] -> Q433),
+	Q286	= (b[1].inTray -> Q231
+		  |b[1..2].idle -> Q286
+		  |b[2].inTray -> Q571
+		  |a[2].putOutTray -> Q799),
+	Q287	= (get.drill.a[1] -> Q54
+		  |{a, b}[2].idle -> Q287
+		  |b[2].inTray -> Q406
+		  |a[2].inTray -> Q926),
+	Q288	= (get.oven.a[1] -> Q136
+		  |{a, b}[2].idle -> Q288
+		  |b[2].inTray -> Q694
+		  |a[2].inTray -> Q922),
+	Q289	= ({a[2].idle, b[1].idle} -> Q289
+		  |a[2].inTray -> Q619
+		  |b[1].inTray -> Q833
+		  |process.press.b[2] -> Q851),
+	Q290	= (b[1].inTray -> Q143
+		  |b[1].idle -> Q290
+		  |process.drill.a[1] -> Q420),
+	Q291	= ({a, b}[1].idle -> Q291
+		  |a[1].inTray -> Q697
+		  |b[1].inTray -> Q779
+		  |get.press.b[2] -> Q874),
+	Q292	= (get.drill.b[1] -> Q6
+		  |b[2].idle -> Q292
+		  |b[2].inTray -> Q663),
+	Q293	= (b[2].idle -> Q293
+		  |b[2].inTray -> Q294
+		  |put.drill.a[1] -> Q606),
+	Q294	= (put.drill.a[1] -> Q158),
+	Q295	= (b[2].inTray -> Q76
+		  |process.press.a[2] -> Q148
+		  |b[2].idle -> Q295
+		  |process.oven.a[1] -> Q777),
+	Q296	= (a[2].idle -> Q311
+		  |a[2].inTray -> Q699
+		  |get.oven.a[1] -> Q942),
+	Q297	= (put.oven.a[1] -> Q3
+		  |a[2].inTray -> Q137
+		  |{a[2].idle, b[1].idle} -> Q297
+		  |b[1].inTray -> Q969),
+	Q298	= (a[1].getInTray -> Q297
+		  |{a[2].idle, b[1].idle} -> Q298
+		  |b[1].inTray -> Q612
+		  |a[2].inTray -> Q660),
+	Q299	= (get.drill.a[1] -> Q441),
+	Q300	= (put.oven.a[1] -> Q449),
+	Q301	= ({a, b}[1].idle -> Q301
+		  |process.oven.a[2] -> Q728
+		  |b[1].inTray -> Q743
+		  |a[1].inTray -> Q816),
+	Q302	= (get.drill.b[1] -> Q50
+		  |b[2].idle -> Q302
+		  |b[2].inTray -> Q654),
+	Q303	= (a[2].idle -> Q303
+		  |process.press.b[1] -> Q648
+		  |a[2].inTray -> Q705
+		  |b[2].putOutTray -> Q892),
+	Q304	= (get.oven.a[1] -> Q136
+		  |{a, b}[2].idle -> Q288
+		  |b[2].inTray -> Q694
+		  |a[2].inTray -> Q922),
+	Q305	= (process.press.b[2] -> Q232
+		  |{a[2].idle, b[1].idle} -> Q305
+		  |a[2].inTray -> Q605
+		  |b[1].inTray -> Q879),
+	Q306	= (put.press.b[2] -> Q77
+		  |a[1].idle -> Q306
+		  |a[1].inTray -> Q949),
+	Q307	= (a[1].idle -> Q307
+		  |a[1].inTray -> Q427
+		  |process.drill.b[2] -> Q823),
+	Q308	= (get.press.b[1] -> Q375),
+	Q309	= (get.drill.b[2] -> Q5
+		  |b[1].idle -> Q309
+		  |b[1].inTray -> Q971),
+	Q310	= (get.drill.a[1] -> Q11
+		  |{a, b}[2].idle -> Q310
+		  |b[2].inTray -> Q596
+		  |a[2].inTray -> Q899),
+	Q311	= (a[2].idle -> Q311
+		  |a[2].inTray -> Q699
+		  |get.oven.a[1] -> Q942),
+	Q312	= (b[2].inTray -> Q37
+		  |get.oven.b[1] -> Q44
+		  |a[2].inTray -> Q219
+		  |{a[1..2].idle, b[2].idle} -> Q312
+		  |a[1].inTray -> Q373),
+	Q313	= (process.oven.a[2] -> Q451),
+	Q314	= (a[2].getInTray -> Q40
+		  |get.press.a[1] -> Q117
+		  |b[1].idle -> Q314
+		  |b[1].inTray -> Q868),
+	Q315	= (put.drill.a[1] -> Q143),
+	Q316	= (put.oven.a[1] -> Q405),
+	Q317	= (b[1].idle -> Q317
+		  |put.oven.a[1] -> Q356
+		  |process.drill.a[2] -> Q599
+		  |b[1].inTray -> Q745),
+	Q318	= (a[1..2].idle -> Q318
+		  |a[2].inTray -> Q385
+		  |a[1].inTray -> Q573
+		  |get.drill.b[1] -> Q865),
+	Q319	= (b[2].inTray -> Q254
+		  |get.drill.a[2] -> Q273
+		  |b[2].idle -> Q319
+		  |process.oven.a[1] -> Q908),
+	Q320	= ({a[1..2].idle, b[1].idle} -> Q320
+		  |b[1].inTray -> Q383
+		  |a[2].inTray -> Q447
+		  |process.oven.b[2] -> Q562
+		  |a[1].inTray -> Q676),
+	Q321	= (put.oven.b[1] -> Q101),
+	Q322	= (process.oven.b[1] -> Q394
+		  |process.press.b[2] -> Q586),
+	Q323	= (a[1].idle -> Q323
+		  |a[1].inTray -> Q366
+		  |put.oven.a[2] -> Q743),
+	Q324	= (a[1].inTray -> Q152
+		  |b[1].inTray -> Q201
+		  |{a, b}[1..2].idle -> Q340
+		  |b[2].inTray -> Q468
+		  |a[2].inTray -> Q811),
+	Q325	= (put.press.b[2] -> Q62
+		  |a[1].idle -> Q325
+		  |a[1].inTray -> Q970),
+	Q326	= (get.press.a[1] -> Q169
+		  |b[1].idle -> Q326
+		  |b[1].inTray -> Q967),
+	Q327	= ({a[2].idle, b[1..2].idle} -> Q327
+		  |b[1].inTray -> Q546
+		  |a[2].inTray -> Q616
+		  |process.drill.a[1] -> Q875
+		  |b[2].inTray -> Q906),
+	Q328	= (b[2].getInTray -> Q74
+		  |{a[2].idle, b[1].idle} -> Q328
+		  |b[1].inTray -> Q624
+		  |a[2].inTray -> Q662),
+	Q329	= (a[1].inTray -> Q162
+		  |{a[1].idle, b[2].idle} -> Q329
+		  |b[2].inTray -> Q550
+		  |put.oven.b[1] -> Q882),
+	Q330	= (process.oven.b[2] -> Q261
+		  |process.drill.b[1] -> Q664),
+	Q331	= (get.drill.b[1] -> Q194
+		  |a[1].idle -> Q331
+		  |a[1].inTray -> Q663),
+	Q332	= (b[2].idle -> Q332
+		  |b[2].inTray -> Q400
+		  |get.drill.a[2] -> Q759),
+	Q333	= (a[1].idle -> Q333
+		  |a[1].inTray -> Q478
+		  |process.drill.b[2] -> Q850),
+	Q334	= (b[1].inTray -> Q175
+		  |get.oven.b[2] -> Q225
+		  |b[1].idle -> Q334),
+	Q335	= (a[1].idle -> Q335
+		  |process.drill.b[2] -> Q623
+		  |b[1].putOutTray -> Q923
+		  |a[1].inTray -> Q935),
+	Q336	= (a[2].idle -> Q336
+		  |a[2].inTray -> Q457
+		  |get.press.b[1] -> Q720),
+	Q337	= (get.press.b[1] -> Q162
+		  |b[2].idle -> Q337
+		  |b[2].inTray -> Q457),
+	Q338	= (process.oven.a[2] -> Q98
+		  |b[1].idle -> Q338
+		  |a[1].putOutTray -> Q872
+		  |b[1].inTray -> Q912),
+	Q339	= (put.press.b[1] -> Q530),
+	Q340	= (a[1].inTray -> Q152
+		  |b[1].inTray -> Q201
+		  |{a, b}[1..2].idle -> Q340
+		  |b[2].inTray -> Q468
+		  |a[2].inTray -> Q811),
+	Q341	= (b[1].inTray -> Q256
+		  |{a[1..2].idle, b[1].idle} -> Q341
+		  |a[1].inTray -> Q387
+		  |a[2].inTray -> Q399
+		  |process.oven.b[2] -> Q521),
+	Q342	= ({a[1..2].idle, b[1].idle} -> Q283
+		  |a[1].inTray -> Q328
+		  |a[2].inTray -> Q402
+		  |b[1].inTray -> Q737
+		  |b[2].getInTray -> Q806),
+	Q343	= (process.drill.b[1] -> Q56
+		  |a[1].inTray -> Q261
+		  |a[1].idle -> Q343
+		  |get.oven.b[2] -> Q770),
+	Q344	= (b[1].inTray -> Q203
+		  |b[1..2].idle -> Q344
+		  |b[2].inTray -> Q589
+		  |a[2].putOutTray -> Q766),
+	Q345	= (a[1].inTray -> Q230
+		  |a[1].idle -> Q345
+		  |get.oven.b[1] -> Q607),
+	Q346	= (b[1].idle -> Q346
+		  |b[1].inTray -> Q613
+		  |put.oven.a[1] -> Q647),
+	Q347	= (a[1].inTray -> Q145
+		  |{a[1].idle, b[2].idle} -> Q347
+		  |b[2].inTray -> Q542
+		  |put.oven.b[1] -> Q867),
+	Q348	= (process.press.b[2] -> Q188
+		  |a[1].inTray -> Q289
+		  |{a[1..2].idle, b[1].idle} -> Q348
+		  |a[2].inTray -> Q398
+		  |b[1].inTray -> Q488),
+	Q349	= (b[1].inTray -> Q193
+		  |get.oven.b[2] -> Q243
+		  |b[1].idle -> Q349),
+	Q350	= ({a[2].idle, b[1..2].idle} -> Q350
+		  |b[2].inTray -> Q598
+		  |a[2].inTray -> Q620
+		  |process.drill.a[1] -> Q629
+		  |b[1].inTray -> Q966),
+	Q351	= (b[2].inTray -> Q223
+		  |b[2].idle -> Q351
+		  |get.oven.b[1] -> Q473),
+	Q352	= (b[2].inTray -> Q200
+		  |a[2].inTray -> Q351
+		  |{a, b}[2].idle -> Q352
+		  |get.oven.b[1] -> Q583),
+	Q353	= (put.oven.a[2] -> Q285),
+	Q354	= (b[1].idle -> Q354
+		  |b[1].inTray -> Q873
+		  |get.drill.a[2] -> Q890),
+	Q355	= (process.drill.b[1] -> Q302
+		  |b[2].idle -> Q355
+		  |b[2].inTray -> Q555),
+	Q356	= (process.drill.a[2] -> Q79
+		  |process.oven.a[1] -> Q93
+		  |b[1].idle -> Q356
+		  |b[1].inTray -> Q408),
+	Q357	= (a[2].inTray -> Q119
+		  |b[2].inTray -> Q318
+		  |{a[1..2].idle, b[2].idle} -> Q357
+		  |a[1].inTray -> Q782
+		  |get.drill.b[1] -> Q944),
+	Q358	= (b[1].inTray -> Q8
+		  |b[2].inTray -> Q12
+		  |put.drill.a[2] -> Q14
+		  |a[1].inTray -> Q196
+		  |{a[1].idle, b[1..2].idle} -> Q358),
+	Q359	= (b[1].inTray -> Q154
+		  |process.press.a[2] -> Q207
+		  |b[1..2].idle -> Q359
+		  |b[2].inTray -> Q836),
+	Q360	= (a[1].inTray -> Q94
+		  |put.oven.b[2] -> Q205
+		  |a[1].idle -> Q360),
+	Q361	= (process.press.a[1] -> Q967),
+	Q362	= (process.oven.b[2] -> Q250
+		  |a[2].idle -> Q362
+		  |get.drill.b[1] -> Q523
+		  |a[2].inTray -> Q664),
+	Q363	= (process.oven.b[2] -> Q193),
+	Q364	= (a[1].inTray -> Q305
+		  |{a[1..2].idle, b[1].idle} -> Q364
+		  |a[2].inTray -> Q409
+		  |b[1].inTray -> Q509
+		  |process.press.b[2] -> Q746),
+	Q365	= (a[2].inTray -> Q308
+		  |a[2].idle -> Q365
+		  |get.press.b[1] -> Q708),
+	Q366	= (put.oven.a[2] -> Q313),
+	Q367	= (a[2].idle -> Q367
+		  |a[2].inTray -> Q388
+		  |process.oven.b[2] -> Q952),
+	Q368	= (a[2].putOutTray -> Q220
+		  |process.oven.a[1] -> Q931),
+	Q369	= (process.drill.b[1] -> Q250
+		  |a[2].inTray -> Q261
+		  |a[2].idle -> Q369
+		  |get.oven.b[2] -> Q644),
+	Q370	= (a[1].idle -> Q370
+		  |a[1].inTray -> Q423
+		  |process.drill.a[2] -> Q659),
+	Q371	= (a[2].idle -> Q371
+		  |b[2].putOutTray -> Q531
+		  |a[2].inTray -> Q841),
+	Q372	= (a[1].inTray -> Q193
+		  |get.oven.b[2] -> Q236
+		  |a[1].idle -> Q372
+		  |b[1].getInTray -> Q588),
+	Q373	= (b[2].inTray -> Q221
+		  |{a, b}[2].idle -> Q373
+		  |a[2].inTray -> Q426
+		  |get.oven.b[1] -> Q585),
+	Q374	= (b[2].inTray -> Q107
+		  |b[1..2].idle -> Q374
+		  |b[1].inTray -> Q503
+		  |put.oven.a[2] -> Q633),
+	Q375	= (put.oven.b[1] -> Q111),
+	Q376	= (a[2].getInTray -> Q39
+		  |{a, b}[1].idle -> Q376
+		  |a[1].inTray -> Q660
+		  |b[1].inTray -> Q767),
+	Q377	= (process.drill.b[1] -> Q302
+		  |b[2].idle -> Q355
+		  |b[2].inTray -> Q555),
+	Q378	= (b[2].idle -> Q378
+		  |b[2].inTray -> Q579
+		  |process.press.a[1] -> Q632),
+	Q379	= (b[2].inTray -> Q165
+		  |a[1].inTray -> Q203
+		  |{a[1].idle, b[2].idle} -> Q379
+		  |a[2].putOutTray -> Q570),
+	Q380	= (a[1].inTray -> Q302
+		  |b[2].inTray -> Q385
+		  |{a[1].idle, b[2].idle} -> Q410
+		  |get.drill.b[1] -> Q517),
+	Q381	= (process.oven.b[2] -> Q175),
+	Q382	= (b[1].inTray -> Q180
+		  |process.press.a[2] -> Q182
+		  |b[1..2].idle -> Q382
+		  |b[2].inTray -> Q765),
+	Q383	= (a[2].inTray -> Q205
+		  |a[1].inTray -> Q278
+		  |a[1..2].idle -> Q383
+		  |process.oven.b[2] -> Q887),
+	Q384	= (a[1].idle -> Q384
+		  |a[1].inTray -> Q401
+		  |process.drill.a[2] -> Q643),
+	Q385	= (get.drill.b[1] -> Q185
+		  |a[1].idle -> Q385
+		  |a[1].inTray -> Q654),
+	Q386	= (process.press.a[1] -> Q868),
+	Q387	= (process.oven.b[2] -> Q106
+		  |b[1].inTray -> Q255
+		  |{a[2].idle, b[1].idle} -> Q387
+		  |a[2].inTray -> Q461),
+	Q388	= (process.oven.b[2] -> Q857),
+	Q389	= (put.drill.a[2] -> Q23
+		  |b[1].inTray -> Q26
+		  |a[1].inTray -> Q214
+		  |{a[1].idle, b[1..2].idle} -> Q389
+		  |b[2].inTray -> Q938),
+	Q390	= (put.press.a[1] -> Q386),
+	Q391	= (b[1].getInTray -> Q73
+		  |a[1..2].idle -> Q500
+		  |a[1].inTray -> Q624
+		  |b[2].getInTray -> Q715
+		  |a[2].inTray -> Q840),
+	Q392	= (b[1].inTray -> Q333
+		  |{a, b}[1].idle -> Q392
+		  |a[1].inTray -> Q504
+		  |process.drill.b[2] -> Q940),
+	Q393	= (b[2].inTray -> Q247
+		  |b[2].idle -> Q393
+		  |put.drill.b[1] -> Q825),
+	Q394	= (process.press.b[2] -> Q112
+		  |get.oven.b[1] -> Q514),
+	Q395	= (a[1].inTray -> Q154
+		  |{a[1].idle, b[2].idle} -> Q395
+		  |b[2].inTray -> Q487
+		  |process.press.a[2] -> Q866),
+	Q396	= (b[1].inTray -> Q269
+		  |b[1].idle -> Q396
+		  |get.drill.a[1] -> Q431),
+	Q397	= (a[2].inTray -> Q125
+		  |{a, b}[2].idle -> Q397
+		  |b[2].inTray -> Q612
+		  |a[1].getInTray -> Q814),
+	Q398	= (b[1].inTray -> Q62
+		  |process.press.b[2] -> Q279
+		  |{a, b}[1].idle -> Q398
+		  |a[1].inTray -> Q619),
+	Q399	= (b[1].inTray -> Q160
+		  |{a, b}[1].idle -> Q399
+		  |a[1].inTray -> Q461
+		  |process.oven.b[2] -> Q889),
+	Q400	= (get.drill.a[2] -> Q884),
+	Q401	= (process.drill.a[2] -> Q400),
+	Q402	= (b[2].getInTray -> Q268
+		  |{a, b}[1].idle -> Q402
+		  |a[1].inTray -> Q662
+		  |b[1].inTray -> Q840),
+	Q403	= (b[2].inTray -> Q368
+		  |b[2].idle -> Q403
+		  |process.oven.a[1] -> Q543
+		  |a[2].putOutTray -> Q681),
+	Q404	= (put.drill.a[1] -> Q290
+		  |b[1].inTray -> Q315
+		  |b[1].idle -> Q404),
+	Q405	= (process.oven.a[1] -> Q699),
+	Q406	= (a[2].inTray -> Q299
+		  |a[2].idle -> Q406
+		  |get.drill.a[1] -> Q808),
+	Q407	= (a[1].idle -> Q407
+		  |get.oven.b[2] -> Q609
+		  |a[1].inTray -> Q857),
+	Q408	= (process.drill.a[2] -> Q254
+		  |process.oven.a[1] -> Q760),
+	Q409	= (b[1].inTray -> Q77
+		  |process.press.b[2] -> Q291
+		  |{a, b}[1].idle -> Q409
+		  |a[1].inTray -> Q605),
+	Q410	= (a[1].inTray -> Q302
+		  |b[2].inTray -> Q385
+		  |{a[1].idle, b[2].idle} -> Q410
+		  |get.drill.b[1] -> Q517),
+	Q411	= (b[1].idle -> Q411
+		  |b[1].inTray -> Q441
+		  |put.press.a[1] -> Q845),
+	Q412	= (b[1].putOutTray -> Q38
+		  |a[2].idle -> Q412
+		  |a[2].inTray -> Q870),
+	Q413	= (b[2].inTray -> Q361
+		  |b[2].idle -> Q413
+		  |process.press.a[1] -> Q653),
+	Q414	= (b[2].inTray -> Q73
+		  |a[2].inTray -> Q129
+		  |{a[1..2].idle, b[2].idle} -> Q414
+		  |a[1].inTray -> Q649
+		  |put.drill.b[1] -> Q763),
+	Q415	= (b[1].inTray -> Q307
+		  |{a, b}[1].idle -> Q415
+		  |a[1].inTray -> Q418
+		  |process.drill.b[2] -> Q964),
+	Q416	= (b[2].inTray -> Q376
+		  |{a[1].idle, b[1..2].idle} -> Q416
+		  |a[2].getInTray -> Q529
+		  |b[1].inTray -> Q538
+		  |a[1].inTray -> Q947),
+	Q417	= (a[2].inTray -> Q234
+		  |b[2].inTray -> Q265
+		  |{a[1..2].idle, b[2].idle} -> Q417
+		  |a[1].inTray -> Q747
+		  |get.drill.b[1] -> Q924),
+	Q418	= (b[1].idle -> Q418
+		  |b[1].inTray -> Q427
+		  |process.drill.b[2] -> Q535),
+	Q419	= (put.press.b[1] -> Q216),
+	Q420	= (b[1].inTray -> Q299
+		  |get.drill.a[1] -> Q411
+		  |b[1].idle -> Q420),
+	Q421	= (get.press.b[1] -> Q167
+		  |b[2].inTray -> Q172
+		  |a[2].inTray -> Q192
+		  |{a[1..2].idle, b[2].idle} -> Q421
+		  |a[1].inTray -> Q785),
+	Q422	= (a[1].idle -> Q422
+		  |get.oven.b[1] -> Q623
+		  |get.drill.b[2] -> Q727
+		  |a[1].inTray -> Q972),
+	Q423	= (process.drill.a[2] -> Q424),
+	Q424	= (get.drill.a[2] -> Q932),
+	Q425	= (get.press.a[1] -> Q98
+		  |b[1].idle -> Q425
+		  |b[1].inTray -> Q717),
+	Q426	= (b[2].inTray -> Q230
+		  |b[2].idle -> Q426
+		  |get.oven.b[1] -> Q459),
+	Q427	= (process.drill.b[2] -> Q971),
+	Q428	= (put.press.b[1] -> Q544),
+	Q429	= ({a, b}[1].idle -> Q442
+		  |a[1].inTray -> Q710
+		  |b[1].inTray -> Q794
+		  |get.press.b[2] -> Q863),
+	Q430	= (b[2].inTray -> Q386
+		  |b[2].idle -> Q430
+		  |process.press.a[1] -> Q639),
+	Q431	= (b[1].inTray -> Q390
+		  |b[1].idle -> Q431
+		  |put.press.a[1] -> Q764),
+	Q432	= (get.oven.a[1] -> Q404
+		  |b[1].idle -> Q432
+		  |b[1].inTray -> Q699),
+	Q433	= (get.oven.a[2] -> Q133),
+	Q434	= (b[2].inTray -> Q376
+		  |{a[1].idle, b[1..2].idle} -> Q416
+		  |a[2].getInTray -> Q529
+		  |b[1].inTray -> Q538
+		  |a[1].inTray -> Q947),
+	Q435	= (b[2].inTray -> Q118
+		  |get.press.b[1] -> Q164
+		  |a[2].inTray -> Q215
+		  |{a[1..2].idle, b[2].idle} -> Q435
+		  |a[1].inTray -> Q771),
+	Q436	= (get.press.b[1] -> Q145
+		  |b[2].inTray -> Q308
+		  |b[2].idle -> Q436),
+	Q437	= (b[2].inTray -> Q336
+		  |a[2].inTray -> Q337
+		  |{a, b}[2].idle -> Q477
+		  |get.press.b[1] -> Q688),
+	Q438	= (a[2].inTray -> Q202
+		  |a[2].idle -> Q438
+		  |put.press.b[2] -> Q527),
+	Q439	= (a[1].inTray -> Q328
+		  |a[2].inTray -> Q402
+		  |{a[1..2].idle, b[1].idle} -> Q439
+		  |b[1].inTray -> Q737
+		  |b[2].getInTray -> Q806),
+	Q440	= (b[2].inTray -> Q187
+		  |b[2].idle -> Q440
+		  |put.drill.b[1] -> Q786),
+	Q441	= (put.press.a[1] -> Q361),
+	Q442	= ({a, b}[1].idle -> Q442
+		  |a[1].inTray -> Q710
+		  |b[1].inTray -> Q794
+		  |get.press.b[2] -> Q863),
+	Q443	= (b[1].idle -> Q443
+		  |get.oven.a[1] -> Q448
+		  |b[1].inTray -> Q686),
+	Q444	= (b[2].inTray -> Q90
+		  |a[2].inTray -> Q146
+		  |{a[1..2].idle, b[2].idle} -> Q444
+		  |a[1].inTray -> Q668
+		  |put.drill.b[1] -> Q838),
+	Q445	= (a[1].inTray -> Q180
+		  |{a[1].idle, b[2].idle} -> Q445
+		  |b[2].inTray -> Q505
+		  |process.press.a[2] -> Q881),
+	Q446	= (get.drill.b[2] -> Q252
+		  |a[1].inTray -> Q282
+		  |a[1..2].idle -> Q446
+		  |a[2].inTray -> Q850),
+	Q447	= (b[1].inTray -> Q205
+		  |{a, b}[1].idle -> Q447
+		  |a[1].inTray -> Q474
+		  |process.oven.b[2] -> Q824),
+	Q448	= (put.drill.a[1] -> Q258
+		  |b[1].inTray -> Q294
+		  |b[1].idle -> Q448),
+	Q449	= (process.oven.a[1] -> Q686),
+	Q450	= (process.press.a[2] -> Q108
+		  |a[1].inTray -> Q382
+		  |b[1].inTray -> Q445
+		  |{a[1].idle, b[1..2].idle} -> Q450
+		  |b[2].inTray -> Q600),
+	Q451	= (get.oven.a[2] -> Q161),
+	Q452	= (b[1].idle -> Q452
+		  |put.press.a[2] -> Q765
+		  |b[1].inTray -> Q932),
+	Q453	= (process.drill.b[1] -> Q119
+		  |{a[1].idle, b[2].idle} -> Q467
+		  |b[2].inTray -> Q714
+		  |a[1].inTray -> Q825),
+	Q454	= (a[1].inTray -> Q419
+		  |a[1].idle -> Q454
+		  |put.press.b[1] -> Q918),
+	Q455	= (a[1].inTray -> Q298
+		  |a[2].inTray -> Q376
+		  |{a[1..2].idle, b[1].idle} -> Q455
+		  |b[1].inTray -> Q713),
+	Q456	= (b[2].inTray -> Q82
+		  |{a, b}[2].idle -> Q456
+		  |process.drill.b[1] -> Q747
+		  |a[2].inTray -> Q786),
+	Q457	= (get.press.b[1] -> Q321),
+	Q458	= (b[2].getInTray -> Q74
+		  |{a[2].idle, b[1].idle} -> Q458
+		  |b[1].inTray -> Q624
+		  |a[2].inTray -> Q662),
+	Q459	= (b[2].inTray -> Q45
+		  |b[2].idle -> Q459
+		  |b[1].putOutTray -> Q955),
+	Q460	= ({a[2].idle, b[1].idle} -> Q460
+		  |a[2].inTray -> Q560
+		  |b[1].inTray -> Q859
+		  |process.oven.a[1] -> Q974),
+	Q461	= (process.oven.b[2] -> Q334
+		  |b[1].inTray -> Q381
+		  |b[1].idle -> Q461),
+	Q462	= (process.oven.b[1] -> Q105
+		  |process.drill.b[2] -> Q226),
+	Q463	= (process.press.a[2] -> Q92
+		  |a[1].inTray -> Q359
+		  |b[1].inTray -> Q395
+		  |{a[1].idle, b[1..2].idle} -> Q463
+		  |b[2].inTray -> Q581),
+	Q464	= (get.press.a[1] -> Q58
+		  |b[2].inTray -> Q326
+		  |b[1..2].idle -> Q464
+		  |b[1].inTray -> Q653),
+	Q465	= (process.drill.b[2] -> Q147
+		  |a[2].inTray -> Q415
+		  |{a[1..2].idle, b[1].idle} -> Q465
+		  |b[1].inTray -> Q849
+		  |a[1].inTray -> Q939),
+	Q466	= (a[2].inTray -> Q411
+		  |{a[2].idle, b[1].idle} -> Q466
+		  |put.press.a[1] -> Q706
+		  |b[1].inTray -> Q808),
+	Q467	= (process.drill.b[1] -> Q119
+		  |{a[1].idle, b[2].idle} -> Q467
+		  |b[2].inTray -> Q714
+		  |a[1].inTray -> Q825),
+	Q468	= (a[1].inTray -> Q328
+		  |a[2].inTray -> Q402
+		  |{a[1..2].idle, b[1].idle} -> Q468
+		  |b[1].inTray -> Q737
+		  |b[2].getInTray -> Q806),
+	Q469	= (b[2].inTray -> Q71
+		  |{a, b}[2].idle -> Q469
+		  |process.drill.b[1] -> Q782
+		  |a[2].inTray -> Q825),
+	Q470	= (a[1].inTray -> Q263
+		  |get.drill.b[2] -> Q270
+		  |a[1..2].idle -> Q470
+		  |a[2].inTray -> Q823),
+	Q471	= ({a[2].idle, b[1].idle} -> Q460
+		  |a[2].inTray -> Q560
+		  |b[1].inTray -> Q859
+		  |process.oven.a[1] -> Q974),
+	Q472	= (b[2].getInTray -> Q74
+		  |{a[2].idle, b[1].idle} -> Q458
+		  |b[1].inTray -> Q624
+		  |a[2].inTray -> Q662
+		  |a[1].getInTray -> Q733),
+	Q473	= (b[2].inTray -> Q61
+		  |b[2].idle -> Q473
+		  |b[1].putOutTray -> Q968),
+	Q474	= (process.oven.b[2] -> Q349
+		  |b[1].inTray -> Q363
+		  |b[1].idle -> Q474),
+	Q475	= (put.oven.b[2] -> Q320
+		  |{a[1..2].idle, b[1].idle} -> Q475
+		  |a[1].inTray -> Q520
+		  |b[1].inTray -> Q655
+		  |a[2].inTray -> Q874),
+	Q476	= (process.oven.b[2] -> Q419
+		  |put.press.b[1] -> Q795),
+	Q477	= (b[2].inTray -> Q336
+		  |a[2].inTray -> Q337
+		  |{a, b}[2].idle -> Q477
+		  |get.press.b[1] -> Q688),
+	Q478	= (process.drill.b[2] -> Q957),
+	Q479	= (b[2].inTray -> Q171
+		  |b[2].idle -> Q479
+		  |put.press.a[2] -> Q777),
+	Q480	= (a[1].getInTray -> Q297
+		  |{a[2].idle, b[1].idle} -> Q480
+		  |b[1].inTray -> Q612
+		  |a[2].inTray -> Q660),
+	Q481	= (a[1].inTray -> Q161
+		  |put.drill.a[2] -> Q384
+		  |a[1].idle -> Q481),
+	Q482	= (a[2].inTray -> Q431
+		  |{a[2].idle, b[1].idle} -> Q482
+		  |put.press.a[1] -> Q755
+		  |b[1].inTray -> Q829),
+	Q483	= (get.press.a[1] -> Q35
+		  |b[2].inTray -> Q314
+		  |b[1..2].idle -> Q483
+		  |b[1].inTray -> Q639),
+	Q484	= (b[1].idle -> Q484
+		  |put.press.a[2] -> Q836
+		  |b[1].inTray -> Q884),
+	Q485	= (b[2].inTray -> Q366
+		  |b[2].idle -> Q485
+		  |put.oven.a[2] -> Q803),
+	Q486	= (get.oven.a[2] -> Q12
+		  |b[1].inTray -> Q197
+		  |{a, b}[1].idle -> Q486
+		  |a[1].inTray -> Q625),
+	Q487	= (a[1].idle -> Q487
+		  |a[1].inTray -> Q578
+		  |process.press.a[2] -> Q646),
+	Q488	= (a[2].inTray -> Q62
+		  |process.press.b[2] -> Q72
+		  |a[1..2].idle -> Q488
+		  |a[1].inTray -> Q833),
+	Q489	= (b[1].inTray -> Q163
+		  |b[2].inTray -> Q298
+		  |{a[2].idle, b[1..2].idle} -> Q489
+		  |a[1].getInTray -> Q848
+		  |a[2].inTray -> Q947),
+	Q490	= (a[2].inTray -> Q322
+		  |a[2].idle -> Q490
+		  |process.oven.b[1] -> Q527
+		  |process.press.b[2] -> Q580),
+	Q491	= (get.oven.a[2] -> Q224
+		  |b[1].inTray -> Q433
+		  |b[1].idle -> Q491),
+	Q492	= (b[1].inTray -> Q173
+		  |b[1..2].idle -> Q492
+		  |get.drill.a[2] -> Q536
+		  |b[2].inTray -> Q792),
+	Q493	= (a[1].inTray -> Q163
+		  |{a[1..2].idle, b[2].idle} -> Q493
+		  |a[2].inTray -> Q538
+		  |b[2].inTray -> Q713),
+	Q494	= (process.press.a[1] -> Q40
+		  |put.oven.a[2] -> Q67
+		  |b[1].idle -> Q494
+		  |b[1].inTray -> Q551),
+	Q495	= (process.press.b[2] -> Q704),
+	Q496	= (a[2].putOutTray -> Q217),
+	Q497	= (a[1].putOutTray -> Q611),
+	Q498	= (a[2].inTray -> Q138
+		  |{a, b}[2].idle -> Q498
+		  |b[2].inTray -> Q624
+		  |b[1].getInTray -> Q649),
+	Q499	= (a[1].inTray -> Q101
+		  |process.oven.b[1] -> Q345
+		  |a[1].idle -> Q499),
+	Q500	= (b[1].getInTray -> Q73
+		  |a[1..2].idle -> Q500
+		  |a[1].inTray -> Q624
+		  |b[2].getInTray -> Q715
+		  |a[2].inTray -> Q840),
+	Q501	= (a[1].inTray -> Q111
+		  |process.oven.b[1] -> Q153
+		  |a[1].idle -> Q501),
+	Q502	= (put.press.a[1] -> Q579),
+	Q503	= (b[2].inTray -> Q353
+		  |b[2].idle -> Q503
+		  |put.oven.a[2] -> Q750),
+	Q504	= (b[1].inTray -> Q478
+		  |b[1].idle -> Q504
+		  |process.drill.b[2] -> Q557),
+	Q505	= (a[1].idle -> Q505
+		  |a[1].inTray -> Q591
+		  |process.press.a[2] -> Q631),
+	Q506	= (b[1].inTray -> Q332
+		  |b[1..2].idle -> Q506
+		  |get.drill.a[2] -> Q547
+		  |b[2].inTray -> Q749),
+	Q507	= (b[2].idle -> Q507
+		  |b[2].inTray -> Q567
+		  |process.oven.a[2] -> Q632
+		  |get.press.a[1] -> Q959),
+	Q508	= (a[2].putOutTray -> Q19),
+	Q509	= (a[2].inTray -> Q77
+		  |process.press.b[2] -> Q81
+		  |a[1..2].idle -> Q509
+		  |a[1].inTray -> Q879),
+	Q510	= (process.drill.b[2] -> Q59
+		  |a[2].inTray -> Q392
+		  |{a[1..2].idle, b[1].idle} -> Q510
+		  |b[1].inTray -> Q809
+		  |a[1].inTray -> Q921),
+	Q511	= (a[1].inTray -> Q163
+		  |b[1].getInTray -> Q444
+		  |{a[1..2].idle, b[2].idle} -> Q493
+		  |a[2].inTray -> Q538
+		  |b[2].inTray -> Q713),
+	Q512	= (a[2].inTray -> Q125
+		  |{a, b}[2].idle -> Q397
+		  |b[2].inTray -> Q612
+		  |b[1].getInTray -> Q668
+		  |a[1].getInTray -> Q814),
+	Q513	= (put.oven.b[2] -> Q341
+		  |{a[1..2].idle, b[1].idle} -> Q513
+		  |a[1].inTray -> Q539
+		  |b[1].inTray -> Q641
+		  |a[2].inTray -> Q863),
+	Q514	= (process.press.b[2] -> Q122
+		  |b[1].putOutTray -> Q752),
+	Q515	= (process.press.b[2] -> Q726),
+	Q516	= (a[1].putOutTray -> Q627),
+	Q517	= (a[1].inTray -> Q50
+		  |put.press.b[1] -> Q104
+		  |b[2].inTray -> Q185
+		  |{a[1].idle, b[2].idle} -> Q517),
+	Q518	= (a[2].inTray -> Q419
+		  |a[2].idle -> Q518
+		  |put.press.b[1] -> Q773),
+	Q519	= (a[1].inTray -> Q241
+		  |put.drill.b[2] -> Q307
+		  |a[1].idle -> Q519),
+	Q520	= (b[1].inTray -> Q222
+		  |{a[2].idle, b[1].idle} -> Q520
+		  |put.oven.b[2] -> Q676
+		  |a[2].inTray -> Q696),
+	Q521	= (a[1].inTray -> Q106
+		  |get.oven.b[2] -> Q174
+		  |{a[1..2].idle, b[1].idle} -> Q521
+		  |a[2].inTray -> Q889
+		  |b[1].inTray -> Q901),
+	Q522	= (get.press.b[1] -> Q162
+		  |b[2].inTray -> Q457
+		  |b[2].idle -> Q522),
+	Q523	= (a[2].inTray -> Q476
+		  |process.oven.b[2] -> Q518
+		  |a[2].idle -> Q523
+		  |put.press.b[1] -> Q909),
+	Q524	= (a[1].inTray -> Q97
+		  |b[2].putOutTray -> Q493
+		  |a[1..2].idle -> Q524
+		  |a[2].inTray -> Q772),
+	Q525	= (get.press.b[2] -> Q539
+		  |{a[2].idle, b[1].idle} -> Q540
+		  |a[2].inTray -> Q710
+		  |b[1].inTray -> Q876),
+	Q526	= (b[1].getInTray -> Q129
+		  |a[1].inTray -> Q138
+		  |{a[1].idle, b[2].idle} -> Q526
+		  |b[2].inTray -> Q840),
+	Q527	= (process.press.b[2] -> Q212
+		  |a[2].inTray -> Q394
+		  |a[2].idle -> Q527
+		  |get.oven.b[1] -> Q635),
+	Q528	= (a[1].inTray -> Q176
+		  |b[1].getInTray -> Q414
+		  |a[2].inTray -> Q526
+		  |{a[1..2].idle, b[2].idle} -> Q570
+		  |b[2].inTray -> Q737),
+	Q529	= (b[2].inTray -> Q39
+		  |b[1].inTray -> Q85
+		  |put.oven.a[2] -> Q121
+		  |a[1].inTray -> Q374
+		  |{a[1].idle, b[1..2].idle} -> Q529),
+	Q530	= (process.press.b[1] -> Q457),
+	Q531	= (a[2].inTray -> Q302
+		  |get.drill.b[1] -> Q549
+		  |{a, b}[2].idle -> Q565
+		  |b[2].inTray -> Q573),
+	Q532	= (process.drill.a[1] -> Q601),
+	Q533	= (a[1].putOutTray -> Q246),
+	Q534	= (a[2].idle -> Q534
+		  |a[2].inTray -> Q663
+		  |get.drill.b[1] -> Q902),
+	Q535	= (get.drill.b[2] -> Q5
+		  |b[1].idle -> Q535
+		  |b[1].inTray -> Q971),
+	Q536	= (put.press.a[2] -> Q382
+		  |b[2].inTray -> Q452
+		  |b[1..2].idle -> Q536
+		  |b[1].inTray -> Q754),
+	Q537	= (get.oven.a[2] -> Q389
+		  |{a[1].idle, b[1..2].idle} -> Q537
+		  |a[1].inTray -> Q568
+		  |b[2].inTray -> Q709
+		  |b[1].inTray -> Q885),
+	Q538	= (a[2].getInTray -> Q85
+		  |a[1].inTray -> Q125
+		  |{a[1].idle, b[2].idle} -> Q538
+		  |b[2].inTray -> Q767),
+	Q539	= (b[1].inTray -> Q237
+		  |put.oven.b[2] -> Q387
+		  |{a[2].idle, b[1].idle} -> Q539
+		  |a[2].inTray -> Q677),
+	Q540	= (get.press.b[2] -> Q539
+		  |{a[2].idle, b[1].idle} -> Q540
+		  |a[2].inTray -> Q710
+		  |b[1].inTray -> Q876),
+	Q541	= (a[1].inTray -> Q133
+		  |put.drill.a[2] -> Q370
+		  |a[1].idle -> Q541),
+	Q542	= (a[1].inTray -> Q375
+		  |put.oven.b[1] -> Q501
+		  |a[1].idle -> Q542),
+	Q543	= (a[2].putOutTray -> Q304
+		  |b[2].idle -> Q543
+		  |b[2].inTray -> Q931),
+	Q544	= (process.press.b[1] -> Q308),
+	Q545	= (b[1].inTray -> Q36
+		  |{a[2].idle, b[1..2].idle} -> Q545
+		  |a[2].inTray -> Q587
+		  |get.oven.a[1] -> Q753
+		  |b[2].inTray -> Q974),
+	Q546	= (b[2].inTray -> Q25
+		  |process.drill.a[1] -> Q310
+		  |{a, b}[2].idle -> Q546
+		  |a[2].inTray -> Q606),
+	Q547	= (put.press.a[2] -> Q359
+		  |b[2].inTray -> Q484
+		  |b[1..2].idle -> Q547
+		  |b[1].inTray -> Q759),
+	Q548	= (a[2].inTray -> Q542
+		  |a[1..2].idle -> Q548
+		  |a[1].inTray -> Q708
+		  |put.oven.b[1] -> Q898),
+	Q549	= (a[2].inTray -> Q50
+		  |put.press.b[1] -> Q80
+		  |{a, b}[2].idle -> Q549
+		  |b[2].inTray -> Q886),
+	Q550	= (a[1].inTray -> Q321
+		  |put.oven.b[1] -> Q499
+		  |a[1].idle -> Q550),
+	Q551	= (put.oven.a[2] -> Q68
+		  |process.press.a[1] -> Q206),
+	Q552	= (get.oven.a[2] -> Q358
+		  |{a[1].idle, b[1..2].idle} -> Q552
+		  |a[1].inTray -> Q554
+		  |b[2].inTray -> Q728
+		  |b[1].inTray -> Q819),
+	Q553	= (b[1].inTray -> Q62
+		  |process.press.b[2] -> Q279
+		  |{a, b}[1].idle -> Q563
+		  |a[1].inTray -> Q619),
+	Q554	= (get.oven.a[2] -> Q196
+		  |b[1..2].idle -> Q554
+		  |b[2].inTray -> Q625
+		  |b[1].inTray -> Q893),
+	Q555	= (process.drill.b[1] -> Q654),
+	Q556	= (process.press.a[2] -> Q707),
+	Q557	= (b[1].idle -> Q557
+		  |get.drill.b[2] -> Q860
+		  |b[1].inTray -> Q957),
+	Q558	= (b[1].inTray -> Q163
+		  |b[2].inTray -> Q298
+		  |{a[2].idle, b[1..2].idle} -> Q489
+		  |a[1].getInTray -> Q848
+		  |a[2].inTray -> Q947),
+	Q559	= (put.press.b[1] -> Q1
+		  |a[1].inTray -> Q6
+		  |b[2].inTray -> Q194
+		  |{a[1].idle, b[2].idle} -> Q559),
+	Q560	= (b[1].inTray -> Q405
+		  |process.oven.a[1] -> Q432
+		  |b[1].idle -> Q560),
+	Q561	= (get.press.b[1] -> Q162
+		  |b[2].inTray -> Q457
+		  |b[2].idle -> Q522),
+	Q562	= (a[1].inTray -> Q88
+		  |get.oven.b[2] -> Q157
+		  |{a[1..2].idle, b[1].idle} -> Q562
+		  |a[2].inTray -> Q824
+		  |b[1].inTray -> Q887),
+	Q563	= (b[1].inTray -> Q62
+		  |process.press.b[2] -> Q279
+		  |{a, b}[1].idle -> Q563
+		  |a[1].inTray -> Q619),
+	Q564	= (a[2].inTray -> Q6
+		  |put.press.b[1] -> Q29
+		  |{a, b}[2].idle -> Q564
+		  |b[2].inTray -> Q902),
+	Q565	= (a[2].inTray -> Q302
+		  |get.drill.b[1] -> Q549
+		  |{a, b}[2].idle -> Q565
+		  |b[2].inTray -> Q573),
+	Q566	= (a[1].inTray -> Q102
+		  |a[2].inTray -> Q236
+		  |b[2].putOutTray -> Q511
+		  |a[1..2].idle -> Q566),
+	Q567	= (process.oven.a[2] -> Q717
+		  |get.press.a[1] -> Q912),
+	Q568	= (get.oven.a[2] -> Q214
+		  |b[2].inTray -> Q491
+		  |b[1..2].idle -> Q568
+		  |b[1].inTray -> Q862),
+	Q569	= (a[1].inTray -> Q218
+		  |put.drill.b[2] -> Q333
+		  |a[1].idle -> Q569),
+	Q570	= (a[1].inTray -> Q176
+		  |b[1].getInTray -> Q414
+		  |a[2].inTray -> Q526
+		  |{a[1..2].idle, b[2].idle} -> Q570
+		  |b[2].inTray -> Q737),
+	Q571	= (a[2].putOutTray -> Q472
+		  |b[1].inTray -> Q508
+		  |b[1].idle -> Q571),
+	Q572	= (process.drill.b[1] -> Q663),
+	Q573	= (a[2].idle -> Q573
+		  |a[2].inTray -> Q654
+		  |get.drill.b[1] -> Q886),
+	Q574	= (a[2].inTray -> Q550
+		  |a[1..2].idle -> Q574
+		  |a[1].inTray -> Q720
+		  |put.oven.b[1] -> Q810),
+	Q575	= (process.oven.a[1] -> Q443
+		  |b[1].inTray -> Q449
+		  |b[1].idle -> Q575),
+	Q576	= (a[2].inTray -> Q20
+		  |a[1].putOutTray -> Q139
+		  |{a, b}[2].idle -> Q576
+		  |b[2].inTray -> Q817),
+	Q577	= (process.oven.a[2] -> Q64
+		  |b[2].inTray -> Q159
+		  |put.press.a[1] -> Q244
+		  |b[2].idle -> Q577),
+	Q578	= (process.press.a[2] -> Q16),
+	Q579	= (process.press.a[1] -> Q717),
+	Q580	= (process.oven.b[1] -> Q212
+		  |a[2].idle -> Q580
+		  |a[2].inTray -> Q586),
+	Q581	= (b[1].inTray -> Q487
+		  |{a, b}[1].idle -> Q581
+		  |a[1].inTray -> Q836
+		  |process.press.a[2] -> Q965),
+	Q582	= (b[2].inTray -> Q229
+		  |process.drill.a[2] -> Q506
+		  |b[1..2].idle -> Q582
+		  |b[1].inTray -> Q687),
+	Q583	= (a[2].inTray -> Q473
+		  |{a, b}[2].idle -> Q583
+		  |b[1].putOutTray -> Q813
+		  |b[2].inTray -> Q828),
+	Q584	= ({a[1].idle, b[2].idle} -> Q584
+		  |a[1].inTray -> Q750
+		  |b[2].inTray -> Q784
+		  |process.oven.a[2] -> Q885),
+	Q585	= (b[1].putOutTray -> Q190
+		  |a[2].inTray -> Q459
+		  |{a, b}[2].idle -> Q585
+		  |b[2].inTray -> Q807),
+	Q586	= (process.oven.b[1] -> Q112),
+	Q587	= (b[2].inTray -> Q432
+		  |b[1..2].idle -> Q587
+		  |get.oven.a[1] -> Q830
+		  |b[1].inTray -> Q922),
+	Q588	= (a[1].inTray -> Q227
+		  |put.drill.b[1] -> Q343
+		  |a[1].idle -> Q588),
+	Q589	= (a[2].putOutTray -> Q458
+		  |b[1].inTray -> Q496
+		  |b[1].idle -> Q589),
+	Q590	= (a[2].inTray -> Q105
+		  |get.oven.b[1] -> Q151
+		  |a[2].idle -> Q590
+		  |process.drill.b[2] -> Q800),
+	Q591	= (process.press.a[2] -> Q55),
+	Q592	= (a[2].inTray -> Q58
+		  |a[1].putOutTray -> Q340
+		  |{a[2].idle, b[1..2].idle} -> Q592
+		  |b[1].inTray -> Q594
+		  |b[2].inTray -> Q945),
+	Q593	= (a[1].inTray -> Q61
+		  |b[1].putOutTray -> Q130
+		  |a[1].idle -> Q593),
+	Q594	= (a[2].inTray -> Q31
+		  |a[1].putOutTray -> Q208
+		  |{a, b}[2].idle -> Q594
+		  |b[2].inTray -> Q856),
+	Q595	= ({a[1].idle, b[2].idle} -> Q595
+		  |b[2].inTray -> Q743
+		  |a[1].inTray -> Q803
+		  |process.oven.a[2] -> Q819),
+	Q596	= (a[2].inTray -> Q269
+		  |a[2].idle -> Q596
+		  |get.drill.a[1] -> Q829),
+	Q597	= (a[1].inTray -> Q105
+		  |get.oven.b[1] -> Q335
+		  |process.drill.b[2] -> Q422
+		  |a[1].idle -> Q597),
+	Q598	= (b[1].inTray -> Q9
+		  |process.drill.a[1] -> Q213
+		  |a[2].inTray -> Q290
+		  |{a[2].idle, b[1].idle} -> Q598),
+	Q599	= (b[1].inTray -> Q10
+		  |put.oven.a[1] -> Q79
+		  |b[1].idle -> Q599),
+	Q600	= (b[1].inTray -> Q505
+		  |{a, b}[1].idle -> Q600
+		  |a[1].inTray -> Q765
+		  |process.press.a[2] -> Q960),
+	Q601	= (get.drill.a[1] -> Q502),
+	Q602	= (put.press.a[1] -> Q67
+		  |b[1].inTray -> Q159
+		  |b[1].idle -> Q602
+		  |process.oven.a[2] -> Q844),
+	Q603	= (b[2].inTray -> Q111
+		  |process.oven.b[1] -> Q351
+		  |b[2].idle -> Q603),
+	Q604	= (a[1].inTray -> Q82
+		  |process.drill.b[1] -> Q265
+		  |a[1..2].idle -> Q604
+		  |a[2].inTray -> Q730),
+	Q605	= (b[1].inTray -> Q515
+		  |b[1].idle -> Q605
+		  |process.press.b[2] -> Q697),
+	Q606	= (b[2].inTray -> Q158
+		  |b[2].idle -> Q606
+		  |process.drill.a[1] -> Q899),
+	Q607	= (a[1].inTray -> Q45
+		  |b[1].putOutTray -> Q141
+		  |a[1].idle -> Q607),
+	Q608	= (process.oven.a[2] -> Q554
+		  |b[1..2].idle -> Q608
+		  |b[1].inTray -> Q803
+		  |b[2].inTray -> Q816),
+	Q609	= (b[2].putOutTray -> Q177
+		  |a[1].idle -> Q609
+		  |a[1].inTray -> Q802),
+	Q610	= (b[2].inTray -> Q443
+		  |b[1..2].idle -> Q610
+		  |get.oven.a[1] -> Q812
+		  |b[1].inTray -> Q946),
+	Q611	= (a[2].getInTray -> Q323
+		  |b[2].getInTray -> Q569
+		  |a[1].idle -> Q627
+		  |a[1].inTray -> Q698
+		  |b[1].getInTray -> Q954),
+	Q612	= (a[2].idle -> Q612
+		  |a[2].inTray -> Q675
+		  |a[1].getInTray -> Q969),
+	Q613	= (put.oven.a[1] -> Q725),
+	Q614	= (a[2].inTray -> Q35
+		  |a[1].putOutTray -> Q324
+		  |b[1].inTray -> Q576
+		  |{a[2].idle, b[1..2].idle} -> Q614
+		  |b[2].inTray -> Q925),
+	Q615	= (get.drill.b[1] -> Q50
+		  |b[2].idle -> Q640
+		  |b[2].inTray -> Q654),
+	Q616	= (process.drill.a[1] -> Q87
+		  |b[2].inTray -> Q258
+		  |b[1].inTray -> Q606
+		  |b[1..2].idle -> Q616),
+	Q617	= (a[2].inTray -> Q138
+		  |{a, b}[2].idle -> Q498
+		  |b[2].inTray -> Q624
+		  |b[1].getInTray -> Q649
+		  |a[1].getInTray -> Q804),
+	Q618	= (a[1].inTray -> Q71
+		  |process.drill.b[1] -> Q318
+		  |a[1..2].idle -> Q618
+		  |a[2].inTray -> Q714),
+	Q619	= (b[1].inTray -> Q495
+		  |b[1].idle -> Q619
+		  |process.press.b[2] -> Q710),
+	Q620	= (process.drill.a[1] -> Q69
+		  |b[2].inTray -> Q290
+		  |b[1..2].idle -> Q620
+		  |b[1].inTray -> Q626),
+	Q621	= (b[2].inTray -> Q101
+		  |process.oven.b[1] -> Q426
+		  |b[2].idle -> Q621),
+	Q622	= (b[2].inTray -> Q181
+		  |process.drill.a[2] -> Q492
+		  |b[1..2].idle -> Q622
+		  |b[1].inTray -> Q669),
+	Q623	= (a[1].idle -> Q623
+		  |b[1].putOutTray -> Q689
+		  |a[1].inTray -> Q870),
+	Q624	= (a[2].idle -> Q624
+		  |b[1].getInTray -> Q693
+		  |a[2].inTray -> Q698
+		  |b[2].getInTray -> Q815),
+	Q625	= (get.oven.a[2] -> Q245
+		  |b[1].inTray -> Q451
+		  |b[1].idle -> Q625),
+	Q626	= (b[2].inTray -> Q143
+		  |b[2].idle -> Q626
+		  |process.drill.a[1] -> Q926),
+	Q627	= (b[2].getInTray -> Q569
+		  |a[1].idle -> Q627
+		  |a[1].inTray -> Q698
+		  |b[1].getInTray -> Q954),
+	Q628	= (a[1].inTray -> Q328
+		  |a[2].inTray -> Q402
+		  |{a[1..2].idle, b[1].idle} -> Q439
+		  |b[1].inTray -> Q737
+		  |b[2].getInTray -> Q806),
+	Q629	= (a[2].inTray -> Q69
+		  |b[2].inTray -> Q213
+		  |b[1].inTray -> Q287
+		  |{a[2].idle, b[1..2].idle} -> Q629
+		  |get.drill.a[1] -> Q958),
+	Q630	= (b[2].inTray -> Q51
+		  |b[1].inTray -> Q57
+		  |put.oven.a[2] -> Q144
+		  |{a[1].idle, b[1..2].idle} -> Q630
+		  |a[1].inTray -> Q722),
+	Q631	= (a[1].inTray -> Q55
+		  |get.press.a[2] -> Q191
+		  |a[1].idle -> Q631),
+	Q632	= (get.press.a[1] -> Q134
+		  |b[2].idle -> Q632
+		  |b[2].inTray -> Q717),
+	Q633	= (process.oven.a[2] -> Q568
+		  |b[1..2].idle -> Q633
+		  |b[1].inTray -> Q750
+		  |b[2].inTray -> Q839),
+	Q634	= (a[2].idle -> Q634
+		  |put.press.b[2] -> Q833
+		  |a[2].inTray -> Q970),
+	Q635	= (b[1].putOutTray -> Q18
+		  |a[2].inTray -> Q514
+		  |a[2].idle -> Q635
+		  |process.press.b[2] -> Q911),
+	Q636	= (get.drill.a[2] -> Q83
+		  |b[2].inTray -> Q280
+		  |a[1].inTray -> Q492
+		  |{a[1].idle, b[1..2].idle} -> Q636
+		  |b[1].inTray -> Q797),
+	Q637	= (b[2].inTray -> Q135
+		  |process.press.a[1] -> Q284
+		  |a[2].inTray -> Q430
+		  |{a, b}[2].idle -> Q637),
+	Q638	= (a[1].inTray -> Q308
+		  |get.press.b[1] -> Q542
+		  |a[1].idle -> Q638),
+	Q639	= (get.press.a[1] -> Q20
+		  |b[2].idle -> Q639
+		  |b[2].inTray -> Q868),
+	Q640	= (get.drill.b[1] -> Q50
+		  |b[2].idle -> Q640
+		  |b[2].inTray -> Q654),
+	Q641	= (a[1].inTray -> Q237
+		  |put.oven.b[2] -> Q256
+		  |a[2].inTray -> Q275
+		  |a[1..2].idle -> Q641),
+	Q642	= (a[1].inTray -> Q353
+		  |a[1].idle -> Q642
+		  |put.oven.a[2] -> Q784),
+	Q643	= (a[1].inTray -> Q400
+		  |a[1].idle -> Q643
+		  |get.drill.a[2] -> Q903),
+	Q644	= (b[2].putOutTray -> Q131
+		  |process.drill.b[1] -> Q371
+		  |a[2].idle -> Q644
+		  |a[2].inTray -> Q735),
+	Q645	= (b[2].putOutTray -> Q33
+		  |a[1].inTray -> Q225
+		  |{a, b}[1].idle -> Q645
+		  |b[1].inTray -> Q772),
+	Q646	= (a[1].inTray -> Q16
+		  |get.press.a[2] -> Q165
+		  |a[1].idle -> Q646),
+	Q647	= (get.press.a[2] -> Q198
+		  |b[1].idle -> Q647
+		  |process.oven.a[1] -> Q672
+		  |b[1].inTray -> Q725),
+	Q648	= (b[2].putOutTray -> Q437
+		  |a[2].idle -> Q648
+		  |a[2].inTray -> Q802),
+	Q649	= (a[2].inTray -> Q440
+		  |put.drill.b[1] -> Q456
+		  |{a, b}[2].idle -> Q649
+		  |b[2].inTray -> Q693),
+	Q650	= (b[2].inTray -> Q575
+		  |process.oven.a[1] -> Q610
+		  |b[1..2].idle -> Q650
+		  |b[1].inTray -> Q712),
+	Q651	= (a[1].inTray -> Q457
+		  |get.press.b[1] -> Q550
+		  |a[1].idle -> Q651),
+	Q652	= (b[1].inTray -> Q532
+		  |b[1].idle -> Q652
+		  |process.drill.a[1] -> Q975),
+	Q653	= (get.press.a[1] -> Q31
+		  |b[2].idle -> Q653
+		  |b[2].inTray -> Q967),
+	Q654	= (get.drill.b[1] -> Q339),
+	Q655	= (a[1].inTray -> Q222
+		  |a[2].inTray -> Q360
+		  |put.oven.b[2] -> Q383
+		  |a[1..2].idle -> Q655),
+	Q656	= (b[1].inTray -> Q556
+		  |b[1].idle -> Q656
+		  |process.press.a[2] -> Q672),
+	Q657	= (b[1].putOutTray -> Q48
+		  |a[2].inTray -> Q607
+		  |a[1..2].idle -> Q657
+		  |a[1].inTray -> Q807),
+	Q658	= (a[1].inTray -> Q152
+		  |b[1].inTray -> Q201
+		  |b[2].inTray -> Q468
+		  |{a, b}[1..2].idle -> Q658
+		  |a[2].inTray -> Q811),
+	Q659	= (get.drill.a[2] -> Q99
+		  |a[1].inTray -> Q424
+		  |a[1].idle -> Q659),
+	Q660	= (a[2].getInTray -> Q107
+		  |a[1].getInTray -> Q137
+		  |b[1].idle -> Q660
+		  |b[1].inTray -> Q675),
+	Q661	= (b[2].inTray -> Q46
+		  |process.oven.a[1] -> Q545
+		  |{a[2].idle, b[1..2].idle} -> Q661
+		  |a[2].inTray -> Q671
+		  |b[1].inTray -> Q963),
+	Q662	= (b[1].idle -> Q662
+		  |b[1].inTray -> Q698
+		  |b[2].getInTray -> Q878),
+	Q663	= (get.drill.b[1] -> Q428),
+	Q664	= (process.oven.b[2] -> Q769),
+	Q665	= (a[1].inTray -> Q122
+		  |b[1].putOutTray -> Q429
+		  |a[1].idle -> Q665),
+	Q666	= (process.oven.a[1] -> Q36
+		  |{a, b}[2].idle -> Q666
+		  |a[2].inTray -> Q702
+		  |b[2].inTray -> Q859),
+	Q667	= (a[2].idle -> Q667
+		  |put.press.b[2] -> Q879
+		  |a[2].inTray -> Q949),
+	Q668	= (a[2].inTray -> Q393
+		  |put.drill.b[1] -> Q469
+		  |{a, b}[2].idle -> Q668
+		  |b[2].inTray -> Q734),
+	Q669	= (process.drill.a[2] -> Q173
+		  |b[2].inTray -> Q423
+		  |b[2].idle -> Q669),
+	Q670	= (put.press.b[2] -> Q305
+		  |b[1].inTray -> Q667
+		  |{a[2].idle, b[1].idle} -> Q670
+		  |a[2].inTray -> Q860),
+	Q671	= (b[2].inTray -> Q560
+		  |process.oven.a[1] -> Q587
+		  |b[1..2].idle -> Q671
+		  |b[1].inTray -> Q702),
+	Q672	= (b[1].idle -> Q672
+		  |b[1].inTray -> Q707
+		  |get.press.a[2] -> Q883),
+	Q673	= (b[1].putOutTray -> Q189
+		  |a[2].inTray -> Q593
+		  |a[1..2].idle -> Q673
+		  |a[1].inTray -> Q828),
+	Q674	= (get.drill.a[2] -> Q66
+		  |b[2].inTray -> Q259
+		  |a[1].inTray -> Q506
+		  |{a[1].idle, b[1..2].idle} -> Q674
+		  |b[1].inTray -> Q914),
+	Q675	= (a[1].getInTray -> Q300
+		  |a[2].getInTray -> Q353),
+	Q676	= (process.oven.b[2] -> Q88
+		  |b[1].inTray -> Q278
+		  |a[2].inTray -> Q474
+		  |{a[2].idle, b[1].idle} -> Q676),
+	Q677	= (put.oven.b[2] -> Q461
+		  |b[1].idle -> Q677
+		  |b[1].inTray -> Q956),
+	Q678	= (b[2].putOutTray -> Q43
+		  |b[1].inTray -> Q236
+		  |a[1].inTray -> Q243
+		  |{a, b}[1].idle -> Q678),
+	Q679	= (a[2].inTray -> Q5
+		  |put.press.b[2] -> Q289
+		  |b[1].inTray -> Q634
+		  |{a[2].idle, b[1].idle} -> Q679),
+	Q680	= (b[2].inTray -> Q402
+		  |b[1].inTray -> Q526
+		  |{a[1].idle, b[1..2].idle} -> Q680
+		  |a[1].inTray -> Q943),
+	Q681	= (process.oven.a[1] -> Q36
+		  |{a, b}[2].idle -> Q666
+		  |a[2].inTray -> Q702
+		  |b[2].inTray -> Q859),
+	Q682	= (b[2].inTray -> Q390
+		  |put.press.a[1] -> Q430
+		  |b[2].idle -> Q682),
+	Q683	= (a[2].inTray -> Q448
+		  |{a[2].idle, b[1].idle} -> Q683
+		  |put.drill.a[1] -> Q906
+		  |b[1].inTray -> Q927),
+	Q684	= (a[1].inTray -> Q229
+		  |process.drill.a[2] -> Q259
+		  |b[1].inTray -> Q384
+		  |{a, b}[1].idle -> Q684),
+	Q685	= (b[2].inTray -> Q370
+		  |a[1].inTray -> Q669
+		  |{a[1].idle, b[2].idle} -> Q685
+		  |process.drill.a[2] -> Q797),
+	Q686	= (get.oven.a[1] -> Q294),
+	Q687	= (process.drill.a[2] -> Q332
+		  |b[2].inTray -> Q401
+		  |b[2].idle -> Q687),
+	Q688	= (put.oven.b[1] -> Q65
+		  |a[2].inTray -> Q162
+		  |{a, b}[2].idle -> Q688
+		  |b[2].inTray -> Q720),
+	Q689	= (get.drill.b[2] -> Q178
+		  |a[1].inTray -> Q535
+		  |{a, b}[1].idle -> Q739
+		  |b[1].inTray -> Q823),
+	Q690	= (process.press.b[1] -> Q215
+		  |{a[1].idle, b[2].idle} -> Q690
+		  |a[1].inTray -> Q719
+		  |b[2].inTray -> Q783),
+	Q691	= (get.drill.a[1] -> Q64
+		  |b[2].inTray -> Q601
+		  |b[2].idle -> Q691),
+	Q692	= (b[2].getInTray -> Q113
+		  |a[1].getInTray -> Q297
+		  |{a[2].idle, b[1].idle} -> Q480
+		  |b[1].inTray -> Q612
+		  |a[2].inTray -> Q660),
+	Q693	= (put.drill.b[1] -> Q82
+		  |a[2].inTray -> Q187
+		  |a[2].idle -> Q693),
+	Q694	= (a[2].idle -> Q694
+		  |a[2].inTray -> Q699
+		  |get.oven.a[1] -> Q942),
+	Q695	= (a[1].inTray -> Q152
+		  |b[1].inTray -> Q201
+		  |b[2].inTray -> Q468
+		  |{a, b}[1..2].idle -> Q658
+		  |a[2].inTray -> Q811),
+	Q696	= (b[1].inTray -> Q94
+		  |put.oven.b[2] -> Q474
+		  |b[1].idle -> Q696),
+	Q697	= (get.press.b[2] -> Q696
+		  |b[1].idle -> Q697
+		  |b[1].inTray -> Q726),
+	Q698	= (b[1].getInTray -> Q187
+		  |b[2].getInTray -> Q218),
+	Q699	= (get.oven.a[1] -> Q315),
+	Q700	= (a[2].inTray -> Q145
+		  |{a, b}[2].idle -> Q700
+		  |b[2].inTray -> Q708
+		  |put.oven.b[1] -> Q936),
+	Q701	= (put.press.a[1] -> Q413
+		  |b[2].inTray -> Q441
+		  |b[2].idle -> Q701),
+	Q702	= (b[2].inTray -> Q405
+		  |b[2].idle -> Q702
+		  |process.oven.a[1] -> Q922),
+	Q703	= (b[2].inTray -> Q3
+		  |a[2].inTray -> Q650
+		  |{a[2].idle, b[1..2].idle} -> Q703
+		  |process.oven.a[1] -> Q718
+		  |b[1].inTray -> Q950),
+	Q704	= (get.press.b[2] -> Q956),
+	Q705	= (b[2].putOutTray -> Q63
+		  |process.press.b[1] -> Q802),
+	Q706	= (b[1].inTray -> Q150
+		  |process.press.a[1] -> Q199
+		  |{a[2].idle, b[1].idle} -> Q706
+		  |a[2].inTray -> Q845),
+	Q707	= (get.press.a[2] -> Q931),
+	Q708	= (put.oven.b[1] -> Q89
+		  |a[2].inTray -> Q375
+		  |a[2].idle -> Q708),
+	Q709	= (b[1].inTray -> Q186
+		  |a[1].inTray -> Q491
+		  |{a, b}[1].idle -> Q709
+		  |get.oven.a[2] -> Q938),
+	Q710	= (get.press.b[2] -> Q677
+		  |b[1].inTray -> Q704
+		  |b[1].idle -> Q710),
+	Q711	= (a[2].idle -> Q711
+		  |get.press.a[1] -> Q856
+		  |a[2].inTray -> Q967),
+	Q712	= (b[2].inTray -> Q449
+		  |b[2].idle -> Q712
+		  |process.oven.a[1] -> Q946),
+	Q713	= (a[1].inTray -> Q612
+		  |a[1..2].idle -> Q713
+		  |a[2].inTray -> Q767),
+	Q714	= (process.drill.b[1] -> Q385
+		  |a[1].inTray -> Q555
+		  |a[1].idle -> Q714),
+	Q715	= (a[2].inTray -> Q569
+		  |a[1..2].idle -> Q715
+		  |put.drill.b[2] -> Q809
+		  |a[1].inTray -> Q815),
+	Q716	= (process.press.b[2] -> Q166
+		  |get.oven.b[1] -> Q170
+		  |a[1].inTray -> Q394
+		  |a[1].idle -> Q716),
+	Q717	= (get.press.a[1] -> Q533),
+	Q718	= (b[1].inTray -> Q47
+		  |a[2].inTray -> Q610
+		  |{a[2].idle, b[1..2].idle} -> Q718
+		  |get.oven.a[1] -> Q801
+		  |b[2].inTray -> Q948),
+	Q719	= (process.press.b[1] -> Q337
+		  |b[2].inTray -> Q530
+		  |b[2].idle -> Q719),
+	Q720	= (put.oven.b[1] -> Q103
+		  |a[2].inTray -> Q321
+		  |a[2].idle -> Q720),
+	Q721	= (a[2].idle -> Q721
+		  |get.press.a[1] -> Q817
+		  |a[2].inTray -> Q868),
+	Q722	= (b[2].inTray -> Q100
+		  |b[1].inTray -> Q485
+		  |put.oven.a[2] -> Q608
+		  |b[1..2].idle -> Q722),
+	Q723	= (a[1].inTray -> Q181
+		  |process.drill.a[2] -> Q280
+		  |b[1].inTray -> Q370
+		  |{a, b}[1].idle -> Q723),
+	Q724	= (a[2].inTray -> Q519
+		  |a[1..2].idle -> Q724
+		  |a[1].inTray -> Q805
+		  |put.drill.b[2] -> Q849),
+	Q725	= (get.press.a[2] -> Q368
+		  |process.oven.a[1] -> Q707),
+	Q726	= (get.press.b[2] -> Q94),
+	Q727	= (a[1].inTray -> Q202
+		  |put.press.b[2] -> Q716
+		  |a[1].idle -> Q727),
+	Q728	= (get.oven.a[2] -> Q12
+		  |b[1].inTray -> Q197
+		  |a[1].inTray -> Q625
+		  |{a, b}[1].idle -> Q728),
+	Q729	= (b[2].inTray -> Q384
+		  |a[1].inTray -> Q687
+		  |{a[1].idle, b[2].idle} -> Q729
+		  |process.drill.a[2] -> Q914),
+	Q730	= (process.drill.b[1] -> Q331
+		  |a[1].inTray -> Q572
+		  |a[1].idle -> Q730),
+	Q731	= (b[2].inTray -> Q402
+		  |b[1].inTray -> Q526
+		  |a[2].getInTray -> Q630
+		  |{a[1].idle, b[1..2].idle} -> Q680
+		  |a[1].inTray -> Q943),
+	Q732	= (get.drill.a[1] -> Q577
+		  |process.oven.a[2] -> Q691
+		  |b[2].idle -> Q732
+		  |b[2].inTray -> Q843),
+	Q733	= (put.oven.a[1] -> Q46
+		  |a[2].inTray -> Q126
+		  |{a[2].idle, b[1].idle} -> Q733
+		  |b[1].inTray -> Q934),
+	Q734	= (put.drill.b[1] -> Q71
+		  |a[2].inTray -> Q247
+		  |a[2].idle -> Q734),
+	Q735	= (b[2].putOutTray -> Q377
+		  |process.drill.b[1] -> Q841),
+	Q736	= (process.press.b[1] -> Q436
+		  |b[2].inTray -> Q544
+		  |b[2].idle -> Q736),
+	Q737	= (b[1].getInTray -> Q73
+		  |a[1].inTray -> Q624
+		  |b[2].getInTray -> Q715
+		  |a[1..2].idle -> Q737
+		  |a[2].inTray -> Q840),
+	Q738	= (process.press.b[1] -> Q215
+		  |{a[1].idle, b[2].idle} -> Q690
+		  |a[1].inTray -> Q719
+		  |b[2].inTray -> Q783),
+	Q739	= (get.drill.b[2] -> Q178
+		  |a[1].inTray -> Q535
+		  |{a, b}[1].idle -> Q739
+		  |b[1].inTray -> Q823),
+	Q740	= (b[2].inTray -> Q21
+		  |a[1].inTray -> Q344
+		  |b[1].inTray -> Q379
+		  |a[2].putOutTray -> Q658
+		  |{a[1].idle, b[1..2].idle} -> Q740),
+	Q741	= (process.press.b[1] -> Q609
+		  |a[1].inTray -> Q705
+		  |b[2].putOutTray -> Q738
+		  |a[1].idle -> Q741),
+	Q742	= (get.oven.b[2] -> Q97
+		  |a[2].inTray -> Q175
+		  |a[2].idle -> Q742),
+	Q743	= (process.oven.a[2] -> Q197
+		  |a[1].inTray -> Q313
+		  |a[1].idle -> Q743),
+	Q744	= (put.press.a[2] -> Q209
+		  |b[1].idle -> Q744
+		  |process.oven.a[1] -> Q890
+		  |b[1].inTray -> Q953),
+	Q745	= (process.drill.a[2] -> Q10
+		  |put.oven.a[1] -> Q408),
+	Q746	= (b[1].inTray -> Q81
+		  |a[1].inTray -> Q232
+		  |a[2].inTray -> Q291
+		  |get.press.b[2] -> Q475
+		  |{a[1..2].idle, b[1].idle} -> Q746),
+	Q747	= (a[2].inTray -> Q292
+		  |b[2].inTray -> Q534
+		  |get.drill.b[1] -> Q564
+		  |{a, b}[2].idle -> Q747),
+	Q748	= (a[2].getInTray -> Q107
+		  |a[1].getInTray -> Q137
+		  |b[1].inTray -> Q675
+		  |b[1].idle -> Q748),
+	Q749	= (b[1].inTray -> Q400
+		  |get.drill.a[2] -> Q484
+		  |b[1].idle -> Q749),
+	Q750	= (b[2].inTray -> Q285
+		  |b[2].idle -> Q750
+		  |process.oven.a[2] -> Q862),
+	Q751	= (put.oven.a[2] -> Q127
+		  |b[1].inTray -> Q253
+		  |b[1].idle -> Q751),
+	Q752	= (b[1].inTray -> Q495
+		  |process.press.b[2] -> Q710
+		  |b[1].idle -> Q852),
+	Q753	= (b[1].inTray -> Q136
+		  |b[2].inTray -> Q267
+		  |put.drill.a[1] -> Q350
+		  |{a[2].idle, b[1..2].idle} -> Q753
+		  |a[2].inTray -> Q830),
+	Q754	= (put.press.a[2] -> Q180
+		  |b[2].idle -> Q754
+		  |b[2].inTray -> Q932),
+	Q755	= (b[1].inTray -> Q135
+		  |process.press.a[1] -> Q211
+		  |{a[2].idle, b[1].idle} -> Q755
+		  |a[2].inTray -> Q764),
+	Q756	= (process.drill.b[2] -> Q282
+		  |a[2].inTray -> Q478
+		  |a[2].idle -> Q756),
+	Q757	= (get.press.b[2] -> Q677
+		  |b[1].inTray -> Q704
+		  |b[1].idle -> Q757),
+	Q758	= (a[1].getInTray -> Q22
+		  |b[1].inTray -> Q125
+		  |a[2].getInTray -> Q374
+		  |b[2].inTray -> Q660
+		  |b[1..2].idle -> Q781),
+	Q759	= (put.press.a[2] -> Q154
+		  |b[2].idle -> Q759
+		  |b[2].inTray -> Q884),
+	Q760	= (process.drill.a[2] -> Q873),
+	Q761	= (a[2].getInTray -> Q107
+		  |a[1].getInTray -> Q137
+		  |b[1].inTray -> Q675
+		  |b[1].idle -> Q748
+		  |b[2].getInTray -> Q896),
+	Q762	= (a[1].inTray -> Q247
+		  |put.drill.b[1] -> Q714
+		  |a[1].idle -> Q762),
+	Q763	= (a[2].inTray -> Q115
+		  |process.drill.b[1] -> Q417
+		  |a[1].inTray -> Q456
+		  |b[2].inTray -> Q604
+		  |{a[1..2].idle, b[2].idle} -> Q763),
+	Q764	= (process.press.a[1] -> Q314
+		  |b[1].inTray -> Q386
+		  |a[2].getInTray -> Q494
+		  |b[1].idle -> Q764),
+	Q765	= (process.press.a[2] -> Q235
+		  |a[1].getInTray -> Q239
+		  |b[1].inTray -> Q591
+		  |b[1].idle -> Q765),
+	Q766	= (b[1].inTray -> Q176
+		  |b[2].inTray -> Q328
+		  |{a[2].idle, b[1..2].idle} -> Q766
+		  |a[2].inTray -> Q943),
+	Q767	= (a[2].getInTray -> Q642
+		  |a[1].inTray -> Q675
+		  |a[1].idle -> Q767),
+	Q768	= (process.drill.b[2] -> Q263
+		  |a[2].inTray -> Q427
+		  |a[2].idle -> Q768),
+	Q769	= (get.oven.b[2] -> Q841),
+	Q770	= (process.drill.b[1] -> Q114
+		  |b[2].putOutTray -> Q453
+		  |a[1].inTray -> Q735
+		  |a[1].idle -> Q770),
+	Q771	= (b[2].inTray -> Q336
+		  |a[2].inTray -> Q337
+		  |get.press.b[1] -> Q688
+		  |{a, b}[2].idle -> Q771),
+	Q772	= (a[1].inTray -> Q27
+		  |a[1].idle -> Q772
+		  |b[2].putOutTray -> Q904),
+	Q773	= (a[2].inTray -> Q216
+		  |get.oven.b[2] -> Q303
+		  |a[2].idle -> Q773
+		  |process.press.b[1] -> Q952),
+	Q774	= (a[2].inTray -> Q686
+		  |a[2].idle -> Q774
+		  |get.oven.a[1] -> Q927),
+	Q775	= (a[1].inTray -> Q65
+		  |process.oven.b[1] -> Q312
+		  |{a[1..2].idle, b[2].idle} -> Q775
+		  |b[2].inTray -> Q810
+		  |a[2].inTray -> Q882),
+	Q776	= (get.press.b[2] -> Q677
+		  |b[1].inTray -> Q704
+		  |b[1].idle -> Q757),
+	Q777	= (process.press.a[2] -> Q124
+		  |b[2].inTray -> Q556
+		  |b[2].idle -> Q777),
+	Q778	= (b[1].getInTray -> Q73
+		  |a[1].inTray -> Q624
+		  |b[2].getInTray -> Q715
+		  |a[1..2].idle -> Q789
+		  |a[2].inTray -> Q840),
+	Q779	= (get.press.b[2] -> Q360
+		  |a[1].inTray -> Q726
+		  |a[1].idle -> Q779),
+	Q780	= (a[1].inTray -> Q24
+		  |process.press.b[1] -> Q172
+		  |a[1..2].idle -> Q780
+		  |a[2].inTray -> Q820),
+	Q781	= (a[1].getInTray -> Q22
+		  |b[1].inTray -> Q125
+		  |a[2].getInTray -> Q374
+		  |b[2].inTray -> Q660
+		  |b[1..2].idle -> Q781),
+	Q782	= (a[2].inTray -> Q302
+		  |get.drill.b[1] -> Q549
+		  |b[2].inTray -> Q573
+		  |{a, b}[2].idle -> Q782),
+	Q783	= (a[1].inTray -> Q530
+		  |process.press.b[1] -> Q651
+		  |a[1].idle -> Q783),
+	Q784	= (process.oven.a[2] -> Q186
+		  |a[1].inTray -> Q285
+		  |a[1].idle -> Q784),
+	Q785	= (b[2].inTray -> Q365
+		  |a[2].inTray -> Q436
+		  |get.press.b[1] -> Q700
+		  |{a, b}[2].idle -> Q785),
+	Q786	= (process.drill.b[1] -> Q292
+		  |b[2].inTray -> Q572
+		  |b[2].idle -> Q786),
+	Q787	= (a[2].inTray -> Q330
+		  |process.drill.b[1] -> Q362
+		  |process.oven.b[2] -> Q369
+		  |a[2].idle -> Q787),
+	Q788	= (b[2].inTray -> Q28
+		  |b[1].inTray -> Q281
+		  |a[1].inTray -> Q286
+		  |a[2].putOutTray -> Q695
+		  |{a[1].idle, b[1..2].idle} -> Q788),
+	Q789	= (b[1].getInTray -> Q73
+		  |a[1].inTray -> Q624
+		  |b[2].getInTray -> Q715
+		  |a[1..2].idle -> Q789
+		  |a[2].inTray -> Q840),
+	Q790	= (put.drill.b[2] -> Q52
+		  |process.oven.b[1] -> Q204
+		  |a[2].idle -> Q790
+		  |a[2].inTray -> Q900),
+	Q791	= (b[1].inTray -> Q34
+		  |a[1].inTray -> Q140
+		  |b[2].inTray -> Q455
+		  |{a, b}[1..2].idle -> Q791
+		  |a[2].inTray -> Q854),
+	Q792	= (b[1].inTray -> Q424
+		  |get.drill.a[2] -> Q452
+		  |b[1].idle -> Q792),
+	Q793	= (get.oven.b[2] -> Q102
+		  |a[2].inTray -> Q193
+		  |a[2].idle -> Q793),
+	Q794	= (get.press.b[2] -> Q275
+		  |a[1].inTray -> Q704
+		  |a[1].idle -> Q794),
+	Q795	= (process.oven.b[2] -> Q216
+		  |process.press.b[1] -> Q388),
+	Q796	= (process.oven.b[2] -> Q227
+		  |put.drill.b[1] -> Q330),
+	Q797	= (a[1].inTray -> Q173
+		  |b[2].inTray -> Q659
+		  |{a[1].idle, b[2].idle} -> Q797
+		  |get.drill.a[2] -> Q835),
+	Q798	= (get.press.a[1] -> Q338
+		  |process.oven.a[2] -> Q425
+		  |b[1].inTray -> Q567
+		  |b[1].idle -> Q798),
+	Q799	= (b[1].inTray -> Q176
+		  |b[2].inTray -> Q328
+		  |{a[2].idle, b[1..2].idle} -> Q766
+		  |a[1].getInTray -> Q832
+		  |a[2].inTray -> Q943),
+	Q800	= (get.oven.b[1] -> Q412
+		  |a[2].idle -> Q800
+		  |a[2].inTray -> Q972),
+	Q801	= (b[1].inTray -> Q120
+		  |put.drill.a[1] -> Q327
+		  |b[2].inTray -> Q683
+		  |{a[2].idle, b[1..2].idle} -> Q801
+		  |a[2].inTray -> Q812),
+	Q802	= (b[2].putOutTray -> Q561),
+	Q803	= (b[2].inTray -> Q313
+		  |b[2].idle -> Q803
+		  |process.oven.a[2] -> Q893),
+	Q804	= ({a, b}[2].idle -> Q804
+		  |a[2].inTray -> Q888
+		  |b[2].inTray -> Q934
+		  |put.oven.a[1] -> Q963),
+	Q805	= (a[2].inTray -> Q241
+		  |put.drill.b[2] -> Q768
+		  |a[2].idle -> Q805),
+	Q806	= (a[1].inTray -> Q74
+		  |a[2].inTray -> Q268
+		  |put.drill.b[2] -> Q510
+		  |b[1].inTray -> Q715
+		  |{a[1..2].idle, b[1].idle} -> Q806),
+	Q807	= (a[2].inTray -> Q45
+		  |b[1].putOutTray -> Q480
+		  |a[2].idle -> Q807),
+	Q808	= (put.press.a[1] -> Q150
+		  |a[2].inTray -> Q441
+		  |a[2].idle -> Q808),
+	Q809	= (a[2].inTray -> Q333
+		  |process.drill.b[2] -> Q446
+		  |a[1].inTray -> Q756
+		  |a[1..2].idle -> Q809),
+	Q810	= (process.oven.b[1] -> Q37
+		  |a[1].inTray -> Q103
+		  |a[2].inTray -> Q499
+		  |a[1..2].idle -> Q810),
+	Q811	= (b[2].inTray -> Q402
+		  |b[1].inTray -> Q526
+		  |{a[1].idle, b[1..2].idle} -> Q811
+		  |a[1].inTray -> Q943),
+	Q812	= (b[1].inTray -> Q293
+		  |b[2].inTray -> Q448
+		  |put.drill.a[1] -> Q616
+		  |b[1..2].idle -> Q812),
+	Q813	= (b[1].inTray -> Q163
+		  |{a[2].idle, b[1..2].idle} -> Q190
+		  |b[2].inTray -> Q298
+		  |a[1].getInTray -> Q848
+		  |a[2].inTray -> Q947),
+	Q814	= ({a, b}[2].idle -> Q814
+		  |a[2].inTray -> Q930
+		  |put.oven.a[1] -> Q950
+		  |b[2].inTray -> Q969),
+	Q815	= (a[2].inTray -> Q218
+		  |put.drill.b[2] -> Q756
+		  |a[2].idle -> Q815),
+	Q816	= (b[1].inTray -> Q313
+		  |process.oven.a[2] -> Q625
+		  |b[1].idle -> Q816),
+	Q817	= (a[1].putOutTray -> Q391
+		  |a[2].inTray -> Q497
+		  |a[2].idle -> Q817),
+	Q818	= (b[1].inTray -> Q99
+		  |a[1].inTray -> Q452
+		  |put.press.a[2] -> Q600
+		  |{a, b}[1].idle -> Q818),
+	Q819	= (get.oven.a[2] -> Q8
+		  |b[2].inTray -> Q197
+		  |{a[1].idle, b[2].idle} -> Q819
+		  |a[1].inTray -> Q893),
+	Q820	= (a[1].inTray -> Q544
+		  |process.press.b[1] -> Q638
+		  |a[1].idle -> Q820),
+	Q821	= (process.oven.b[1] -> Q277
+		  |{a[1..2].idle, b[2].idle} -> Q821
+		  |a[2].inTray -> Q867
+		  |b[2].inTray -> Q898
+		  |a[1].inTray -> Q936),
+	Q822	= (put.oven.a[2] -> Q272
+		  |process.drill.a[1] -> Q751
+		  |b[1].idle -> Q822
+		  |b[1].inTray -> Q855),
+	Q823	= (get.drill.b[2] -> Q325
+		  |a[1].idle -> Q823
+		  |a[1].inTray -> Q971),
+	Q824	= (a[1].inTray -> Q349
+		  |b[1].inTray -> Q372
+		  |get.oven.b[2] -> Q678
+		  |{a, b}[1].idle -> Q824),
+	Q825	= (process.drill.b[1] -> Q302
+		  |b[2].inTray -> Q555
+		  |b[2].idle -> Q825),
+	Q826	= (put.drill.b[1] -> Q787
+		  |a[2].inTray -> Q796
+		  |a[2].idle -> Q826
+		  |process.oven.b[2] -> Q915),
+	Q827	= (a[1].inTray -> Q113
+		  |a[2].inTray -> Q257
+		  |put.drill.b[2] -> Q465
+		  |b[1].inTray -> Q724
+		  |{a[1..2].idle, b[1].idle} -> Q827),
+	Q828	= (a[2].inTray -> Q61
+		  |b[1].putOutTray -> Q692
+		  |a[2].idle -> Q828),
+	Q829	= (put.press.a[1] -> Q135
+		  |a[2].inTray -> Q390
+		  |a[2].idle -> Q829),
+	Q830	= (b[1].inTray -> Q276
+		  |b[2].inTray -> Q404
+		  |put.drill.a[1] -> Q620
+		  |b[1..2].idle -> Q830),
+	Q831	= (b[2].inTray -> Q10
+		  |put.oven.a[1] -> Q319
+		  |b[2].idle -> Q831),
+	Q832	= (a[2].inTray -> Q30
+		  |put.oven.a[1] -> Q661
+		  |b[2].inTray -> Q733
+		  |b[1].inTray -> Q804
+		  |{a[2].idle, b[1..2].idle} -> Q832),
+	Q833	= (a[2].inTray -> Q495
+		  |a[2].idle -> Q833
+		  |process.press.b[2] -> Q876),
+	Q834	= (b[1].getInTray -> Q129
+		  |a[1].inTray -> Q138
+		  |{a[1].idle, b[2].idle} -> Q834
+		  |b[2].inTray -> Q840),
+	Q835	= (b[2].inTray -> Q99
+		  |put.press.a[2] -> Q445
+		  |a[1].inTray -> Q754
+		  |{a[1].idle, b[2].idle} -> Q835),
+	Q836	= (process.press.a[2] -> Q184
+		  |b[1].inTray -> Q578
+		  |b[1].idle -> Q836),
+	Q837	= (process.drill.b[2] -> Q123
+		  |a[2].inTray -> Q418
+		  |b[1].inTray -> Q768
+		  |{a[2].idle, b[1].idle} -> Q846),
+	Q838	= (a[2].inTray -> Q75
+		  |process.drill.b[1] -> Q357
+		  |a[1].inTray -> Q469
+		  |b[2].inTray -> Q618
+		  |{a[1..2].idle, b[2].idle} -> Q838),
+	Q839	= (b[1].inTray -> Q285
+		  |process.oven.a[2] -> Q491
+		  |b[1].idle -> Q839),
+	Q840	= (b[2].getInTray -> Q569
+		  |a[1].inTray -> Q698
+		  |a[1].idle -> Q840
+		  |b[1].getInTray -> Q954),
+	Q841	= (b[2].putOutTray -> Q615),
+	Q842	= (a[2].inTray -> Q109
+		  |process.oven.b[1] -> Q438
+		  |put.press.b[2] -> Q490
+		  |a[2].idle -> Q842),
+	Q843	= (get.drill.a[1] -> Q159
+		  |process.oven.a[2] -> Q601),
+	Q844	= (b[1].inTray -> Q502
+		  |b[1].idle -> Q844
+		  |put.press.a[1] -> Q864),
+	Q845	= (process.press.a[1] -> Q326
+		  |b[1].inTray -> Q361
+		  |b[1].idle -> Q845),
+	Q846	= (process.drill.b[2] -> Q123
+		  |a[2].inTray -> Q418
+		  |b[1].inTray -> Q768
+		  |{a[2].idle, b[1].idle} -> Q846),
+	Q847	= (put.press.a[2] -> Q395
+		  |a[1].inTray -> Q759
+		  |{a[1].idle, b[2].idle} -> Q847
+		  |b[2].inTray -> Q903),
+	Q848	= (a[2].inTray -> Q22
+		  |b[2].inTray -> Q297
+		  |put.oven.a[1] -> Q703
+		  |b[1].inTray -> Q814
+		  |{a[2].idle, b[1..2].idle} -> Q848),
+	Q849	= (a[2].inTray -> Q307
+		  |process.drill.b[2] -> Q470
+		  |a[1].inTray -> Q768
+		  |a[1..2].idle -> Q849),
+	Q850	= (get.drill.b[2] -> Q306
+		  |a[1].idle -> Q850
+		  |a[1].inTray -> Q957),
+	Q851	= (get.press.b[2] -> Q539
+		  |a[2].inTray -> Q710
+		  |{a[2].idle, b[1].idle} -> Q851
+		  |b[1].inTray -> Q876),
+	Q852	= (b[1].inTray -> Q495
+		  |process.press.b[2] -> Q710
+		  |b[1].idle -> Q852),
+	Q853	= (b[2].inTray -> Q150
+		  |process.press.a[1] -> Q262
+		  |a[2].inTray -> Q413
+		  |{a, b}[2].idle -> Q853),
+	Q854	= (b[2].inTray -> Q376
+		  |a[2].getInTray -> Q529
+		  |b[1].inTray -> Q538
+		  |{a[1].idle, b[1..2].idle} -> Q854
+		  |a[1].inTray -> Q947),
+	Q855	= (process.drill.a[1] -> Q253
+		  |put.oven.a[2] -> Q271),
+	Q856	= (a[1].putOutTray -> Q500
+		  |a[2].inTray -> Q516
+		  |a[2].idle -> Q856),
+	Q857	= (get.oven.b[2] -> Q802),
+	Q858	= (a[2].getInTray -> Q57
+		  |b[1].getInTray -> Q129
+		  |a[1].inTray -> Q138
+		  |{a[1].idle, b[2].idle} -> Q834
+		  |b[2].inTray -> Q840),
+	Q859	= (a[2].inTray -> Q405
+		  |process.oven.a[1] -> Q694
+		  |a[2].idle -> Q859),
+	Q860	= (put.press.b[2] -> Q605
+		  |b[1].idle -> Q860
+		  |b[1].inTray -> Q949),
+	Q861	= (b[2].inTray -> Q96
+		  |a[2].inTray -> Q719
+		  |process.press.b[1] -> Q771
+		  |{a, b}[2].idle -> Q861),
+	Q862	= (b[2].inTray -> Q433
+		  |b[2].idle -> Q862
+		  |get.oven.a[2] -> Q913),
+	Q863	= (b[1].inTray -> Q275
+		  |put.oven.b[2] -> Q399
+		  |a[1].inTray -> Q677
+		  |{a, b}[1].idle -> Q863),
+	Q864	= (process.press.a[1] -> Q425
+		  |b[1].inTray -> Q579
+		  |b[1].idle -> Q864),
+	Q865	= (a[2].inTray -> Q185
+		  |a[1..2].idle -> Q865
+		  |a[1].inTray -> Q886
+		  |put.press.b[1] -> Q917),
+	Q866	= (get.press.a[2] -> Q379
+		  |b[2].inTray -> Q646
+		  |{a[1].idle, b[2].idle} -> Q866
+		  |a[1].inTray -> Q951),
+	Q867	= (process.oven.b[1] -> Q249
+		  |b[2].inTray -> Q501
+		  |a[1].inTray -> Q603
+		  |{a[1].idle, b[2].idle} -> Q867),
+	Q868	= (get.press.a[1] -> Q497),
+	Q869	= (a[2].getInTray -> Q85
+		  |a[1].inTray -> Q125
+		  |b[1].getInTray -> Q146
+		  |b[2].inTray -> Q767
+		  |{a[1].idle, b[2].idle} -> Q904),
+	Q870	= (b[1].putOutTray -> Q264),
+	Q871	= (b[1].inTray -> Q102
+		  |a[2].inTray -> Q243
+		  |b[2].putOutTray -> Q558
+		  |{a[2].idle, b[1].idle} -> Q871),
+	Q872	= (process.oven.a[2] -> Q728
+		  |b[1].inTray -> Q743
+		  |a[1].inTray -> Q816
+		  |{a, b}[1].idle -> Q905),
+	Q873	= (get.drill.a[2] -> Q171),
+	Q874	= (b[1].inTray -> Q360
+		  |put.oven.b[2] -> Q447
+		  |a[1].inTray -> Q696
+		  |{a, b}[1].idle -> Q874),
+	Q875	= (a[2].inTray -> Q87
+		  |b[2].inTray -> Q233
+		  |b[1].inTray -> Q310
+		  |{a[2].idle, b[1..2].idle} -> Q875
+		  |get.drill.a[1] -> Q941),
+	Q876	= (get.press.b[2] -> Q237
+		  |a[2].inTray -> Q704
+		  |a[2].idle -> Q876),
+	Q877	= (get.oven.a[2] -> Q8
+		  |b[2].inTray -> Q197
+		  |{a[1].idle, b[2].idle} -> Q891
+		  |a[1].inTray -> Q893),
+	Q878	= (b[1].inTray -> Q218
+		  |put.drill.b[2] -> Q504
+		  |b[1].idle -> Q878),
+	Q879	= (a[2].inTray -> Q515
+		  |a[2].idle -> Q879
+		  |process.press.b[2] -> Q895),
+	Q880	= (a[2].inTray -> Q194
+		  |put.press.b[1] -> Q780
+		  |a[1..2].idle -> Q880
+		  |a[1].inTray -> Q902),
+	Q881	= (get.press.a[2] -> Q281
+		  |b[2].inTray -> Q631
+		  |{a[1].idle, b[2].idle} -> Q881
+		  |a[1].inTray -> Q976),
+	Q882	= (process.oven.b[1] -> Q219
+		  |b[2].inTray -> Q499
+		  |a[1].inTray -> Q621
+		  |{a[1].idle, b[2].idle} -> Q882),
+	Q883	= (a[2].putOutTray -> Q15
+		  |b[1].idle -> Q883
+		  |b[1].inTray -> Q931),
+	Q884	= (put.press.a[2] -> Q578),
+	Q885	= (get.oven.a[2] -> Q26
+		  |b[2].inTray -> Q186
+		  |a[1].inTray -> Q862
+		  |{a[1].idle, b[2].idle} -> Q885),
+	Q886	= (put.press.b[1] -> Q96
+		  |a[2].inTray -> Q339
+		  |a[2].idle -> Q886),
+	Q887	= (a[2].inTray -> Q372
+		  |get.oven.b[2] -> Q566
+		  |a[1].inTray -> Q793
+		  |a[1..2].idle -> Q887),
+	Q888	= (b[2].inTray -> Q316
+		  |put.oven.a[1] -> Q702
+		  |b[2].idle -> Q888),
+	Q889	= (b[1].inTray -> Q274
+		  |a[1].inTray -> Q334
+		  |get.oven.b[2] -> Q645
+		  |{a, b}[1].idle -> Q889),
+	Q890	= (b[1].inTray -> Q171
+		  |put.press.a[2] -> Q656
+		  |b[1].idle -> Q890),
+	Q891	= (get.oven.a[2] -> Q8
+		  |b[2].inTray -> Q197
+		  |{a[1].idle, b[2].idle} -> Q891
+		  |a[1].inTray -> Q893),
+	Q892	= (b[2].inTray -> Q96
+		  |a[2].inTray -> Q719
+		  |process.press.b[1] -> Q771
+		  |{a, b}[2].idle -> Q861),
+	Q893	= (b[2].inTray -> Q451
+		  |b[2].idle -> Q893
+		  |get.oven.a[2] -> Q929),
+	Q894	= (a[2].getInTray -> Q51
+		  |b[2].getInTray -> Q268
+		  |a[1].inTray -> Q662
+		  |b[1].inTray -> Q840
+		  |{a, b}[1].idle -> Q907),
+	Q895	= (get.press.b[2] -> Q222
+		  |a[2].inTray -> Q726
+		  |a[2].idle -> Q895),
+	Q896	= (b[1].inTray -> Q241
+		  |put.drill.b[2] -> Q418
+		  |b[1].idle -> Q896),
+	Q897	= (b[1].inTray -> Q34
+		  |a[1].inTray -> Q140
+		  |b[2].inTray -> Q455
+		  |a[2].inTray -> Q854
+		  |{a, b}[1..2].idle -> Q897),
+	Q898	= (process.oven.b[1] -> Q49
+		  |a[1].inTray -> Q89
+		  |a[2].inTray -> Q501
+		  |a[1..2].idle -> Q898),
+	Q899	= (b[2].inTray -> Q269
+		  |get.drill.a[1] -> Q682
+		  |b[2].idle -> Q899
+		  |a[2].getInTray -> Q973),
+	Q900	= (put.drill.b[2] -> Q462
+		  |process.oven.b[1] -> Q962),
+	Q901	= (a[2].inTray -> Q274
+		  |get.oven.b[2] -> Q524
+		  |a[1].inTray -> Q742
+		  |a[1..2].idle -> Q901),
+	Q902	= (put.press.b[1] -> Q24
+		  |a[2].inTray -> Q428
+		  |a[2].idle -> Q902),
+	Q903	= (put.press.a[2] -> Q487
+		  |a[1].inTray -> Q884
+		  |a[1].idle -> Q903),
+	Q904	= (a[2].getInTray -> Q85
+		  |a[1].inTray -> Q125
+		  |b[2].inTray -> Q767
+		  |{a[1].idle, b[2].idle} -> Q904),
+	Q905	= (process.oven.a[2] -> Q728
+		  |b[1].inTray -> Q743
+		  |a[1].inTray -> Q816
+		  |{a, b}[1].idle -> Q905),
+	Q906	= (b[1].inTray -> Q25
+		  |process.drill.a[1] -> Q233
+		  |a[2].inTray -> Q258
+		  |{a[2].idle, b[1].idle} -> Q906),
+	Q907	= (b[2].getInTray -> Q268
+		  |a[1].inTray -> Q662
+		  |b[1].inTray -> Q840
+		  |{a, b}[1].idle -> Q907),
+	Q908	= (get.drill.a[2] -> Q479
+		  |b[2].inTray -> Q873
+		  |b[2].idle -> Q908),
+	Q909	= (process.press.b[1] -> Q367
+		  |process.oven.b[2] -> Q773
+		  |a[2].inTray -> Q795
+		  |a[2].idle -> Q909),
+	Q910	= (b[1].inTray -> Q97
+		  |a[2].inTray -> Q225
+		  |b[2].putOutTray -> Q489
+		  |{a[2].idle, b[1].idle} -> Q910),
+	Q911	= (a[2].inTray -> Q122
+		  |b[1].putOutTray -> Q525
+		  |a[2].idle -> Q911),
+	Q912	= (a[1].putOutTray -> Q228
+		  |process.oven.a[2] -> Q533),
+	Q913	= (b[2].inTray -> Q133
+		  |put.drill.a[2] -> Q669
+		  |b[2].idle -> Q913),
+	Q914	= (a[1].inTray -> Q332
+		  |b[2].inTray -> Q643
+		  |get.drill.a[2] -> Q847
+		  |{a[1].idle, b[2].idle} -> Q914),
+	Q915	= (a[2].inTray -> Q227
+		  |put.drill.b[1] -> Q369
+		  |a[2].idle -> Q915),
+	Q916	= (a[2].inTray -> Q178
+		  |b[1].inTray -> Q270
+		  |put.press.b[2] -> Q348
+		  |a[1].inTray -> Q679
+		  |{a[1..2].idle, b[1].idle} -> Q916),
+	Q917	= (a[1].inTray -> Q96
+		  |process.press.b[1] -> Q118
+		  |a[2].inTray -> Q783
+		  |a[1..2].idle -> Q917),
+	Q918	= (a[1].inTray -> Q216
+		  |process.press.b[1] -> Q407
+		  |get.oven.b[2] -> Q741
+		  |a[1].idle -> Q918),
+	Q919	= (b[1].inTray -> Q34
+		  |a[1].inTray -> Q140
+		  |b[2].inTray -> Q455
+		  |{a, b}[1..2].idle -> Q791
+		  |a[2].inTray -> Q854),
+	Q920	= (b[1].inTray -> Q34
+		  |a[1].inTray -> Q140
+		  |b[2].inTray -> Q455
+		  |a[2].inTray -> Q854
+		  |{a, b}[1..2].idle -> Q897),
+	Q921	= (process.drill.b[2] -> Q132
+		  |a[2].inTray -> Q504
+		  |b[1].inTray -> Q756
+		  |{a[2].idle, b[1].idle} -> Q921),
+	Q922	= (get.oven.a[1] -> Q276
+		  |b[2].inTray -> Q699
+		  |b[2].idle -> Q922),
+	Q923	= (b[1].inTray -> Q307
+		  |a[1].inTray -> Q418
+		  |{a, b}[1].idle -> Q937
+		  |process.drill.b[2] -> Q964),
+	Q924	= (put.press.b[1] -> Q84
+		  |a[2].inTray -> Q559
+		  |a[1].inTray -> Q564
+		  |b[2].inTray -> Q880
+		  |{a[1..2].idle, b[2].idle} -> Q924),
+	Q925	= (a[2].inTray -> Q117
+		  |a[1].putOutTray -> Q342
+		  |b[1].inTray -> Q817
+		  |{a[2].idle, b[1].idle} -> Q925),
+	Q926	= (b[2].inTray -> Q299
+		  |get.drill.a[1] -> Q701
+		  |b[2].idle -> Q926),
+	Q927	= (put.drill.a[1] -> Q25
+		  |a[2].inTray -> Q294
+		  |a[2].idle -> Q927),
+	Q928	= (a[2].inTray -> Q128
+		  |b[1].inTray -> Q252
+		  |put.press.b[2] -> Q364
+		  |a[1].inTray -> Q670
+		  |{a[1..2].idle, b[1].idle} -> Q928),
+	Q929	= (b[2].inTray -> Q161
+		  |put.drill.a[2] -> Q687
+		  |b[2].idle -> Q929),
+	Q930	= (b[2].inTray -> Q300
+		  |put.oven.a[1] -> Q712
+		  |b[2].idle -> Q930),
+	Q931	= (a[2].putOutTray -> Q296),
+	Q932	= (put.press.a[2] -> Q591),
+	Q933	= (put.drill.b[2] -> Q597
+		  |a[1].idle -> Q933
+		  |a[1].inTray -> Q962),
+	Q934	= (a[2].inTray -> Q316
+		  |put.oven.a[1] -> Q859
+		  |a[2].idle -> Q934),
+	Q935	= (b[1].putOutTray -> Q110
+		  |process.drill.b[2] -> Q870),
+	Q936	= (b[2].inTray -> Q89
+		  |process.oven.b[1] -> Q352
+		  |a[2].inTray -> Q603
+		  |{a, b}[2].idle -> Q936),
+	Q937	= (b[1].inTray -> Q307
+		  |a[1].inTray -> Q418
+		  |{a, b}[1].idle -> Q937
+		  |process.drill.b[2] -> Q964),
+	Q938	= (a[1].inTray -> Q224
+		  |b[1].inTray -> Q541
+		  |put.drill.a[2] -> Q723
+		  |{a, b}[1].idle -> Q938),
+	Q939	= (process.drill.b[2] -> Q123
+		  |a[2].inTray -> Q418
+		  |b[1].inTray -> Q768
+		  |{a[2].idle, b[1].idle} -> Q939),
+	Q940	= (get.drill.b[2] -> Q128
+		  |a[1].inTray -> Q557
+		  |b[1].inTray -> Q850
+		  |{a, b}[1].idle -> Q940),
+	Q941	= (put.press.a[1] -> Q2
+		  |b[1].inTray -> Q11
+		  |a[2].inTray -> Q95
+		  |b[2].inTray -> Q482
+		  |{a[2].idle, b[1..2].idle} -> Q941),
+	Q942	= (put.drill.a[1] -> Q9
+		  |a[2].inTray -> Q315
+		  |a[2].idle -> Q942),
+	Q943	= (b[1].inTray -> Q138
+		  |b[2].inTray -> Q662
+		  |b[1..2].idle -> Q943),
+	Q944	= (put.press.b[1] -> Q70
+		  |a[2].inTray -> Q517
+		  |a[1].inTray -> Q549
+		  |b[2].inTray -> Q865
+		  |{a[1..2].idle, b[2].idle} -> Q944),
+	Q945	= (a[2].inTray -> Q169
+		  |a[1].putOutTray -> Q283
+		  |b[1].inTray -> Q856
+		  |{a[2].idle, b[1].idle} -> Q945),
+	Q946	= (get.oven.a[1] -> Q293
+		  |b[2].inTray -> Q686
+		  |b[2].idle -> Q946),
+	Q947	= (a[1].getInTray -> Q22
+		  |b[1].inTray -> Q125
+		  |a[2].getInTray -> Q374
+		  |b[2].inTray -> Q660
+		  |b[1..2].idle -> Q947),
+	Q948	= (a[2].inTray -> Q443
+		  |get.oven.a[1] -> Q683
+		  |b[1].inTray -> Q774
+		  |{a[2].idle, b[1].idle} -> Q948),
+	Q949	= (put.press.b[2] -> Q515),
+	Q950	= (process.oven.a[1] -> Q47
+		  |a[2].inTray -> Q712
+		  |{a, b}[2].idle -> Q950
+		  |b[2].inTray -> Q961),
+	Q951	= (b[2].inTray -> Q16
+		  |get.press.a[2] -> Q203
+		  |b[2].idle -> Q951),
+	Q952	= (get.oven.b[2] -> Q648
+		  |a[2].inTray -> Q857
+		  |a[2].idle -> Q952),
+	Q953	= (put.press.a[2] -> Q76
+		  |process.oven.a[1] -> Q171),
+	Q954	= (a[1].inTray -> Q187
+		  |put.drill.b[1] -> Q730
+		  |a[1].idle -> Q954),
+	Q955	= (a[1].getInTray -> Q22
+		  |b[1].inTray -> Q125
+		  |a[2].getInTray -> Q374
+		  |b[2].inTray -> Q660
+		  |b[1..2].idle -> Q955),
+	Q956	= (put.oven.b[2] -> Q381),
+	Q957	= (get.drill.b[2] -> Q949),
+	Q958	= (a[2].inTray -> Q4
+		  |b[1].inTray -> Q54
+		  |put.press.a[1] -> Q238
+		  |b[2].inTray -> Q466
+		  |{a[2].idle, b[1..2].idle} -> Q958),
+	Q959	= (process.oven.a[2] -> Q134
+		  |a[1].putOutTray -> Q183
+		  |b[2].inTray -> Q912
+		  |b[2].idle -> Q959),
+	Q960	= (get.press.a[2] -> Q28
+		  |a[1].inTray -> Q235
+		  |b[1].inTray -> Q631
+		  |{a, b}[1].idle -> Q960),
+	Q961	= (a[2].inTray -> Q449
+		  |process.oven.a[1] -> Q774
+		  |a[2].idle -> Q961),
+	Q962	= (put.drill.b[2] -> Q105),
+	Q963	= (process.oven.a[1] -> Q36
+		  |a[2].inTray -> Q702
+		  |b[2].inTray -> Q859
+		  |{a, b}[2].idle -> Q963),
+	Q964	= (get.drill.b[2] -> Q178
+		  |a[1].inTray -> Q535
+		  |b[1].inTray -> Q823
+		  |{a, b}[1].idle -> Q964),
+	Q965	= (get.press.a[2] -> Q21
+		  |a[1].inTray -> Q184
+		  |b[1].inTray -> Q646
+		  |{a, b}[1].idle -> Q965),
+	Q966	= (b[2].inTray -> Q9
+		  |process.drill.a[1] -> Q287
+		  |a[2].inTray -> Q626
+		  |{a, b}[2].idle -> Q966),
+	Q967	= (get.press.a[1] -> Q516),
+	Q968	= (a[1].getInTray -> Q22
+		  |b[1].inTray -> Q125
+		  |a[2].getInTray -> Q374
+		  |b[2].inTray -> Q660
+		  |b[1..2].idle -> Q955),
+	Q969	= (a[2].inTray -> Q300
+		  |put.oven.a[1] -> Q961
+		  |a[2].idle -> Q969),
+	Q970	= (put.press.b[2] -> Q495),
+	Q971	= (get.drill.b[2] -> Q970),
+	Q972	= (get.oven.b[1] -> Q870),
+	Q973	= (b[2].inTray -> Q253
+		  |put.oven.a[2] -> Q732
+		  |b[2].idle -> Q973),
+	Q974	= (get.oven.a[1] -> Q267
+		  |a[2].inTray -> Q432
+		  |b[1].inTray -> Q694
+		  |{a[2].idle, b[1].idle} -> Q974),
+	Q975	= (b[1].inTray -> Q601
+		  |get.drill.a[1] -> Q844
+		  |b[1].idle -> Q975),
+	Q976	= (b[2].inTray -> Q55
+		  |get.press.a[2] -> Q231
+		  |b[2].idle -> Q976).
+

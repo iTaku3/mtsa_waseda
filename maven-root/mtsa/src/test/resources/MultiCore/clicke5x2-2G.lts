@@ -1,0 +1,33 @@
+const N = 3 //Clicke size
+const M = 2 //repeat clicke
+
+
+range J = 1..M //range of a
+range I = 1..N //range of b
+
+BUFF = BUFF[1],
+BUFF[i:I] = (
+	b[j:J] -> BUFF[j]).
+
+
+fluent Initial[j:J] = <a[1].b[1],{a[j].b[N]}>
+assert NoController1 = Initial[J]
+
+
+fluent Final[j:J] = <a[M].b[N],{a[1].b[1]}>
+assert NoController2 = Final[J]
+
+//(e+1)%10
+set Control = {a[J].b[I]}
+
+controllerSpec Goal = {
+	controllable ={Control}
+	liveness = {NoController1, NoController2}
+}
+
+
+||ENV = (forall [j:J] a[j]:BUFF).
+
+controller ||C = ENV ~{Goal}.
+
+assert TESTGOAL = ([]<>NoController1&& []<>NoController2)

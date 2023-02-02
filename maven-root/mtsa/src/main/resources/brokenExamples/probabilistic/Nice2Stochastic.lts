@@ -1,0 +1,93 @@
+// Supposedly added by the Darwin Architecture
+const MAXPROXY = 1
+
+//=======
+//Taken From Simple
+
+	Equipment = Q0,
+	Q0	= (myPort.setParameter -> Q1),
+	Q1	= (<?exp(0.01)?> myPort.trapParameter -> Q0
+		  | myPort.setParameter -> Q1
+		  | <?exp(2.00)?> setParameter -> Q2),
+	Q2	= (<?exp(0.01)?> myPort.trapParameter -> Q0
+		  |myPort.setParameter -> Q1) @ {myPort}.
+
+
+Proxy = Q0,
+	Q0	= (myWKS.setParameter -> Q1),
+	Q1	= (<?exp(0.01)?> myEquip1.setParameter -> Q2),
+	Q2	= (<?exp(0.01)?> myEquip2.setParameter -> Q3),
+	Q3	= ({myEquip1, myEquip2}.trapParameter -> Q4),
+	Q4	= (<?exp(0.01)?> myWKS.trapParameter -> Q0) @ {myWKS, myEquip1, myEquip2}.
+
+//====================
+//Taken From Complex
+//Process modified to do "forAll" setParameter transmissions to all Proxies connected to an indexed myPort
+
+Coordinator = Q0,
+
+	Q0	= (displayFailureOccured -> Q1),
+	Q1	= (myProc2.startRecovery -> Q2),
+	Q2	= (myProc1.startRecovery -> Q3),
+	Q3	= (myProc1.recoveryComplete -> Q4),
+	Q4	= (myProc2.recoveryComplete -> Q5),
+	Q5	= (<?exp(0.5)?> displayRecoveryCompleted -> Q0) @ {myProc1, myProc2, displayFailureOccured,displayRecoveryCompleted}.
+
+
+
+Process = Q0,
+	Q0	= (myCoord.startRecovery -> Q1),
+	Q1	= (<?exp(1.0)?> prepareSetParameter -> FORALL[1]),
+FORALL[i:1..MAXPROXY] = (<?exp(0.01)?> myProxy[i].setParameter -> FORALL[i+1]),
+FORALL[MAXPROXY+1] = FORALL2[1],
+FORALL2[i:1..MAXPROXY] = (myProxy[i].trapParameter -> FORALL2[i+1]),
+FORALL2[MAXPROXY+1] = CONTINUE,
+CONTINUE = (myCoord.recoveryComplete -> Q0) @ {myCoord, myProxy}.
+
+	CTSProcess = Q0,
+	Q0	= (myCoord.startRecovery -> Q1),
+	Q1	= (<?exp(1.0)?> prepareDeletePP -> Q2),
+	Q2	= (<?exp(0.01)?> myCTSProxy.deletePP -> Q3),
+	Q3	= (myCTSProxy.trapDPP -> Q4),
+	Q4	= (<?exp(1.0)?> prepareCreatePP -> Q5),
+	Q5	= (<?exp(0.01)?> myCTSProxy.createPP -> Q6),
+	Q6	= (myCTSProxy.trapCPP -> Q7),
+	Q7	= (myCoord.recoveryComplete -> Q0) @ {myCTSProxy, myCoord}.
+
+
+
+	CTSProxy = Q0,
+	Q0	= (myPort.deletePP -> Q1),
+	Q1	= (<?exp(1.0)?> deletePP -> Q2),
+	Q2	= (<?exp(0.1)?> myPort.trapDPP -> Q3),
+	Q3	= (myPort.createPP -> Q4),
+	Q4	= (<?exp(2.0)?> createPP -> Q5),
+	Q5	= (<?exp(0.1)?> myPort.trapCPP -> Q0)@{myPort}.
+
+
+
+//==================
+//Generated and altered
+
+||Workstation = 
+  (p1:Process || p2:CTSProcess || c:Coordinator)
+   /{p1.myCoord/c.myProc1,
+   p2.myCoord/c.myProc2,
+   myCTSProxy/p2.myCTSProxy,
+   myProxy/p1.myProxy
+   }
+  @ {myCTSProxy, myProxy, c.{displayFailureOccured,displayRecoveryCompleted}}.
+
+
+
+||BIGNICE(N=MAXPROXY) = (w:Workstation || forall [i:1..N]  
+	 ( p[i]:Proxy || e1[i]:Equipment || e2[i]:Equipment || ctsp:CTSProxy)
+    /{w.myProxy[i]/p[i].myWKS,
+    w.myCTSProxy/ctsp.myPort, 
+    p[i].myEquip1/e1[i].myPort,
+    p[i].myEquip2/e2[i].myPort
+    }).
+
+
+timer TimeInSystem <w.c.displayFailureOccured,w.c.displayRecoveryCompleted >
+

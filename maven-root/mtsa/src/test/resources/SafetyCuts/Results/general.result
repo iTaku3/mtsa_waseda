@@ -1,0 +1,19 @@
+\begin{tabular}{ c c c c c c c c c c c c c c c c c }
+test name&c'=c&#As&#G&#F&|cut name&#S_d&T_d&|cut name&#S_d&T_d&|cut name&#S_d&T_d&|cut name&#S_d&T_d\\
+\hline\\
+Augmented Biscotti&Y&1&1&0&GR&-8&14&GR+CUT&-8&128&Opp.Safe&-6&97&Opp.GR&-2&14\\
+section-4.2-biscotti&N&1&1&1&GR&-2&4&GR+CUT&-2&9&Opp.Safe&-2&3&Opp.GR&-3&3\\
+section-4.64-bookstore&Y&1&1&1&GR&-1&9&GR+CUT&-1&22&Opp.Safe&-32&9&Opp.GR&-32&11\\
+section-4.63-autonomousvehicles&N&2&1&0&GR&0&27&GR+CUT&0&34&Opp.Safe&-23&10&Opp.GR&0&11\\
+section-4.62-payandship&Y&1&1&1&GR&-1&20&GR+CUT&-1&48&Opp.Safe&-91&18&Opp.GR&-91&15\\
+section-4.1-travelagency&Y&2&1&1&GR&-49&42&GR+CUT&-49&179&Opp.Safe&-334&65&Opp.GR&-334&49\\
+section-3.83-bookstore&Y&1&1&0&GR&-10&1&GR+CUT&-10&4&Opp.Safe&-40&1&Opp.GR&-40&2\\
+section-3.82-purchaseanddelivery&Y&1&1&0&GR&-4&1&GR+CUT&-4&1&Opp.Safe&-17&0&Opp.GR&-17&1\\
+section-3.81-autonomousvehicles&N&2&1&0&GR&0&3&GR+CUT&0&6&Opp.Safe&-36&1&Opp.GR&0&3\\
+arbiter&N&2&2&0&GR&-1&1&GR+CUT&-1&2&Opp.Safe&-9&0&Opp.GR&-1&1\\
+prod_cell_variant&Y&0&1&0&GR&0&1&GR+CUT&0&3&Opp.Safe&-44&1&Opp.GR&0&1\\
+tomAndJerryV12&Y&0&1&0&GR&-47&2&GR+CUT&-47&6&Opp.Safe&-75&1&Opp.GR&-75&3\\
+section-4.71-productioncell&N&1&1&1&GR&-1559&251&GR+CUT&-1605&711&Opp.Safe&-2408&288&Opp.GR&-2261&244\\
+section-4.61-productioncell&N&4&2&1&GR&0&2024&GR+CUT&0&3052&Opp.Safe&-1368&1085&Opp.GR&0&1031\\
+section-3.1-productioncell&N&4&2&0&GR&0&903&GR+CUT&0&1424&Opp.Safe&-1733&700&Opp.GR&0&285\\
+\end{tabular}

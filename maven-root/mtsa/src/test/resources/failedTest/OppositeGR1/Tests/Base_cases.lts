@@ -1,0 +1,66 @@
+set A = {c_1, c_2, u_1, u_2, as}
+set Controllable = {c_1, c_2}
+
+//the cut is CUT_neg(G)(CASE0) = (u_1 -> CASE0_1), CASE0_1 = (u_1 -> CASE0_1).
+//but the assumptions are not satisfied within the cut, so it should cut the cut
+CASE0 = (u_1 -> CASE0_1 | u_2 -> CASE0_2),
+CASE0_1 = (c_1 -> c_2 -> CASE0_1),
+CASE0_2 = (g -> as -> CASE0_2).
+
+//CASE1 - losing
+CASE1 = (c_1 -> CASE1_1 | c_2 -> CASE1_2),
+CASE1_1 = (u_1 -> as -> CASE1_1),
+CASE1_2 = (u_2 -> CASE1_2).
+
+//CASE2
+CASE2 = (u_1 -> CASE2_1 | u_2 -> CASE2_2),
+CASE2_1 = (c_1 -> CASE2_1_1 | c_2 -> CASE2_1_2),
+CASE2_1_1 = (as -> CASE2_1_1),
+CASE2_1_2 = (c_2 -> CASE2_1_2),
+CASE2_2 = (as -> CASE2_2).
+
+//CASE3
+CASE3 = (u_1 -> CASE3_1 | u_2 -> CASE3_2),
+CASE3_1 = (c_1 -> CASE3_1_1 | c_2 -> CASE3_1_2),
+CASE3_1_1 = (as -> CASE3_1_1),
+CASE3_1_2 = (as -> CASE3_1_2),
+CASE3_2 = (as -> CASE3_2).
+
+fluent F_As = <as, A\{as}>
+fluent F_OverHeated = <overHeated, A\{overHeated}> 
+
+||P_CASE0 = CASE0.
+||P_CASE1 = CASE1.
+||P_CASE2 = CASE2.
+||P_CASE3 = CASE3.
+assert AS = F_As
+
+
+//controllers
+controller ||C0 = (CASE0)~{G1}.
+controller ||C1 = (CASE1)~{G1}.
+controller ||C2 = (CASE2)~{G1}.
+controller ||C3 = (CASE3)~{G1}.
+
+EXP0 = (u_2 -> EXP0_1),
+EXP0_1 = (g -> as -> EXP0_1).
+
+||EXP1 = (CASE1 || CASE2).
+
+EXP2 = (u_2 -> EXP2_1),
+EXP2_1 = (as -> EXP2_1).
+
+EXP3 = (u_2 -> EXP3_1),
+EXP3_1 = (as -> EXP3_1),
+EXP3_2 = (c_1 -> EXP3_2_1 | c_2 -> EXP3_2_2),
+EXP3_2_1 = (as -> EXP3_2_1),
+EXP3_2_2 = (as -> EXP3_2_2).
+
+
+
+//Goals
+controllerSpec G1 = {
+       assumption = {AS}
+       liveness = {AS}
+       controllable = {Controllable}
+}

@@ -1,0 +1,96 @@
+//
+const CLIENTS= 30
+const LAMBDA= 4*CLIENTS
+const MU1A= 0.1*2
+const MU1B= 0.9*2
+const MU2= 2
+const KAPPA= 4
+const E= 2.71828183
+
+// algunas guardas se solapan en el CTMC. En el DTMC combino los rates de las guardas uniformizando los parametros de las geometricas correspondientes
+// ie. si a,b,c son rates que se combinan, quedan los parametros a*(1-e^-(a+b+c))/(a+b+c), b*(1-e^-(a+b+c))/(a+b+c), c*(1-e^-(a+b+c))/(a+b+c). El resto (1-sum de lo anterior) es la p de no moverse.
+// 1- el rate lambda no se combina cuando sc=0
+
+// const LAMBDAPARAM1= 0.9999999999999999957516458410 // 1-pow(e, -lambda)
+const LAMBDAPARAM1= 1-(E**(-LAMBDA))
+// const RESTPARAM1= 0.000000000000000004248354159
+const RESTPARAM1= 1-LAMBDAPARAM1
+
+// 1,2,3- lambda se combina con mu1a y mu1b si 0<sc<c & ph=1
+// const TOTAL123= 42 // lambda+mu1a+mu1b
+const TOTAL123= LAMBDA+MU1A+MU1B
+// const PARAM123= 0.9999999999999999994250477873 // 1-pow(e,-total123)
+const PARAM123= 1-(E**(-TOTAL123))
+// const LAMBDAPARAM123= 0.9523809523809523804048074164 // lambda*param123/total123
+const LAMBDAPARAM123= LAMBDA*PARAM123/TOTAL123
+// const MU1APARAM123= 0.004761904761904761902024037083 // mu1a*param123/total123
+const MU1APARAM123= MU1A*PARAM123/TOTAL123
+// const MU1BPARAM123= 0.04285714285714285711821633374 // mu1b*param123/total123
+const MU1BPARAM123= MU1B*PARAM123/TOTAL123
+// const RESTPARAM123= 0.000000000000000000574952212777
+const RESTPARAM123= 1-LAMBDAPARAM123-MU1APARAM123-MU1BPARAM123
+
+// 1,4- lambda se combina con mu2 si 0<sc<c & ph=2
+// const TOTAL14= 42 // lambda+mu2
+const TOTAL14= LAMBDA+MU2
+// const PARAM14= 0.9999999999999999994250477873 // 1-pow(e,-total14)
+const PARAM14= 1-(E**(-TOTAL14))
+// const LAMBDAPARAM14= 0.9523809523809523804048074164 // lambda*param14/total14
+const LAMBDAPARAM14= LAMBDA*PARAM14/TOTAL14
+// const MU2PARAM14= 0.04761904761904761902024037083 // mu2*param14/total14
+const MU2PARAM14= MU2*PARAM14/TOTAL14
+// const RESTPARAM14= 0.00000000000000000057495221277
+const RESTPARAM14= 1-LAMBDAPARAM14-MU2PARAM14
+
+// 2,3- mu1a y mu1b combinan si sc=c & ph=1
+// const TOTAL23= 2 // mu1a+mu1b
+const TOTAL23= MU1A+MU1B
+// const PARAM23= 0.8646647169168265484133328841 // 1-pow(e,-total23)
+const PARAM23= 1-(E**(-TOTAL23))
+// const MU1APARAM23= 0.0864664716916826548413332884 // mu1a*param23/total23
+const MU1APARAM23= MU1A*PARAM23/TOTAL23
+// const MU1BPARAM23= 0.7781982452251438935719995955 // mu1b*param23/total23
+const MU1BPARAM23= MU1B*PARAM23/TOTAL23
+// const RESTPARAM23= 0.1353352830831734515866671161
+const RESTPARAM23= 1-MU1APARAM23-MU1BPARAM23
+
+// 4- mu2 no se combina si sc=c & ph=2
+// const MU2PARAM4= 0.8646647169168265484133328841 // 1-pow(e,-mu2)
+const MU2PARAM4= 1-(E**(-MU2))
+// const RESTPARAM4= 0.1353352830831734515866671159
+const RESTPARAM4= 1-MU2PARAM4
+
+// const ONEPARAM= 0.6321205590371032278135781086 // 1-pow(e,-1)
+const ONEPARAM= 1-(E**(-1))
+// const KAPPAPARAM= 0.9816843611527973057759453906 // 1-pow(e,-kappa)
+const KAPPAPARAM= 1-(E**(-KAPPA))
+
+// Environment model. Governs client pushing behaviour, waiting time. Queue routing?
+// probabilistic mdp
+// ENVIRONMENT= ENV[0],
+// ENV[cs:0..CLIENTS] = 
+
+
+// 3 variables: #clients in queue (0..CLIENTS), phase (1,2), routestatus (boolean: 0,1)
+probabilistic mdp
+SERVERC= STARTSERVERC[0][1][0],
+STARTSERVERC[cs:0..CLIENTS][phase:1..2][doRoute:0..1]= ( when doRoute == 0 && cs == 0 tick -> {LAMBDAPARAM1:STARTSERVERC[cs+1][phase][doRoute] + RESTPARAM1:STARTSERVERC[cs][phase][doRoute]}
+													   | when doRoute == 0 && cs < CLIENTS && cs > 0 && phase == 1 tick -> {LAMBDAPARAM123:STARTSERVERC[cs+1][phase][doRoute] + MU1APARAM123:STARTSERVERC[cs][2][doRoute] + MU1BPARAM123:STARTSERVERC[cs][phase][1] + RESTPARAM123:STARTSERVERC[cs][phase][doRoute]}
+													   | when doRoute == 0 && cs < CLIENTS && cs > 0 && phase == 2 tick -> {LAMBDAPARAM14:STARTSERVERC[cs+1][phase][doRoute] + MU2PARAM14:STARTSERVERC[cs][phase][1] + RESTPARAM14:STARTSERVERC[cs][phase][doRoute]}
+													   | when doRoute == 0 && cs == CLIENTS && phase == 1 tick -> {MU1APARAM23:STARTSERVERC[cs][2][doRoute] + MU1BPARAM23:STARTSERVERC[cs][phase][1] + RESTPARAM23:STARTSERVERC[cs][phase][doRoute]}
+													   | when doRoute == 0 && cs == CLIENTS && phase == 2 tick -> {MU2PARAM4:STARTSERVERC[cs][phase][1] + RESTPARAM4:STARTSERVERC[cs][phase][doRoute]}
+													   | when doRoute == 1 && cs > 0 && phase == 1 route -> {1.0:STARTSERVERC[cs-1][phase][0]}
+													   | when doRoute == 1 && cs > 0 && phase == 2 route -> {1.0:STARTSERVERC[cs-1][1][0]}
+													   ).
+
+// module serverM
+//	sm : [0..c];
+//	
+//	[route]	(sm<c) -> (sm'=sm+1);
+//	[tick2] (sm>0) -> kappaParam:(sm'=sm-1) + 1-kappaParam:(sm'=sm);
+// endmodule
+
+// rewards "time"
+//	[tick] true: 1;
+//	[tick2] true: 1;
+// endrewards

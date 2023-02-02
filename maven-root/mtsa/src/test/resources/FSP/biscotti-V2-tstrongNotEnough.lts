@@ -1,0 +1,47 @@
+set A = {idle, cook, cooking, finishedCooking, fix, moveToBelt, broken, notBroken, salt, noSalt}
+set Controllable = {idle, cook, moveToBelt, throwAway}
+set FailureSet = {broken}
+
+BISCOTTI = (idle->BISCOTTI | cook->COOKING), 
+COOKING = (cooking->COOKING | finishedCooking->STATUS), 
+STATUS = (broken->BROKEN | notBroken->NOT_BROKEN), 
+BROKEN = ({throwAway, moveToBelt}->BISCOTTI | fix->cook->COOKING),
+NOT_BROKEN = ({throwAway, moveToBelt}->BISCOTTI | cook->COOKING).
+
+SALT = ({salt, noSalt}->SALTED),
+SALTED = ({A\{salt, noSalt}}->SALT).
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_Cooked = <finishedCooking, cook>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Choice = <{broken, notBroken}, A\{broken, notBroken}>
+fluent F_Salt_Avail = <{salt, noSalt}, A\{salt, noSalt}>
+fluent F_Salt = <salt, A\{salt}>
+fluent F_Controlled = <Controllable, A\{Controllable}>
+assert MoveToBelt = F_MoveToBelt
+
+ltl_property SALT_AFTER_CHOICE = [](F_Choice -> X F_Salt_Avail)
+
+assert FinishCooking = !F_Cooking
+assert Failures = F_Failures
+assert Salty = F_Salt
+
+SUCCESSFULLY_COOKED_TWICE = (notBroken->SUCCESSFULLY_COOKED_ONCE | broken->SUCCESSFULLY_COOKED_TWICE), 
+SUCCESSFULLY_COOKED_ONCE = (notBroken->salt->moveToBelt->SUCCESSFULLY_COOKED_TWICE | broken->SUCCESSFULLY_COOKED_TWICE). //broken->SUCCESSFULLY_COOKED_ONCE).
+
+
+||A = (SALT_AFTER_CHOICE || SUCCESSFULLY_COOKED_TWICE || BISCOTTI).
+
+//controllers
+controller ||C = (BISCOTTI || SALT)~{G1}.
+checkCompatibility ||Comp = (BISCOTTI || SALT)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {SUCCESSFULLY_COOKED_TWICE, SALT_AFTER_CHOICE}
+       failure = {Failures}
+       assumption = {FinishCooking, Salty}
+       liveness = {MoveToBelt}
+       controllable = {Controllable}
+}

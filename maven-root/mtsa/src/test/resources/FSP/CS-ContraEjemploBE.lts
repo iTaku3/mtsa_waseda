@@ -1,0 +1,21 @@
+set A = {c1, c2, a, g1}
+set C = {c1, g1, c2}
+set U = {A\{C}}
+
+fluent FG1 = <g1, A\{g1}>
+fluent FG2 = <g2, A\{g2}>
+fluent FA = <a, A\{a}>
+
+assert Goal1 = FG1
+assert Goal2 = FG2
+assert A = FA
+
+M = (c1->l->M | c2->g1->a->M).
+
+controllerSpec G = {
+	safety = {}
+	assumption = {A}
+	liveness = {Goal1}
+	controllable = {C}
+}
+controller ||C = M~{G}.

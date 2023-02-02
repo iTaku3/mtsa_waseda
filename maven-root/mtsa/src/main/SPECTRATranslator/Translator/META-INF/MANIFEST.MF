@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: D1_parsing
+Bundle-SymbolicName: SPECTRA_MTSA_Translator
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: D1.parsing
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: tau.smlab.syntech.Spectra;bundle-version="1.0.0",
+ tau.smlab.syntech.spectragameinput;bundle-version="1.0.0",
+ tau.smlab.syntech.gameinput;bundle-version="1.0.0",
+ tau.smlab.syntech.gameinputtrans;bundle-version="1.0.0",
+ org.eclipse.xtext;bundle-version="2.25.0",
+ org.apache.log4j;bundle-version="1.2.15",
+ org.eclipse.core.runtime;bundle-version="3.20.100",
+ org.eclipse.xtext.xbase.lib;bundle-version="2.25.0"

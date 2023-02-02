@@ -1,0 +1,81 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {pm,s,gm}
+set OldA = {ControllableActions}
+
+
+//Environments
+
+//FSP
+ENV = ({pm,s,gm} -> ENV).
+
+||OldEnvironment = (ENV).
+//||NewEnvironment = ().
+
+//Fluents declaration
+fluent PM = <pm,gm>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert PRESCRIBE_BEFORE_SIGN = (s -> PM)
+assert GIVE_AFTER_SIGN = (!gm W s)
+
+
+ltl_property P_PRESCRIBE_BEFORE_SIGN = []PRESCRIBE_BEFORE_SIGN
+ltl_property P_GIVE_AFTER_SIGN = GIVE_AFTER_SIGN
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_PRESCRIBE_BEFORE_SIGN, P_GIVE_AFTER_SIGN}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+/*
+assert PHI_ = ()
+
+ltl_property P_PHI_ = []PHI_
+
+
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec= {
+    safety = {P_PHI_}
+    controllable = {NewControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+ltl_property T = ()
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = OldEnvironment,
+    hatEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+    // T = True is executed if no transition requirement is set
+	//transition = T,
+	nonblocking,
+    updateFluents = {}
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = ()
+assert S_NEW = ()
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+*/

@@ -1,0 +1,29 @@
+const N = 3
+range IDs = 1..N
+set ControlledActions = {c[IDs]}
+set UnControlledActions = {u[IDs]}
+
+set A = {ControlledActions, UnControlledActions}
+
+
+DOMAIN = (c[1] -> ACTION_1 | c[2] -> FINISH),
+ACTION_1 = (u[1] -> FINISH),
+FINISH = (c[3] -> u[2] -> DOMAIN).
+
+//SENSED STATES
+fluent S1 = <u[1], c[3]>
+fluent S3 = <c[3], {c[1],c[2]}>
+
+//Goal in terms of sensed state
+assert MyGoal = S3
+controllerSpec G1 = {
+       liveness = {MyGoal}
+       controllable = {ControlledActions}
+}
+
+//controllers
+controller ||C = (DOMAIN)~{G1}.
+
+
+//Which fluents need to be added manually to obtain a plan. What would the plan be (i.e. can you give us the mapping state assertion to controlled action)
+//We assumption that the fluents you will propose should be in terms of controlled actions, right?

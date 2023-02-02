@@ -1,0 +1,65 @@
+//unrealizable/Unrealizable2-SelfParkingSmartCarLTL_974_AspectLTLAspect_unrealizable automatically_translated 
+
+set ControlledActions = {steeringmot.max_right, steeringmot.max_left, steeringmot.center, steeringmot.align_right, steeringmot.align_left, sensormot.fwd, sensormot.bwd, enginemot.fwd, enginemot.bwd, enginemot.stop, enginemot.parking_bwd, enginemot.parking_fwd, spec_carstatus.seeking_for_ps, spec_carstatus.measure_parking, spec_carstatus.prepare_for_parallel_parking, spec_carstatus.parallel, spec_carstatus.perpendicular, spec_blankspotscounter[0], spec_blankspotscounter[1], spec_blankspotscounter[2], spec_blankspotscounter[3], spec_blankspotscounter[4], spec_blankspotscounter[5], spec_prepareparallelcounter[0], spec_prepareparallelcounter[1], spec_parkingparallelphase.phase_none, spec_parkingparallelphase.first_phase, spec_parkingparallelphase.second_phase, spec_parkingparallelphase.parking_failure, spec_parkingparallelphase.parking_success, spec_parkingperpendicularphase.phase_none, spec_parkingperpendicularphase.first_phase, spec_parkingperpendicularphase.second_phase, spec_parkingperpendicularphase.third_phase, spec_parkingperpendicularphase.parking_failure, spec_parkingperpendicularphase.parking_success, spec_alignmentstates.state_centered, spec_alignmentstates.state_toofar, spec_alignmentstates.state_tooclose, spec_alignmentstates.alignment_failure, spec_capableperpendicular.yes, spec_capableperpendicular.no, tick, sys_constraint.3471.respondsto.responded, not_sys_constraint.3471.respondsto.responded, sys_constraint.3486.respondsto.responded, not_sys_constraint.3486.respondsto.responded, env_constraint.3500.respondsto.responded, not_env_constraint.3500.respondsto.responded, env_constraint.3501.respondsto.responded, not_env_constraint.3501.respondsto.responded, env_constraint.3502.respondsto.responded, not_env_constraint.3502.respondsto.responded}
+set UncontrolledActions = {obstacle.clear, obstacle.blocked, sidesensor.too_close, sidesensor.too_far, sidesensor.centered, sidesensor.ps_too_far, sidesensor.ps_too_close, sidesensor.ps_centered, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Obstacle_Actions = {obstacle.clear, obstacle.blocked}
+fluent OBSTACLE_CLEAR = <obstacle.clear, Obstacle_Actions\{obstacle.clear}>
+fluent OBSTACLE_BLOCKED = <obstacle.blocked, Obstacle_Actions\{obstacle.blocked}>
+
+set SideSensor_Actions = {sidesensor.too_close, sidesensor.too_far, sidesensor.centered, sidesensor.ps_too_far, sidesensor.ps_too_close, sidesensor.ps_centered}
+fluent SIDESENSOR_TOO_CLOSE = <sidesensor.too_close, SideSensor_Actions\{sidesensor.too_close}>
+fluent SIDESENSOR_TOO_FAR = <sidesensor.too_far, SideSensor_Actions\{sidesensor.too_far}>
+fluent SIDESENSOR_CENTERED = <sidesensor.centered, SideSensor_Actions\{sidesensor.centered}>
+fluent SIDESENSOR_PS_TOO_FAR = <sidesensor.ps_too_far, SideSensor_Actions\{sidesensor.ps_too_far}>
+fluent SIDESENSOR_PS_TOO_CLOSE = <sidesensor.ps_too_close, SideSensor_Actions\{sidesensor.ps_too_close}>
+fluent SIDESENSOR_PS_CENTERED = <sidesensor.ps_centered, SideSensor_Actions\{sidesensor.ps_centered}>
+
+set SteeringMot_Actions = {steeringmot.max_right, steeringmot.max_left, steeringmot.center, steeringmot.align_right, steeringmot.align_left}
+fluent STEERINGMOT_MAX_RIGHT = <steeringmot.max_right, SteeringMot_Actions\{steeringmot.max_right}>
+fluent STEERINGMOT_MAX_LEFT = <steeringmot.max_left, SteeringMot_Actions\{steeringmot.max_left}>
+fluent STEERINGMOT_CENTER = <steeringmot.center, SteeringMot_Actions\{steeringmot.center}>
+fluent STEERINGMOT_ALIGN_RIGHT = <steeringmot.align_right, SteeringMot_Actions\{steeringmot.align_right}>
+fluent STEERINGMOT_ALIGN_LEFT = <steeringmot.align_left, SteeringMot_Actions\{steeringmot.align_left}>
+
+set SensorMot_Actions = {sensormot.fwd, sensormot.bwd}
+fluent SENSORMOT_FWD = <sensormot.fwd, SensorMot_Actions\{sensormot.fwd}>
+fluent SENSORMOT_BWD = <sensormot.bwd, SensorMot_Actions\{sensormot.bwd}>
+
+set EngineMot_Actions = {enginemot.fwd, enginemot.bwd, enginemot.stop, enginemot.parking_bwd, enginemot.parking_fwd}
+fluent ENGINEMOT_FWD = <enginemot.fwd, EngineMot_Actions\{enginemot.fwd}>
+fluent ENGINEMOT_BWD = <enginemot.bwd, EngineMot_Actions\{enginemot.bwd}>
+fluent ENGINEMOT_STOP = <enginemot.stop, EngineMot_Actions\{enginemot.stop}>
+fluent ENGINEMOT_PARKING_BWD = <enginemot.parking_bwd, EngineMot_Actions\{enginemot.parking_bwd}>
+fluent ENGINEMOT_PARKING_FWD = <enginemot.parking_fwd, EngineMot_Actions\{enginemot.parking_fwd}>
+
+set Spec_carStatus_Actions = {spec_carstatus.seeking_for_ps, spec_carstatus.measure_parking, spec_carstatus.prepare_for_parallel_parking, spec_carstatus.parallel, spec_carstatus.perpendicular}
+fluent SPEC_CARSTATUS_SEEKING_FOR_PS = <spec_carstatus.seeking_for_ps, Spec_carStatus_Actions\{spec_carstatus.seeking_for_ps}>
+fluent SPEC_CARSTATUS_MEASURE_PARKING = <spec_carstatus.measure_parking, Spec_carStatus_Actions\{spec_carstatus.measure_parking}>
+fluent SPEC_CARSTATUS_PREPARE_FOR_PARALLEL_PARKING = <spec_carstatus.prepare_for_parallel_parking, Spec_carStatus_Actions\{spec_carstatus.prepare_for_parallel_parking}>
+fluent SPEC_CARSTATUS_PARALLEL = <spec_carstatus.parallel, Spec_carStatus_Actions\{spec_carstatus.parallel}>
+fluent SPEC_CARSTATUS_PERPENDICULAR = <spec_carstatus.perpendicular, Spec_carStatus_Actions\{spec_carstatus.perpendicular}>
+
+set Spec_blankSpotsCounter_Actions = {spec_blankspotscounter[0], spec_blankspotscounter[1], spec_blankspotscounter[2], spec_blankspotscounter[3], spec_blankspotscounter[4], spec_blankspotscounter[5]}
+fluent SPEC_BLANKSPOTSCOUNTER[0] = <spec_blankspotscounter[0], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[0]}>
+fluent SPEC_BLANKSPOTSCOUNTER[1] = <spec_blankspotscounter[1], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[1]}>
+fluent SPEC_BLANKSPOTSCOUNTER[2] = <spec_blankspotscounter[2], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[2]}>
+fluent SPEC_BLANKSPOTSCOUNTER[3] = <spec_blankspotscounter[3], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[3]}>
+fluent SPEC_BLANKSPOTSCOUNTER[4] = <spec_blankspotscounter[4], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[4]}>
+fluent SPEC_BLANKSPOTSCOUNTER[5] = <spec_blankspotscounter[5], Spec_blankSpotsCounter_Actions\{spec_blankspotscounter[5]}>
+
+set Spec_prepareParallelCounter_Actions = {spec_prepareparallelcounter[0], spec_prepareparallelcounter[1]}
+fluent SPEC_PREPAREPARALLELCOUNTER[0] = <spec_prepareparallelcounter[0], Spec_prepareParallelCounter_Actions\{spec_prepareparallelcounter[0]}>
+fluent SPEC_PREPAREPARALLELCOUNTER[1] = <spec_prepareparallelcounter[1], Spec_prepareParallelCounter_Actions\{spec_prepareparallelcounter[1]}>
+
+set Spec_parkingParallelPhase_Actions = {spec_parkingparallelphase.phase_none, spec_parkingparallelphase.first_phase, spec_parkingparallelphase.second_phase, spec_parkingparallelphase.parking_failure, spec_parkingparallelphase.parking_success}
+fluent SPEC_PARKINGPARALLELPHASE_PHASE_NONE = <spec_parkingparallelphase.phase_none, Spec_parkingParallelPhase_Actions\{spec_parkingparallelphase.phase_none}>
+fluent SPEC_PARKINGPARALLELPHASE_FIRST_PHASE = <spec_parkingparallelphase.first_phase, Spec_parkingParallelPhase_Actions\{spec_parkingparallelphase.first_phase}>
+fluent SPEC_PARKINGPARALLELPHASE_SECOND_PHASE = <spec_parkingparallelphase.second_phase, Spec_parkingParallelPhase_Actions\{spec_parkingparallelphase.second_phase}>
+fluent SPEC_PARKINGPARALLELPHASE_PARKING_FAILURE = <spec_parkingparallelphase.parking_failure, Spec_parkingParallelPhase_Actions\{spec_parkingparallelphase.parking_failure}>
+fluent SPEC_PARKINGPARALLELPHASE_PARKING_SUCCESS = <spec_parkingparallelphase.parking_success, Spec_parkingParallelPhase_Actions\{spec_parkingparallelphase.parking_success}>
+
+set Spec_parkingPerpendicularPhase_Actions = {spec_parkingperpendicularphase.phase_none, spec_parkingperpendicularphase.first_phase, spec_parkingperpendicularphase.second_phase, spec_parkingperpendicularphase.third_phase, spec_parkingperpendicularphase.parking_failure, spec_parkingperpendicularphase.parking_success}
+fluent SPEC_PARKINGPERPENDICULARPHASE_PHASE_NONE = <spec_parkingperpendicularphase.phase_none, Spec_parkingP

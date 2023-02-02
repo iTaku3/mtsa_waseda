@@ -1,0 +1,166 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+const LOWBAT = 1
+const MAXBAT = 10
+const MAXWEATHER = 2
+
+set ControllableActions = {return2base, move, low, mid, high, scan, picture, takeoff}
+set NewControllableActions = {ControllableActions, follow, weather}
+set AlphabetOld = {return2base, move, low, mid, high, scan, picture, takeoff,
+				 scan.val[0..1], pictureOk[0..1], lowBattery}
+set AlphabetNew = {return2base, move, low, mid, high, scan, picture, follow, takeoff,
+				 scan.val[0..1], pictureOk[0..1], lowBattery}
+
+
+    //oldEnvironment
+    MISSION 	= (takeoff -> HEIGHT),
+	HEIGHT		= ({low,mid,high} -> UAV),
+    UAV			= ({move,low,mid,high} -> UAV
+                | return2base -> MISSION 
+				| picture -> pictureOk[0..1] -> UAV
+                | scan -> scan.val[0..1] -> UAV).
+
+
+	BATTERY_COUNTER(N=MAXBAT) = BAT[N],
+    BAT[i:0..N]= (when (i==LOWBAT) lowBattery -> BAT[i-1] |
+    			  when (i!=LOWBAT) {move,high,mid,low, scan, picture} -> BAT[i-1] |
+                  when (i == 0) {move,high,mid,low, scan, picture} -> ERROR | 
+				  return2base -> BAT[N]
+                  ).
+
+    //NewEnvironment
+    NEW_MISSION     = (takeoff -> HEIGHT),
+	HEIGHT			= ({high,mid,low} -> UAV),
+    UAV             = ({follow,move,high,mid,low} -> UAV 
+                    | return2base -> NEW_MISSION 
+					| picture -> pictureOk[0..1] -> UAV
+                    | scan -> scan.val[0..1] -> UAV).
+
+	NEW_BATTERY_COUNTER(N=MAXBAT) = BAT[N],
+    BAT[i:0..N]= (when (i==LOWBAT) lowBattery -> BAT[i-1] |
+    			  when (i!=LOWBAT) {move,high,mid,low, scan, picture, follow} -> BAT[i-1] |
+				  when (i == 0) {move,high,mid,low, scan, picture, follow} -> ERROR |
+                  return2base -> BAT[N]
+                  ).
+
+||OldEnvironment = (MISSION || BATTERY_COUNTER).
+||NewEnvironment = (NEW_MISSION || NEW_BATTERY_COUNTER).
+
+//Fluents declaration
+fluent FlyingHigh = <high,{mid,low,return2base}>
+fluent FlyingMid = <mid,{high,low,return2base}>
+fluent FlyingLow = <low,{mid,high,return2base}>
+fluent ScanPending	  = <scan,scan.val[0..1]>
+fluent ZoneScaned = <{scan.val[0], scan.val[1]},{move,return2base}>
+fluent SuspiciousActivityDetected = <scan.val[1],{move,return2base}>
+fluent NewSuspiciousActivityDetected = <scan.val[1],{return2base}>
+fluent ScanProcessing	= <scan,{scan.val[0],pictureOk[1],return2base}>
+fluent PictureSent		= <pictureOk[1],{move,return2base}>
+fluent NoBattery        = <lowBattery,takeoff>
+fluent Following = <follow,return2base>
+fluent HeightSet = <{high,mid,low},return2base>
+fluent MissionStarted = <takeoff,return2base>
+fluent ScanFailed	  = <scan.val[0],{move,return2base}>
+fluent PicturePending   = <picture,pictureOk[0..1]>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+assert DONT_SCAN_TWICE			= (scan ->!ZoneScaned)
+assert ALWAYS_FLY_HIGH 			= (MissionStarted -> (!FlyingLow && !FlyingMid))
+assert HOW_TO_MOVE				= ((move -> !ScanProcessing))
+assert DONT_PICTURE_TWICE		= (picture -> !PictureSent)
+assert DETECTED_ACTIONS  		= ((picture -> SuspiciousActivityDetected) && (scan -> !SuspiciousActivityDetected))
+assert HIGH_PRIORITY_TO_MISSION = (return2base -> NoBattery)
+
+ltl_property P_DONT_SCAN_TWICE = []DONT_SCAN_TWICE
+ltl_property P_ALWAYS_FLY_HIGH = []ALWAYS_FLY_HIGH 
+ltl_property P_HOW_TO_MOVE = []HOW_TO_MOVE
+ltl_property P_DONT_PICTURE_TWICE = []DONT_PICTURE_TWICE
+ltl_property P_DETECTED_ACTIONS = []DETECTED_ACTIONS
+ltl_property P_HIGH_PRIORITY_TO_MISSION = []HIGH_PRIORITY_TO_MISSION
+
+controllerSpec OldSpec = {
+    safety = {P_ALWAYS_FLY_HIGH, P_DETECTED_ACTIONS, P_HIGH_PRIORITY_TO_MISSION, P_HOW_TO_MOVE, P_DONT_PICTURE_TWICE, P_DONT_SCAN_TWICE}
+    controllable = {ControllableActions}
+}
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldController || OldEnvironment).
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert ALWAYS_FLY_LOW = (MissionStarted -> (!FlyingHigh && !FlyingMid))
+assert NEW_HOW_TO_MOVE = ((move -> !Following) && (move -> !NewSuspiciousActivityDetected))
+assert FOLLOWING_ACTIONS = ((picture -> Following) && (scan -> !Following) &&
+					 (scan -> !SuspiciousActivityDetected) && (PictureSent -> !follow))
+assert NO_FOLLOW_BEFORE_SCAN = (follow -> SuspiciousActivityDetected)
+
+ltl_property P_ALWAYS_FLY_LOW = []ALWAYS_FLY_LOW
+ltl_property P_NEW_HOW_TO_MOVE = []NEW_HOW_TO_MOVE
+ltl_property P_FOLLOWING_ACTIONS = []FOLLOWING_ACTIONS
+ltl_property P_NO_FOLLOW_BEFORE_SCAN = []NO_FOLLOW_BEFORE_SCAN
+
+controllerSpec NewSpec = {
+    safety = {P_ALWAYS_FLY_LOW, P_FOLLOWING_ACTIONS, P_NO_FOLLOW_BEFORE_SCAN, P_HIGH_PRIORITY_TO_MISSION,
+			 P_NEW_HOW_TO_MOVE, P_DONT_SCAN_TWICE}
+    controllable = {NewControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewControllerAndNewEnvironment = (NewController || NewEnvironment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+
+assert AnyAction = (return2base || move || low || mid || high || scan ||
+				 picture || follow ||  lowBattery || pictureOk[0] || pictureOk[1] || scan.val[0] || scan.val[1])
+
+ltl_property T_LOW = ((StartNewSpec -> (FlyingLow || !HeightSet))) // same as T = True
+ltl_property T_NO_TP_AND_NOT_UPDATE_AT_BASE = ((AnyAction -> (!((StopOldSpec && !StartNewSpec)  || (StartNewSpec && !StopOldSpec) ))) // No Controller
+ && (StartNewSpec -> (MissionStarted && HeightSet))  )
+ltl_property T_NO_MOVE_WHILE_UPDATE = (move -> (!((StopOldSpec && !StartNewSpec)  || (StartNewSpec && !StopOldSpec) )))
+ltl_property T_NO_PICTURE_WHILE_UPDATE = (picture -> (!((StopOldSpec && !StartNewSpec)  || (StartNewSpec && !StopOldSpec) )))
+
+// Updating Controller Fluents
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = OldEnvironment,
+    oldPropositions = {MissionStarted, FlyingHigh, FlyingMid, FlyingLow, SuspiciousActivityDetected, NoBattery, ScanPending, 
+					ScanFailed, PicturePending,Following, ZoneScaned, PictureSent}
+    newEnvironment = NewEnvironment,
+    newPropositions = {MissionStarted, FlyingHigh, FlyingMid, FlyingLow, NewSuspiciousActivityDetected, NoBattery, ScanPending, 
+					ScanFailed, PicturePending,Following, ZoneScaned, PictureSent}
+    oldGoal = OldSpec,
+    newGoal = NewSpec,
+//    T = True is executed if no transition requirement is set
+//    transition = T_LOW,
+//    transition = T_NO_TP_AND_NOT_UPDATE_AT_BASE,
+//    transition = T_NO_MOVE_WHILE_UPDATE,
+    transition = T_NO_PICTURE_WHILE_UPDATE,
+	nonblocking,
+
+
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = (ALWAYS_FLY_HIGH && DETECTED_ACTIONS && HIGH_PRIORITY_TO_MISSION && HOW_TO_MOVE && DONT_PICTURE_TWICE && DONT_SCAN_TWICE)
+assert S_NEW = (ALWAYS_FLY_LOW && FOLLOWING_ACTIONS && NO_FOLLOW_BEFORE_SCAN && HIGH_PRIORITY_TO_MISSION && NEW_HOW_TO_MOVE && DONT_SCAN_TWICE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+

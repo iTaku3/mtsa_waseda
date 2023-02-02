@@ -1,0 +1,193 @@
+/*
+This example is an interpretation of the MEDICAL(5) problem described for contingent planning 
+in 'GPT: A Tool for Planning with Uncertainty and Partial Information'.
+The problem involves a patient that can be healthy or may have N=1...5 diseases. There is a 
+particular medication for each of the diseases, but if the patient receives the wrong one dies 
+instead of being cured. 
+In order to find which illness the patient has the are are two tests: stain and count cells. 
+Stain has 3 possible results while count cells just high or normal. If the stain result is 1 or 2, 
+we need to perform also count cells to desambiguate the results. When the result of the stain 3 the 
+patient has the illness 5 despite the result of the count cells. 
+Each of the illness is defined using def Illness(s,c), and the corresponding medication is medicate.[1..5].
+*/
+const N = 5
+range Illness = 1..N 
+range Medicine = 1..N
+set High = {[1],[3],[5]}
+set Normal = {[2],[4]}
+set Stain1 = {[3],[4]}
+set Stain2 = {[1],[2]}
+set Stain3 = {[5]}
+set Stain = {[1],[2],[3]}
+const OK = 1
+const H = 2
+const NO_RES = 0
+set Cells = {[OK],[H]}
+set StainPlus = {Stain,[NO_RES]}
+set CellsPlus = {Cells,[NO_RES]}
+
+
+set Medicate = {medicate.[m:Medicine]}
+set PersonResult = {cured, dead}
+set Reset = {cured,dead}
+set Controllable = {sStain, inspect, analyseBlood, sCountCells, Medicate}
+set Uncontrollable = {eStain, resultS.Stain, bloodResult.Cells, eCountCells, PersonResult, leave, enter}
+set Alphabet = {Controllable, Uncontrollable}
+
+def Illness1(s,c) = (s==2 && c==H)
+def Illness2(s,c) = (s==2 && c==OK)
+def Illness3(s,c) = (s==1 && c==H)
+def Illness4(s,c) = (s==1 && c==OK)
+def Illness5(s,c) = (s==3 && c!=OK)
+def Uncertainty(s,c) = !(Illness1(s,c) || Illness2(s,c) || Illness3(s,c) || Illness4(s,c) || Illness5(s,c))
+
+MEDICATE = (enter -> RESULTS[NO_RES][NO_RES]),
+RESULTS[s:StainPlus][c:CellsPlus] = (when Illness1(s,c) medicate.[m:Medicine] -> CERTAINTY[m][1] |
+									 when Illness2(s,c) medicate.[m:Medicine] -> CERTAINTY[m][2] |
+									 when Illness3(s,c) medicate.[m:Medicine] -> CERTAINTY[m][3] |
+									 when Illness4(s,c) medicate.[m:Medicine] -> CERTAINTY[m][4] |
+									 when Illness5(s,c) medicate.[m:Medicine] -> CERTAINTY[m][5] |
+									 when Uncertainty(s,c) medicate.[m:Medicine] -> UNCERTAINTY  |
+									 bloodResult.[rc:Cells] -> RESULTS[s][rc] |
+									 resultS.[rs:Stain] -> RESULTS[rs][c]),
+CERTAINTY[m:Medicine][i:Illness] =  (when (i!=m) dead -> DEATH |
+									 when (i==m) cured -> leave-> EMPTY),
+UNCERTAINTY = (cured -> leave -> EMPTY | dead -> DEATH), 
+EMPTY = (cured -> EMPTY), 
+DEATH = (dead -> DEATH).
+
+
+PACIENT = (enter -> IN), 
+IN = (cured -> HEALTHY | dead -> DEATH), 
+HEALTHY = (leave -> EMPTY), 
+EMPTY = (cured -> EMPTY),
+DEATH = (dead -> DEATH).
+
+TEST_STAIN = (sStain -> PROCESSING), 
+PROCESSING = (eStain -> STOP).
+
+TEST_CELLS = (sCountCells -> PROCESSING), 
+PROCESSING = (eCountCells -> STOP).
+
+DOCTOR_STAIN = (inspect -> INSPECTING),
+INSPECTING = (resultS.[j:Stain] -> STOP).
+
+DOCTOR_CELLS = (analyseBlood -> INSPECTING),
+INSPECTING = (bloodResult.[j:Cells] -> STOP).
+
+
+|| TESTS = (TEST_STAIN || TEST_CELLS).
+
+|| DOCTOR = (DOCTOR_STAIN || DOCTOR_CELLS).
+
+|| Game = (MEDICATE||TESTS||DOCTOR||PACIENT).
+
+fluent Cured = <cured, Alphabet\{cured}>
+fluent Dead = <dead, Alphabet\{dead}>
+
+fluent FStain = <sStain, eStain>
+fluent FCountCells = <sCountCells, eCountCells>
+fluent FInspect = <inspect, resultS.Stain>
+fluent FAnalyseBlood = <analyseBlood, bloodResult.Cells>
+fluent FMedicates = <Medicate, cured>
+fluent EndStain = <eStain, Reset>
+fluent EndCountCells = <eCountCells, Reset>
+fluent Pacient = <enter, Reset> 
+fluent Work = <Controllable, Reset> 
+
+ltl_property ANALYSE_AFTER_TEST = [](analyseBlood -> EndCountCells)
+ltl_property INSPECT_AFTER_TEST = [](inspect -> EndStain)
+ltl_property WORK_ONLY_IF_THERE_IS_A_PATIENT = [](Work -> Pacient)
+
+assert Stain  = FStain
+assert CountCells = FCountCells
+assert Inspect  = FInspect
+assert AnalyseBlood = FAnalyseBlood
+assert Medicate = FMedicates
+
+controllerSpec Goal = {
+	safety = {ANALYSE_AFTER_TEST, INSPECT_AFTER_TEST, WORK_ONLY_IF_THERE_IS_A_PATIENT}
+	liveness = {Cured}
+  	controllable = {Controllable}
+}
+
+controller ||C = Game~{Goal}.
+
+assert TESTGOAL = <> Cured
+
+||ExpectedC  = Expected.
+
+Expected = Q0,
+	Q0	= (enter -> Q8),
+	Q1	= (sStain -> Q21),
+	Q2	= (cured -> Q43),
+	Q3	= (sCountCells -> Q15
+		  |resultS[2] -> Q30
+		  |resultS[3] -> Q39
+		  |resultS[1] -> Q45),
+	Q4	= (eCountCells -> Q1
+		  |sStain -> Q14),
+	Q5	= (leave -> Q50),
+	Q6	= (eCountCells -> Q38),
+	Q7	= (cured -> Q5),
+	Q8	= (sCountCells -> Q4
+		  |sStain -> Q48),
+	Q9	= (bloodResult[2] -> Q42
+		  |bloodResult[1] -> Q51),
+	Q10	= (medicate[2] -> Q7),
+	Q11	= (resultS[1] -> Q38
+		  |resultS[3] -> Q40
+		  |resultS[2] -> Q49),
+	Q12	= (cured -> Q36
+		  |eCountCells -> Q47),
+	Q13	= (cured -> Q17
+		  |eCountCells -> Q20),
+	Q14	= (eCountCells -> Q21
+		  |eStain -> Q28),
+	Q15	= (resultS[1] -> Q6
+		  |eCountCells -> Q11
+		  |resultS[2] -> Q32
+		  |resultS[3] -> Q41),
+	Q16	= (inspect -> Q11),
+	Q17	= (cured -> Q17
+		  |eCountCells -> Q20),
+	Q18	= (inspect -> Q3
+		  |sCountCells -> Q28),
+	Q19	= (cured -> Q31),
+	Q20	= (cured -> Q43),
+	Q21	= (eStain -> Q16),
+	Q22	= (cured -> Q22),
+	Q23	= (cured -> Q25),
+	Q24	= (cured -> Q46),
+	Q25	= (cured -> Q25),
+	Q26	= (leave -> Q50),
+	Q27	= (medicate[1] -> Q19),
+	Q28	= (inspect -> Q15
+		  |eCountCells -> Q16),
+	Q29	= (leave -> Q50),
+	Q30	= (sCountCells -> Q32),
+	Q31	= (leave -> Q50),
+	Q32	= (eCountCells -> Q49),
+	Q33	= (leave -> Q2),
+	Q34	= (leave -> Q20),
+	Q35	= (bloodResult[1] -> Q10
+		  |bloodResult[2] -> Q27),
+	Q36	= (leave -> Q13
+		  |eCountCells -> Q34),
+	Q37	= (cured -> Q29),
+	Q38	= (analyseBlood -> Q9),
+	Q39	= (medicate[5] -> Q24),
+	Q40	= (medicate[5] -> Q47),
+	Q41	= (medicate[5] -> Q12
+		  |eCountCells -> Q40),
+	Q42	= (medicate[3] -> Q44),
+	Q43	= (cured -> Q43),
+	Q44	= (cured -> Q26),
+	Q45	= (sCountCells -> Q6),
+	Q46	= (leave -> Q23),
+	Q47	= (cured -> Q33),
+	Q48	= (sCountCells -> Q14
+		  |eStain -> Q18),
+	Q49	= (analyseBlood -> Q35),
+	Q50	= (cured -> Q22),
+	Q51	= (medicate[4] -> Q37)+{dead}.

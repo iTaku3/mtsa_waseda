@@ -1,0 +1,74 @@
+const N = 2
+range ElemSet = 1..N
+range A = 1..N/2
+range B = N/2+1..N
+set Toolset = {drill,oven,press}
+set BlankAlpha = {[ElemSet].{start, ready, exit, end}}
+set ArmAlpha = { [ElemSet].{ready, exit}, {begin,end}.Toolset.[ElemSet] }
+set ToolsAlpha  = { {begin,putdown,process,pickup,end}.Toolset.[ElemSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+
+set ControllableActions = {[ElemSet].{ready, exit}, {putdown,pickup}.Toolset.[ElemSet]}
+
+INIT_ELEM(C=1) = ([C].start -> [C].ready -> END  | [C].idle -> INIT_ELEM).
+TRY_TOOL(T='any, C=1) = (putdown[T][C] -> END).
+FINISH_ELEM(C=1) = ([C].exit -> [C].end -> END).
+
+ELEM_A(C=1)= INIT_ELEM(C);
+				TRY_TOOL('oven,C);
+				TRY_TOOL('drill,C);
+				TRY_TOOL('press,C);
+				FINISH_ELEM(C);
+				ELEM_A.
+
+ELEM_B(C=N/2+1)= 	INIT_ELEM(C);
+					TRY_TOOL('drill,C);
+					TRY_TOOL('press,C);
+					TRY_TOOL('oven,C);
+					FINISH_ELEM(C);
+					ELEM_B.
+
+||ELEMS = (forall[b:B] ELEM_B(b) || forall[a:A] ELEM_A(a)).
+
+
+TOOL(T='any) = (putdown[T][e:ElemSet] -> begin[T][e] -> 
+		process[T][e] -> end[T][e] -> pickup[T][e] -> TOOL). 
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([e:ElemSet].ready -> PICKED_UP[e]
+		| pickup[t:Toolset][e:ElemSet] -> PICKED_UP[e]),
+PICKED_UP[e:ElemSet] = (putdown[t:Toolset][e] -> IDLE
+               | [e].exit -> IDLE).
+
+||Plant = (
+		ELEMS ||
+		TOOLS || 
+		ARM).
+
+ltl_property S1 = [](! exists[e1:ElemSet][e2:ElemSet] (PROCESSING['drill][e1] && PROCESSING['press][e2]))
+
+//controllerSpec tryouts
+fluent ENDED[e:ElemSet] = <[e].end, Alphabet\{[e].end}> initially 1
+fluent IN_PROD[e:ElemSet] = <[e].start,  Alphabet\{[e].start}>//[e].end>//Alphabet\{[e].start}>
+fluent PROCESSING[t:Toolset][e:ElemSet] = <begin[t][e], end[t][e]>
+
+assert A_1 = IN_PROD[1]
+assert A_2 = IN_PROD[2]
+
+assert G1_3 = ENDED[1]
+assert G2_3 = ENDED[2]
+
+controller ||C = (Plant)~{Objective}.
+
+||Comp = (C||Plant).
+
+controllerSpec Objective = {
+safety = {S1}
+assumption = {A_1, A_2}
+liveness = {G1_3, G2_3}
+controllable = {ControllableActions}
+}
+assert AssumptionsEmptyness = !([]<> A_1 && []<>A_2)
+assert SS1 = [](! exists[e1:ElemSet][e2:ElemSet] (PROCESSING['drill][e1] && PROCESSING['press][e2]))
+

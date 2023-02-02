@@ -1,0 +1,22 @@
+ 1.
+  usrReq
+ shipInfoReq
+ prodInfoReq
+ infoRcvd
+ costAndTime
+ offerRcvd
+ usrAck
+ prodReq
+ prodFail
+habilita: shipCancel, shipReq y respFail.
+
+ 
+ 
+ 
+10.
+ usrNack
+ prodCancel
+ shipCancel
+ 
+ Tal vez es mejor que sea en dos pasos,  o sea que el usrNack no haga nada, y que solo el usrAck genera pedido que luego puede fallar o no. onda hacemos el servicio como en dos tiempos. asi si el usr no da rsp se rompe todo.
+ 

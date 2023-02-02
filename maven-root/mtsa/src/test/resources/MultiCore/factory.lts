@@ -1,0 +1,18 @@
+const N = 2.
+
+MAKE_A = (makeA -> ready -> used -> MAKE_A).
+MAKE_B = (makeb -> ready -> used -> MAKE_B).
+ASSEMBLE = (ready ->assemble->used->ASSEMBLE).
+
+
+||FACTORY = ((forall [i:1..N] a[i]:MAKE_A)||(forall [i:1..N] b[i]:MAKE_B)||(forall [i:1..N] c[i]:ASSEMBLE)).
+
+set Controllable = {makeA, makeb}
+
+controllerSpec G = {
+	controllable = {Controllable}
+}
+
+controller ||C = (FACTORY)~{G}.
+
+assert TESTGOAL = []<>makeA

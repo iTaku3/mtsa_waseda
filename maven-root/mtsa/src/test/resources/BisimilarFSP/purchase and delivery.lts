@@ -1,0 +1,83 @@
+set User = {usrReq, offerRcvd, usrAck, usrNack}
+set Producer = {prodInfoReq, infoRcvd, prodReq}
+set Shipper = {shipInfoReq, costAndTime, shipReq}
+set Controllable = {prodInfoReq, prodReq, shipInfoReq, shipReq, offerRcvd}
+set A = {User, Producer, Shipper}
+
+PRODUCER = (prodInfoReq->REQUESTED), 
+REQUESTED = (infoRcvd->ORDER_PENDING),
+ORDER_PENDING = (prodReq->PRODUCER).
+
+SHIPPER = (shipInfoReq->REQUESTED), 
+REQUESTED = (costAndTime->SHIPPING_PENDING),
+SHIPPING_PENDING = (shipReq->SHIPPER).
+
+USER = (usrReq->REQUESTED), 
+REQUESTED = (offerRcvd->ACK_NACK),
+ACK_NACK = (usrAck->respOk->USER | usrNack->USER).
+
+||ENV = (USER || SHIPPER || PRODUCER).
+
+//fluents definition
+fluent F_RespOk = <respOk, A\{respOk}>
+fluent F_ShipInfoReq = <shipInfoReq, A\{shipInfoReq}>
+fluent F_ProdInfoReq = <prodInfoReq, A\{prodInfoReq}>
+fluent F_UsrReq = <usrReq, offerRcvd>
+fluent F_OfferRcvd = <offerRcvd, A\{offerRcvd}>
+fluent F_CostAndTime = <costAndTime, shipReq>
+fluent F_InfoRcvd = <infoRcvd, prodReq>
+fluent F_ShipReq = <shipReq, A\{shipReq}>
+fluent F_ProdReq = <prodReq, A\{prodReq}>
+fluent F_UsrNack = <usrNack, usrReq> 
+fluent F_UsrAck = <usrAck, respOk> 
+fluent F_RespFail = <respFail, A\{respFail}>
+fluent F_ShipInfoRequested = <shipInfoReq, usrReq>
+fluent F_ProdInfoRequested = <prodInfoReq, usrReq>
+fluent F_Processing = <usrReq, respOk>
+
+
+//Safety requirements
+ltl_property NoInfoReqBeforeUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> F_UsrReq)
+ltl_property OfferRcvdImpliesInfoAvailable = [](F_OfferRcvd -> (F_CostAndTime && F_InfoRcvd))
+ltl_property ShipAndProdReqImpliesACK = []((F_ShipReq || F_ProdReq) -> F_UsrAck)
+
+//assertions
+assert AssumptiononUser = F_UsrAck
+assert UsrRespOk = F_RespOk
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {NoInfoReqBeforeUsrReq, OfferRcvdImpliesInfoAvailable,
+				ShipAndProdReqImpliesACK}
+       assumption = {AssumptiononUser}//AssumptionOnRequests, AssumptiononUser}
+       liveness = {UsrRespOk}
+       controllable = {Controllable}
+}
+
+||ExpectedC = E.
+
+E = Q0,
+	Q0	= (usrReq -> Q4),
+	Q1	= (offerRcvd -> Q3),
+	Q2	= (costAndTime -> Q7
+		  |prodInfoReq -> Q11),
+	Q3	= (usrNack -> Q6
+		  |usrAck -> Q10),
+	Q4	= (shipInfoReq -> Q2
+		  |prodInfoReq -> Q5),
+	Q5	= (infoRcvd -> Q8
+		  |shipInfoReq -> Q11),
+	Q6	= (usrReq -> Q1),
+	Q7	= (prodInfoReq -> Q13),
+	Q8	= (shipInfoReq -> Q12),
+	Q9	= (usrReq -> Q1),
+	Q10	= (respOk -> Q9),
+	Q11	= (infoRcvd -> Q12
+		  |costAndTime -> Q13),
+	Q12	= (costAndTime -> Q1),
+	Q13	= (infoRcvd -> Q1)+ {prodReq, shipReq}.
+

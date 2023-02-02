@@ -1,0 +1,33 @@
+/*
+Environment model that is controllable by IA Controllers
+*/
+
+set Controllable = {n,s,e,w}
+set Alphabet = {Controllable, pressed}
+
+ROBOT = ({n,s,e,w}->ROBOT). 
+
+ROOM = E, 
+E = (w->NW | w->SW | e->STOP),
+SW = (e->E | n->NW | s->SP | w->STOP),
+NW = (e->E | n->NP | s->SW | w->STOP),
+NP = (pressed->NW | n->NP),
+SP = (pressed->SW | s->SP).
+
+||ENV = (ROOM || ROBOT).
+
+fluent F_E = <e, Controllable\{e}>
+fluent F_P = <pressed, Alphabet\{pressed}>
+
+assert PRESSED = F_P
+assert EAST = F_E
+
+controlled_det ||DET = ENV~{G}.
+controller ||C = ENV~{G}.
+minimal ||Min_Controller = C.
+
+controllerSpec G = {
+    liveness = {PRESSED, EAST}
+//	nonblocking
+    controllable = {Controllable}
+}

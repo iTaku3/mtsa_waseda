@@ -1,0 +1,308 @@
+/*
+Copyright (c) since 2015, Tel Aviv University and Software Modeling Lab
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Tel Aviv University and Software Modeling Lab nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+
+grammar tau.smlab.syntech.Spectra with org.eclipse.xtext.common.Terminals
+
+generate spectra "http://smlab.cs.tau.ac.il/syntech/Spectra"
+
+Model:
+	(imports+=Import)*
+	('module'|'spec') name=ID (elements+=Decl)+;
+
+Import:
+	'import' importURI=STRING;
+
+Decl:
+	Var
+	| TypeDef
+	| Define
+	| Predicate
+	| Pattern
+	| Monitor
+	| WeightDef
+	| LTLGar
+	| LTLAsm
+	| EXGar
+	| Counter
+	| DefineRegExp;
+
+
+WeightDef:
+	'weight' (name=ID ':')? negative=('-')? value=INT
+	definition=TemporalInExpr TOK_SEMI;
+
+enum VarOwner: SYS='output' | SYS='out' | SYS='sysvar' | SYS='sys' |  ENV='input' |  ENV='in' | ENV='envvar' |  ENV='env' | AUX='auxvar' | AUX='aux';
+
+Var:
+	kind=VarOwner var=VarDecl;
+
+TypeDef:
+	'type' name=ID '=' type=VarType TOK_SEMI;
+
+VarDecl:
+	type=VarType name=ID TOK_SEMI;
+  
+Referrable:
+	VarDecl | TypeConstant | DefineDecl | TypedParam | PatternParam | Monitor | Counter | DefineRegExpDecl | DomainVarDecl;
+
+TypeConstant:
+	name=TypeConstantLiteral;
+
+TypeConstantLiteral:
+	ID | INT;
+
+Define:
+	'define' (defineList+=DefineDecl)+;
+	
+DefineDecl:
+	((name=ID ':=' simpleExpr=TemporalExpression) |
+	(name=ID ('[' dimensions+=SizeDefineDecl ']')+ ':=' innerArray=DefineArray ))
+	TOK_SEMI;
+	
+DefineArray:
+	'{' (simpleExprs+=TemporalExpression (',' simpleExprs+=TemporalExpression)*) '}' | '{' (innerArrays+=DefineArray (',' innerArrays+=DefineArray)*) '}' ;
+	
+DefineRegExp:
+  'regexp' (defineRegsList+=DefineRegExpDecl)+;
+
+DefineRegExpDecl:
+  name=ID ':=' exp=RegExp TOK_SEMI;
+
+PatternParamList: 
+	params+=PatternParam (',' params+=PatternParam)*;
+
+PatternParam:
+	name=ID;
+		
+TypedParamList:
+	params+=TypedParam (',' params+=TypedParam)*;
+
+TypedParam:
+	type=VarType name=ID;
+
+enum OverflowMethod: KEEP='keep' | FALSE='false' | MODULO='modulo';
+
+Counter:
+	'counter' name=ID ('(' range=Subrange ')') 
+  '{' (((initial+=TemporalInExpr)
+  	| ('reset:' resetPred+=TemporalInExpr)
+  	| ('inc:' incPred+=TemporalExpression)
+  	| ('dec:' decPred+=TemporalExpression)
+  	| ('overflow:' overflowMethod+=OverflowMethod)
+  	| ('underflow:' underflowMethod+=OverflowMethod)
+  ) TOK_SEMI)* '}';
+	
+Monitor:
+  'monitor' type=VarType name=ID '{' ((
+    (('ini' | 'initially')? initial+=TemporalInExpr) |    
+    (('G' | 'trans') safety+=TemporalInExpr) |
+    (('always' | 'alw') stateInv+=TemporalInExpr)
+  ) TOK_SEMI)* '}';
+  
+Pattern:
+	'pattern' name=ID ('(' params=PatternParamList ')')?
+	('{' ('var' varDeclList+=VarDecl)* ((
+	  (('ini' | 'initially')? initial+=TemporalInExpr) | 
+	  (('G' | 'trans') safety+=TemporalInExpr) |
+	  (('always' | 'alw') stateInv+=TemporalInExpr) |  
+	  (('GF' | 'alwEv'| 'alwaysEventually') justice+=TemporalInExpr)
+	) TOK_SEMI)+ '}');
+
+Predicate:
+  'predicate' name=ID ('(' params=TypedParamList ')' | '()')
+  ( (':' body=TemporalExpression TOK_SEMI) | 
+    ('{' body=TemporalExpression '}')
+  );
+  
+VarType:
+	(name='boolean'
+	| 'Int' '(' subr=Subrange ')'
+	| '{' const+=TypeConstant (',' const+=TypeConstant)* '}'
+	| type=[TypeDef])
+	('[' dimensions+=SizeDefineDecl ']')*;
+
+LTLGar:
+	('guarantee' | 'gar') (name=ID ('{' params=TypedParamList '}')? ':')?
+	((('ini' | 'initially' | safety=('G' | 'trans') | stateInv=('always' | 'alw') | justice=('GF' | 'alwEv'| 'alwaysEventually'))? (temporalExpr=QuantifierExpr)) | (trig=Trigger)) TOK_SEMI;
+	
+
+LTLAsm:
+	('assumption' | 'asm') (name=ID ('{'  params=TypedParamList '}')? ':')?
+  ((('ini' | 'initially' | safety=('G' | 'trans') | stateInv=('always' | 'alw') | justice=('GF' | 'alwEv'| 'alwaysEventually'))? (temporalExpr=QuantifierExpr)) | (trig=Trigger)) TOK_SEMI;
+
+
+EXGar:	
+  ('guarantee' | 'gar') (name=ID ':')?
+  (('GE' elements+=TemporalInExpr (',' elements+=TemporalInExpr)*) | ('GEF' regExpPointer = [DefineRegExpDecl]) | ('GEF' regExp = RegExp)) TOK_SEMI;
+
+TemporalExpression:
+  QuantifierExpr;
+	
+TemporalInExpr returns TemporalExpression:
+	TemporalImpExpr ({TemporalInExpr.left=current} (not?='not')? operator=('in') '{'  values+=ValueInRange (',' values+=ValueInRange)* '}')?;
+	
+TemporalImpExpr returns TemporalExpression:
+	TemporalIffExpr ({TemporalImpExpr.left=current} operator=('->' | 'implies') implication=TemporalImpExpr)?;
+
+TemporalIffExpr returns TemporalExpression:
+	TemporalOrExpr ({TemporalIffExpr.elements+=current} operator=('<->' | 'iff') elements+=TemporalOrExpr)*;
+
+TemporalOrExpr returns TemporalExpression:
+	TemporalAndExpr	({TemporalOrExpr.elements+=current} operator+=('|' | 'or' | 'xor') elements+=TemporalAndExpr)*;
+
+TemporalAndExpr returns TemporalExpression:
+	TemporalRelationalExpr ({TemporalAndExpr.elements+=current} operator+=('&' | 'and') elements+=TemporalRelationalExpr)*;
+
+TemporalRelationalExpr returns TemporalExpression:
+	TemporalRemainderExpr	({TemporalRelationalExpr.left=current} operator=('='|'!='|'<'|'>'|'<='|'>=') right=TemporalRemainderExpr)?;
+	
+TemporalRemainderExpr returns TemporalExpression:
+	TemporalAdditiveExpr ({TemporalRemainderExpr.left=current} operator=('mod' | '%') right=TemporalAdditiveExpr)?;
+
+TemporalAdditiveExpr returns TemporalExpression:
+	TemporalMultiplicativeExpr ({TemporalAdditiveExpr.elements+=current} operator+=('+'|'-') elements+=TemporalMultiplicativeExpr)*;
+
+TemporalMultiplicativeExpr returns TemporalExpression:
+	TemporalBinaryExpr ({TemporalMultiplicativeExpr.elements+=current} operator+=('*'|'/') elements+=TemporalBinaryExpr)*;
+
+TemporalBinaryExpr returns TemporalExpression:
+	TemporalUnaryExpr	({TemporalBinaryExpr.elements+=current} operator+=('S' | 'SINCE' | 'T' | 'TRIGGERED') elements+=TemporalUnaryExpr)*;
+
+TemporalUnaryExpr returns TemporalExpression:
+	TemporalPrimaryExpr
+	| {TemporalUnaryExpr} 
+  	(kinds=('Y' | 'PREV') tue=TemporalUnaryExpr
+  	| kinds=('H' | 'HISTORICALLY') tue=TemporalUnaryExpr
+  	| kinds=('O' | 'ONCE') tue=TemporalUnaryExpr);
+
+TemporalPrimaryExpr returns TemporalExpression:
+	Constant
+	| '(' QuantifierExpr ')'
+	| {TemporalPrimaryExpr}
+	 (predPatt=[PredicateOrPatternReferrable] ('(' predPattParams+=TemporalInExpr (',' predPattParams+=TemporalInExpr)* ')' | '()')
+	 | operator=('-'|'!') tpe=TemporalPrimaryExpr
+	 | pointer=[Referrable]('[' index+=TemporalInExpr ']')* 
+	 | operator='next' '(' temporalExpression=TemporalInExpr ')'
+	 | operator='regexp' '(' (regexp=RegExp | regexpPointer=[DefineRegExpDecl]) ')'
+	 | pointer=[Referrable] operator='.all'
+	 | pointer=[Referrable] operator='.any'
+	 | pointer=[Referrable] operator='.prod'
+	 | pointer=[Referrable] operator='.sum'
+	 | pointer=[Referrable] operator='.min'
+	 | pointer=[Referrable] operator='.max');
+	// |Trigger;
+	
+PredicateOrPatternReferrable:
+  Pattern | Predicate;
+  
+//now subrange can be defined with define declaration  
+Subrange:
+    from=SizeDefineDecl '..' to=SizeDefineDecl;
+
+Constant returns TemporalExpression:
+	{Constant} 
+  	(booleanValue='FALSE'
+  	| booleanValue='false'
+  	| booleanValue='TRUE'
+  	| booleanValue='true'
+  	| integerValue=INT);
+
+  
+Trigger:
+{Trigger} 'trig'  (initPointer=[DefineRegExpDecl] | initRegExp=RegExp ) '|=>' (effectPointer=[DefineRegExpDecl] | effectRegExp=RegExp);
+  
+
+RegExp:
+ 	BinaryRegExp;
+ 
+ BinaryRegExp returns RegExp:
+ 	UnaryRegExp ({BinaryRegExp.left=current} (op=('&' | '|'))? right=UnaryRegExp)*;
+ 
+ UnaryRegExp returns RegExp:
+ 	CompRegExp ({UnaryRegExp.left=current}
+		((kleened?='*')| 
+ 		(questionMark?='?')| 
+ 		(plus?='+')|
+        (haveExactRepetition?='{' exactRepetition=INT '}')| 
+        (haveAtLeast?='{' atLeast=INT ',' '}')| 
+        (haveRange?='{' (from=INT | fromDefine=[DefineDecl]) ',' (to=INT | toDefine=[DefineDecl]) '}')))?;
+ 
+ CompRegExp returns RegExp:
+ 	PrimaryRegExp | ({CompRegExp} (comp='~') left=CompRegExp);
+
+PrimaryRegExp returns RegExp:
+	'(' RegExp ')' | val=('TRUE' |'FALSE' | 'true' | 'false') | assrt=BooleanTerm  | empty?='()'; //| (neg?='!')? pointer=[VarDecl]
+
+BooleanTerm:
+	{BooleanTerm} '[' relExpr=TemporalInExpr ']';
+
+ValueInRange:
+	 const=[TypeConstant] | int=INT | (from=INT multi?='-' to=INT) | booleanValue=('TRUE' |'FALSE' | 'true' | 'false');
+	
+// UnaryRegExp returns RegExp:
+// 	left = PrimaryRegExp  ( 
+//		(kleened?='*')| 
+// 		(questionMark?='?')| 
+// 		(plus?='+')|
+//        (haveExactRepetition?='{' exactRepetition=INT '}')| 
+//        (haveAtLeast?='{' atLeast=INT ',' '}')| 
+//        (haveRange?='{' from=INT ',' to=INT '}'))?;
+
+// PrimaryRegExp returns RegExp:
+// 	(comp?='~')? left = AtomicRegExp;
+
+
+//AtomicRegExp returns RegExp:
+//	'(' RegExp ')' | (neg?='!')? var=[VarDecl]  (((neq='!=') | '=') (const=[TypeConstant] | int=INT))? | val=('TRUE' |'FALSE' | 'true' | 'false') | rangedVar=RangedVar  | empty?= '()';
+   
+        
+//RangedVar:
+//	var=[VarDecl] ((neq='!=') | '=') '[' (values+=ValueInRange)+ ']';
+                    
+//quantifier expression - a temporal logic expression with quantifiers.
+QuantifierExpr returns TemporalExpression:
+  TemporalInExpr
+  |{QuantifierExpr}
+  (operator=('forall' | 'exists') domainVar=DomainVarDecl '.' temporalExpr=(QuantifierExpr));
+
+
+//declaration of a var from domain for quantifier
+DomainVarDecl:
+    name=ID 'in' domainType=(VarType);
+                  
+//all the declaration that can determine size of array and range of int
+SizeDefineDecl:
+    value=INT | name=[DefineDecl] | '(' arithExp=TemporalExpression ')';
+                          
+
+TOK_SEMI:
+	';';
+
+@Override 
+terminal SL_COMMENT:
+	('//' | '--') !('\n' | '\r')* ('\r'? '\n')?;

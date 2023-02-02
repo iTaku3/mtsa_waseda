@@ -1,0 +1,116 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - After Composing, you can animate the controller obtained pressing 
+// the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller goal formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {stopPump, startPump, procedure, endProcedure}
+set A = {ControllableActions, request}
+
+    //OldEnvironment and NewEnvironment
+    MAINTENANCE = (request -> endProcedure -> MAINTENANCE).
+
+    ENV = STARTED,
+    STARTED = (stopPump -> STOPPED | 
+                    procedure -> STARTED | 
+                    endProcedure -> STARTED),
+	STOPPED = (startPump -> STARTED | 
+				procedure -> STOPPED |
+				endProcedure -> STOPPED).
+
+    //Mapping Environment
+	BEFORE_RECONF = (reconfigure -> AFTER_RECONF | A -> BEFORE_RECONF),
+	AFTER_RECONF = (A -> AFTER_RECONF).
+
+
+||OldEnvironment = (MAINTENANCE || ENV).
+||NewEnvironment = (MAINTENANCE || ENV).
+||MappingEnvironment = (MAINTENANCE || ENV || BEFORE_RECONF).
+
+//Fluents declaration
+fluent PumpOff = <{stopPump},{startPump}>
+fluent PumpOn = <{startPump},{stopPump}> initially 1
+fluent RequestPending = <{request},{endProcedure}>
+fluent MainteinanceFinished = <{procedure}, {request}> 
+fluent PendingOk = <procedure, endProcedure>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert PROCEDURE_WHILE_STOPPED = (procedure -> PumpOff)
+assert MAINTEINANCE_GUARANTEED = (endProcedure -> (MainteinanceFinished && !PumpOff))
+assert PROCEDURE_IF_REQUEST = (procedure -> RequestPending)
+assert PUMP_OFF_ONLY_OK_NOT_PENDING = (stopPump -> !PendingOk)
+
+ltl_property P_PROCEDURE_WHILE_STOPPED = []PROCEDURE_WHILE_STOPPED
+ltl_property P_MAINTEINANCE_GUARANTEED = []MAINTEINANCE_GUARANTEED
+ltl_property P_PROCEDURE_IF_REQUEST = []PROCEDURE_IF_REQUEST
+ltl_property P_PUMP_OFF_ONLY_OK_NOT_PENDING = []PUMP_OFF_ONLY_OK_NOT_PENDING
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+minimal ||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_PROCEDURE_WHILE_STOPPED, P_MAINTEINANCE_GUARANTEED,
+			  P_PROCEDURE_IF_REQUEST, P_PUMP_OFF_ONLY_OK_NOT_PENDING}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert MAINTEINANCE_GUARANTEED_NEW = (endProcedure -> MainteinanceFinished)
+assert NEVER_STOP = (!stopPump)
+ltl_property P_MAINTEINANCE_GUARANTEED_NEW = []MAINTEINANCE_GUARANTEED_NEW 
+ltl_property P_NEVER_STOP = []NEVER_STOP
+
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+controllerSpec NewSpec= {
+    safety = {P_NEVER_STOP, P_MAINTEINANCE_GUARANTEED_NEW, P_PROCEDURE_IF_REQUEST}
+    controllable = {ControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert AnyAction = (stopPump || startPump || procedure || endProcedure || request)
+
+//ltl_property LeavesPumpOn = ((StopOldSpec && PumpOff) -> (!StartNewSpec))
+assert EMPTY_TRANSITION = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+ltl_property LeavesPumpOn = (EMPTY_TRANSITION && (startNewSpec -> !PumpOff))
+ltl_property NoTransition = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    mapping = MappingEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+//	T = True is executed if no transition requirement is set
+//	transition = LeavesPumpOn,
+	transition = NoTransition,
+	nonblocking
+}
+
+||UPDATE_CONTROLLER = (UpdCont).
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = (PROCEDURE_WHILE_STOPPED && MAINTEINANCE_GUARANTEED && PROCEDURE_IF_REQUEST && PUMP_OFF_ONLY_OK_NOT_PENDING)
+assert S_NEW = (NEVER_STOP && MAINTEINANCE_GUARANTEED_NEW && PROCEDURE_IF_REQUEST)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert LeavesPumpOn = []((StopOldSpec && PumpOff) -> (!StartNewSpec))
+
+assert DESIRABLE_BEHAVIOUR = !<>[](PumpOff && StartNewSpec)

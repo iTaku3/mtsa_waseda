@@ -1,0 +1,574 @@
+||SEAMS1 = (SEAMS || AUX1 || AUX2).
+||ACM1 = ACM.
+||ACM2 = ACM1\{stopOldSpec,startNewSpec,reconfigure, beginUpdate}.
+||SEAMS2 = SEAMS1\{stopOldSpec,startNewSpec,reconfigure, beginUpdate}.
+
+deterministic ||SEAMS3 = SEAMS2.
+deterministic ||ACM3 = ACM2.
+
+property ||SEAMS4 = SEAMS3.
+property ||ACM4 = ACM3.
+
+||Compare = (ACM3 || SEAMS4).
+
+AUX1 = (stopOldSpec -> STOP).
+AUX2 = (startNewSpec -> STOP).
+
+
+	SEAMS = Q0,
+	Q0	= (stopPump -> Q1
+		  |beginUpdate -> Q106
+		  |request -> Q109),
+	Q1	= (startPump -> Q0
+		  |beginUpdate -> Q2
+		  |request -> Q63),
+	Q2	= (request -> Q3
+		  |stopOldSpec -> Q43),
+	Q3	= (stopOldSpec -> Q4),
+	Q4	= (reconfigure -> Q5
+		  |procedure -> Q30
+		  |startNewSpec -> Q36
+		  |endProcedure -> Q38
+		  |stopOldSpec -> Q39
+		  |startPump -> Q40),
+	Q5	= (startNewSpec -> Q6),
+	Q6	= (procedure -> Q7
+		  |{startNewSpec, stopOldSpec} -> Q28
+		  |startPump -> Q29),
+	Q7	= (endProcedure -> Q8
+		  |{procedure, startNewSpec, stopOldSpec} -> Q25
+		  |startPump -> Q27),
+	Q8	= (request -> Q6
+		  |{startNewSpec, stopOldSpec} -> Q9
+		  |startPump -> Q24),
+	Q9	= ({startNewSpec, stopOldSpec} -> Q10
+		  |startPump -> Q23
+		  |request -> Q28),
+	Q10	= ({startNewSpec, stopOldSpec} -> Q8
+		  |request -> Q11
+		  |startPump -> Q22),
+	Q11	= ({startNewSpec, stopOldSpec} -> Q6
+		  |procedure -> Q12
+		  |startPump -> Q21),
+	Q12	= ({procedure, startNewSpec, stopOldSpec} -> Q7
+		  |endProcedure -> Q10
+		  |startPump -> Q13),
+	Q13	= (procedure -> Q14
+		  |endProcedure -> Q20
+		  |{startNewSpec, stopOldSpec} -> Q27),
+	Q14	= (endProcedure -> Q15
+		  |{procedure, startNewSpec, stopOldSpec} -> Q18),
+	Q15	= ({startNewSpec, stopOldSpec} -> Q16
+		  |request -> Q29),
+	Q16	= (request -> Q17
+		  |{startNewSpec, stopOldSpec} -> Q20),
+	Q17	= (procedure -> Q18
+		  |{startNewSpec, stopOldSpec} -> Q21),
+	Q18	= (endProcedure -> Q16
+		  |{procedure, startNewSpec, stopOldSpec} -> Q19),
+	Q19	= ({procedure, startNewSpec, stopOldSpec} -> Q14
+		  |endProcedure -> Q20),
+	Q20	= ({startNewSpec, stopOldSpec} -> Q15
+		  |request -> Q21),
+	Q21	= (procedure -> Q19
+		  |{startNewSpec, stopOldSpec} -> Q29),
+	Q22	= (request -> Q21
+		  |{startNewSpec, stopOldSpec} -> Q24),
+	Q23	= (request -> Q17
+		  |{startNewSpec, stopOldSpec} -> Q22),
+	Q24	= ({startNewSpec, stopOldSpec} -> Q23
+		  |request -> Q29),
+	Q25	= (endProcedure -> Q9
+		  |{procedure, startNewSpec, stopOldSpec} -> Q12
+		  |startPump -> Q26),
+	Q26	= ({startNewSpec, stopOldSpec} -> Q13
+		  |endProcedure -> Q16
+		  |procedure -> Q19),
+	Q27	= (endProcedure -> Q15
+		  |procedure -> Q18
+		  |{startNewSpec, stopOldSpec} -> Q26),
+	Q28	= ({startNewSpec, stopOldSpec} -> Q11
+		  |startPump -> Q17
+		  |procedure -> Q25),
+	Q29	= (procedure -> Q14
+		  |{startNewSpec, stopOldSpec} -> Q17),
+	Q30	= (startNewSpec -> Q31),
+	Q31	= (reconfigure -> Q7
+		  |endProcedure -> Q32
+		  |{procedure, startNewSpec, stopOldSpec} -> Q34
+		  |startPump -> Q35),
+	Q32	= (reconfigure -> Q10
+		  |request -> Q33),
+	Q33	= (reconfigure -> Q28),
+	Q34	= (reconfigure -> Q7),
+	Q35	= (reconfigure -> Q13),
+	Q36	= (reconfigure -> Q28
+		  |{startNewSpec, stopOldSpec} -> Q33
+		  |procedure -> Q34
+		  |startPump -> Q37),
+	Q37	= (reconfigure -> Q29),
+	Q38	= (request -> Q39),
+	Q39	= (startNewSpec -> Q36),
+	Q40	= (startNewSpec -> Q41),
+	Q41	= (reconfigure -> Q29
+		  |{startNewSpec, stopOldSpec} -> Q37
+		  |procedure -> Q42),
+	Q42	= (reconfigure -> Q19),
+	Q43	= (request -> Q39
+		  |reconfigure -> Q44
+		  |procedure -> Q45
+		  |stopOldSpec -> Q56
+		  |startPump -> Q57),
+	Q44	= (request -> Q5),
+	Q45	= (request -> Q46),
+	Q46	= (startNewSpec -> Q47),
+	Q47	= (procedure -> Q34
+		  |reconfigure -> Q48
+		  |{startNewSpec, stopOldSpec} -> Q54
+		  |startPump -> Q55),
+	Q48	= (procedure -> Q25
+		  |{startNewSpec, stopOldSpec} -> Q49
+		  |startPump -> Q53),
+	Q49	= (procedure -> Q12
+		  |{startNewSpec, stopOldSpec} -> Q50
+		  |startPump -> Q52),
+	Q50	= (procedure -> Q7
+		  |{startNewSpec, stopOldSpec} -> Q48
+		  |startPump -> Q51),
+	Q51	= (procedure -> Q14
+		  |{startNewSpec, stopOldSpec} -> Q53),
+	Q52	= (procedure -> Q19
+		  |{startNewSpec, stopOldSpec} -> Q51),
+	Q53	= (procedure -> Q18
+		  |{startNewSpec, stopOldSpec} -> Q52),
+	Q54	= (reconfigure -> Q48),
+	Q55	= (reconfigure -> Q51),
+	Q56	= (request -> Q39),
+	Q57	= (request -> Q40
+		  |startNewSpec -> Q58),
+	Q58	= (request -> Q37
+		  |reconfigure -> Q59
+		  |{startNewSpec, stopOldSpec} -> Q62),
+	Q59	= (request -> Q17
+		  |{startNewSpec, stopOldSpec} -> Q60),
+	Q60	= (request -> Q21
+		  |{startNewSpec, stopOldSpec} -> Q61),
+	Q61	= (request -> Q29
+		  |{startNewSpec, stopOldSpec} -> Q59),
+	Q62	= (request -> Q37
+		  |reconfigure -> Q59),
+	Q63	= (beginUpdate -> Q3
+		  |procedure -> Q64
+		  |startPump -> Q109),
+	Q64	= (procedure -> Q64
+		  |beginUpdate -> Q65
+		  |startPump -> Q74),
+	Q65	= (stopOldSpec -> Q66),
+	Q66	= ({procedure, stopOldSpec} -> Q30
+		  |startNewSpec -> Q31
+		  |reconfigure -> Q67
+		  |endProcedure -> Q68
+		  |startPump -> Q71),
+	Q67	= (startNewSpec -> Q12),
+	Q68	= (request -> Q39
+		  |startNewSpec -> Q69),
+	Q69	= (reconfigure -> Q10
+		  |{startNewSpec, stopOldSpec} -> Q32
+		  |request -> Q33
+		  |startPump -> Q70),
+	Q70	= (reconfigure -> Q23
+		  |request -> Q37),
+	Q71	= (startNewSpec -> Q72),
+	Q72	= (reconfigure -> Q13
+		  |{startNewSpec, stopOldSpec} -> Q35
+		  |procedure -> Q42
+		  |endProcedure -> Q73),
+	Q73	= (reconfigure -> Q16
+		  |request -> Q37),
+	Q74	= (beginUpdate -> Q75
+		  |endProcedure -> Q83),
+	Q75	= (stopOldSpec -> Q76),
+	Q76	= (stopOldSpec -> Q71
+		  |startNewSpec -> Q72
+		  |stopPump -> Q77
+		  |reconfigure -> Q78
+		  |procedure -> Q79
+		  |endProcedure -> Q81),
+	Q77	= (procedure -> Q30
+		  |startPump -> Q71),
+	Q78	= (startNewSpec -> Q26),
+	Q79	= (startNewSpec -> Q80),
+	Q80	= (reconfigure -> Q19
+		  |{procedure, startNewSpec, stopOldSpec} -> Q42
+		  |endProcedure -> Q73),
+	Q81	= (request -> Q40
+		  |startNewSpec -> Q82),
+	Q82	= (reconfigure -> Q16
+		  |request -> Q37
+		  |{startNewSpec, stopOldSpec} -> Q73),
+	Q83	= (stopPump -> Q84
+		  |beginUpdate -> Q103
+		  |request -> Q109),
+	Q84	= (request -> Q63
+		  |beginUpdate -> Q85
+		  |startPump -> Q91),
+	Q85	= (request -> Q3
+		  |stopOldSpec -> Q86),
+	Q86	= (request -> Q39
+		  |procedure -> Q45
+		  |reconfigure -> Q87
+		  |stopOldSpec -> Q88
+		  |startPump -> Q89),
+	Q87	= (request -> Q5),
+	Q88	= (request -> Q39),
+	Q89	= (request -> Q40
+		  |startNewSpec -> Q90),
+	Q90	= (reconfigure -> Q23
+		  |request -> Q37
+		  |{startNewSpec, stopOldSpec} -> Q70),
+	Q91	= (stopPump -> Q84
+		  |beginUpdate -> Q92
+		  |request -> Q109),
+	Q92	= (request -> Q93
+		  |stopOldSpec -> Q98),
+	Q93	= (stopOldSpec -> Q94),
+	Q94	= (stopOldSpec -> Q40
+		  |startNewSpec -> Q41
+		  |procedure -> Q79
+		  |stopPump -> Q95
+		  |reconfigure -> Q96
+		  |endProcedure -> Q97),
+	Q95	= (procedure -> Q30
+		  |startPump -> Q40),
+	Q96	= (startNewSpec -> Q21),
+	Q97	= (request -> Q40),
+	Q98	= (request -> Q40
+		  |stopPump -> Q88
+		  |stopOldSpec -> Q89
+		  |startNewSpec -> Q90
+		  |reconfigure -> Q99
+		  |procedure -> Q100),
+	Q99	= (startNewSpec -> Q24
+		  |request -> Q96),
+	Q100	= (request -> Q101),
+	Q101	= (startNewSpec -> Q102),
+	Q102	= (procedure -> Q42
+		  |reconfigure -> Q51
+		  |{startNewSpec, stopOldSpec} -> Q55),
+	Q103	= (request -> Q93
+		  |stopOldSpec -> Q104),
+	Q104	= (request -> Q40
+		  |stopOldSpec -> Q81
+		  |startNewSpec -> Q82
+		  |stopPump -> Q88
+		  |procedure -> Q100
+		  |reconfigure -> Q105),
+	Q105	= (startNewSpec -> Q15
+		  |request -> Q96),
+	Q106	= (request -> Q93
+		  |stopOldSpec -> Q107),
+	Q107	= (request -> Q40
+		  |stopPump -> Q56
+		  |stopOldSpec -> Q57
+		  |startNewSpec -> Q58
+		  |procedure -> Q100
+		  |reconfigure -> Q108),
+	Q108	= (startNewSpec -> Q61
+		  |request -> Q96),
+	Q109	= (beginUpdate -> Q93
+		  |stopPump -> Q110),
+	Q110	= (procedure -> Q64
+		  |startPump -> Q109
+		  |beginUpdate -> Q111),
+	Q111	= (stopOldSpec -> Q112),
+	Q112	= (procedure -> Q30
+		  |endProcedure -> Q38
+		  |startPump -> Q40
+		  |stopOldSpec -> Q95
+		  |reconfigure -> Q113),
+	Q113	= (procedure -> Q67
+		  |startPump -> Q96).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	ACM = Q0,
+	Q0	= (stopPump -> Q1
+		  |beginUpdate -> Q111
+		  |request -> Q116),
+	Q1	= (startPump -> Q0
+		  |beginUpdate -> Q2
+		  |request -> Q70),
+	Q2	= (request -> Q3
+		  |stopOldSpec -> Q50),
+	Q3	= (stopOldSpec -> Q4),
+	Q4	= (procedure -> Q5
+		  |reconfigure -> Q37
+		  |startNewSpec -> Q38
+		  |endProcedure -> Q40
+		  |startPump -> Q47),
+	Q5	= (startNewSpec -> Q6),
+	Q6	= (procedure -> Q7
+		  |reconfigure -> Q8
+		  |endProcedure -> Q33
+		  |startPump -> Q36),
+	Q7	= (reconfigure -> Q8),
+	Q8	= (procedure -> Q9
+		  |endProcedure -> Q29
+		  |startPump -> Q32),
+	Q9	= (procedure -> Q10
+		  |endProcedure -> Q25
+		  |startPump -> Q28),
+	Q10	= (procedure -> Q11
+		  |endProcedure -> Q12
+		  |startPump -> Q24),
+	Q11	= (procedure -> Q9
+		  |endProcedure -> Q29
+		  |startPump -> Q32),
+	Q12	= (request -> Q13
+		  |startPump -> Q23),
+	Q13	= (procedure -> Q10
+		  |startPump -> Q14),
+	Q14	= (procedure -> Q15),
+	Q15	= (procedure -> Q16
+		  |endProcedure -> Q22),
+	Q16	= (procedure -> Q17
+		  |endProcedure -> Q20),
+	Q17	= (procedure -> Q15
+		  |endProcedure -> Q18),
+	Q18	= (request -> Q19),
+	Q19	= (procedure -> Q17),
+	Q20	= (request -> Q21),
+	Q21	= (procedure -> Q16),
+	Q22	= (request -> Q14),
+	Q23	= (request -> Q14),
+	Q24	= (procedure -> Q16
+		  |endProcedure -> Q22),
+	Q25	= (request -> Q26
+		  |startPump -> Q27),
+	Q26	= (procedure -> Q9
+		  |startPump -> Q19),
+	Q27	= (request -> Q19),
+	Q28	= (procedure -> Q15
+		  |endProcedure -> Q18),
+	Q29	= (request -> Q30
+		  |startPump -> Q31),
+	Q30	= (procedure -> Q11
+		  |startPump -> Q21),
+	Q31	= (request -> Q21),
+	Q32	= (procedure -> Q17
+		  |endProcedure -> Q20),
+	Q33	= (reconfigure -> Q34
+		  |request -> Q35),
+	Q34	= (request -> Q13
+		  |startPump -> Q23),
+	Q35	= (reconfigure -> Q26),
+	Q36	= (reconfigure -> Q24),
+	Q37	= (startNewSpec -> Q30),
+	Q38	= (procedure -> Q7
+		  |reconfigure -> Q26
+		  |startPump -> Q39),
+	Q39	= (reconfigure -> Q21),
+	Q40	= (startNewSpec -> Q41
+		  |request -> Q46),
+	Q41	= (request -> Q35
+		  |reconfigure -> Q42
+		  |startPump -> Q44),
+	Q42	= (request -> Q13
+		  |startPump -> Q43),
+	Q43	= (request -> Q14),
+	Q44	= (request -> Q39
+		  |reconfigure -> Q45),
+	Q45	= (request -> Q19),
+	Q46	= (startNewSpec -> Q38),
+	Q47	= (startNewSpec -> Q48),
+	Q48	= (reconfigure -> Q21
+		  |procedure -> Q49),
+	Q49	= (reconfigure -> Q24),
+	Q50	= (startNewSpec -> Q41
+		  |request -> Q46
+		  |procedure -> Q51
+		  |reconfigure -> Q66
+		  |startPump -> Q68),
+	Q51	= (startNewSpec -> Q52
+		  |request -> Q64),
+	Q52	= (reconfigure -> Q53
+		  |request -> Q57
+		  |startPump -> Q60),
+	Q53	= (request -> Q54
+		  |startPump -> Q56),
+	Q54	= (procedure -> Q10
+		  |startPump -> Q55),
+	Q55	= (procedure -> Q15),
+	Q56	= (request -> Q55),
+	Q57	= (reconfigure -> Q58),
+	Q58	= (procedure -> Q9
+		  |startPump -> Q59),
+	Q59	= (procedure -> Q17),
+	Q60	= (reconfigure -> Q61
+		  |request -> Q62),
+	Q61	= (request -> Q59),
+	Q62	= (reconfigure -> Q63),
+	Q63	= (procedure -> Q16),
+	Q64	= (startNewSpec -> Q65),
+	Q65	= (procedure -> Q7
+		  |reconfigure -> Q58
+		  |startPump -> Q62),
+	Q66	= (request -> Q37
+		  |startNewSpec -> Q67),
+	Q67	= (request -> Q26
+		  |startPump -> Q45),
+	Q68	= (request -> Q47
+		  |startNewSpec -> Q69),
+	Q69	= (request -> Q39
+		  |reconfigure -> Q45),
+	Q70	= (beginUpdate -> Q3
+		  |procedure -> Q71
+		  |startPump -> Q116),
+	Q71	= (procedure -> Q71
+		  |beginUpdate -> Q72
+		  |startPump -> Q82),
+	Q72	= (stopOldSpec -> Q73),
+	Q73	= (procedure -> Q5
+		  |startNewSpec -> Q6
+		  |reconfigure -> Q74
+		  |endProcedure -> Q76
+		  |startPump -> Q79),
+	Q74	= (startNewSpec -> Q75),
+	Q75	= (procedure -> Q11
+		  |endProcedure -> Q12
+		  |startPump -> Q24),
+	Q76	= (request -> Q46
+		  |startNewSpec -> Q77),
+	Q77	= (reconfigure -> Q34
+		  |request -> Q35
+		  |startPump -> Q78),
+	Q78	= (reconfigure -> Q27
+		  |request -> Q39),
+	Q79	= (startNewSpec -> Q80),
+	Q80	= (reconfigure -> Q24
+		  |procedure -> Q49
+		  |endProcedure -> Q81),
+	Q81	= (reconfigure -> Q27
+		  |request -> Q39),
+	Q82	= (beginUpdate -> Q83
+		  |endProcedure -> Q90),
+	Q83	= (stopOldSpec -> Q84),
+	Q84	= (startNewSpec -> Q80
+		  |stopPump -> Q85
+		  |procedure -> Q86
+		  |reconfigure -> Q87
+		  |endProcedure -> Q88),
+	Q85	= (startNewSpec -> Q6),
+	Q86	= (startNewSpec -> Q80),
+	Q87	= (startNewSpec -> Q28),
+	Q88	= (request -> Q47
+		  |startNewSpec -> Q89),
+	Q89	= (reconfigure -> Q27
+		  |request -> Q39),
+	Q90	= (stopPump -> Q91
+		  |beginUpdate -> Q98
+		  |request -> Q116),
+	Q91	= (request -> Q70
+		  |beginUpdate -> Q92
+		  |startPump -> Q97),
+	Q92	= (request -> Q3
+		  |stopOldSpec -> Q93),
+	Q93	= (request -> Q46
+		  |procedure -> Q51
+		  |startNewSpec -> Q77
+		  |reconfigure -> Q94
+		  |startPump -> Q96),
+	Q94	= (request -> Q37
+		  |startNewSpec -> Q95),
+	Q95	= (request -> Q26
+		  |startPump -> Q27),
+	Q96	= (request -> Q47
+		  |startNewSpec -> Q89),
+	Q97	= (stopPump -> Q91
+		  |beginUpdate -> Q98
+		  |request -> Q116),
+	Q98	= (request -> Q99
+		  |stopOldSpec -> Q104),
+	Q99	= (stopOldSpec -> Q100),
+	Q100	= (startNewSpec -> Q48
+		  |procedure -> Q86
+		  |stopPump -> Q101
+		  |reconfigure -> Q102
+		  |endProcedure -> Q103),
+	Q101	= (startNewSpec -> Q38),
+	Q102	= (startNewSpec -> Q14),
+	Q103	= (request -> Q47
+		  |startNewSpec -> Q69),
+	Q104	= (request -> Q47
+		  |startNewSpec -> Q89
+		  |stopPump -> Q105
+		  |procedure -> Q106
+		  |reconfigure -> Q110),
+	Q105	= (request -> Q46
+		  |startNewSpec -> Q77),
+	Q106	= (startNewSpec -> Q107
+		  |request -> Q108),
+	Q107	= (reconfigure -> Q61
+		  |request -> Q62),
+	Q108	= (startNewSpec -> Q109),
+	Q109	= (procedure -> Q49
+		  |reconfigure -> Q63),
+	Q110	= (startNewSpec -> Q31
+		  |request -> Q102),
+	Q111	= (request -> Q99
+		  |stopOldSpec -> Q112),
+	Q112	= (request -> Q47
+		  |startNewSpec -> Q69
+		  |procedure -> Q106
+		  |stopPump -> Q113
+		  |reconfigure -> Q114),
+	Q113	= (startNewSpec -> Q41
+		  |request -> Q46),
+	Q114	= (request -> Q102
+		  |startNewSpec -> Q115),
+	Q115	= (request -> Q21),
+	Q116	= (beginUpdate -> Q99
+		  |stopPump -> Q117),
+	Q117	= (beginUpdate -> Q3
+		  |procedure -> Q71
+		  |startPump -> Q116).

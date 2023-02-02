@@ -1,0 +1,30 @@
+set A={req, resp1, resp2, ping}
+set Controllable = {resp1, resp2, ping}
+
+E = (req->REQ | ping->E),
+REQ = ({resp1,resp2}->E | ping->REQ).
+
+MPING = (ping?->MPING).
+
+CONTR = (req->REQ0 | ping->CONTR),
+REQ0 = ({resp1,resp2}->CONTR | ping->REQ1), 
+REQ1 = ({resp1,resp2}->CONTR).
+
+
+fluent F_RESP1 = <resp1, A\{resp1}> 
+
+assert RESP1 = F_RESP1
+
+assert Goal = ([]<> RESP1)
+
+||DOM = E. //(E||MPING).
+
+//controllers
+controller ||C = (DOM)~{G1}.
+starenv ||Star = (DOM).
+
+//Goals
+controllerSpec G1 = {
+       liveness = {RESP1}
+       controllable = {Controllable}
+}

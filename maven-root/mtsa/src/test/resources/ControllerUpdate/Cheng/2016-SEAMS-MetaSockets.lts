@@ -1,0 +1,226 @@
+set Controllable64 = {des64, output}
+set Controllable128 = {des128, output}
+set Controllable64Com = {des64Com, output}
+set Controllable128Com = {des128Com, output}
+set Alphabet64 = {Controllable64, input}
+set Alphabet128 = {Controllable128, input}
+set Alphabet64Com = {Controllable64Com, input}
+set Alphabet128Com = {Controllable128Com, input}
+set Alphabet = {des64, des128, des64Com, des128Com, output, input}
+
+//ENVIRONMENTS
+IO = (input -> output -> IO).
+DES64 = (des64 -> DES64).
+DES128 = (des128 -> DES128).
+DES64COM = (des64Com -> DES64COM).
+DES128COM = (des128Com -> DES128COM).
+
+||ENV_DES64 = (DES64 || IO).
+||ENV_DES128 = (DES128 || IO).
+||ENV_DES64COM = (DES64COM || IO).
+||ENV_DES128COM = (DES128COM || IO).
+
+// PROPERTIES
+fluent InputRecieve = <input, output>
+fluent EncriptionDone64 = <des64, input>
+fluent EncriptionDone128 = <des128, input>
+fluent EncriptionDone64Com = <des64Com, input>
+fluent EncriptionDone128Com = <des128Com, input>
+
+// ACTION FLUENTS
+fluent Des64_action = <des64,{output,input}>
+fluent Des128_action = <des128,{output,input}>
+fluent Des64Com_action = <des64Com,{output,input}>
+fluent Des128Com_action = <des128Com,{output,input}>
+fluent Output_action = <output,{input}>
+
+ltl_property P_DES64 = []((Des64_action -> InputRecieve) && (Output_action -> EncriptionDone64))
+ltl_property P_DES128 = []((Des128_action -> InputRecieve) && (Output_action -> EncriptionDone128))
+ltl_property P_DES64Com = []((Des64Com_action -> InputRecieve) && (Output_action -> EncriptionDone64Com))
+ltl_property P_DES128Com = []((Des128Com_action -> InputRecieve) && (Output_action -> EncriptionDone128Com))
+
+// CONTROLLERS
+// 1
+controllerSpec DES64_SPEC = {
+	safety = {P_DES64}
+	controllable = {Controllable64}
+}
+
+controller ||CONTROLLER64 = ENV_DES64~{DES64_SPEC}.
+||CONTROLLER_ENVIRONMENT_64 = (CONTROLLER64||ENV_DES64).
+
+// 2
+controllerSpec DES128_SPEC = {
+	safety = {P_DES128}
+	controllable = {Controllable128}
+}
+
+controller ||CONTROLLER128 = ENV_DES128~{DES128_SPEC}.
+||CONTROLLER_ENVIRONMENT_128 = (CONTROLLER128||ENV_DES128).
+
+// 3
+controllerSpec DES64COM_SPEC = {
+	safety = {P_DES64Com}
+	controllable = {Controllable64Com}
+}
+
+controller ||CONTROLLER64COM = ENV_DES64COM~{DES64COM_SPEC}.
+||CONTROLLER_ENVIRONMENT_64COM = (CONTROLLER64COM||ENV_DES64COM).
+
+
+// 4
+controllerSpec DES128COM_SPEC = {
+	safety = {P_DES128Com}
+	controllable = {Controllable128Com}
+}
+
+controller ||CONTROLLER128COM = ENV_DES128COM~{DES128COM_SPEC}.
+||CONTROLLER_ENVIRONMENT_128COM = (CONTROLLER128COM||ENV_DES128COM).
+
+
+//------------------T--------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+// For avoiding overlapping
+ltl_property T_FROM_DES64 = (StartNewSpec -> !EncriptionDone64)
+ltl_property T_FROM_DES128= (StartNewSpec -> !EncriptionDone128)
+ltl_property T_FROM_DES64COM = (StartNewSpec -> !EncriptionDone64Com)
+ltl_property T_FROM_DES128COM = (StartNewSpec -> !EncriptionDone128Com)
+
+
+// For overlapping updates
+ltl_property T_OVERLAP = (StopOldSpec -> StartNewSpec)
+
+// Updates controllers
+
+// 1
+updatingController DES64_DES128 = {
+    oldController = CONTROLLER_ENVIRONMENT_64,
+    oldEnvironment = ENV_DES64,
+	hatEnvironment = ENV_DES64,
+    newEnvironment = ENV_DES128,
+	oldGoal = DES64_SPEC,
+	newGoal = DES128_SPEC,
+	transition = T_FROM_DES64,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone64, EncriptionDone128, Des64_action, Des128_action, Output_action}
+}
+||UPD64_128 = DES64_DES128.
+
+// 2
+updatingController DES64_DES64COM = {
+    oldController = CONTROLLER_ENVIRONMENT_64,
+    oldEnvironment = ENV_DES64,
+	hatEnvironment = ENV_DES64,
+    newEnvironment = ENV_DES64COM,
+	oldGoal = DES64_SPEC,
+	newGoal = DES64COM_SPEC,
+	transition = T_FROM_DES64,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone64, EncriptionDone64Com, Des64_action, Des64Com_action, Output_action}
+}
+||UPD64_64COM = DES64_DES64COM.
+
+// 3
+updatingController DES128_DES64 = {
+    oldController = CONTROLLER_ENVIRONMENT_128,
+    oldEnvironment = ENV_DES128,
+	hatEnvironment = ENV_DES128,
+    newEnvironment = ENV_DES64,
+	oldGoal = DES128_SPEC,
+	newGoal = DES64_SPEC,
+	transition = T_FROM_DES128,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone64, EncriptionDone128, EncriptionDone64Com, EncriptionDone128Com,
+				Des64_action, Des128_action, Des64Com_action, Des128Com_action, Output_action}
+}
+||UPD128_64 = DES128_DES64.
+
+// 4
+updatingController DES128_DES128COM = {
+    oldController = CONTROLLER_ENVIRONMENT_128,
+    oldEnvironment = ENV_DES128,
+	hatEnvironment = ENV_DES128,
+    newEnvironment = ENV_DES128COM,
+	oldGoal = DES128_SPEC,
+	newGoal = DES128COM_SPEC,
+	transition = T_FROM_DES128,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone128, EncriptionDone128Com, Des128_action, Des128Com_action, Output_action}
+}
+
+||UPD128_128COM = DES128_DES128COM.
+
+// 5
+updatingController DES64COM_DES64 = {
+    oldController = CONTROLLER_ENVIRONMENT_64COM,
+    oldEnvironment = ENV_DES64COM,
+	hatEnvironment = ENV_DES64COM,
+    newEnvironment = ENV_DES64,
+	oldGoal = DES64COM_SPEC,
+	newGoal = DES64_SPEC,
+	transition = T_FROM_DES64COM,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone64, EncriptionDone128, EncriptionDone64Com, EncriptionDone128Com,
+				Des64_action, Des128_action, Des64Com_action, Des128Com_action, Output_action}
+}
+||UPD64COM_64 = DES64COM_DES64.
+
+// 6
+updatingController DES64COM_DES128COM = {
+    oldController = CONTROLLER_ENVIRONMENT_64COM,
+    oldEnvironment = ENV_DES64COM,
+	hatEnvironment = ENV_DES64COM,
+    newEnvironment = ENV_DES128COM,
+	oldGoal = DES64COM_SPEC,
+	newGoal = DES128COM_SPEC,
+	transition = T_FROM_DES64COM,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone64Com, EncriptionDone128Com, Des64Com_action, Des128Com_action, Output_action}
+}
+||UPD64COM_128COM = DES64COM_DES128COM.
+
+// 7
+updatingController DES128COM_DES128 = {
+    oldController = CONTROLLER_ENVIRONMENT_128COM,
+    oldEnvironment = ENV_DES128COM,
+	hatEnvironment = ENV_DES128COM,
+    newEnvironment = ENV_DES128,
+	oldGoal = DES128COM_SPEC,
+	newGoal = DES128_SPEC,
+	transition = T_FROM_DES128COM,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone128Com, EncriptionDone128, Des128Com_action, Des128_action, Output_action}
+}
+||UPD128COM_128 = DES128COM_DES128.
+
+// 8
+updatingController DES128COM_DES64COM = {
+    oldController = CONTROLLER_ENVIRONMENT_128COM,
+    oldEnvironment = ENV_DES128COM,
+	hatEnvironment = ENV_DES128COM,
+    newEnvironment = ENV_DES64COM,
+	oldGoal = DES128COM_SPEC,
+	newGoal = DES64COM_SPEC,
+	transition = T_FROM_DES128COM,
+	//transition = T_OVERLAP,
+    updateFluents = {InputRecieve, EncriptionDone128Com, EncriptionDone64Com, Des128Com_action, Des64Com_action, Output_action}
+}
+||UPD128COM_64COM = DES128COM_DES64COM.
+
+//Update Graph
+graphUpdate Graph = { 
+	initialState = DES64_DES128
+	transitions = { 
+		DES64_DES128,
+		DES64_DES64COM,
+		DES128_DES64,
+		DES128_DES128COM,
+		DES64COM_DES64,
+		DES64COM_DES128COM,
+		DES128COM_DES128,
+		DES128COM_DES64COM
+	}
+}

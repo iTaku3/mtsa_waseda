@@ -1,0 +1,148 @@
+set Locations = {ww, we, ew, ee}
+set Direction = {w, e}
+
+set Room = {e,w}
+set Sensed = {success, fail, putsuccess, putfail}//, doorOpen, doorClosed}
+set Cont = {move[Direction], pickup, putdown, exception}
+
+
+I_ROBOT = (arrive['ww]->ROBOT),
+ROBOT = (move[Direction] -> arrive[Locations] -> ROBOT 
+		| pickup -> (success -> ROBOT | fail -> ROBOT) 
+		| putdown -> (putsuccess -> ROBOT | putfail -> ROBOT)).
+
+GOOD_MAP = (arrive['ww] -> MAP['ww]),
+MAP['ww] = (move['e] -> arrive['ew] -> MAP['ew] 
+			| move['w] -> arrive['ww] -> MAP['ww] 
+			| putdown -> SENSE['putsuccess]['ww] 
+			| pickup -> SENSE['fail]['ww]),
+MAP['ew] = (move['e] -> arrive['we] -> MAP['we] 
+			| move['w] -> arrive['ww] -> MAP['ww] 
+			| putdown -> SENSE['putfail]['ew] 
+			| pickup -> SENSE['fail]['ew]),
+MAP['we] = (move['e] -> arrive['ee] -> MAP['ee] 
+			| move['w] -> arrive['ew] -> MAP['ew] 
+			| putdown -> SENSE['putfail]['we] 
+			| pickup -> SENSE['fail]['we]),
+MAP['ee] = (move['e] -> arrive['ee] -> MAP['ee] 
+			| move['w] -> arrive['we] -> MAP['we] 
+			| putdown -> SENSE['putfail]['ee]
+			| pickup -> SENSE['success]['ee]),
+SENSE[s:Sensed][x:Locations] = (
+			when (s=='putfail) putfail -> MAP[x]
+			|when (s=='putfail) {Sensed\{putfail}} -> EXCEPTION
+			|when (s=='putsuccess) putsuccess -> MAP[x]
+			|when (s=='putsuccess) {Sensed\{putsuccess}} -> EXCEPTION
+			|when (s=='success) success -> MAP[x]
+			|when (s=='success) {Sensed\{success}} -> EXCEPTION
+			|when (s=='fail) fail -> MAP[x]
+			|when (s=='fail) {Sensed\{fail}} -> EXCEPTION
+//			|when (s=='doorOpen) doorOpen -> MAP[x]
+//			|when (s=='doorOpen) {Sensed\{doorOpen}} -> EXCEPTION
+//			|when (s=='doorClosed) doorClosed -> MAP[x]
+//			|when (s=='doorClosed) {Sensed\{doorClosed}} -> EXCEPTION
+			),
+EXCEPTION = (exception->EXCEPTION).
+
+
+MAP = (arrive['ww] -> MAP['ww]),
+MAP['ww] = (move['e] -> (arrive['ew] -> MAP['ew] | arrive['ww]-> MAP['ww]) //east or oddly stuck
+			| move['w] -> (arrive['ww] -> MAP['ww] | arrive['ew] -> MAP['ew]) //stuck or oddly east
+			| putdown -> putsuccess -> MAP['ww] | pickup -> fail -> MAP['ww]),
+
+MAP['ew] = (move['e] -> (arrive['we] -> MAP['we] | arrive['ew]-> MAP['ew] | arrive['ww]-> MAP['ww]) //east or oddly stuck or odder west
+			| move['w] -> (arrive['ww] -> MAP['ww] | arrive['ew]-> MAP['ew]) //west or oddly stuck
+			| putdown -> putfail -> MAP['ew] | pickup -> fail -> MAP['ew]),
+
+MAP['we] = (move['e] -> (arrive['ee] -> MAP['ee] | arrive['we]-> MAP['we]) //east or oddly stuck
+			| move['w] -> (arrive['ew] -> MAP['ew] | arrive['we]-> MAP['we] | arrive['ee] -> MAP['ee]) //west or oddly stuck or odder east
+			| putdown -> putfail -> MAP['we] | pickup -> fail -> MAP['we]),
+
+MAP['ee] = (move['e] -> (arrive['ee] -> MAP['ee] | arrive['we] -> MAP['we]) //stuck or oddly west
+			| move['w] -> (arrive['we] -> MAP['we] | arrive['ee] -> MAP['ee]) //west or oddly stuck
+			| putdown -> putfail -> MAP['ee] | pickup -> success -> MAP['ee]).
+
+DOOR = (doorOpen -> doorClosed -> DOOR).
+
+||DOMAIN = (I_ROBOT||MAP||DOOR||I_FAST_ENOUGH||D_SLOW_ENOUGH).
+||GOOD_DOMAIN = (I_ROBOT||GOOD_MAP||DOOR||I_FAST_ENOUGH||D_SLOW_ENOUGH).
+
+set MOVES = {move[Direction]}
+set ARRIVES = {arrive[Locations]}
+set A = {MOVES, ARRIVES, pickup, putdown, doorOpen, doorClosed, exception}
+
+I_FAST_ENOUGH = (arrive['ww]-> FAST_ENOUGH),
+FAST_ENOUGH = ({A\{MOVES}}->FAST_ENOUGH 
+				| MOVES->ARRIVES->FAST_ENOUGH).
+D_SLOW_ENOUGH = (arrive['ww]-> SLOW_ENOUGH),
+SLOW_ENOUGH = ({A\{doorOpen}}->SLOW_ENOUGH 
+				| doorOpen->Cont->SLOW_ENOUGH).
+
+
+fluent DOOROPEN = <doorOpen, doorClosed>
+fluent AT[x:Locations] = <arrive[x], move[Direction]>
+fluent PICKED = <success, putsuccess>
+
+ltl_property DOORSAFE = []( ((AT['ew] && !DOOROPEN) -> X!move['e]) 
+								&& ((AT['we] && !DOOROPEN) -> X!move['w]) )
+ltl_property PICKONCE = [](PICKED -> X!pickup)
+ltl_property PUTONCE = [](!PICKED -> X!putdown)
+ltl_property BOMB_EE = [](AT['ee] -> X !move['e])
+
+
+||SAFETY = (DOORSAFE||PICKONCE||PUTONCE||BOMB_EE).
+||SAFEDOM = (DOMAIN||SAFETY).
+
+assert ASSUMEDOOROPENS = DOOROPEN
+fluent PICKING = <success, Cont\{success}>
+fluent PUTTING = <putsuccess, Cont\{putsuccess}>
+assert A_PUTTING = PUTTING
+assert A_PICKING = PICKING
+
+set Aux = {A\ARRIVES}
+fluent F_Exception = <exception, Cont\{exception}>
+assert Exception = F_Exception
+
+controllerSpec Goal = {
+	safety = {PICKONCE, PUTONCE}
+//	failure = {Exception}
+	assumption = {ASSUMEDOOROPENS}
+	nonblocking 
+	controllable = {Cont}
+}
+
+controllerSpec Goal2 = {
+	safety = {PICKONCE, PUTONCE}
+	failure = {Exception}
+	assumption = {ASSUMEDOOROPENS}
+	liveness = {A_PICKING, A_PUTTING}
+	nonblocking 
+	controllable = {Cont}
+}
+
+checkCompatibility ||Compatible = (DOMAIN)~{Goal}.
+
+minimal ||Abs_DOMAIN = (DOMAIN||DOORSAFE||BOMB_EE)
+				\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+ltl_property NotException = []!exception
+
+minimal ||GOOD_Abs_DOMAIN = (GOOD_DOMAIN||DOORSAFE||BOMB_EE)
+				\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+controller ||SAFE_ON_BAD_DOMAIN = (Abs_DOMAIN)~{Goal}.
+
+minimal ||D2 = (SAFE_ON_BAD_DOMAIN||GOOD_Abs_DOMAIN)\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+controller ||LIVE_ON_GOOD_DOMAIN = (D2)~{Goal2}.
+checkCompatibility ||Comp_LIVE_ON_GOOD_DOMAIN = (D2)~{Goal2}.
+
+||ROBUST = (DOMAIN || LIVE_ON_GOOD_DOMAIN).// || SAFETY).
+
+||REALLY_LIVE = (LIVE_ON_GOOD_DOMAIN || GOOD_DOMAIN).
+
+||EXCEPTIONS_HAPPEN = (LIVE_ON_GOOD_DOMAIN || NotException || Abs_DOMAIN).
+
+assert G2 = (([]<>ASSUMEDOOROPENS) -> 
+					([]<> (A_PICKING || Exception) && 
+					[]<> (A_PUTTING || Exception)))

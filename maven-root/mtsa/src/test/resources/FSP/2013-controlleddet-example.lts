@@ -1,0 +1,33 @@
+set Controllable = {n,s,e,w}
+
+ROBOT = ({n,s,e,w}->ROBOT). 
+
+ROOM = E, 
+E = (w->NW | w->SW | a->E),
+SW = (e->E | s->SW),
+NW = (e->E | n->NW)+{n,s,e,w}.
+
+||ENV = (ROOM || ROBOT).
+
+fluent F_S = <s, Controllable\{s}>
+fluent F_N = <n, Controllable\{n}>
+
+assert NorS = (F_S || F_N)
+
+controlled_det ||DET = ENV~{G}.
+
+||SOL = (E_C || ENV).
+
+controllerSpec G = {
+    liveness = {NorS}
+    controllable = {Controllable}
+}
+
+
+||E_C = CC.
+CC = Q0,
+	Q0	= (c1 -> Q1
+		  |u1 -> Q2),
+	Q1	= (c2 -> Q1),
+	Q2	= (u1 -> Q2).
+

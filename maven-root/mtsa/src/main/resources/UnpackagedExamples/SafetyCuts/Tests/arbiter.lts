@@ -1,0 +1,54 @@
+const N = 2
+range ID = 1..N
+
+PROC = (request -> grant -> release -> PROC).
+||PROCS = (p[ID]:PROC).
+
+set Controls = {p[ID].grant}
+set EnvActions = {p[ID].{request,release}}
+set AllActions = {Controls,EnvActions}
+fluent REQ[i:ID] = <p[i].request, p[i].grant>
+fluent HOLDS[i:ID] = <p[i].grant, p[i].release>
+
+assert REQ1 = REQ[1]
+assert REQ2 = REQ[2]
+assert HOLD1 = HOLDS[1]
+assert HOLD2 = HOLDS[2]
+
+//[]<> req1 /\ []<> req2 -> ([]<> holds1 /\ []<> holds2)
+
+ltl_property MUTEX = []!(exists[i:1..N-1] (HOLDS[i] && HOLDS[i+1..N]))
+
+controllerSpec PETERSON = {
+	safety = {MUTEX}
+	assumption = {REQ1, REQ2}
+	liveness = {HOLD1, HOLD2}
+	controllable = {Controls}
+}
+controller ||C = (PROCS)~{PETERSON}.
+checkCompatibility ||Comp = (PROCS)~{PETERSON}.
+
+EXP = Q0,
+	Q0	= (p[2].request -> Q4
+		  |p[1].request -> Q8),
+	Q1	= (p[2].grant -> Q12),
+	Q2	= (p[2].release -> Q8),
+	Q3	= (p[1].grant -> Q10),
+	Q4	= (p[1].request -> Q3
+		  |p[2].grant -> Q14),
+	Q5	= (p[2].request -> Q1),
+	Q6	= (p[1].release -> Q7
+		  |p[2].request -> Q9),
+	Q7	= (p[1].request -> Q5
+		  |p[2].request -> Q13),
+	Q8	= (p[2].request -> Q3
+		  |p[1].grant -> Q6),
+	Q9	= (p[1].release -> Q13),
+	Q10	= (p[1].release -> Q13),
+	Q11	= (p[2].release -> Q0
+		  |p[1].request -> Q2),
+	Q12	= (p[2].release -> Q8),
+	Q13	= (p[1].request -> Q1
+		  |p[2].grant -> Q11),
+	Q14	= (p[2].release -> Q0
+		  |p[1].request -> Q2).

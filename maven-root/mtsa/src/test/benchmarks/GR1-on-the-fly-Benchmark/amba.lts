@@ -1,0 +1,363 @@
+const INCR = 1
+const BURST4 = 2
+const SINGLE = 3
+const MaxAddr = 10
+const MaxClients = 0
+range Bool = 0..1
+const TRUE = 1
+const FALSE = 0
+
+//check that g11 states that decide start and hgrant_0 should be 1 at the start
+//TODO: hay que agregar liveness (guarantee) de []<>(s==0 || s==1)
+//TODO: hay que agregar liveness (assumption) de []<>(s==0 || s==2)
+//TODO: la realidad es que amba no tiene mucho sentido con un único master
+
+
+
+HBUSREQ(ID=1) = LOW,
+LOW = (hbusreq[ID].high  -> tick -> HIGH | tick-> LOW),
+HIGH = (hbusreq[ID].low -> tick -> LOW | tick -> HIGH).
+
+HLOCK(ID=1) = LOW,
+LOW = (hlock[ID].high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hlock[ID].low -> tick -> LOW | tick -> HIGH).
+
+HMASTER = LOW,
+LOW = (hmaster[i:0..MaxClients].high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hmaster.low -> tick-> LOW | tick -> HIGH).
+
+HREADY = HIGH,
+LOW = (hready.high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hready.low -> tick-> HREADY | tick -> HIGH).
+
+HGRANT(ID=1)= LOW,
+LOW = (hgrant[ID].high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hgrant[ID].low -> tick ->  LOW | tick -> HIGH).
+
+HMASTLOCK = LOW,
+LOW = (hmastlock.high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hmastlock.low -> tick-> LOW | tick -> HIGH).
+
+HBURST = LOW,
+LOW = (hburst[i:0..3].high  -> tick -> HIGH | tick -> LOW),
+HIGH = (hburst.low -> tick-> LOW | tick -> HIGH).
+
+START = LOW,
+LOW = (start.high  -> tick -> HIGH | tick -> LOW),
+HIGH = (start.low -> tick -> LOW | tick -> HIGH).
+
+LOCKED = LOW,
+LOW = (locked.high  -> tick -> HIGH | tick -> LOW),
+HIGH = (locked.low -> tick -> LOW | tick -> HIGH).
+
+DECIDE = LOW,
+LOW = (decide.high -> tick-> HIGH | tick -> LOW),
+HIGH = (decide.low -> tick -> LOW | tick -> HIGH).
+
+//Estados iniciales?
+fluent HMASTLOCK = <hmastlock.high, hmastlock.low> initially 0
+fluent HBUSREQ[i:0..MaxClients] = <hbusreq[i].high,hbusreq[i].low> initially 0
+fluent HMASTER[i:0..MaxClients] = <hmaster[i].high, {hmaster[0..MaxClients].high,hmaster.low}\{hmaster[i].high}> initially 0
+fluent HLOCK[i:0..MaxClients] = <hlock[i].high,hlock[i].low> initially 0
+fluent START = <start.high,start.low> initially TRUE
+fluent HBURST[i:0..3] = <hburst[i].high, {hburst.high[0..3],hburst.low}\{hburst[i].high}> initially 0
+fluent HGRANT[i:0..MaxClients] = <hgrant[i].high, hgrant[i].low> initially 0
+fluent HGRANT[0] = <hgrant[0].high, hgrant[0].low> initially TRUE
+fluent DECIDE = <decide.high, decide.low> initially TRUE
+fluent HREADY = <hready.high, hready.low> initially TRUE
+fluent LOCKED = <locked.high,locked.low> initially 0
+
+assert A_HREADY = HREADY
+
+
+
+fluent S_state = <s_state, tick>  	//A1
+fluent T_state = <t_state, tick>	//G2
+fluent U_state = <u_state, tick>	//G3
+
+assert A_S_state = S_state
+assert A_T_state = T_state
+assert A_U_state = U_state
+
+/*
+constraint A1 = [](HMASTLOCK && HBURST[INCR] -> X<>! forall [i:0..MaxClients] (HMASTER[i] <-> HBUSREQ[i])) //LIVENESS
+constraint A3 = forall [i:0..MaxClients] [](HLOCK[i] -> HBUSREQ[i])
+constraint A4 = forall [i:0..MaxClients] (!HBUSREQ[i] && !HLOCK[i] && !HREADY)  //OJO CONDICION DE BORDE EN ESTA FORMULA DE ESTADO INICIAL
+
+constraint G1 = [](!HREADY -> X!START)
+constraint G2 = []((HMASTLOCK && HBURST[INCR] && START) -> X (!START W !START &&  forall [i:0..MaxClients] (HMASTER[i] -> HBUSREQ[i])))
+constraint G31 = []((HMASTLOCK && HBURST[BURST4] && START && HREADY)->X (!START W X(!START W X (!START W (!START && HREADY)))))
+constraint G32 = []((HMASTLOCK && HBURST[BURST4] && START && !HREADY)->X (!START W X(!START W X (!START W X(!START W (!START && HREADY))))))
+constraint G4 = forall [i:0..MaxClients] [](HGRANT[i] <-> X(HMASTER[i]))
+constraint G5 = [](HREADY -> (LOCKED <-> X(HMASTLOCK)))
+constraint G6 = forall [i:0..MaxClients] [](X!START -> ((HMASTER[i] <-> X HMASTER[i]) && (HMASTLOCK <-> X HMASTLOCK)))
+constraint G7 = forall [i:0..MaxClients] []((DECIDE && X HGRANT[i])->(HLOCK[i]<->X LOCKED))
+constraint G8 = forall [i:0..MaxClients] [](!DECIDE -> ((HGRANT[i]<->X HGRANT[i])&&(LOCKED <-> X LOCKED)))
+constraint G101 =  forall [i:1..MaxClients] [](!HGRANT[i] -> (!HGRANT[i] W HBUSREQ[i]))
+constraint G102 = []((DECIDE  && forall [i:0..MaxClients] (!HBUSREQ[i]))->X HGRANT[0])
+constraint G11 = (HGRANT[0] && forall [i:0..MaxClients] (!HGRANT[i]) && HMASTER[0] && !HMASTLOCK && DECIDE && START)
+*/
+//constraint G9 = [](forall [i:0..MaxClients](HBUSREQ[i] -> <>(!HBUSREQ[i] || HMASTER[i]))) // ES LIVENESS!!!
+
+
+
+
+//GR1 assumption GFHREADY
+
+||C0 = (A3 || A4 || G6 || G8 || G102). //G7
+
+||ComponentNotZero  = (A3 || A4 || G4 || G8 || G101 || G102).//Falta G7
+
+||C1 = ComponentNotZero/{hbusreq[1]/hbusreq[0], hgrant[1]/hgrant[0],hlock[1]/hlock[0]}.
+||C2 = ComponentNotZero/{hbusreq[2]/hbusreq[0], hgrant[2]/hgrant[0],hlock[2]/hlock[0]}.
+||C3 = ComponentNotZero/{hbusreq[3]/hbusreq[0], hgrant[3]/hgrant[0],hlock[3]/hlock[0]}.
+||C4 = ComponentNotZero/{hbusreq[4]/hbusreq[0], hgrant[4]/hgrant[0],hlock[4]/hlock[0]}.
+||C5 = ComponentNotZero/{hbusreq[5]/hbusreq[0], hgrant[5]/hgrant[0],hlock[5]/hlock[0]}.
+
+||SYSTEM = (C0 || C1 || C2 || C3 || C4 || C5 || G1 || G11). // Faltan G9, A1 y A2, G1 ||G2 ||G31 || G32 || G5
+
+
+constraint A3 = [](tick -> (HLOCK[0] -> HBUSREQ[0]))
+constraint A4 = true//!HBUSREQ[0] && !HLOCK[0] && !HREADY  //Guaranteed by construction
+constraint G1 = [](tick -> (!HREADY -> (X (!tick W tick && !START))))
+
+//Faltan traducir a asincronico....
+//constraint G2 = []((HMASTLOCK && HBURST[INCR] && START) -> X (!START W !START &&  forall [i:0..MaxClients] (HMASTER[i] -> HBUSREQ[i])))
+//constraint G31 = []((HMASTLOCK && HBURST[BURST4] && START && HREADY)->X (!START W X(!START W X (!START W (!START && HREADY)))))
+//constraint G32 = []((HMASTLOCK && HBURST[BURST4] && START && !HREADY)->X (!START W X(!START W X (!START W X(!START W (!START && HREADY))))))
+//constraint G5 = [](HREADY -> (LOCKED <-> X(HMASTLOCK)))
+
+constraint G11 = true // DEBERIA estar garantizado por construccion. (HGRANT[0] && forall [i:0..MaxClients] (!HGRANT[i]) && HMASTER[0] && !HMASTLOCK && DECIDE && START)
+
+// ****** A1 ******
+set SigmaA1 = {hburst[INCR].high, hburst[INCR].low, hmastlock.high, hmastlock.low, hbusreq[0].high, hbusreq[0].low}
+
+A1 = ReleaseReq[0][0][0][0][0][0][0], //ml HMASTLOCK, b Hburst, r BusReq
+ReleaseReq[s:0..2][ml:Bool][b:Bool][r:Bool][ml_p:Bool][b_p:Bool][r_p:Bool] = (
+	when(s == 0 && (ml_p == 0 || b_p == 0))s_state -> tick -> ReleaseReq[0][ml_p][b_p][r_p][ml_p][b_p][r_p] |
+	when(s == 0 && ml_p == 1 && b_p == 1)tick -> ReleaseReq[1][ml_p][b_p][r_p][ml_p][b_p][r_p] |
+	when((s == 1 || s == 2)&& r_p == 1)tick -> ReleaseReq[1][ml_p][b_p][r_p][ml_p][b_p][r_p] |
+	when((s == 1 || s == 2)&& r_p == 0 && ml_p == 1 && b_p == 1)s_state -> tick -> ReleaseReq[2][ml_p][b_p][r_p][ml_p][b_p][r_p] |
+	when((s == 1 || s == 2)&& r_p == 0 && (ml_p == 0 || b_p == 0))tick -> ReleaseReq[0][ml_p][b_p][r_p][ml_p][b_p][r_p]|
+	hburst[INCR].high -> ReleaseReq[s][ml][b][r][ml_p][1][r_p]|
+	hburst[INCR].low -> ReleaseReq[s][ml][b][r][ml_p][0][r_p]|
+	hmastlock.high -> ReleaseReq[s][ml][b][r][1][b_p][r_p]|
+	hmastlock.low -> ReleaseReq[s][ml][b][r][0][b_p][r_p]|
+	hbusreq[0].high -> ReleaseReq[s][ml][b][r][ml_p][b_p][1]|
+	hbusreq[0].low -> ReleaseReq[s][ml][b][r][ml_p][b_p][0]
+).
+
+||TESTA1 = (A1 || HMASTLOCK || HBURST || HBUSREQ(0)).
+assert A1A = [](tick -> (HMASTLOCK -> (X (!tick W (tick && <> (tick && !HBUSREQ[0]))))))
+
+
+// ****** G2 ******
+set SigmaG2 = {hburst[INCR].high, hburst[INCR].low, hmastlock.high, hmastlock.low, hbusreq[0].high, hbusreq[0].low, start.high, start.low}
+
+G2 = AccessIfNoReq[0][0][0][0][0][0][0][0][0], //ml HMASTLOCK, b Hburst, r BusReq, s start
+AccessIfNoReq[t:0..2][ml:Bool][b:Bool][r:Bool][s:Bool][ml_p:Bool][b_p:Bool][r_p:Bool][s_p:Bool] = (
+	when(t == 0 && (ml_p == 0 || b_p == 0 || s == 0))t_state -> tick -> AccessIfNoReq[0][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p] |
+	when(t == 0 && ml_p == 1 && b_p == 1 && s == 1)t_state -> tick -> AccessIfNoReq[1][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p] |
+	when(t == 1 && r_p == 0 && s == 0)t_state -> tick -> AccessIfNoReq[0][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p] |
+	when(t == 1 && r_p == 1 && s == 0)t_state -> tick -> AccessIfNoReq[1][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p] |
+	when(t == 1 && s == 1)tick -> AccessIfNoReq[2][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p]|
+	when(t == 2)tick -> AccessIfNoReq[2][ml_p][b_p][r_p][s_p][ml_p][b_p][r_p][s_p]|
+	hburst[INCR].high -> AccessIfNoReq[t][ml][b][r][s][ml_p][1][r_p][s_p]|
+	hburst[INCR].low -> AccessIfNoReq[t][ml][b][r][s][ml_p][0][r_p][s_p]|
+	hmastlock.high -> AccessIfNoReq[t][ml][b][r][s][1][b_p][r_p][s_p]|
+	hmastlock.low -> AccessIfNoReq[t][ml][b][r][s][0][b_p][r_p][s_p]|
+	hbusreq[0].high -> AccessIfNoReq[t][ml][b][r][s][ml_p][b_p][1][s_p]|
+	hbusreq[0].low -> AccessIfNoReq[t][ml][b][r][s][ml_p][b_p][0][s_p]|
+	start.high -> AccessIfNoReq[t][ml][b][r][s][ml_p][b_p][r_p][1]|
+	high.low -> AccessIfNoReq[t][ml][b][r][s][ml_p][b_p][r_p][0]
+).
+
+||TESTG2 = (G2 || HMASTLOCK || HBURST || HBUSREQ(0) || START).
+/*
+assert G2A = [](tick->
+                      (HMASTLOCK && START -> (X (!tick W (tick && !START W (tick && HBUSREQ[0]))))))
+*/
+assert G2A = [](tick->
+                      (HMASTLOCK && HBURST[INCR] && START -> (X (!tick W (tick && !START W (tick && !START && !HBUSREQ[0]))))))
+
+//assert G2A = []((HMASTLOCK && HBURST[INCR] && START) -> X (!START W !START &&  HMASTER[0] && HBUSREQ[0]))
+
+// ****** G3 ******
+set SigmaG3 = {hburst[BURST4].high, hburst[BURST4].low, hmastlock.high, hmastlock.low, hready.high, hready.low, start.high, start.low}
+
+G3 = Burst4NoAccess[0][0][0][0][0], //u state, m hmastlock, b hburst, s start, r hready
+Burst4NoAccess[u:0..5][m:Bool][b:Bool][s:Bool][r:Bool] = (
+	when(u == 0 && (b == 0 || s == 0)) u_state -> tick -> Burst4NoAccess[0][m][b][s][r] |
+	when(u == 0 && b == 1 && s == 1 && r == 0) u_state -> tick -> Burst4NoAccess[1][m][b][s][r] |
+	when(u == 0 && b == 1 && s == 1 && r == 1) u_state -> tick -> Burst4NoAccess[2][m][b][s][r] |
+	when(u == 1 && s == 0 && r == 0) u_state -> tick -> Burst4NoAccess[1][m][b][s][r] |
+	when(u == 1 && s == 0 && r == 1) u_state -> tick -> Burst4NoAccess[2][m][b][s][r] |
+	when(u == 1 && s == 1) tick -> Burst4NoAccess[5][m][b][s][r] |
+	when(u == 2 && s == 0 && r == 0) u_state -> tick -> Burst4NoAccess[2][m][b][s][r] |
+	when(u == 2 && s == 0 && r == 1) u_state -> tick -> Burst4NoAccess[3][m][b][s][r] |
+	when(u == 2 && s == 1) tick -> Burst4NoAccess[5][m][b][s][r] |
+	when(u == 3 && s == 0 && r == 0) u_state -> tick -> Burst4NoAccess[3][m][b][s][r] |
+	when(u == 3 && s == 0 && r == 1) u_state -> tick -> Burst4NoAccess[4][m][b][s][r] |
+	when(u == 3 && s == 1) tick -> Burst4NoAccess[5][m][b][s][r] |
+	when(u == 4 && s == 0 && r == 0) u_state -> tick -> Burst4NoAccess[4][m][b][s][r] |
+	when(u == 4 && s == 0 && r == 1) u_state -> tick -> Burst4NoAccess[0][m][b][s][r] |
+	when(u == 4 && s == 1) tick -> Burst4NoAccess[5][m][b][s][r] |
+	hburst[BURST4].high -> Burst4NoAccess[u][m][1][s][r]|
+	hburst[BURST4].low -> Burst4NoAccess[u][m][0][s][r]|
+	hmastlock.high -> Burst4NoAccess[u][1][b][s][r]|
+	hmastlock.low -> Burst4NoAccess[u][0][b][s][r]|
+	hready.high -> Burst4NoAccess[u][m][b][s][r]|
+	hready.low -> Burst4NoAccess[u][m][b][s][r]|
+	start.high -> Burst4NoAccess[u][m][b][s][r]|
+	start.low -> Burst4NoAccess[u][m][b][s][r]
+).
+
+||TESTG3 = (G3 || HMASTLOCK || HBURST || HREADY || START).
+
+// ****** G4 ******
+G4 = LastTickNotReady[0][0][0],
+LastTickNotReady[r:Bool][g:Bool][m:Bool] = (hready.high -> LastTickNotReady[1][g][m] |
+                                                         hgrant[0].high -> LastTickNotReady[r][1][m] |
+                                                         hmaster[0].high -> LastTickNotReady[r][g][1] |
+                                                         hready.low -> LastTickNotReady[0][g][m] |
+                                                         hgrant[0].low -> LastTickNotReady[r][0][m] |
+                                                         hmaster.low -> LastTickNotReady[r][g][0] |
+                                                         when (r == 1) tick -> LastTickReady [r][g][m][g] |
+                                                         when (r == 0) tick -> LastTickNotReady[r][g][m]),
+LastTickReady[r:Bool][g:Bool][m:Bool][gAtTick:Bool] = (
+                                                         when (gAtTick == m && r == 1) tick -> LastTickReady[r][g][m][g] |
+                                                         when (gAtTick == m && r == 0) tick -> LastTickNotReady[r][g][m] |
+                                                         hready.high -> LastTickReady[1][g][m][gAtTick] |
+                                                         hgrant[0].high -> LastTickReady[r][1][m][gAtTick] |
+                                                         when (gAtTick == 1) hmaster[0].high -> LastTickReady[r][g][1][gAtTick]  |
+                                                         hready.low -> LastTickReady[0][g][m][gAtTick] |
+                                                         hgrant[0].low -> LastTickReady[r][0][m][gAtTick] |
+                                                         when (gAtTick == 0) hmaster.low -> LastTickReady[r][g][0][gAtTick] ).
+||TESTG4 = (G4 || HMASTER || HGRANT(0) || HREADY). //Chequear contra GAA
+assert G4A = [](tick->
+                                        (HREADY -> (HGRANT[0] <-> (X (!tick W (tick && HMASTER[0]))))))
+
+
+// ****** G5 ******
+set SigmaG5 = {hready.high, hready.low, locked.high, locked.low, hmastlock.high, hmastlock.low}
+G5 = SetMastLock[0][0][0][0][0][0],  //r hready, l locked, m hmastlocked
+SetMastLock[r:Bool][l:Bool][m:Bool][r_p:Bool][l_p:Bool][m_p:Bool] = (
+	when(r == 1 && l == m_p) tick -> SetMastLock[r_p][l_p][m_p][r_p][l_p][m_p] |
+	hready.high -> SetMastLock[r][l][m][1][l_p][m_p] |
+	hready.low -> SetMastLock[r][l][m][0][l_p][m_p] |
+	locked.high -> SetMastLock[r][l][m][r_p][1][m_p] |
+	locked.low -> SetMastLock[r][l][m][r_p][0][m_p] |
+	hmastlock.high -> SetMastLock[r][l][m][r_p][l_p][1] |
+	hmastlock.low -> SetMastLock[r][l][m][r_p][l_p][0]
+).
+
+||TESTG5 = (G5 || HREADY || HMASTLOCK || LOCKED). //Chequear contra CGA
+assert G5A = [](tick->(HREADY -> (LOCKED <-> (X (!tick W (tick && HMASTLOCK))))))
+
+// ****** G6 ******
+set SigmaG6 = {hmaster[0].high, hmaster.low, hmastlock.high, hmastlock.low}
+G6 = S1,  //Assumes START is low
+S1 = (tick -> G6 | SigmaG6 -> S2 | start.high -> S3),
+S2 = (SigmaG6 -> S2 | start.high -> S3), //changed signals, must change start before tick
+S3 = (SigmaG6 -> S3 | tick -> S4),
+S4 = (SigmaG6 -> S5 | start.low -> S6),
+S5 = (SigmaG6 -> S5 | tick -> S4),
+S6 = (tick -> S1).
+||TESTG6 = (G6 || START || HMASTLOCK || HMASTER). //Chequear contra CGA
+assert G6A = [](tick -> (
+                                                (X (!tick W (tick && !START))) -> ((G6_AUX2 -> G6_AUX1) && (HMASTLOCK -> X (!tick W (tick && HMASTLOCK))))
+                        ))
+assert G6_AUX1 = (HMASTER[0])
+assert G6_AUX2 = (X (!tick W (tick && HMASTER[0])))
+
+// ****** G7 ******
+
+assert G7A = [](tick -> (DECIDE && X (!tick W (tick && HGRANT[0])) -> (HLOCK[0]<->X (!tick W (tick && LOCKED)))))
+
+set SigmaG7 = {decide.high, decide.low, hlock[0].high, hlock[0].low, hgrant[0].high, hgrant[0].low, locked.high, locked.low}
+
+G7 = RememberLocked[0][0][0][0][0][0][0][0],
+RememberLocked[d:Bool][hg:Bool][hl:Bool][l:Bool][d_p:Bool][hg_p:Bool][hl_p:Bool][l_p:Bool] = (
+	when((d == 1 && hg_p == 1 && hl == l_p )|| (d == 0 || hg_p == 0)) tick -> RememberLocked[d_p][hg_p][hl_p][l_p][d_p][hg_p][hl_p][l_p] |
+	decide.high -> RememberLocked[d][hg][hl][l][1][hg_p][hl_p][l_p] |
+	decide.low -> RememberLocked[d][hg][hl][l][0][hg_p][hl_p][l_p] |
+	hgrant[0].high -> RememberLocked[d][hg][hl][l][d_p][1][hl_p][l_p] |
+	hgrant[0].low -> RememberLocked[d][hg][hl][l][d_p][0][hl_p][l_p] |
+	hlock[0].high -> RememberLocked[d][hg][hl][l][d_p][hg_p][1][l_p] |
+	hlock[0].low -> RememberLocked[d][hg][hl][l][d_p][hg_p][0][l_p] |
+	locked.high -> RememberLocked[d][hg][hl][hg][d_p][hg_p][hl_p][1] |
+	locked.low -> RememberLocked[d][hg][hl][hg][d_p][hg_p][hl_p][0]).
+
+||TESTG7 = (G7 || DECIDE || HGRANT(0) || HLOCK(0) || LOCKED).
+
+
+
+// ****** G8 ******
+set SigmaG8 = {hgrant[0].high, hgrant[0].low, locked.high, locked.low}
+G8 = S1,
+S1 = (tick -> S1 | decide.high -> S2),
+S2 = (tick -> S3),
+S3 = (SigmaG8 -> S3 | tick -> S3 | decide.low -> S4),
+S4 = (SigmaG8 -> S4 | tick -> S1).
+||TESTG8 = (G8 || DECIDE || HGRANT(0) || LOCKED). //Chequear contra CGA
+assert G8A = [](tick -> (!DECIDE -> ((HGRANT[0]<->X(!tick W (tick && HGRANT[0])) && (LOCKED <-> X (!tick W (tick && LOCKED)))))))
+
+
+constraint G101 =  [](tick->(!HGRANT[0] -> ((tick -> !HGRANT[0]) W (tick && HBUSREQ[0]))))
+constraint G102 = []((DECIDE  && (!HBUSREQ[0]))->X (!tick W (tick && HGRANT[0])))
+
+// ****** G9 ******
+fluent G9 = <{hbusreq[0].low, hmaster[0].high}, {hbusreq[0].high, hmaster[0].low}>
+assert A_G9 = G9
+
+// ****** G10 ******
+
+assert G10A = [](tick -> (DECIDE && X (!tick W (tick && HGRANT[0])) -> (HLOCK[0]<->X (!tick W (tick && LOCKED)))))
+
+set SigmaG10 = {decide.high, decide.low, hbusreq[0].high, hbusreq[0].low, hgrant[0].high, hgrant[0].low}
+
+G10_1 = ( hbusreq[i:0..MaxClients] -> G10_1ReqEnabled),
+G10_1ReqEnabled = (hgrant[i:0..MaxClients].high -> G10_1ReqEnabled).
+
+G10_2 = DefReqMaster0[0][0][0][0][0][0], //g grant, d decide, b busreq
+DefReqMaster0[g:Bool][d:Bool][b:Bool][g_p:Bool][d_p:Bool][b_p:Bool] = (
+	when(d == 1 && b == 0 && g_p == 1) tick -> DefReqMaster0[g_p][d_p][b_p][g_p][d_p][b_p] |
+	decide.high -> DefReqMaster0[g][d][b][g_p][1][b_p] |
+	decide.low -> DefReqMaster0[g][d][b][g_p][0][b_p] |
+	hbusreq[0].high -> DefReqMaster0[g][d][b][g_p][d_p][1] |
+	hbusreq[0].low -> DefReqMaster0[g][d][b][g_p][d_p][0] |
+	hgrant[0].high -> DefReqMaster0[g][d][b][1][d_p][b_p] |
+	hgrant[0].low -> DefReqMaster0[g][d][b][0][d_p][b_p]
+).
+
+// ****** G10 ******
+const QtySignals = 10
+
+SIGNALS_SEQUENCER = SEQ[0],
+SEQ[i:0..QtySignals] = (when (i < 1) {hbusreq[0].high, hbusreq[0].low} -> SEQ[1] |
+	when (i < 2) {hlock[0].high, hlock[0].low} -> SEQ[2] |
+	when (i < 3) {hmaster[0].high, hmaster.low} -> SEQ[3] |
+	when (i < 4) {hready.high, hready.low} -> SEQ[4] |
+	when (i < 5) {hmastlock.high, hmastlock.low} -> SEQ[5] |
+	when (i < 6) {hburst[j:0..3].high, hburst[k:0..3].low} -> SEQ[6] |
+	when (i < 7) {start.high, start.low} -> SEQ[7] |
+	when (i < 8) {locked.high, locked.low} -> SEQ[8] |
+	when (i < 9) {decide.high, decide.low} -> SEQ[9] |
+	tick -> SEQ[0]).
+
+||SIGNALS = (forall [i:MaxClients] HBUSREQ(i) || forall [i:MaxClients] HLOCK(i) || HMASTER || HREADY || HGRANT || HMASTLOCK || HBURST || START || LOCKED || DECIDE).
+
+||ENV = (SIGNALS_SEQUENCER || SIGNALS || A1 || G2 || G3 || G4 || G5 || G6 || G7 || G8 || G10_1 || G10_2).
+
+set Controllable = {hmaster[i:0..MaxClients].high, hmaster.low, hgrant[j:0..MaxClients].high, hgrant[k:0..MaxClients].low, hmastlock.high, hmastlock.low, start.high, start.low, locked.high, locked.low, decide.high, decide.low}
+
+//controllers
+controller ||C = (ENV)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       assumption = {A_S_state, A_HREADY}
+       liveness = {A_T_state, A_U_state, A_G9}
+       controllable = {Controllable}
+}
+

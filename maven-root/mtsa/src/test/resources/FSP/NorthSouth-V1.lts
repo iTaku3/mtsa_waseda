@@ -1,0 +1,75 @@
+set A = {mn, ms, od, northFar, northClose, southClose, southFar}
+set Controllable = {mn, ms}
+
+fluent DO = <do, dc> initially 1
+fluent NorthFar = <northFar, {northClose, southClose, southFar}>
+fluent SouthFar = <southFar, {northClose, southClose, northFar}>
+
+assert ADO = !DO
+assert ANorthFar = !NorthFar
+assert ASouthFar = !SouthFar
+
+ 
+controllerSpec G1 = {
+assumption = {ADO}
+liveness = {ANorthFar, ASouthFar}
+controllable = {Controllable}
+}
+
+||A = (M || CM).
+
+controller ||CM = (M)~{G1}.
+ 
+||TopFreeM = (M || NotTopFarNorth || NotTopFarSouth || NotTopDO).
+
+NotTopDO = TRUE,
+TRUE = (do -> TRUE | dc -> FALSE),
+FALSE = (do -> TRUE | dc -> FALSE).
+
+
+NotTopFarNorth = FALSE,
+TRUE = (northFar -> TRUE | {northClose, southClose, southFar} -> FALSE),
+FALSE = (northFar -> TRUE | {northClose, southClose, southFar} -> FALSE).
+
+NotTopFarSouth = FALSE,
+TRUE = (southFar -> TRUE | {northClose, southClose, northFar} -> FALSE),
+FALSE = (southFar -> TRUE | {northClose, southClose, northFar} -> FALSE).
+
+M = ToState1,
+ToState1 = (northFar -> State1),
+State1 = (ms -> do -> ToState2 | ms-> dc -> ToState3),
+
+ToState4 = (northFar -> State4),
+State4 = (ms -> do -> ToState2 | ms-> dc -> ToState3 
+		//| do -> State1
+),
+
+ToState2 = (northClose -> State2),
+State2 = (mn -> do -> ToState1 | mn -> dc -> ToState4 
+		| ms -> do -> ToState5 | ms -> dc -> ToState8), 
+
+ToState3 = (northClose -> State3),
+State3 = (mn -> do -> ToState1 | mn -> ToState4 
+		//| do-> State2 
+),
+
+
+ToState5 = (southClose -> State5),
+State5 = (mn -> do -> ToState2 | mn -> dc -> ToState3 
+		| ms -> do -> ToState6 | ms -> dc -> ToState7), 
+
+
+ToState8 = (southClose -> State8),
+State8 = (ms -> do -> ToState6 | ms -> dc -> ToState7
+		 //| do-> State5 
+),
+
+ToState6 = (southFar -> State6),
+State6 = (mn -> do -> ToState5 | mn-> dc -> ToState8),
+
+
+ToState7 = (southFar -> State7),
+State7 = (mn -> do -> ToState5 | ms-> dc -> ToState8 
+		 ///| do -> State6
+).
+

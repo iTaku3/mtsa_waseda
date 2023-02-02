@@ -1,0 +1,58 @@
+const SRVsCount = 1
+const ClientsCount = 2
+range IDServices = 1..SRVsCount
+range Clients = 1..ClientsCount
+
+set AvailableServices = {car, flight, hotel}
+set Controllable = {AvailableServices.{buy, query, reserve, cancelReservation}.[IDServices]}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail, notFound}.[IDServices]}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess, found}.[IDServices]}
+set A = {Controllable, Uncontrollable}
+
+//Environment model
+SERVICE(SRV='car, ID=1) = IDLE,
+IDLE = ([SRV].query[ID] -> ( [SRV].queryFail[ID] -> IDLE | [SRV].querySuccess[ID] -> QUERIED) | [SRV].cancelReservation[ID] -> IDLE),
+QUERIED = ([SRV].found[ID] -> RESULTSET | [SRV].notFound[ID] -> IDLE),
+RESULTSET = ([SRV].reserve[ID] -> ([SRV].reserveFail[ID] -> IDLE | [SRV].reserveSuccess[ID] -> RESERVED)),
+RESERVED = ([SRV].buy[ID] -> ([SRV].buyFail[ID] -> IDLE | [SRV].buySuccess[ID] -> IDLE)).
+
+||SERVICES = (forall[srv:AvailableServices][id:IDServices] SERVICE(srv, id)).
+
+||ENV = (SERVICES).
+
+//fluent definitions
+fluent Reserve[srv:AvailableServices][id:IDServices] = <[srv].reserveSuccess[id], [srv].query[id]>//A\{[srv].reserve[id]}>
+fluent BuySuccessfully[srv:AvailableServices][id:IDServices] = <[srv].buySuccess[id], A\{[srv].buySuccess[id]}>
+fluent F_Query[srv:AvailableServices][id:IDServices] = <[srv].query[id], A\{[srv].query[id]}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent BoughtSuccessfully[srv:AvailableServices][id:IDServices] = <[srv].buySuccess[id], [srv].query[id]>
+
+//fluent assertions
+assert BuyAll = forall[srv:AvailableServices][id:IDServices] (BuySuccessfully[srv][id])
+assert Failures = F_Failures
+assert Query = F_Query
+assert AllBought = forall[srv:AvailableServices]exists[id:IDServices] (BoughtSuccessfully[srv][id])
+
+//Safety definition
+ltl_property ReservePriorBuy = [] (forall[srv:AvailableServices][srv2:AvailableServices][id:IDServices] (BuySuccessfully[srv][id] -> Reserve[srv2][id]))
+
+
+||A = S1.
+BB = (a->BB)+{FailureSet}.
+||B = (BB || SERVICES).
+
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+controllerSpec G1 = {
+	safety = {ReservePriorBuy}
+	failure = {Failures}
+	assumptions = {}
+	liveness = 
+	{AllBought}
+	controllable = {Controllable}
+}
+||PLANT = (ReservePriorBuy || SERVICES).
+
+
+

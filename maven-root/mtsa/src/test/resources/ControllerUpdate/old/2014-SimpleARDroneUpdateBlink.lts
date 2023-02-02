@@ -1,0 +1,125 @@
+const MAX = 2
+range R = 0..MAX
+
+
+// -------- BEFORE ---------
+set ControllableActions = {takeoff, land, blink, read, switchE}
+set OLDControllableActions = {takeoffOLD, landOLD, blinkOLD, readOLD}
+set A = {ControllableActions, read.val[R],OLDControllableActions}
+
+assert LIGHTOFFWHENLANDED = (Blink -> IN_AIR)
+fluent IN_AIR = <{takeoff,takeoffOLD},{land,landOLD}> initially 0
+assert NOREADWHENLANDED = (Read -> IN_AIR)
+assert PROCESS_VALUE = ((!Read && !Land) W (Blink || switchE))
+assert NOREAD_UNTIL_VALPROCESSED = (read.val[1] -> PROCESS_VALUE && ((read.val[0] || read.val[2]) -> (!Blink W (Read || switchE))))
+assert NOTWOPROCESSEDINAIR = (Read -> X(!Read W (!IN_AIR)))
+
+fluent SwitchE = <switchE, switchC> initially 0 // HACK! switchC is livenessd to not happen
+fluent SwitchC = <switchC, landOLD> initially 0 // HACK! landOLD is livenessd to not happen
+assert A_SwitchC = SwitchC
+
+assert NOREAD_UNTIL_VALPROCESSED_NEW = ((read.val[2] -> PROCESS_VALUE) 
+									&& ((read.val[0] || read.val[1]) -> (!Blink W Read)))
+assert TRUE = (switchE || !switchE)
+
+
+
+ltl_property S = (NOREAD_UNTIL_VALPROCESSED W switchE)
+ltl_property NEWS = [](switchE -> []NOREAD_UNTIL_VALPROCESSED_NEW)
+
+ltl_property I1 = [](NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOTWOPROCESSEDINAIR)
+
+
+//ltl_property I2 = ([](NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOTWOPROCESSEDINAIR) &&
+//				   [](((read.val[1] && (!Blink W switchE)) -> (((!Read && !Land) W Blink))))
+
+
+ltl_property I2 = ([](NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOTWOPROCESSEDINAIR) &&
+				   ([]((read.val[1] && (!Blink W switchE)) -> [](switchE -> ((!Read && !Land) W Blink))))
+				  ) // When switchE on unprocessed value, use OLD spec
+
+//ltl_property I3 = ([](NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOTWOPROCESSEDINAIR) &&
+//				   [](((read.val[1] && (!Blink W switchE)) -> ((!Blink W Read))))
+
+ltl_property I3 = ([](NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOTWOPROCESSEDINAIR) &&
+				   ([]((read.val[1] && (!Blink W switchE)) -> [](switchE -> (!Blink W Read))))
+ 				  )	// When switchE on unprocessed value, use NEW spec
+
+
+
+
+
+fluent Read = <{read, readOLD}, A\{read, readOLD}>
+fluent Takeoff = <{takeoff, takeoffOLD}, A\{takeoff, takeoffOLD}>
+fluent Land = <{land, landOLD}, A\{land, landOLD}>
+fluent Blink = <{blink, blinkOLD}, A\{blink, blinkOLD}>
+
+
+
+// E en fase 2 siga en el estado que estaba E en fase 1.
+// Esto se puede hacer cambiando C para que se apague al recibir switchC. 
+// Entonces la composicion de C y E va a comportarse como E (fase 2) despues de switchC.
+
+// El mismo problema existe en general para fase 3 aunque justo aca no se necesita.
+
+
+	C_Original = Q0, 
+	Q0	= (takeoffOLD -> Q1 | switchC -> OFF),
+	Q1	= (readOLD -> Q4 | switchC -> OFF),
+	Q2	= (landOLD -> Q0 | switchC -> OFF),
+	Q3	= (blinkOLD -> Q2 | switchC -> OFF),
+	Q4	= (read.val.{[0], [2]} -> Q2
+		  |read.val[1] -> Q3 | switchC -> OFF),
+	OFF = ({takeoffOLD, landOLD, blinkOLD, readOLD, read.val[R]} -> OFF).
+
+	E_OLDandNEW = Q0,
+	Q0	= (blinkOLD -> Q0
+		  |readOLD -> Q1
+		  |takeoffOLD -> Q2
+		  |switchC -> Q0_N),
+	Q1	= (read.val[0..2] -> Q0
+		  |switchC -> Q1_N),
+	Q2	= (landOLD -> Q0
+		  |blinkOLD -> Q2
+		  |readOLD -> Q3
+		  |switchC -> Q2_N),
+	Q3	= (read.val[0..2] -> Q2
+		  |switchC -> Q3_N),
+	Q0_N	= (blink -> Q0_N
+		  |read -> Q1_N
+		  |takeoff -> Q2_N
+		  |switchE -> Q0_NP),
+	Q1_N	= (read.val[0..2] -> Q0_N
+		  |switchE -> Q1_NP),
+	Q2_N	= (land -> Q0_N
+		  |blink -> Q2_N
+		  |read -> Q3_N
+		  |switchE -> Q2_NP),
+	Q3_N	= (read.val[0..2] -> Q2_N
+		  |switchE -> Q3_NP),
+	Q0_NP	= (blink -> Q0_NP
+		  |read -> Q1_NP
+		  |takeoff -> Q2_NP),
+	Q1_NP	= (read.val[0..2] -> Q0_NP),
+	Q2_NP	= (land -> Q0_NP
+		  |blink -> Q2_NP
+		  |read -> Q3_NP),
+	Q3_NP	= (read.val[0..2] -> Q2_NP).
+
+
+	||FASE1a3 = (C_Original || E_OLDandNEW).
+
+||TEST = (C||FASE1a3).
+
+controllerSpec ObjectiveBefore = {
+	safety = {S,NEWS,I2}
+	assumption = {A_SwitchC}
+	liveness = {Read,SwitchE}
+	controllable = {ControllableActions}
+}
+
+controller ||C=(FASE1a3)~{ObjectiveBefore}.
+
+
+
+

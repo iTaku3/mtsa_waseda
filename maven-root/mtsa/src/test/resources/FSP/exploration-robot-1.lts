@@ -1,0 +1,89 @@
+set Moves = {n,s,e,w}
+set Moves_Maybe = {n?,s?,e?,w?,load?,unload?}
+
+set Actions = {load,unload}
+set A = {Moves,Actions}
+const MIN = 1 //this must always be odd
+const MAX = 3
+range Pos = MIN..MAX
+
+//Concrete
+MAZE = M[1][1],
+M[r:Pos][c:Pos] = ( when(r%2==0 && c==MAX) n->M[r-1][c] 
+                  | when(r%2==1 && r>MIN && c==MIN) n->M[r-1][c]
+                  | when(c!=MIN) w->M[r][c-1]
+				  | when(c!=MAX) e->M[r][c+1]
+                  | when(r%2==1 && r<MAX && c==MAX) s->M[r+1][c]
+                  | when(r%2==0 && r<MAX && c==MIN) s->M[r+1][c]
+                  | when(r%2==1 && r==MAX && c==MAX) load->M[r][c]
+                  | when(r==MIN && c==MIN) unload->M[r][c]
+).
+
+//Other Maze
+MAZE1 = M[1][1],
+M[r:Pos][c:Pos] = ( when(r>MIN && c==MIN) n->M[r-1][c]
+                  | when(c!=MIN) w->M[r][c-1]
+				  | when(c!=MAX) e->M[r][c+1]
+                  | when(r<MAX && c==MIN) s->M[r+1][c]
+                  | when(r==MAX && c==MAX) load->M[r][c]
+                  | when(r==MIN && c==MIN) unload->M[r][c]
+).
+
+ARM = (load->unload->ARM).
+
+fluent F_Load = <load, A\{load}>
+fluent F_Unload = <unload, A\{unload}>
+
+assert Load = F_Load
+assert Unload = F_Unload
+
+controllerSpec G = {
+	permissive
+	liveness = {Load,Unload}
+	controllable = {A}
+}
+
+||ROBOT_EXPLORE = (MAZE || ARM).
+||ROBOT_EXPLORE1 = (MAZE1 || ARM).
+
+controller ||C = (ROBOT_EXPLORE)~{G}.
+controller ||C1 = (ROBOT_EXPLORE1)~{G}.
+
+//Abs1
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs1_System = (Abs1_MAZE || ARM).
+||REF_CHECK1 = (Abs1_System || ROBOT_EXPLORE1).
+controller ||Abs1_C = Abs1_System~{G}.
+
+//Abs2
+Abs2_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = ({Moves_Maybe}->Abs1_MAZE),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs2_System = (Abs2_MAZE || ARM).
+||REF_CHECK2 = (Abs2_System || Abs1_System).
+controller ||Abs2_C = Abs2_System~{G}.
+
+//Abs3
+Abs3_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = (e->M13 | w->M11),
+M13 = ({Moves_Maybe}->Abs1_MAZE),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs3_System = (Abs3_MAZE || ARM).
+||REF_CHECK3 = (Abs2_System || Abs3_System).
+controller ||Abs3_C = Abs3_System~{G}.
+
+//Abs4
+Abs4_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = (e->M13 | w->M11),
+M13 = (w->M12),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs4_System = (Abs4_MAZE || ARM).
+||REF_CHECK4 = (Abs4_System || Abs3_System).
+controller ||Abs4_C = Abs4_System~{G}.
+

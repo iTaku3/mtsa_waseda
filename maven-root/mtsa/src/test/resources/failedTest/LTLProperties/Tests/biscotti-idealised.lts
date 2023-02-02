@@ -1,0 +1,28 @@
+set A = {cook, cooking, finishedCooking, moveToBelt}
+set Controllable = {cook, moveToBelt}
+
+BISCOTTI = (cook->COOKING), 
+COOKING = (cooking->COOKING | finishedCooking->STATUS), 
+STATUS = (moveToBelt->BISCOTTI | cook->COOKING).
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_Cooked = <finishedCooking, cook>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+
+assert MoveToBelt = F_MoveToBelt
+assert SuccessfullyCookedTwice = MoveToBelt
+
+assert FinishCooking = !F_Cooking
+
+property SUCCESSFULLY_COOKED_TWICE = (cook->cook->SUCCESSFULLY_COOKED_TWICE).
+
+//controllers
+controller ||C = (BISCOTTI)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+		assumption = {FinishCooking}
+       liveness = {MoveToBelt}
+       controllable = {Controllable}
+}
+

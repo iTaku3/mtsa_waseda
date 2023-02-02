@@ -1,0 +1,81 @@
+//Matrix Size
+const M = 2 // Max Rows
+const N = 2 // Max Cols
+range Rows = 0..M 
+range Cols = 0..N
+
+//Robot initial position
+const InitRow = 2  
+const InitCol = 2 
+
+//Robot @position
+fluent At[i:Rows][j:Cols] = <arrived[i][j] ,{go[ni:Rows][nj:Cols]}> initially (i==InitRow && j==InitCol)
+
+//Package positions
+const P = 3 //Max Package
+range Packages = 0..P
+
+ltl_property LocOf_1 = [](grab[1] -> At[0][0])
+ltl_property LocOf_2 = [](grab[2] -> At[0][1])
+ltl_property LocOf_3 = [](grab[3] -> At[1][0])
+
+//Actions
+set Controllables = {go[i:Rows][j:Cols],grab[Packages],release[Packages]}
+set Alphabet = {Controllables,arrived[i:Rows][j:Packages],fail}
+
+//map
+Matrix = Elem[InitRow][InitCol],
+	Elem[i:Rows][j:Cols] = (when (i<M) go[i+1][j] -> (arrived[i+1][j] -> Elem[i+1][j] | fail -> Elem[i][j]) |
+							when (i>0) go[i-1][j] -> (arrived[i-1][j] -> Elem[i-1][j] | fail -> Elem[i][j]) |
+							when (j<N) go[i][j+1] -> (arrived[i][j+1] -> Elem[i][j+1] | fail -> Elem[i][j]) |
+							when (j>0) go[i][j-1] -> (arrived[i][j-1] -> Elem[i][j-1] | fail -> Elem[i][j])).
+
+//Robot, packet and travelling models
+Packet(N=0) = (grab[N] -> release[N] -> Packet).
+
+	//segun Seba U. faltaba release[0..P] -> Robot
+Robot = (go[0..M][0..N] -> InTravel | grab[0..P] -> Robot | release[0..P] -> Robot), 
+InTravel = (arrived[0..M][0..N] -> Robot | fail -> Robot).
+
+
+//**Define the model for the environment**
+||Environment = (Matrix || Robot || forall [i:Packages] Packet(i) || LocOf_1 || LocOf_2 || LocOf_3). 
+
+
+//Transport limitations
+fluent With[i:Packages] = <grab[i],release[i]>
+fluent Moving = <go[Rows][Cols],{arrived[Rows][Cols],fail}>
+fluent Arrival = <{arrived[Rows][Cols]},Alphabet\{arrived[Rows][Cols]} >
+
+//Packages destinations
+fluent Released1 = <release[1],Alphabet\{release[1]}>
+fluent Released2 = <release[2],Alphabet\{release[2]}>
+fluent Released3 = <release[3],Alphabet\{release[3]}>
+
+ltl_property Take1to00 = 
+    []((Released1 -> At[0][0]) 
+        && ((With[1] && At[0][0]) -> (!Moving W release[1])) 
+        && (With[1] -> (!arrived[0][0])))
+ltl_property Take2to11 = 
+    []((Released2 -> At[1][1]) 
+        && ((With[2] && At[1][1]) -> (!Moving W release[2])) 
+        && (With[2] -> (!arrived[0][1])))
+ltl_property Take3to01 = 
+    []((Released3 -> At[0][1]) 
+        && ((With[3] && At[0][1]) -> (!Moving W release[3])) 
+        && (With[3] -> (!arrived[1][0])))
+
+assert Arrives = (Arrival)
+
+//Definition of the controller synthesis problem
+controllerSpec ControlSpec = {
+		safety = {Take1to00,Take2to11,Take3to01}
+        assumption = {Arrives}
+        liveness = {Released1,Released2,Released3}
+        controllable = {Controllables}
+}
+
+heuristic ||Controller = Environment~{ControlSpec}.
+minimal ||TestController = (Environment || Controller).
+
+assert Check = ([]<>Arrives -> ([]<>Released1 && []<>Released2 && []<>Released3))

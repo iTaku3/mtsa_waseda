@@ -1,0 +1,15 @@
+/*
+Issue #15 https://bitbucket.org/lnahabedian/mtsa/issues/15/prioritization-does-not-work-with-set
+*/
+
+set A = {a, b, c}
+P = (A -> P2 | d -> P2),
+P2 = (d->P).
+||C = (P) << {A}.
+||S = (P) << {a, b, c}.
+
+Result = Q0,
+Q0 = ({a, b, c} -> Q1),
+Q1 = (d -> Q0).
+
+||ExpectedC = (Result || C || S).

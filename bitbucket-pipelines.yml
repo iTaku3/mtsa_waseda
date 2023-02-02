@@ -1,0 +1,27 @@
+image: maven:3.8.1-jdk-11
+#image: maven:3.5.0-jdk-8
+
+pipelines:
+    default:
+    - step:
+        script: # Modify the commands below to build your repository.
+          - cd maven-root/mtsa
+          - mvn -B -s settings.xml clean test
+          - tar cfz /tmp/coverage-report.tar.gz  /opt/atlassian/pipelines/agent/build/maven-root/mtsa/target/site/
+          - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"/tmp/coverage-report.tar.gz"
+    branches:
+     master:
+      - step:
+          caches:
+            - maven
+            #- rootrepo
+          script: # Modify the commands below to build your repository.
+            - cd maven-root/mtsa
+            - mvn clean -U
+            - mvn -B -Dmaven.wagon.http.pool=false -Dmaven.wagon.rto=240000 install -Denv=server
+            #- mvn -B -s settings.xml install -Denv=server # -B batch mode makes Maven less verbose
+            - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"/root/.m2/repository/mtsa/mtsa/1.0-SNAPSHOT/mtsa-1.0-SNAPSHOT.jar"
+#definitions:
+#  caches:
+#    rootrepo: /root/.m2/repository
+

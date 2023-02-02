@@ -1,0 +1,78 @@
+set Responses = {OK,FAIL}
+set User = {request,eSend,ack}
+set Car = {eCar.Responses}
+set Hotel = {eHotel.Responses}
+set Flight = {eFlight.Responses}
+set PyS = {sFlighy, sHotel, sCar, sSend}
+set Controllable = {PyS,ack}
+set Alphabet = {User, Car, Hotel, PyS}
+set FinishActions = {ack}
+
+
+USER = (request -> WAITING), 
+WAITING = (sSend -> RCV_REQ),
+RCV_REQ = (eSend -> FINISH_REQ), 
+FINISH_REQ = (ack -> USER).
+
+HOTEL = (sHotel -> PROCESSING_REQ), 
+PROCESSING_REQ = (eHotelOK -> HOTEL|eHotelFAIL -> HOTEL).
+
+CAR = (sCar -> PROCESSING_REQ), 
+PROCESSING_REQ = (eCarOK -> CAR|eCarFAIL -> CAR).
+
+FLIGHT = (sFlight -> PROCESSING_REQ), 
+PROCESSING_REQ = (eFlightOK -> FLIGHT|eFlightFAIL -> FLIGHT).
+
+fluent F_HOTEL = <sHotel, Hotel>
+fluent F_CAR = <sCar, Car>
+fluent F_FLIGHT = <sFlight, Flight>
+
+
+fluent REQ_RCV = <request,ack>
+fluent I_HOTEL = <eHotel,ack>
+fluent I_CAR = <eCar,ack>
+fluent I_FLIGHT = <eCar,ack>
+
+fluent GOAL = <FinishActions, Alphabet\FinishActions>
+ltl_property DONT_ASK = []((sHotel || sCar || sFlight) -> REQ_RCV)
+ltl_property SEND_WITH_CAR = [] (sSend -> (I_HOTEL && I_CAR && I_FLIGHT))
+
+assert HOTEL = F_HOTEL
+assert CAR = F_CAR
+assert FLIGHT = F_FLIGHT
+
+||ENV = (USER || HOTEL || CAR || FLIGHT).
+
+
+minimal || MIN = ENV.
+ 
+
+controller ||C = (ENV)~{G}.
+
+controller ||C2 = (MIN_C)~{G2}.
+
+||CC = (C2).
+
+controllerSpec G2 = {
+	safety = {DONT_ASK,SEND_WITH_CAR}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={HOTEL, CAR, FLIGHT}
+	//lazyness=1
+	//non_transient
+	controllable = {Controllable}
+}
+
+controllerSpec G = {
+	safety = {DONT_ASK,SEND_WITH_CAR}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={HOTEL, CAR}
+	//lazyness=1
+	//non_transient
+	controllable = {Controllable}
+}
+
+minimal ||MIN_C = (C).

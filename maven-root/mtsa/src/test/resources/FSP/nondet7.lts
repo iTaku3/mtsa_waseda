@@ -1,0 +1,27 @@
+set Controllable = {c1}
+
+M = (c1->C1 | u1->U1),
+U1 = (c1->U1),
+C1 = (c1->C1)\{u1}.
+
+fluent F_C1 = <c1, Controllable\{c1}>
+assert C1 = F_C1
+
+assert TRUE = (F_C1 || !F_C1)
+
+controller ||C = M~{G}.
+
+controllerSpec G = {
+    liveness = {C1}
+    controllable = {Controllable}
+}
+
+||E_C = CC.
+CC = Q0,
+	Q0	= (u1 -> Q3
+		  |c1 -> Q4),
+	Q1	= (c2 -> Q1),
+	Q2	= (c1 -> Q2),
+	Q3	= (u1 -> Q3),
+	Q4	= (c2 -> Q1
+		  |c1 -> Q2).

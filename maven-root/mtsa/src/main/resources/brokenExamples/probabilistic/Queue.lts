@@ -1,0 +1,35 @@
+/*
+This system models a single server queue. We have a server which handles
+requests from a queue, taking a request off the queue at time events specified
+by an exponential distribution with parameter Mu.
+The queue has customers arriving at instants specified by an exponential distribution
+with parameter Lambda. To measure the average time a request spends in the queue,
+we intersperse this stream of arrivals with tagged arrivals at a much lower rate
+LambdaT. The time these special requests spend in the queue are then calculated
+in the simulation and we receive an average.
+*/
+const N = 20
+float Mu = 2.0
+float Lambda  = 1.0
+float LambdaT = 0.01
+
+Server = ( start <c:exp(Mu)> -> ?c? finish -> Server ).
+
+Arr    = ( <? exp(Lambda) ?> arrival -> Arr ).
+TagArr = ( <? exp(LambdaT) ?> tagarrival -> TagArr ).
+||Arrivals = (Arr || TagArr).
+
+Queue = Queue[0],
+Queue[i:0..N] = ( when i < N enqueue -> Queue[i+1]
+                | when i < N tagenqueue -> TQ[i][0]
+                | when i > 0 dequeue -> Queue[i-1]
+                ),
+TQ[i:0..N][j:0..N] = ( when (i+j+1) < N enqueue -> TQ[i][j+1]
+                     | when i > 0 dequeue -> TQ[i-1][j]
+                     | when i == 0 tagdequeue -> Queue[j]
+                     ).
+
+timer MeanQueueTime <tagenqueue, tagdequeue>
+
+||SingleServerQueue = ( Server || Queue || Arrivals || MeanQueueTime )
+                    / { {dequeue,tagdequeue}/start, enqueue/arrival, tagenqueue/tagarrival }.

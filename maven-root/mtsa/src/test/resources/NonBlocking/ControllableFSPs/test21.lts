@@ -1,0 +1,17 @@
+Ejemplo = A1,
+A1 = (u12 -> A2),
+A2 = (u23 -> A3),
+A3 = (c34 -> A4 | u31 -> A1),
+A4 = (u45 -> A5),
+A5 = (c56 -> A6 | c53 -> A3),
+A6 = (u65 -> A5).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {c56, c34,c53}
+  marking = {u12}
+  nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

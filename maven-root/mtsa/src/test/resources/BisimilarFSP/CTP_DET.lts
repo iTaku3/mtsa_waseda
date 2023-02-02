@@ -1,0 +1,127 @@
+/* 
+This a deterministic model of the Canadian Traveller Problem. 
+The truck start in the initial location I and has to reach the final 
+location F. There are N locations. 
+The locations are connected in a circular shape. For instance, the location 
+0 is connected with the location N and 1. Each pair of locations are connected 
+with two roads and one of them is fine while the other one has snow. 
+*/
+const N = 4
+const I = 0
+const F = 2
+const Cant = 1
+range CantRoads = 0..Cant
+
+set Name = {route}
+set Prefix = {way}
+set Roads = {Prefix.[m:CantRoads]}
+set Controllable = {Name.[0..N-1].{observe,Roads},win}
+
+set Uncontrollable = {Name.[0..N-1].{observe.Roads,crash,arrived}}
+set Alphabet = {Controllable,Uncontrollable}
+
+DOUBLE_EDGE =(
+	observe -> OBS |
+    Prefix.[r:CantRoads] -> UNCERTAINTY[r] 
+),
+
+UNCERTAINTY[r:CantRoads] = (crash -> ERROR | arrived -> AVAILABLE[r]), 
+
+AVAILABLE[r:CantRoads] = (
+foreach[w:CantRoads] 
+	when (w==r) Prefix.[w] -> arrived -> AVAILABLE[w] |
+    when (w!=r) Prefix.[w] -> crash -> ERROR), 
+
+OBS = (observe.Prefix.[r:CantRoads] -> AVAILABLE[r]).
+
+
+MAP = POS[I], 
+POS[i:0..N-1] = (
+				Name.{[(i-1+N)%N],[i]}.observe-> POS[i] 
+				| Name.[(i-1+N)%N].Roads -> MOV[(i-1+N)%N][(i-1+N)%N]
+				| Name.[i].Roads -> MOV[i][(i+1)%N]
+				| when (i==F) win -> WIN
+),
+MOV[i:0..N-1][p:0..N-1] = (
+	Name.[i].arrived -> POS[p]
+), 
+WIN = (win-> WIN).
+
+
+||Game = (forall [i:0..N-1] Name.[i]::DOUBLE_EDGE || MAP).
+
+fluent Win = <win, Alphabet\{win}>
+
+controllerSpec Goal = {
+  liveness = {Win}
+  controllable = {Controllable}
+}
+
+controller ||C = Game~{Goal}.
+
+assert TESTGOAL = <> Win
+
+||ExpectedC = Expected.
+
+
+
+
+	Expected = Q0,
+	Q0	= (route[3].observe -> Q6
+		  |route[0].observe -> Q8),
+	Q1	= (win -> Q33),
+	Q2	= (route[1].way[0] -> Q19),
+	Q3	= (win -> Q36),
+	Q4	= (win -> Q39),
+	Q5	= (route[1].way[0] -> Q20),
+	Q6	= (route[3].observe.way[1] -> Q10
+		  |route[3].observe.way[0] -> Q25),
+	Q7	= (win -> Q7),
+	Q8	= (route[0].observe.way[0] -> Q34
+		  |route[0].observe.way[1] -> Q48),
+	Q9	= (route[2].observe -> Q38),
+	Q10	= (route[3].way[1] -> Q37),
+	Q11	= (win -> Q50),
+	Q12	= (route[2].observe.way[0] -> Q17
+		  |route[2].observe.way[1] -> Q41),
+	Q13	= (route[1].way[1] -> Q44),
+	Q14	= (route[1].way[1] -> Q42),
+	Q15	= (route[2].arrived -> Q1),
+	Q16	= (win -> Q7),
+	Q17	= (route[2].way[0] -> Q32),
+	Q18	= (win -> Q18),
+	Q19	= (route[1].arrived -> Q3),
+	Q20	= (route[1].arrived -> Q4),
+	Q21	= (win -> Q21),
+	Q22	= (route[1].observe.way[0] -> Q5
+		  |route[1].observe.way[1] -> Q13),
+	Q23	= (win -> Q23),
+	Q24	= (route[1].observe.way[0] -> Q2
+		  |route[1].observe.way[1] -> Q14),
+	Q25	= (route[3].way[0] -> Q35),
+	Q26	= (route[2].way[1] -> Q28),
+	Q27	= (route[2].observe -> Q12),
+	Q28	= (route[2].arrived -> Q11),
+	Q29	= (route[1].observe -> Q24),
+	Q30	= (win -> Q18),
+	Q31	= (route[1].observe -> Q22),
+	Q32	= (route[2].arrived -> Q16),
+	Q33	= (win -> Q33),
+	Q34	= (route[0].way[0] -> Q46),
+	Q35	= (route[3].arrived -> Q9),
+	Q36	= (win -> Q36),
+	Q37	= (route[3].arrived -> Q27),
+	Q38	= (route[2].observe.way[1] -> Q26
+		  |route[2].observe.way[0] -> Q49),
+	Q39	= (win -> Q39),
+	Q40	= (route[2].arrived -> Q30),
+	Q41	= (route[2].way[1] -> Q40),
+	Q42	= (route[1].arrived -> Q47),
+	Q43	= (win -> Q21),
+	Q44	= (route[1].arrived -> Q43),
+	Q45	= (route[0].arrived -> Q31),
+	Q46	= (route[0].arrived -> Q29),
+	Q47	= (win -> Q23),
+	Q48	= (route[0].way[1] -> Q45),
+	Q49	= (route[2].way[0] -> Q15),
+	Q50	= (win -> Q50)+{route[0..3].crash}.

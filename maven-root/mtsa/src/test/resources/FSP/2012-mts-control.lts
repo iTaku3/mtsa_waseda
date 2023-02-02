@@ -1,0 +1,58 @@
+set A={req, resp1, resp2, ping}
+set Controllable = {resp1, resp2, ping}
+
+E = (req->REQ | ping->E),
+REQ = ({resp1,resp2}->E | ping->REQ).
+
+MPING = (ping?->MPING).
+
+CONTR = (req->REQ0 | ping->CONTR),
+REQ0 = ({resp1,resp2}->CONTR | ping->REQ1), 
+REQ1 = ({resp1,resp2}->CONTR).
+
+
+fluent F_RESP1 = <req, resp1> 
+fluent F_RESP2 = <req, resp2> 
+
+assert RESP1 = F_RESP1
+assert RESP2 = F_RESP2
+assert TRUE = (F_RESP1 || !F_RESP1)
+
+assert Goal = ([]<> RESP1 && []<> RESP2)
+
+||DOM = E. //(E||MPING).
+
+//controllers
+controller ||C = (DOM)~{G1}.
+starenv ||Star = (DOM).
+
+//Goals
+controllerSpec G1 = {
+//       safety = {NotOverHeated}
+//       assumption = {TRUE}
+       liveness = {RESP1, RESP2}
+       controllable = {Controllable}
+}
+
+
+/*
+
+UN_CONTR = (req->REQ | ping->UN_CONTR),
+REQ = ({resp1,resp2}->UN_CONTR | ping->REQ).
+
+CONTR = (req->REQ0 | ping->CONTR),
+REQ0 = ({resp1,resp2}->CONTR | ping->REQ1), 
+REQ1 = ({resp1,resp2}->CONTR).
+
+M = (req->REQ | ping->M),
+REQ = (resp1->RESP1 | resp2->RESP2 | ping->PING_REQ), 
+PING_REQ = (resp1->RESP1 | resp2->RESP2),
+RESP2 = (req->REQ1 | ping->RESP2),
+PING_RESP2 = (resp2->REQ1),
+RESP1 = (req->REQ2 | ping->RESP1),
+PING_RESP1 = (resp1->REQ2),
+REQ1 = (resp1->RESP1 | ping->PING_REQ1),
+PING_REQ1 = (resp1->RESP1),
+REQ2 = (resp2->RESP2 | ping->PING_REQ2),
+PING_REQ2 = (resp2->RESP2).
+*/

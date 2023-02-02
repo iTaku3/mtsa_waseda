@@ -1,0 +1,68 @@
+range Rooms = 0..2
+set TOMFlaps = {c01,c12,c20,c02,c21,c10}
+set JERRYFlaps = {m01,m12,m20,m02,m21,m10}
+set Controllable = {TOMFlaps, JERRYFlaps}
+
+TOM(Init=0) = (start->tom_in[Init]->TOM[Init]),
+TOM[0] = (c01 -> ETOM[1] | c02 -> ETOM[2]),
+TOM[1] = (c12 -> ETOM[2] | c10 -> ETOM[0]),
+TOM[2] = (c20 -> ETOM[0] | c21 -> ETOM[1]),
+ETOM[room:Rooms] = (tom_in[room]->TOM[room]).
+
+JERRY(Init=1) = (start->jerry_in[Init]->JERRY[Init]),
+JERRY[0] = (m01 -> EJERRY[1] | m02 -> EJERRY[2]),
+JERRY[1] = (m12 -> EJERRY[2] | m10 -> EJERRY[0]),
+JERRY[2] = (m20 -> EJERRY[0] | m21 -> EJERRY[1]),
+EJERRY[room:Rooms] = (jerry_in[room]->JERRY[room]).
+
+EXP = Q0,
+	Q0	= (start -> Q12),
+	Q1	= (m10 -> Q8),
+	Q2	= (c02 -> Q6
+		  |jerry_in[1] -> Q9),
+	Q3	= (jerry_in[1] -> Q1),
+	Q4	= (tom_in[1] -> Q5),
+	Q5	= (c12 -> Q13
+		  |m02 -> Q14),
+	Q6	= (tom_in[2] -> Q3
+		  |jerry_in[1] -> Q7),
+	Q7	= (tom_in[2] -> Q1),
+	Q8	= (jerry_in[0] -> Q15),
+	Q9	= (c02 -> Q7),
+	Q10	= (tom_in[0] -> Q9),
+	Q11	= (m20 -> Q16),
+	Q12	= (tom_in[0] -> Q2
+		  |jerry_in[1] -> Q10),
+	Q13	= (tom_in[2] -> Q15),
+	Q14	= (jerry_in[2] -> Q11),
+	Q15	= (m01 -> Q3
+		  |c21 -> Q4),
+	Q16	= (jerry_in[0] -> Q5).
+
+
+fluent TOMROOM[room:Rooms] = <tom_in[room],{tom_in[Rooms]}\{tom_in[room]}>
+fluent JERRYROOM[room:Rooms] = <jerry_in[room],{jerry_in[Rooms]}\{jerry_in[room]}>
+
+assert JERRY_IN_0 = JERRYROOM[0]
+assert JERRY_IN_1 = JERRYROOM[1]
+assert TOM_IN_0 = TOMROOM[0]
+assert TOM_IN_1 = TOMROOM[1]
+
+assert TRUE = (JERRY_IN_0 && !JERRY_IN_0)
+
+ltl_property SAFE = []( !exists[i:Rooms] (TOMROOM[i] && JERRYROOM[i]))
+
+controllerSpec G1 = {
+safety = {SAFE}
+liveness = {JERRY_IN_0}//, JERRY_IN_1, TOM_IN_0, TOM_IN_1}
+controllable = {Controllable}
+}
+
+||Tom_Jerry = (TOM || JERRY).
+controller	||C = (Tom_Jerry)~{G1}.
+||RUNLiveAndSafe = C.
+||Analysed_Env = (Tom_Jerry || SAFE).
+
+
+
+

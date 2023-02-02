@@ -1,0 +1,80 @@
+set Machines = {a,b} 
+set BUncontrollableActions = {finishDrilling}
+set BControllableActions = {getTool,startDrilling,releaseTool,finishProduct}
+set AUncontrollableActions = {BUncontrollableActions,finishDrilling}
+set AControllableActions = {BControllableActions,startPreHeat}
+set ControllableActions = {['a].AControllableActions, ['b].BControllableActions, sAssemble}
+set UncontrollableActions = {['a].AUncontrollableActions, ['b].BUncontrollableActions,eAssemble}
+set AAlphabet = {['a].AControllableActions,['a].AUncontrollableActions}
+set BAlphabet = {['b].BControllableActions,['b].BUncontrollableActions}
+set Alphabet = {ControllableActions,UncontrollableActions}
+
+DRILLER(C=1) = ([C].getTool -> LOCK), 
+LOCK = ([C].startDrilling -> DRILLING), 
+DRILLING = ([C].finishDrilling -> RELEASE), 
+RELEASE = ([C].releaseTool -> END).
+
+DRILL = ([m:Machines].getTool -> LOCKED[m]),
+LOCKED[m:Machines] = ([m].releaseTool -> DRILL).
+
+PREHEAT(C=1) = ([C].startPreHeat -> PREHEATING), 
+PREHEATING = ([C].finishPreHeat -> END).
+
+FINISH_PRODUCT(C=1) = ([C].finishProduct -> END).
+
+MACHINE_A(C=1) = PREHEAT(C); DRILLER(C); FINISH_PRODUCT(C); MACHINE_A.
+
+MACHINE_B(C=1) = DRILLER(C); FINISH_PRODUCT(C); MACHINE_B.
+
+ASSEMBLER(C=1) = (sAssemble -> eAssemble-> ASSEMBLER).
+
+//ENVIROMENT
+|| ENVIROMENT = (MACHINE_A('a) || MACHINE_B('b) || DRILL || ASSEMBLER).
+
+//PROPERTIES
+fluent DRILLING[m:Machines] = <{[m].startDrilling}, {[m].finishDrilling}>
+fluent PREHEATING[m:Machines] = <{[m].startPreHeat},{[m].finishPreHeat}>
+
+fluent FinishedA = <['a].finishProduct, Alphabet\{['a].finishProduct}>
+fluent FinishedB = <['b].finishProduct, Alphabet\{['b].finishProduct}>
+
+fluent PRODUCT_OUT_A = <['a].finishProduct, eAssemble>
+fluent PRODUCT_OUT_B = <['b].finishProduct, eAssemble>
+
+ltl_property ASSEMBLY_AFTER = []( sAssemble -> (PRODUCT_OUT_A && PRODUCT_OUT_B))
+
+ltl_property DONT_DRILL_WHILE_ASSEMBLING = forall[m:Machines] [] ((DRILLING[m]) -> !Assemble)
+
+ltl_property DONT_PRE_WHILE_ASSEMBLING = forall[m:Machines] [] ((PREHEATING['a]) -> !Assemble)
+
+
+
+assert FinishPAyB = (PRODUCT_OUT_A && PRODUCT_OUT_B && Assemble)
+fluent Assemble = <sAssemble, eAssemble>
+
+assert FinishA = (FinishedA)
+assert FinishB = (FinishedB)
+
+assert AEG1 = []<> PRODUCT_OUT_A
+assert AEG2 = []<> PRODUCT_OUT_B
+
+assert PREHEATA = (PREHEATING['a])
+assert DRILLINGA = (DRILLING['a])
+assert DRILLINGB = (DRILLING['b])
+
+
+// DEFINED CONTROLLER
+controller ||C = (ENVIROMENT)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	safety = {DONT_DRILL_WHILE_ASSEMBLING,DONT_PRE_WHILE_ASSEMBLING,ASSEMBLY_AFTER}
+	liveness = {FinishPAyB /*FinishA,FinishB*/}
+	//concurrencyFluents={PREHEATA,DRILLINGA,DRILLINGB}
+	//lazyness=0
+	//non_transient
+	controllable = {ControllableActions}
+}
+

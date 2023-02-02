@@ -1,0 +1,3 @@
+M_02 = ( b? -> STOP | _tau? -> a -> STOP ).
+N_02 = ( b  -> STOP | a? -> STOP ).
+I_02_01 = ( a  -> STOP | b -> STOP).

@@ -1,0 +1,207 @@
+
+const Clear = -1
+const Stay  = 0
+const East  = 1
+const West  = 2
+const North = 3
+const South = 4
+
+range Hint = Clear..South
+
+const Error = 3 // Maximum distance + 1
+const Cells = 8
+range Cell  = 0..Cells
+
+range Turn  = 0..1
+
+def Min(a,b) = a < b ? a : b
+
+def Min4(a,b,c,d) = Min(Min(a,b),Min(c,d))
+
+def D(d,c0,c1,v0,v1) = d == East || d == North ? c0==v0 && c1==v1 : c0==v1 && c1==v0
+
+/* 3x3 obstacle in the middle */
+def Dist(s,e,d) = s == e ? 0 :
+                  d == East || d == West ? (
+                    D(d,s,e,0,1) | D(d,s,e,1,2) | D(d,s,e,5,6) | D(d,s,e,6,7) ? 1 :
+                    D(d,s,e,0,2) | D(d,s,e,5,7) ? 2 : Error) :
+                  d == North || d == South ? (
+                    D(d,s,e,3,0) | D(d,s,e,4,2) | D(d,s,e,5,3) | D(d,s,e,7,4) ? 1 :
+                    D(d,s,e,5,0) | D(d,s,e,7,2) ? 2 : Error) : Error
+
+/* 3x3 no obstacles
+def Dist(s,e,d) = s == e ? 0 :
+                  d == East || d == West ? (
+                    D(d,s,e,0,1) | D(d,s,e,1,2) | D(d,s,e,3,4) |
+                    D(d,s,e,4,5) | D(d,s,e,6,7) | D(d,s,e,7,8) ? 1 :
+                    D(d,s,e,0,2) | D(d,s,e,3,5) | D(d,s,e,6,8) ? 2 : Error) :
+                  d == North || d == South ? (
+                    D(d,s,e,3,0) | D(d,s,e,4,1) | D(d,s,e,5,2) |
+                    D(d,s,e,6,3) | D(d,s,e,7,4) | D(d,s,e,8,5) ? 1 :
+                    D(d,s,e,6,0) | D(d,s,e,7,1) | D(d,s,e,8,2) ? 2 : Error) : Error
+*/
+
+def Distance(c0,c1) = Min4(Dist(c0,c1,North),Dist(c0,c1,South),Dist(c0,c1,East),Dist(c0,c1,West))
+
+def Adjacent(c0,c1) = c0 == Cells || Distance(c0,c1) == 1
+
+def Detect(c0,c1) = Distance(c0,c1) == Error             ? Clear :
+                    Distance(c0,c1) == 0                 ? Stay  :
+                    Distance(c0,c1) == Dist(c0,c1,North) ? North :
+                    Distance(c0,c1) == Dist(c0,c1,South) ? South :
+                    Distance(c0,c1) == Dist(c0,c1,East)  ? East  :
+                    Distance(c0,c1) == Dist(c0,c1,West)  ? West  :
+                                                           Clear // impossible
+
+
+/*****************************************************************************/
+
+/*
+Warehouse = (alarm -> Intruder[0][Cells-1][Cells]),
+
+  Intruder[s0:Cell][s1:Cell][i:Cell] = (
+    foreach [c:Cell]
+      when (Adjacent(i,c)) move -> Check[s0][s1][c][0]),
+
+  Sentries[s0:Cell][s1:Cell][i:Cell] = (
+    sense[Detect(s0,i)][Detect(s1,i)] -> (
+      foreach [c0:Cell][c1:Cell]
+        when (Adjacent(s0,c0) && Adjacent(s1,c1))
+          patrol[c0][c1] -> Check[c0][c1][i][1])),
+
+  Check[s0:Cell][s1:Cell][i:Cell][t:Turn] =
+    if (i==s0 || i==s1) then (capture -> Warehouse)
+    else if (t==0) then Sentries[s0][s1][i]
+    else Intruder[s0][s1][i]
+    +{patrol[Cell][Cell]}.
+*/
+
+Warehouse = (alarm -> Intruder[0][Cells-1][Cells]),
+
+  Intruder[s0:Cell][s1:Cell][i:Cell] = (
+      when (Adjacent(i,0)) move -> Check[s0][s1][0][0] |
+      when (Adjacent(i,1)) move -> Check[s0][s1][1][0] |
+      when (Adjacent(i,2)) move -> Check[s0][s1][2][0] |
+      when (Adjacent(i,3)) move -> Check[s0][s1][3][0] |
+      when (Adjacent(i,4)) move -> Check[s0][s1][4][0] |
+      when (Adjacent(i,5)) move -> Check[s0][s1][5][0] |
+      when (Adjacent(i,6)) move -> Check[s0][s1][6][0] |
+      when (Adjacent(i,7)) move -> Check[s0][s1][7][0] |
+      when (Adjacent(i,7)) move -> Check[s0][s1][8][0] ),
+
+  Sentries[s0:Cell][s1:Cell][i:Cell] = (
+    sense[Detect(s0,i)][Detect(s1,i)] -> (
+      when (Adjacent(s0,0) && Adjacent(s1,0)) patrol[0][0] -> Check[0][0][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,1)) patrol[0][1] -> Check[0][1][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,2)) patrol[0][2] -> Check[0][2][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,3)) patrol[0][3] -> Check[0][3][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,4)) patrol[0][4] -> Check[0][4][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,5)) patrol[0][5] -> Check[0][5][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,6)) patrol[0][6] -> Check[0][6][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,7)) patrol[0][7] -> Check[0][7][i][1] |
+      when (Adjacent(s0,0) && Adjacent(s1,8)) patrol[0][8] -> Check[0][8][i][1] |
+
+      when (Adjacent(s0,1) && Adjacent(s1,0)) patrol[1][0] -> Check[1][0][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,1)) patrol[1][1] -> Check[1][1][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,2)) patrol[1][2] -> Check[1][2][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,3)) patrol[1][3] -> Check[1][3][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,4)) patrol[1][4] -> Check[1][4][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,5)) patrol[1][5] -> Check[1][5][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,6)) patrol[1][6] -> Check[1][6][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,7)) patrol[1][7] -> Check[1][7][i][1] |
+      when (Adjacent(s0,1) && Adjacent(s1,8)) patrol[1][8] -> Check[1][8][i][1] |
+
+      when (Adjacent(s0,2) && Adjacent(s1,0)) patrol[2][0] -> Check[2][0][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,1)) patrol[2][1] -> Check[2][1][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,2)) patrol[2][2] -> Check[2][2][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,3)) patrol[2][3] -> Check[2][3][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,4)) patrol[2][4] -> Check[2][4][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,5)) patrol[2][5] -> Check[2][5][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,6)) patrol[2][6] -> Check[2][6][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,7)) patrol[2][7] -> Check[2][7][i][1] |
+      when (Adjacent(s0,2) && Adjacent(s1,8)) patrol[2][8] -> Check[2][8][i][1] |
+
+      when (Adjacent(s0,3) && Adjacent(s1,0)) patrol[3][0] -> Check[3][0][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,1)) patrol[3][1] -> Check[3][1][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,2)) patrol[3][2] -> Check[3][2][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,3)) patrol[3][3] -> Check[3][3][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,4)) patrol[3][4] -> Check[3][4][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,5)) patrol[3][5] -> Check[3][5][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,6)) patrol[3][6] -> Check[3][6][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,7)) patrol[3][7] -> Check[3][7][i][1] |
+      when (Adjacent(s0,3) && Adjacent(s1,8)) patrol[3][8] -> Check[3][8][i][1] |
+
+      when (Adjacent(s0,4) && Adjacent(s1,0)) patrol[4][0] -> Check[4][0][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,1)) patrol[4][1] -> Check[4][1][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,2)) patrol[4][2] -> Check[4][2][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,3)) patrol[4][3] -> Check[4][3][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,4)) patrol[4][4] -> Check[4][4][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,5)) patrol[4][5] -> Check[4][5][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,6)) patrol[4][6] -> Check[4][6][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,7)) patrol[4][7] -> Check[4][7][i][1] |
+      when (Adjacent(s0,4) && Adjacent(s1,8)) patrol[4][8] -> Check[4][8][i][1] |
+
+      when (Adjacent(s0,5) && Adjacent(s1,0)) patrol[5][0] -> Check[5][0][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,1)) patrol[5][1] -> Check[5][1][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,2)) patrol[5][2] -> Check[5][2][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,3)) patrol[5][3] -> Check[5][3][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,4)) patrol[5][4] -> Check[5][4][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,5)) patrol[5][5] -> Check[5][5][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,6)) patrol[5][6] -> Check[5][6][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,7)) patrol[5][7] -> Check[5][7][i][1] |
+      when (Adjacent(s0,5) && Adjacent(s1,8)) patrol[5][8] -> Check[5][8][i][1] |
+
+      when (Adjacent(s0,6) && Adjacent(s1,0)) patrol[6][0] -> Check[6][0][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,1)) patrol[6][1] -> Check[6][1][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,2)) patrol[6][2] -> Check[6][2][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,3)) patrol[6][3] -> Check[6][3][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,4)) patrol[6][4] -> Check[6][4][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,5)) patrol[6][5] -> Check[6][5][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,6)) patrol[6][6] -> Check[6][6][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,7)) patrol[6][7] -> Check[6][7][i][1] |
+      when (Adjacent(s0,6) && Adjacent(s1,8)) patrol[6][8] -> Check[6][8][i][1] |
+
+      when (Adjacent(s0,7) && Adjacent(s1,0)) patrol[7][0] -> Check[7][0][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,1)) patrol[7][1] -> Check[7][1][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,2)) patrol[7][2] -> Check[7][2][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,3)) patrol[7][3] -> Check[7][3][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,4)) patrol[7][4] -> Check[7][4][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,5)) patrol[7][5] -> Check[7][5][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,6)) patrol[7][6] -> Check[7][6][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,7)) patrol[7][7] -> Check[7][7][i][1] |
+      when (Adjacent(s0,7) && Adjacent(s1,8)) patrol[7][8] -> Check[7][8][i][1] |
+
+      when (Adjacent(s0,8) && Adjacent(s1,0)) patrol[8][0] -> Check[8][0][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,1)) patrol[8][1] -> Check[8][1][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,2)) patrol[8][2] -> Check[8][2][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,3)) patrol[8][3] -> Check[8][3][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,4)) patrol[8][4] -> Check[8][4][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,5)) patrol[8][5] -> Check[8][5][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,6)) patrol[8][6] -> Check[8][6][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,7)) patrol[8][7] -> Check[8][7][i][1] |
+      when (Adjacent(s0,8) && Adjacent(s1,8)) patrol[8][8] -> Check[8][8][i][1] )),
+
+  Check[s0:Cell][s1:Cell][i:Cell][t:Turn] =
+    if (i==s0 || i==s1) then (capture -> Warehouse)
+    else if (t==0) then Sentries[s0][s1][i]
+    else Intruder[s0][s1][i]
+    +{patrol[Cell][Cell]}.
+
+
+/*****************************************************************************/
+
+set Controllable = {patrol[Cell][Cell],capture}
+
+||Game = Warehouse.
+
+fluent Secured = <capture,alarm> initially 1
+
+controllerSpec Goal = {
+  liveness = {Secured}
+  nonblocking
+  controllable = {Controllable}
+}
+
+controller ||Controller = Game~{Goal}.
+minimal ||MinControler = Controller.
+

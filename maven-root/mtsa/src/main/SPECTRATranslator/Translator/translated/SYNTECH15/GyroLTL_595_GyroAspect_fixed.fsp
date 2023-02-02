@@ -1,0 +1,216 @@
+//GyroLTL_595_GyroAspect_fixed automatically_translated 
+
+set ControlledActions = {balancer.stp, balancer.fwd, balancer.bwd, balancer.turn_left, balancer.turn_right, spec_blockedstate.s0, spec_blockedstate.s1, spec_blockedstate.s2, spec_moveawayfromfrontobstaclestate.s0, spec_moveawayfromfrontobstaclestate.s1, spec_moveawayfrombackobstaclestate.s0, spec_moveawayfrombackobstaclestate.s1, spec_forwardingstate.s0, spec_forwardingstate.s1, spec_backwardingstate.s0, spec_backwardingstate.s1, tick}
+set UncontrolledActions = {frontdistsense.clear, frontdistsense.blocked, backdistsense.clear, backdistsense.blocked, isready, not_isready, bluetoothcmd.auto, bluetoothcmd.stp, bluetoothcmd.fwd, bluetoothcmd.bwd, bluetoothcmd.turn_left, bluetoothcmd.turn_right, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set FrontDistSense_Actions = {frontdistsense.clear, frontdistsense.blocked}
+fluent FRONTDISTSENSE_CLEAR = <frontdistsense.clear, FrontDistSense_Actions\{frontdistsense.clear}>
+fluent FRONTDISTSENSE_BLOCKED = <frontdistsense.blocked, FrontDistSense_Actions\{frontdistsense.blocked}>
+
+set BackDistSense_Actions = {backdistsense.clear, backdistsense.blocked}
+fluent BACKDISTSENSE_CLEAR = <backdistsense.clear, BackDistSense_Actions\{backdistsense.clear}>
+fluent BACKDISTSENSE_BLOCKED = <backdistsense.blocked, BackDistSense_Actions\{backdistsense.blocked}>
+
+set IsReady_Actions = {isready, not_isready}
+fluent ISREADY = <isready, IsReady_Actions\{isready}>
+
+set BluetoothCmd_Actions = {bluetoothcmd.auto, bluetoothcmd.stp, bluetoothcmd.fwd, bluetoothcmd.bwd, bluetoothcmd.turn_left, bluetoothcmd.turn_right}
+fluent BLUETOOTHCMD_AUTO = <bluetoothcmd.auto, BluetoothCmd_Actions\{bluetoothcmd.auto}>
+fluent BLUETOOTHCMD_STP = <bluetoothcmd.stp, BluetoothCmd_Actions\{bluetoothcmd.stp}>
+fluent BLUETOOTHCMD_FWD = <bluetoothcmd.fwd, BluetoothCmd_Actions\{bluetoothcmd.fwd}>
+fluent BLUETOOTHCMD_BWD = <bluetoothcmd.bwd, BluetoothCmd_Actions\{bluetoothcmd.bwd}>
+fluent BLUETOOTHCMD_TURN_LEFT = <bluetoothcmd.turn_left, BluetoothCmd_Actions\{bluetoothcmd.turn_left}>
+fluent BLUETOOTHCMD_TURN_RIGHT = <bluetoothcmd.turn_right, BluetoothCmd_Actions\{bluetoothcmd.turn_right}>
+
+set Balancer_Actions = {balancer.stp, balancer.fwd, balancer.bwd, balancer.turn_left, balancer.turn_right}
+fluent BALANCER_STP = <balancer.stp, Balancer_Actions\{balancer.stp}>
+fluent BALANCER_FWD = <balancer.fwd, Balancer_Actions\{balancer.fwd}>
+fluent BALANCER_BWD = <balancer.bwd, Balancer_Actions\{balancer.bwd}>
+fluent BALANCER_TURN_LEFT = <balancer.turn_left, Balancer_Actions\{balancer.turn_left}>
+fluent BALANCER_TURN_RIGHT = <balancer.turn_right, Balancer_Actions\{balancer.turn_right}>
+
+set Spec_blockedState_Actions = {spec_blockedstate.s0, spec_blockedstate.s1, spec_blockedstate.s2}
+fluent SPEC_BLOCKEDSTATE_S0 = <spec_blockedstate.s0, Spec_blockedState_Actions\{spec_blockedstate.s0}>
+fluent SPEC_BLOCKEDSTATE_S1 = <spec_blockedstate.s1, Spec_blockedState_Actions\{spec_blockedstate.s1}>
+fluent SPEC_BLOCKEDSTATE_S2 = <spec_blockedstate.s2, Spec_blockedState_Actions\{spec_blockedstate.s2}>
+
+set Spec_moveAwayFromFrontObstacleState_Actions = {spec_moveawayfromfrontobstaclestate.s0, spec_moveawayfromfrontobstaclestate.s1}
+fluent SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0 = <spec_moveawayfromfrontobstaclestate.s0, Spec_moveAwayFromFrontObstacleState_Actions\{spec_moveawayfromfrontobstaclestate.s0}>
+fluent SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S1 = <spec_moveawayfromfrontobstaclestate.s1, Spec_moveAwayFromFrontObstacleState_Actions\{spec_moveawayfromfrontobstaclestate.s1}>
+
+set Spec_moveAwayFromBackObstacleState_Actions = {spec_moveawayfrombackobstaclestate.s0, spec_moveawayfrombackobstaclestate.s1}
+fluent SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0 = <spec_moveawayfrombackobstaclestate.s0, Spec_moveAwayFromBackObstacleState_Actions\{spec_moveawayfrombackobstaclestate.s0}>
+fluent SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S1 = <spec_moveawayfrombackobstaclestate.s1, Spec_moveAwayFromBackObstacleState_Actions\{spec_moveawayfrombackobstaclestate.s1}>
+
+set Spec_forwardingState_Actions = {spec_forwardingstate.s0, spec_forwardingstate.s1}
+fluent SPEC_FORWARDINGSTATE_S0 = <spec_forwardingstate.s0, Spec_forwardingState_Actions\{spec_forwardingstate.s0}>
+fluent SPEC_FORWARDINGSTATE_S1 = <spec_forwardingstate.s1, Spec_forwardingState_Actions\{spec_forwardingstate.s1}>
+
+set Spec_backwardingState_Actions = {spec_backwardingstate.s0, spec_backwardingstate.s1}
+fluent SPEC_BACKWARDINGSTATE_S0 = <spec_backwardingstate.s0, Spec_backwardingState_Actions\{spec_backwardingstate.s0}>
+fluent SPEC_BACKWARDINGSTATE_S1 = <spec_backwardingstate.s1, Spec_backwardingState_Actions\{spec_backwardingstate.s1}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && BALANCER_STP))
+minimal || Initial_0_min =  Initial_0.
+//property divided into 1 subproperties.
+ltl_property Initial_1 = (!tick W (tick && SPEC_BLOCKEDSTATE_S0))
+minimal || Initial_1_min =  Initial_1.
+//property divided into 1 subproperties.
+ltl_property Initial_2 = (!tick W (tick && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0))
+minimal || Initial_2_min =  Initial_2.
+//property divided into 1 subproperties.
+ltl_property Initial_3 = (!tick W (tick && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0))
+minimal || Initial_3_min =  Initial_3.
+//property divided into 1 subproperties.
+ltl_property Initial_4 = (!tick W (tick && SPEC_FORWARDINGSTATE_S0))
+minimal || Initial_4_min =  Initial_4.
+//property divided into 1 subproperties.
+ltl_property Initial_5 = (!tick W (tick && SPEC_BACKWARDINGSTATE_S0))
+minimal || Initial_5_min =  Initial_5.
+//property divided into 1 subproperties.
+constraint Initial_6 = (!tock W (tock && !ISREADY))
+minimal || Initial_6_min =  Initial_6.
+//property divided into 1 subproperties.
+constraint Initial_7 = (!tock W (tock && BLUETOOTHCMD_AUTO))
+minimal || Initial_7_min =  Initial_7.
+//property divided into 1 subproperties.
+constraint Initial_8 = (!tock W (tock && (FRONTDISTSENSE_CLEAR && BACKDISTSENSE_CLEAR)))
+minimal || Initial_8_min =  Initial_8.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min ||  Initial_1_min ||  Initial_2_min ||  Initial_3_min ||  Initial_4_min ||  Initial_5_min ||  Initial_6_min ||  Initial_7_min ||  Initial_8_min).
+
+
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> (!ISREADY -> BALANCER_STP))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> (BALANCER_FWD -> FRONTDISTSENSE_CLEAR))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+ltl_property G2 = [](tick -> (BALANCER_BWD -> BACKDISTSENSE_CLEAR))
+minimal ||G2_min = G2.
+
+//property divided into 1 subproperties.
+assert G_l0 = (tick && (BLUETOOTHCMD_AUTO -> BALANCER_FWD))
+
+//property divided into 1 subproperties.
+ltl_property G3 = [](tick -> (BLUETOOTHCMD_AUTO -> ((FRONTDISTSENSE_CLEAR && ISREADY) -> BALANCER_FWD)))
+minimal ||G3_min = G3.
+
+
+//property divided into 1 subproperties.
+ltl_property G4 = [](tick -> ((BLUETOOTHCMD_AUTO && ISREADY) -> ((((((((SPEC_BLOCKEDSTATE_S0 && ((!FRONTDISTSENSE_BLOCKED && !FRONTDISTSENSE_CLEAR) || FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S0))) || ((SPEC_BLOCKEDSTATE_S0 && ((FRONTDISTSENSE_BLOCKED && !(BALANCER_TURN_RIGHT || BALANCER_TURN_LEFT)) && !FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S1)))) || ((SPEC_BLOCKEDSTATE_S0 && ((FRONTDISTSENSE_BLOCKED && (BALANCER_TURN_RIGHT || BALANCER_TURN_LEFT)) && !FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S2)))) || (SPEC_BLOCKEDSTATE_S1 && X(!tick W (tick && SPEC_BLOCKEDSTATE_S1)))) || ((SPEC_BLOCKEDSTATE_S2 && FRONTDISTSENSE_CLEAR) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S0)))) || ((SPEC_BLOCKEDSTATE_S2 && (!(BALANCER_TURN_RIGHT || BALANCER_TURN_LEFT) && !FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S1)))) || ((SPEC_BLOCKEDSTATE_S2 && ((BALANCER_TURN_RIGHT || BALANCER_TURN_LEFT) && !FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_BLOCKEDSTATE_S2))))))
+minimal ||G4_min = G4.
+
+//property divided into 1 subproperties.
+assert G_l1 = (tick && (BLUETOOTHCMD_AUTO -> (SPEC_BLOCKEDSTATE_S0 || SPEC_BLOCKEDSTATE_S2)))
+
+//property divided into 1 subproperties.
+ltl_property G5 = [](tick -> (BLUETOOTHCMD_FWD -> ((FRONTDISTSENSE_CLEAR && ISREADY) -> BALANCER_FWD)))
+minimal ||G5_min = G5.
+
+//property divided into 1 subproperties.
+ltl_property G6 = [](tick -> (BLUETOOTHCMD_BWD -> ((BACKDISTSENSE_CLEAR && ISREADY) -> BALANCER_BWD)))
+minimal ||G6_min = G6.
+
+//property divided into 1 subproperties.
+ltl_property G7 = [](tick -> (BLUETOOTHCMD_TURN_RIGHT -> (ISREADY -> BALANCER_TURN_RIGHT)))
+minimal ||G7_min = G7.
+
+//property divided into 1 subproperties.
+ltl_property G8 = [](tick -> (BLUETOOTHCMD_TURN_LEFT -> (ISREADY -> BALANCER_TURN_LEFT)))
+minimal ||G8_min = G8.
+
+//property divided into 1 subproperties.
+ltl_property G9 = [](tick -> (((BLUETOOTHCMD_STP || (BLUETOOTHCMD_FWD && FRONTDISTSENSE_BLOCKED)) || (BLUETOOTHCMD_BWD && BACKDISTSENSE_BLOCKED)) -> (ISREADY -> BALANCER_STP)))
+minimal ||G9_min = G9.
+
+
+//property divided into 1 subproperties.
+ltl_property G10 = [](tick -> (((((SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0 && (!!(BALANCER_FWD || BALANCER_STP) || (!(BALANCER_FWD || BALANCER_STP) && (!!(BALANCER_FWD || BALANCER_STP) || FRONTDISTSENSE_CLEAR)))) && X(!tick W (tick && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0))) || ((SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0 && (!(BALANCER_FWD || BALANCER_STP) && !(!!(BALANCER_FWD || BALANCER_STP) || FRONTDISTSENSE_CLEAR))) && X(!tick W (tick && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S1)))) || ((SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S1 && (!!(BALANCER_FWD || BALANCER_STP) || FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0)))) || ((SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S1 && !(!!(BALANCER_FWD || BALANCER_STP) || FRONTDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S1)))))
+minimal ||G10_min = G10.
+
+
+//property divided into 1 subproperties.
+ltl_property G11 = [](tick -> (((((SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0 && (!!(BALANCER_BWD || BALANCER_STP) || (!(BALANCER_BWD || BALANCER_STP) && (!!(BALANCER_BWD || BALANCER_STP) || BACKDISTSENSE_CLEAR)))) && X(!tick W (tick && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0))) || ((SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0 && (!(BALANCER_BWD || BALANCER_STP) && !(!!(BALANCER_BWD || BALANCER_STP) || BACKDISTSENSE_CLEAR))) && X(!tick W (tick && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S1)))) || ((SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S1 && (!!(BALANCER_BWD || BALANCER_STP) || BACKDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0)))) || ((SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S1 && !(!!(BALANCER_BWD || BALANCER_STP) || BACKDISTSENSE_CLEAR)) && X(!tick W (tick && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S1)))))
+minimal ||G11_min = G11.
+
+
+//property divided into 1 subproperties.
+ltl_property G12 = [](tick -> (((((SPEC_FORWARDINGSTATE_S0 && (!BALANCER_FWD || (BALANCER_FWD && (!BALANCER_FWD || FRONTDISTSENSE_BLOCKED)))) && X(!tick W (tick && SPEC_FORWARDINGSTATE_S0))) || ((SPEC_FORWARDINGSTATE_S0 && (BALANCER_FWD && !(!BALANCER_FWD || FRONTDISTSENSE_BLOCKED))) && X(!tick W (tick && SPEC_FORWARDINGSTATE_S1)))) || ((SPEC_FORWARDINGSTATE_S1 && (!BALANCER_FWD || FRONTDISTSENSE_BLOCKED)) && X(!tick W (tick && SPEC_FORWARDINGSTATE_S0)))) || ((SPEC_FORWARDINGSTATE_S1 && !(!BALANCER_FWD || FRONTDISTSENSE_BLOCKED)) && X(!tick W (tick && SPEC_FORWARDINGSTATE_S1)))))
+minimal ||G12_min = G12.
+
+
+//property divided into 1 subproperties.
+ltl_property G13 = [](tick -> (((((SPEC_BACKWARDINGSTATE_S0 && (!BALANCER_BWD || (BALANCER_BWD && (!BALANCER_BWD || BACKDISTSENSE_BLOCKED)))) && X(!tick W (tick && SPEC_BACKWARDINGSTATE_S0))) || ((SPEC_BACKWARDINGSTATE_S0 && (BALANCER_BWD && !(!BALANCER_BWD || BACKDISTSENSE_BLOCKED))) && X(!tick W (tick && SPEC_BACKWARDINGSTATE_S1)))) || ((SPEC_BACKWARDINGSTATE_S1 && (!BALANCER_BWD || BACKDISTSENSE_BLOCKED)) && X(!tick W (tick && SPEC_BACKWARDINGSTATE_S0)))) || ((SPEC_BACKWARDINGSTATE_S1 && !(!BALANCER_BWD || BACKDISTSENSE_BLOCKED)) && X(!tick W (tick && SPEC_BACKWARDINGSTATE_S1)))))
+minimal ||G13_min = G13.
+
+
+
+
+//property divided into 1 subproperties.
+assert A_l0 = (tock && ISREADY)
+
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> (ISREADY -> X(!tock W (tock && ISREADY))))
+minimal ||A0_min = A0.
+
+//property divided into 1 subproperties.
+assert A_l1 = (tock && SPEC_MOVEAWAYFROMFRONTOBSTACLESTATE_S0)
+
+//property divided into 1 subproperties.
+assert A_l2 = (tock && SPEC_MOVEAWAYFROMBACKOBSTACLESTATE_S0)
+
+//property divided into 1 subproperties.
+assert A_l3 = (tock && SPEC_FORWARDINGSTATE_S0)
+
+//property divided into 1 subproperties.
+assert A_l4 = (tock && SPEC_BACKWARDINGSTATE_S0)
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min || G0_min || G1_min || G2_min || G3_min || G4_min || G5_min || G6_min || G7_min || G8_min || G9_min || G10_min || G11_min || G12_min || G13_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l0, A_l1, A_l2, A_l3, A_l4, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0, G_l1}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l0 && []<>A_l1 && []<>A_l2 && []<>A_l3 && []<>A_l4 && A_clock) -> ([]<>G_l0 && []<>G_l1))
+assert ASM =   ([]<>A_l0 && []<>A_l1 && []<>A_l2 && []<>A_l3 && []<>A_l4 && A_clock)
+assert GNT = ([]<>G_l0 && []<>G_l1)
+progress Time  = {tick}

@@ -1,0 +1,85 @@
+set InRooms = {in0,in1,in2}
+set CatMoves = {ce,cw,ci}
+set MouseMoves = {me,mw,mi}
+set CatA = {CatMoves,InRooms}
+set MouseA = {MouseMoves,InRooms}
+set Controllable = {CatMoves, InRooms}
+set A = {MouseA, CatA}
+
+||CONCRETECAT = (CAT || Abs1_MOUSE || MOUSE_SPEED).
+
+//Concrete system. 
+||CONCRETE1 = (CAT || MOUSE || MOUSE_SPEED).
+
+CAT(Init=0) = CAT[Init],
+CAT[0] = (ce->CAT[1] | ci->CAT[0] | in0->CAT[0]),
+CAT[1] = (cw->CAT[0] | ce->CAT[2] | ci->CAT[1] | in1->CAT[1]),
+CAT[2] = (cw->CAT[1] | ci->CAT[2] | in2->CAT[2]).
+
+MOUSE(Init=0) = MOUSE[Init],
+MOUSE[0] = (me->MOUSE[1] | mi->MOUSE[0] | in0->MOUSE[0]),
+MOUSE[1] = (mw->MOUSE[0] | me->MOUSE[2] | mi->MOUSE[1] | in1->MOUSE[1]),
+MOUSE[2] = (mw->MOUSE[1] | mi->MOUSE[2] | in2->MOUSE[2]).
+
+MOUSE_SPEED = (MouseA->CAT_TURN), 
+CAT_TURN = (CatA->CAT_TURN2), 
+CAT_TURN2 = (CatA->MOUSE_SPEED).
+
+controller ||CONCRETE1_C = (CONCRETE1)~{G1}.
+
+//Abstract initial view of the world.
+Abs1_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT).
+||Abs1 = (Abs1_CAT || Abs1_MOUSE || MOUSE_SPEED). 
+
+Abs1_MOUSE(Init=0) = MOUSE[Init],
+MOUSE[0] = (mw?->MOUSE[2] | me?->MOUSE[1] | mi?->MOUSE[0] | in0->MOUSE[0]),
+MOUSE[1] = (mw?->MOUSE[0] | me?->MOUSE[2] | mi?->MOUSE[1] | in1->MOUSE[1]),
+MOUSE[2] = (mw?->MOUSE[1] | me?->MOUSE[0] | mi?->MOUSE[2] | in2->MOUSE[2]).
+
+||SYSTEM1 = (Abs1_CAT || Abs1_MOUSE || CAT || MOUSE || MOUSE_SPEED).
+||SYS_COMP = (CONCRETE1 || Abs1).
+
+//Exploration step 1
+controller ||Abs1_C = (Abs1)~{G1}.
+//Answer SOME.
+
+//Exploration step 2
+controller ||Abs2_C = (Abs2)~{G1}.
+//Answer SOME.
+Abs2_CAT = (in0->Abs2_CAT | {ce?,cw?,ci?,in1?,in2?}->Abs1_CAT), 
+Abs1_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT).
+
+||Abs2 = (Abs2_CAT || Abs1_MOUSE || MOUSE_SPEED). 
+||SYSTEM2 = (Abs2_CAT || Abs1_CAT || Abs1_MOUSE || CAT || MOUSE || MOUSE_SPEED).
+
+//Exploration step 3
+controller ||Abs3_C = (Abs3)~{G1}.
+//Answer SOME.
+Abs3_CAT = ({ci,in0}->Abs3_CAT | ce->Abs2_CAT), 
+Abs2_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT), 
+Abs1_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT).
+||Abs3 = (Abs3_CAT || Abs1_MOUSE || MOUSE_SPEED). 
+||SYSTEM3 = (Abs3_CAT || Abs2_CAT || CAT).
+
+//Exploration step 4
+controller ||Abs4_C = (Abs4)~{G1}.
+//Answer SOME.
+Abs4_CAT = ({ci,in0}->Abs4_CAT | ce->Abs3_CAT), 
+Abs3_CAT = ({in1,ci}->Abs3_CAT | cw->Abs4_CAT | ce->Abs2_CAT), 
+Abs2_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT), 
+Abs1_CAT = ({ce?,cw?,ci?,in0?,in1?,in2?}->Abs1_CAT).
+||Abs4 = (Abs4_CAT || Abs1_MOUSE || MOUSE_SPEED). 
+||SYSTEM4 = (Abs4_CAT || Abs3_CAT || CAT).
+
+
+//controllerSpec
+fluent IN = <{in0,in1,in2},A\{in0,in1,in2}>
+
+assert CAT_CAUGHT_MOUSE = IN
+assert GF_CAT_CAUGHT_MOUSE = []<> IN
+
+controllerSpec G1 = {
+	permissive
+	liveness = {CAT_CAUGHT_MOUSE}
+	controllable = {Controllable}
+}

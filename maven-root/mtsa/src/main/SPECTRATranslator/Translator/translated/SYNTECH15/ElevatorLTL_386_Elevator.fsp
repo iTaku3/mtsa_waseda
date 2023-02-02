@@ -1,0 +1,80 @@
+//ElevatorLTL_386_Elevator automatically_translated 
+
+set ControlledActions = {elevmot.fwd, elevmot.bwd, elevmot.stop, tick}
+set UncontrolledActions = {floor.lower, floor.middle, floor.upper, floor.none, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Floor_Actions = {floor.lower, floor.middle, floor.upper, floor.none}
+fluent FLOOR_LOWER = <floor.lower, Floor_Actions\{floor.lower}>
+fluent FLOOR_MIDDLE = <floor.middle, Floor_Actions\{floor.middle}>
+fluent FLOOR_UPPER = <floor.upper, Floor_Actions\{floor.upper}>
+fluent FLOOR_NONE = <floor.none, Floor_Actions\{floor.none}>
+
+set ElevMot_Actions = {elevmot.fwd, elevmot.bwd, elevmot.stop}
+fluent ELEVMOT_FWD = <elevmot.fwd, ElevMot_Actions\{elevmot.fwd}>
+fluent ELEVMOT_BWD = <elevmot.bwd, ElevMot_Actions\{elevmot.bwd}>
+fluent ELEVMOT_STOP = <elevmot.stop, ElevMot_Actions\{elevmot.stop}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && ELEVMOT_STOP))
+minimal || Initial_0_min =  Initial_0.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min).
+
+
+
+//property divided into 1 subproperties.
+assert G_l0 = (tick && ELEVMOT_FWD)
+
+//property divided into 1 subproperties.
+assert G_l1 = (tick && (FLOOR_LOWER -> ELEVMOT_FWD))
+
+//property divided into 1 subproperties.
+assert G_l2 = (tick && (FLOOR_UPPER -> ELEVMOT_BWD))
+
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> (ELEVMOT_STOP -> !FLOOR_NONE))
+minimal ||A0_min = A0.
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0, G_l1, G_l2}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = ((A_clock) -> ([]<>G_l0 && []<>G_l1 && []<>G_l2))
+assert ASM =   (A_clock)
+assert GNT = ([]<>G_l0 && []<>G_l1 && []<>G_l2)
+progress Time  = {tick}

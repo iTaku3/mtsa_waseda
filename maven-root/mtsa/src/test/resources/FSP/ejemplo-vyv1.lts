@@ -1,0 +1,23 @@
+set A = {ir1, pos1, pos2}
+set Controllable = {ir1}
+
+E = (ir1->pos1->POS1), 
+POS1 = (pos1->POS1).
+
+fluent F_Pos1 = <pos1, A\{pos1}>
+fluent F_Pos2 = <pos2, A\{pos2}>
+
+assert Goal1 = F_Pos1
+assert Goal2 = F_Pos2
+
+||ENV = E. 
+
+//controllers
+controller ||C = (ENV)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       liveness = {Goal1,Goal2}
+       controllable = {Controllable}
+}
+

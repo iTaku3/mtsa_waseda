@@ -1,0 +1,79 @@
+set ControllableActions = {takeoff, land, blink, read}
+set UpdatingControllableActions = {ControllableActions, stopOldSpec, startNewSpec, reconfigure}
+set A = {UpdatingControllableActions, read.val[0..2], beginUpdate}
+
+fluent ValueReaded = <{read.val[0..2]},{land}>
+fluent InAir = <{takeoff},{land}>
+fluent Read = <{read}, {A\{read}}>
+
+assert BLINK_ONLY_WITH_TWOS = ((read.val[2] -> PROCESS_VALUE) && ((read.val[0] || read.val[1]) -> (!blink W land)))
+ltl_property P_BLINK_ONLY_WITH_TWOS  = []BLINK_ONLY_WITH_TWOS 
+
+		// Old Environment
+        E0     = (blink -> E0
+                     |read -> E1
+                     |takeoff -> E2),
+        E1     = (read.val[0..2] -> E0),
+        E2     = (land -> E0
+                     |blink -> E2
+                     |read -> E3),
+        E3     = (read.val[0..2] -> E2).
+
+||NewEnvironment = E0.
+||HatEnvironment = E0.
+||OldEnvironment = E0.
+
+// properties for old Controller
+assert LAND_AFTER_BLINK = (blink -> (!read W land))
+assert BLINK_ONLY_WITH_ONES = ((read.val[1] -> PROCESS_VALUE) && ((read.val[0] || read.val[2]) -> (!blink W land)))
+assert ONLY_READ_IN_AIR = (read -> InAir)
+assert ONLY_BLINK_IN_AIR = (blink -> InAir)
+assert BLINK_AFTER_READING_VALUE = (blink -> ValueReaded)
+ltl_property P_LAND_AFTER_BLINK = []LAND_AFTER_BLINK
+ltl_property P_BLINK_ONLY_WITH_ONES = []BLINK_ONLY_WITH_ONES 
+ltl_property P_ONLY_READ_IN_AIR  = []ONLY_READ_IN_AIR 
+ltl_property P_ONLY_BLINK_IN_AIR  = []ONLY_BLINK_IN_AIR 
+ltl_property P_BLINK_AFTER_READING_VALUE = []BLINK_AFTER_READING_VALUE 
+assert PROCESS_VALUE = ((!read && !land) W blink)
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+        safety = {P_BLINK_ONLY_WITH_ONES, P_ONLY_READ_IN_AIR, P_ONLY_BLINK_IN_AIR, P_BLINK_AFTER_READING_VALUE, P_LAND_AFTER_BLINK}
+        controllable = {ControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewEnvironmentAndController = (NewEnvironment || NewController).
+
+controllerSpec NewSpec = {
+        safety = {P_BLINK_ONLY_WITH_TWOS, P_ONLY_READ_IN_AIR, P_ONLY_BLINK_IN_AIR, P_BLINK_AFTER_READING_VALUE, P_LAND_AFTER_BLINK}
+        controllable = {ControllableActions}
+}
+
+
+fluent Reading = <read, read.val[0..2]>
+
+updatingController UpdCont = {
+	oldController = EnvironmentAndController,
+	oldEnvironment = OldEnvironment,
+	hatEnvironment = HatEnvironment,
+	newEnvironment = NewEnvironment,
+	oldGoal = OldSpec,
+	newGoal = NewSpec,
+	nonblocking,
+	updateFluents = {InAir,Reading}
+}
+
+/*TESTS*/
+assert S_OLD = (BLINK_ONLY_WITH_ONES && LAND_AFTER_BLINK &&
+				ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR  && BLINK_AFTER_READING_VALUE )
+assert S_NEW = (BLINK_ONLY_WITH_TWOS && LAND_AFTER_BLINK &&
+				 ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR  && BLINK_AFTER_READING_VALUE)
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FORMULA4 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))

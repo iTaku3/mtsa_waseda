@@ -1,0 +1,70 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {startMission, endMission, go, form4, form2[1..2]/*,passivate*/,dismiss4,dismiss2[1..2], form4Ok[0..1], dismiss4Ok[0..1], form2Ok[0..1][1..2], dismiss2Ok[0..1][1..2]}
+set A = {ControllableActions, form4Ok[0..1], dismiss4Ok[0..1], form2Ok[0..1][1..2], dismiss2Ok[0..1][1..2]}
+
+//Environment
+	PLAN = ( startMission -> STARTED),
+	STARTED = (go -> STARTED | endMission -> PLAN).
+	
+	DIAMOND_FORMATION = (form4 -> PENDING | passivate -> DIAMOND_FORMATION),
+	PENDING = (form4Ok[1] -> FORMED | form4Ok[0] -> DIAMOND_FORMATION | passivate -> DIAMOND_FORMATION),
+	FORMED = (dismiss4 -> DISMISS_PENDING | passivate -> DIAMOND_FORMATION),
+	DISMISS_PENDING = (dismiss4Ok[0] -> FORMED | dismiss4Ok[1] -> DIAMOND_FORMATION | passivate -> DIAMOND_FORMATION).
+
+	DUO_FORMATION(N=2) = FORM[N],
+	FORM[N] = (form2[N] -> PENDING[N] | passivate -> FORM[N]),
+	PENDING[N] = (form2Ok[1][N] -> FORMED[N] | form2Ok[0][N] -> FORM[N] | passivate -> FORM[N]),
+	FORMED[N] = (dismiss2[N] -> DISMISS_PENDING[N] | passivate -> FORM[N]),
+	DISMISS_PENDING[N] = (dismiss2Ok[0][N] -> FORMED[N] | dismiss2Ok[1][N] -> FORM[N] | passivate -> FORM[N]).
+
+||Environment = (PLAN || DIAMOND_FORMATION || DUO_FORMATION(1) || DUO_FORMATION(2)).
+
+
+//Fluents declaration
+fluent MissionStarted = <startMission,endMission>
+fluent Formed4 = <form4Ok[1],{dismiss4Ok[1],passivate}>
+fluent Formed1 = <form2Ok[1][1],{dismiss2Ok[1][1],passivate}>
+fluent Formed2 = <form2Ok[1][2],{dismiss2Ok[1][2],passivate}>
+fluent Dismissed4 = <{dismiss4Ok[1],passivate}, form4Ok[1]> initially 1
+fluent Dismissed1 = <{dismiss2Ok[1][1],passivate}, form2Ok[1][1]> initially 1
+fluent Dismissed2 = <{dismiss2Ok[1][2],passivate}, form2Ok[1][2]> initially 1
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert FORMED2 = (Formed1 && Formed2)
+assert DISMISSED2 = (Dismissed1 && Dismissed2)
+
+assert FLY_FORMED = (go -> (Formed4 || FORMED2))
+assert FORM_IF_MISSION_STARTED= ((form4 || form2[1..2]) -> MissionStarted)
+assert ONLY4ROBOTS = (form4 -> DISMISSED2)
+assert DISSMIS_BEFORE_END = (endMission -> (Dismissed4 && DISMISSED2))
+//assert T = (FORMED2 -> (passivate W Formed4))
+
+T = (form4Ok[1] -> dismiss4Ok[1] -> passivate -> PASSIVATED),
+PASSIVATED = (form2Ok[1][1] -> FORMED1 | form2Ok[1][2] -> FORMED2),
+FORMED1 = (form2Ok[1][2] -> passivate -> T),
+FORMED2 = (form2Ok[1][1] -> passivate -> T).
+
+ltl_property P_FLY_FORMED = []FLY_FORMED
+ltl_property P_FORM_IF_MISSION_STARTED = []FORM_IF_MISSION_STARTED
+ltl_property P_ONLY4ROBOTS = []ONLY4ROBOTS
+ltl_property P_DISSMIS_BEFORE_END = []DISSMIS_BEFORE_END
+//ltl_property P_T = []T
+
+controller ||Controller = Environment~{Spec}.
+||EnvironmentAndController = (Environment || Controller).
+
+controllerSpec Spec = {
+    safety = {P_FLY_FORMED, P_ONLY4ROBOTS, P_DISSMIS_BEFORE_END, P_FORM_IF_MISSION_STARTED, T}
+    controllable = {ControllableActions}
+}
+/*
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = ()
+assert S_NEW = ()
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+*/

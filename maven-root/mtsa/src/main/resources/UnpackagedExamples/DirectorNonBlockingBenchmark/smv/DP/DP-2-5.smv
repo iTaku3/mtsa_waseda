@@ -1,0 +1,392 @@
+MODULE main
+DOMAINNAME DirectedController
+PROBLEMNAME Goal
+IVAR
+  c: {
+    lambda,
+    "step_1",
+    "step_0",
+    "eat_1",
+    "eat_0",
+    "release_1_1",
+    "release_0_1",
+    "release_1_0",
+    "take_0_0",
+    "take_0_1",
+    "take_1_0",
+    "take_1_1",
+    "release_0_0",
+    "think_0",
+    "think_1",
+    "eat_all"
+  };
+VAR
+  "Monitor_0":0..1;
+  "Philosopher_0":0..10;
+  "Monitor_1":0..1;
+  "Philosopher_1":0..10;
+  "Fork_0":0..1;
+  "Fork_1":0..1;
+  u: {
+    lambda,
+    "step_1",
+    "step_0",
+    "think_0",
+    "think_1",
+    "eat_1",
+    "eat_0",
+    "release_1_1",
+    "release_0_1",
+    "release_1_0",
+    "release_0_0",
+    "eat_all"
+  };
+  violation:0..1;
+INIT (
+  "Monitor_0"=0&
+  "Philosopher_0"=0&
+  "Monitor_1"=0&
+  "Philosopher_1"=0&
+  "Fork_0"=0&
+  "Fork_1"=0
+)
+TRANS
+  (violation=1 -> next(violation)=1) &
+  (c=lambda -> violation=1)
+TRANS
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  ((u="eat_0" & !("Monitor_0"=0 | "Monitor_0"=1)) -> (next(violation)=1)) &
+  ((c="eat_0") -> ("Monitor_0"=0 | "Monitor_0"=1)) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    ("Monitor_0"=0 -> next("Monitor_0")=1) &
+    ("Monitor_0"=1 -> next("Monitor_0")=1) 
+  )) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((c="take_0_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((c="take_0_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((c="take_1_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((c="take_1_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    next("Monitor_0")="Monitor_0"
+  )) &
+  ((u="eat_all" & !("Monitor_0"=1)) -> (next(violation)=1)) &
+  ((c="eat_all") -> ("Monitor_0"=1)) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    ("Monitor_0"=1 -> next("Monitor_0")=0) 
+  )) 
+TRANS
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  ((u="step_0" & !("Philosopher_0"=2 | "Philosopher_0"=3 | "Philosopher_0"=4 | "Philosopher_0"=5 | "Philosopher_0"=6)) -> (next(violation)=1)) &
+  ((c="step_0") -> ("Philosopher_0"=2 | "Philosopher_0"=3 | "Philosopher_0"=4 | "Philosopher_0"=5 | "Philosopher_0"=6)) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    ("Philosopher_0"=2 -> next("Philosopher_0")=3) &
+    ("Philosopher_0"=3 -> next("Philosopher_0")=4) &
+    ("Philosopher_0"=4 -> next("Philosopher_0")=5) &
+    ("Philosopher_0"=5 -> next("Philosopher_0")=6) &
+    ("Philosopher_0"=6 -> next("Philosopher_0")=7) 
+  )) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  ((u="eat_0" & !("Philosopher_0"=8)) -> (next(violation)=1)) &
+  ((c="eat_0") -> ("Philosopher_0"=8)) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    ("Philosopher_0"=8 -> next("Philosopher_0")=9) 
+  )) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  ((u="release_0_1" & !("Philosopher_0"=10)) -> (next(violation)=1)) &
+  ((c="release_0_1") -> ("Philosopher_0"=10)) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    ("Philosopher_0"=10 -> next("Philosopher_0")=0) 
+  )) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  ((c="take_0_0") -> ("Philosopher_0"=1)) &
+  (((c="take_0_0" & u=lambda)) -> (
+    ("Philosopher_0"=1 -> next("Philosopher_0")=2) 
+  )) &
+  ((c="take_0_1") -> ("Philosopher_0"=7)) &
+  (((c="take_0_1" & u=lambda)) -> (
+    ("Philosopher_0"=7 -> next("Philosopher_0")=8) 
+  )) &
+  (((c="take_1_0" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  (((c="take_1_1" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  ((u="release_0_0" & !("Philosopher_0"=9)) -> (next(violation)=1)) &
+  ((c="release_0_0") -> ("Philosopher_0"=9)) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    ("Philosopher_0"=9 -> next("Philosopher_0")=10) 
+  )) &
+  ((u="think_0" & !("Philosopher_0"=0)) -> (next(violation)=1)) &
+  ((c="think_0") -> ("Philosopher_0"=0)) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    ("Philosopher_0"=0 -> next("Philosopher_0")=1) 
+  )) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    next("Philosopher_0")="Philosopher_0"
+  )) 
+TRANS
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  ((u="eat_1" & !("Monitor_1"=0 | "Monitor_1"=1)) -> (next(violation)=1)) &
+  ((c="eat_1") -> ("Monitor_1"=0 | "Monitor_1"=1)) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    ("Monitor_1"=0 -> next("Monitor_1")=1) &
+    ("Monitor_1"=1 -> next("Monitor_1")=1) 
+  )) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((c="take_0_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((c="take_0_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((c="take_1_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((c="take_1_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    next("Monitor_1")="Monitor_1"
+  )) &
+  ((u="eat_all" & !("Monitor_1"=1)) -> (next(violation)=1)) &
+  ((c="eat_all") -> ("Monitor_1"=1)) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    ("Monitor_1"=1 -> next("Monitor_1")=0) 
+  )) 
+TRANS
+  ((u="step_1" & !("Philosopher_1"=2 | "Philosopher_1"=3 | "Philosopher_1"=4 | "Philosopher_1"=5 | "Philosopher_1"=6)) -> (next(violation)=1)) &
+  ((c="step_1") -> ("Philosopher_1"=2 | "Philosopher_1"=3 | "Philosopher_1"=4 | "Philosopher_1"=5 | "Philosopher_1"=6)) &
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    ("Philosopher_1"=2 -> next("Philosopher_1")=3) &
+    ("Philosopher_1"=3 -> next("Philosopher_1")=4) &
+    ("Philosopher_1"=4 -> next("Philosopher_1")=5) &
+    ("Philosopher_1"=5 -> next("Philosopher_1")=6) &
+    ("Philosopher_1"=6 -> next("Philosopher_1")=7) 
+  )) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  ((u="eat_1" & !("Philosopher_1"=8)) -> (next(violation)=1)) &
+  ((c="eat_1") -> ("Philosopher_1"=8)) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    ("Philosopher_1"=8 -> next("Philosopher_1")=9) 
+  )) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  ((u="release_1_1" & !("Philosopher_1"=9)) -> (next(violation)=1)) &
+  ((c="release_1_1") -> ("Philosopher_1"=9)) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    ("Philosopher_1"=9 -> next("Philosopher_1")=10) 
+  )) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  ((u="release_1_0" & !("Philosopher_1"=10)) -> (next(violation)=1)) &
+  ((c="release_1_0") -> ("Philosopher_1"=10)) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    ("Philosopher_1"=10 -> next("Philosopher_1")=0) 
+  )) &
+  (((c="take_0_0" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  (((c="take_0_1" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  ((c="take_1_0") -> ("Philosopher_1"=7)) &
+  (((c="take_1_0" & u=lambda)) -> (
+    ("Philosopher_1"=7 -> next("Philosopher_1")=8) 
+  )) &
+  ((c="take_1_1") -> ("Philosopher_1"=1)) &
+  (((c="take_1_1" & u=lambda)) -> (
+    ("Philosopher_1"=1 -> next("Philosopher_1")=2) 
+  )) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) &
+  ((u="think_1" & !("Philosopher_1"=0)) -> (next(violation)=1)) &
+  ((c="think_1") -> ("Philosopher_1"=0)) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    ("Philosopher_1"=0 -> next("Philosopher_1")=1) 
+  )) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    next("Philosopher_1")="Philosopher_1"
+  )) 
+TRANS
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  ((u="release_1_0" & !("Fork_0"=1)) -> (next(violation)=1)) &
+  ((c="release_1_0") -> ("Fork_0"=1)) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    ("Fork_0"=1 -> next("Fork_0")=0) 
+  )) &
+  ((c="take_0_0") -> ("Fork_0"=0)) &
+  (((c="take_0_0" & u=lambda)) -> (
+    ("Fork_0"=0 -> next("Fork_0")=1) 
+  )) &
+  (((c="take_0_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  ((c="take_1_0") -> ("Fork_0"=0)) &
+  (((c="take_1_0" & u=lambda)) -> (
+    ("Fork_0"=0 -> next("Fork_0")=1) 
+  )) &
+  (((c="take_1_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  ((u="release_0_0" & !("Fork_0"=1)) -> (next(violation)=1)) &
+  ((c="release_0_0") -> ("Fork_0"=1)) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    ("Fork_0"=1 -> next("Fork_0")=0) 
+  )) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    next("Fork_0")="Fork_0"
+  )) 
+TRANS
+  (((u="step_1") | (c="step_1" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="step_0") | (c="step_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="eat_1") | (c="eat_1" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="eat_0") | (c="eat_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  ((u="release_1_1" & !("Fork_1"=1)) -> (next(violation)=1)) &
+  ((c="release_1_1") -> ("Fork_1"=1)) &
+  (((u="release_1_1") | (c="release_1_1" & u=lambda)) -> (
+    ("Fork_1"=1 -> next("Fork_1")=0) 
+  )) &
+  ((u="release_0_1" & !("Fork_1"=1)) -> (next(violation)=1)) &
+  ((c="release_0_1") -> ("Fork_1"=1)) &
+  (((u="release_0_1") | (c="release_0_1" & u=lambda)) -> (
+    ("Fork_1"=1 -> next("Fork_1")=0) 
+  )) &
+  (((u="release_1_0") | (c="release_1_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((c="take_0_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  ((c="take_0_1") -> ("Fork_1"=0)) &
+  (((c="take_0_1" & u=lambda)) -> (
+    ("Fork_1"=0 -> next("Fork_1")=1) 
+  )) &
+  (((c="take_1_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  ((c="take_1_1") -> ("Fork_1"=0)) &
+  (((c="take_1_1" & u=lambda)) -> (
+    ("Fork_1"=0 -> next("Fork_1")=1) 
+  )) &
+  (((u="release_0_0") | (c="release_0_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="think_0") | (c="think_0" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="think_1") | (c="think_1" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) &
+  (((u="eat_all") | (c="eat_all" & u=lambda)) -> (
+    next("Fork_1")="Fork_1"
+  )) 
+FULL_OBS_CTL_GOAL
+  AG(EF(
+    violation | (
+      ("Monitor_0"=0) &
+      ("Monitor_1"=0) 
+    )
+  ))

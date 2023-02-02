@@ -1,0 +1,48 @@
+reactive_prod_cell.lts
+FINAL:{EQUALLYGOOD=14, Tf1 > Tf2=4}
+
+pay_and_ship.lts
+Sin Fallas
+{EQUALLYGOOD=24, Tf1 > Tf2=8}
+*Tiene 2 soluciones porque es posible alcanzar el estado de maxima concurrencia pidiendo los datos primero al Producer o al Shipper.
+
+jobs.lts
+-Restricted
+FINAL:{EQUALLYGOOD=1528, Tf1 > Tf2=1352}
+#Heuristic Solutions:2
+#Controllers:45
+#Schedullers:32
+-Not Restricted
+{EQUALLYGOOD=65, Tf1 > Tf2=12}
+#Heuristic Solutions:2
+#Controllers:75
+#Schedullers:384
+
+
+
+
+
+
+painted_parts.lts 
+#MaxConcurrency
+#Heuristic Solutions:8
+#Controllers:18
+#Schedullers:16
+laziness=1
+ConcurrencyFluents
+{EQUALLYGOOD=512, Tf1 < Tf2=96, UNCOMPARABLES=1344, Tf1 > Tf2=352}
+	
+
+
+
+#Formula para la comparación.
+BoolExpr parte1 = z3.MkEq(getConst("T2Paint1"), getConst("T1Paint1"));
+BoolExpr parte2 = z3.MkEq(getConst("T2Paint2"), getConst("T1Paint2"));
+BoolExpr assembled1 = z3.MkGt(getConst("T1PaintAsm"), getConst("T1Paint2"));
+BoolExpr assembled2 = z3.MkGt(getConst("T1PaintAsm"), getConst("T1Paint1"));
+			 
+truth.add(parte1);
+truth.add(parte2);
+truth.add(assembled1);
+truth.add(assembled2);
+

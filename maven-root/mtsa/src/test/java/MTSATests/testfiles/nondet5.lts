@@ -1,0 +1,18 @@
+set Controllable = {c1}
+
+M = (c1->C2 | c1->C1),
+C1 = (c1->C1),
+C2 = (c1->C2).
+
+fluent F_C1 = <c1, Controllable\{c1}>
+
+assert C1o2oU1 = (F_C1)
+controller ||C = M~{G}.
+
+controllerSpec G = {
+    liveness = {C1o2oU1}
+    nonblocking
+    controllable = {Controllable}
+}
+
+

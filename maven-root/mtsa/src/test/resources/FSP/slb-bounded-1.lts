@@ -1,0 +1,36 @@
+const N = 2 // number of each type of car
+range ID= 1..N // car identities
+
+CAR = (enter->exit->CAR).
+||CARS = (red[ID]:CAR || blue[ID]:CAR).
+
+set EnterActions = {blue[ID].enter,red[ID].enter}
+set ExitActions = {blue[ID].exit,red[ID].exit}
+set Actions = {EnterActions, ExitActions}
+set Controls = {EnterActions, ended}
+
+CROSSING = (Actions -> CROSSING
+|ended -> reset -> CROSSING).
+
+fluent BLUE[i:ID] = <blue[i].enter,blue[i].exit>
+fluent RED[i:ID] = <red[i].enter,red[i].exit>
+fluent BEENBLUE = <blue[ID].enter,reset>
+fluent BEENRED = <red[ID].enter,reset>
+fluent ENDED = <ended, reset>
+
+ltl_property SAFE = []!(BLUE[ID] && RED[ID])
+ltl_property CYCLE = [](ENDED -> (BEENRED && BEENBLUE))
+
+minimal ||SYS = (CARS || CROSSING).
+
+assert LIVE = []<>ENDED
+
+controller ||BRIDGE = (SYS)~{G1}.
+||SAFESYS = BRIDGE.
+//Goals
+controllerSpec G1 = {
+       safety = {SAFE,CYCLE}
+//       assumption = {NOT_COOKING}
+//       liveness = {MOVE_TO_BELT}
+       controllable = {Controls}
+}

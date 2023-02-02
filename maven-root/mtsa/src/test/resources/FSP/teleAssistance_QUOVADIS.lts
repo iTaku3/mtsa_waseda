@@ -1,0 +1,81 @@
+// TELE ASSISTANCE SYSTEM: waits for user input and analyses bodily functions 
+
+TELEASSISTANCE = (startAssistance -> WAITING_NODEGRADE), // 0
+
+WAITING_NODEGRADE= (stop -> STOPPED | vitalMsg -> VITAL | panic -> PANICKING), // 1
+WAITING_DEGRADE_1= (stop -> STOPPED | vitalMsg -> VITAL_DEGRADED_1 | panic -> PANICKING), // 0'
+WAITING_DEGRADE_2= (stop -> STOPPED | vitalMsg -> VITAL_DEGRADED_2 | panic -> PANICKING), // 0''
+
+STOPPED= (stop -> STOPPED), // 2
+
+PANICKING= (panic -> PANICKING | alarm -> ALARMED), // 3
+
+VITAL= (panic -> PANICKING | analyseData -> ANALYSING), // 4 // OJO EN EL PAPER panic IBA A ALARMED
+// 1st level degradation: functional degradation analysis and drug/dose changes
+VITAL_DEGRADED_1= (panic -> PANICKING | analyseData -> ANALYSING_DEGRADED_1),
+// 2nd level degradation: functional degradation and panic function on analysis wait may end up on deadlock
+VITAL_DEGRADED_2= (panic -> WAITING_FOR_FAS[0] | analyseData -> ANALYSING_DEGRADED_2),
+
+ALARMED= (panic -> ALARMED | callFAS -> FAS_CALLED), // 5
+
+FAS_CALLED= (panic -> FAS_CALLED | attendPA -> WAITING_NODEGRADE), // 6
+
+ANALYSING= (alarm -> ALARMED | performAnalysis -> WAITING_ANALYSIS | panic -> PANICKING), // 8
+ANALYSING_DEGRADED_1= (alarm -> ALARMED | performAnalysis -> WAITING_ANALYSIS_DEGRADED_1 | panic -> PANICKING),
+ANALYSING_DEGRADED_2= (alarm -> ALARMED | performAnalysis -> WAITING_ANALYSIS_DEGRADED_2 | panic -> WAITING_FOR_FAS[0]),
+
+WAITING_ANALYSIS= (emergencyValues -> alarm -> ALARMED | changeDrug -> CHANGING_DRUG | changeDose -> CHANGING_DOSE | noChange -> WAITING_NODEGRADE | panic -> PANICKING), // 8BIS
+WAITING_ANALYSIS_DEGRADED_1= (emergencyValues -> alarm -> ALARMED | changeDrug -> CHANGING_DRUG_DEGRADED_1 | changeDose -> CHANGING_DOSE_DEGRADED_1 | noChange -> WAITING_NODEGRADE | panic -> PANICKING),
+WAITING_ANALYSIS_DEGRADED_2= (emergencyValues -> alarm -> ALARMED | changeDrug -> CHANGING_DRUG_DEGRADED_2 | changeDose -> CHANGING_DOSE_DEGRADED_2 | noChange -> WAITING_NODEGRADE | panic -> WAITING_FOR_FAS[0]),
+
+CHANGING_DRUG= (panic -> PANICKING | notifyPA -> WAITING_DEGRADE_1), // 11
+CHANGING_DRUG_DEGRADED_1= (panic -> PANICKING | notifyPA -> WAITING_DEGRADE_2),
+CHANGING_DRUG_DEGRADED_2= (panic -> WAITING_FOR_FAS[0] | notifyPA -> WAITING_NODEGRADE),
+
+CHANGING_DOSE= (panic -> PANICKING | notifyPA -> WAITING_DEGRADE_1), // 12
+CHANGING_DOSE_DEGRADED_1= (panic -> PANICKING | notifyPA -> WAITING_DEGRADE_2),
+CHANGING_DOSE_DEGRADED_2= (panic -> WAITING_FOR_FAS[0] | notifyPA -> WAITING_NODEGRADE),
+
+WAITING_FOR_FAS[panicCount:0..4]= (when (panicCount<4) panic -> WAITING_FOR_FAS[panicCount+1] | when (panicCount==4) panic -> FAILURE | alarm -> ALARMED),
+
+// FAILURE= (panic -> FAILURE | failedAlarm -> ERROR). // 9
+FAILURE= (panic -> FAILURE | failedAlarm -> changeDrug -> FAILURE). // 9 // INTRODUCED DEADLOCK TO CHECK AT WHICH GENERATED STATE IT IS DETECTED
+
+// ANALYSER: machine that performs the analysis; consists of a data stream reader.
+
+ANALYSER= (performAnalysis -> ANALYSE_SLOW | performAnalysis -> ANALYSE_QUICK | performAnalysis -> ANALYSE_SENSITIVE),
+ANALYSE_SLOW= (wait -> takeResult -> ANALYSER),
+ANALYSE_QUICK= (takeResult -> ANALYSER),
+ANALYSE_SENSITIVE= (takeBadResult -> ANALYSER).
+
+// DATA READER: data stream reader for the analyser
+
+DATA_READER= (takeResult -> changeDrug -> DATA_READER | takeResult -> changeDose -> DATA_READER |
+              takeResult -> emergencyValues -> DATA_READER | takeBadResult -> emergencyValues -> DATA_READER | takeResult -> noChange -> DATA_READER).
+
+
+
+
+
+// PATIENT = (startAssistance -> PATIENT_OPERATION), // 0
+// PATIENT_OPERATION= (stop -> PATIENT_STOPPED | vitalMsg -> PATIENT_VITAL | panic -> PATIENT_PANIC), // 1
+// PATIENT_STOPPED = (stop -> PATIENT_STOPPED), // 4,7
+// PATIENT_PANIC= (attendPA -> PATIENT_OPERATION), // 3,6
+// PATIENT_VITAL= (noChange -> PATIENT_OPERATION | attendPA -> PATIENT_OPERATION | 
+//				notifyPA -> PATIENT_OPERATION | notifyPA -> panic -> PATIENT_PANIC |
+//				panic -> PATIENT_VITAL). // 5 //
+
+
+PATIENT = (startAssistance -> WAITING),
+WAITING = (internal -> STOPPING | internal -> PANICKING | internal -> VITAL),
+STOPPING = (stop -> STOPPED),
+STOPPED= (stop -> STOPPED),
+PANICKING = (panic -> attendPA -> WAITING),
+VITAL = (vitalMsg -> PROCESSING),
+PROCESSING = (internal -> MAY_PANIC | internal -> DOESNT_PANIC),
+NOTIFIED = (internal -> WAITING | internal -> CYCLING),
+CYCLING = (internal -> PANICKING | internal -> VITAL),
+// MAY_PANIC = (panic -> PROCESSING | notifyPA -> NOTIFIED | noChange -> WAITING | attendPA -> WAITING | timeout -> MAY_PANIC),
+// DOESNT_PANIC = (notifyPA -> NOTIFIED | noChange -> WAITING | attendPA -> WAITING | timeout -> DOESNT_PANIC)  \ {internal}.
+MAY_PANIC = (panic -> PROCESSING | notifyPA -> NOTIFIED | noChange -> WAITING | attendPA -> WAITING),
+DOESNT_PANIC = (notifyPA -> NOTIFIED | noChange -> WAITING | attendPA -> WAITING)  \ {internal}.

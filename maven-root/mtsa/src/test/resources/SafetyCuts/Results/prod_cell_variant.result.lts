@@ -1,0 +1,4 @@
+\begin{tabular}{ | c | c c c c c c c | c c c c c | c c c c c | c c c c c | }\
+\rot{test name}&\rot{$c'=c$}&\rot{$c'<c$}&\rot{$c'>c$}&\rot{$|As|$}&\rot{$|G|$}&\rot{$|F|$}&\rot{ass.Comp.}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}\
+prod_cell_variant&N&N&N&0&1&0&Y&GR&45&44&-1&T&0&GR+CUT&45&44&-1&F&0&GR.only&45&44&-1&T&0\
+\end{tabular}\

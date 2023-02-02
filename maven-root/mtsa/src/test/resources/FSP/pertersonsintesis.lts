@@ -1,0 +1,107 @@
+/* Distributed Algorithms
+*  Jeff Kramer
+*
+*  PetersonNP
+*/
+const N = 3
+range Card =  1..N
+
+const False = 0
+const True  = 1
+range Bool  = False..True
+set   BoolActions = {setTrue, setFalse, [False], [True]}
+
+set   CardActions = {setto[i:1..N],[1..N]}
+CARDVAR     = VAL[1],
+VAL[i:Card] = (setto[j:Card] -> VAL[j]
+              |[i]  -> VAL[i]
+              ).
+
+
+set   CardActions0 = {setto[i:0..N-1],[0..N-1]}
+range Card0 =  0..N-1
+CARDVAR0     = VAL[0],
+VAL[i:Card0] = (setto[j:Card0] -> VAL[j]
+              |[i]  -> VAL[i]
+              ).
+
+||VARS = (flag[i:Card]:CARDVAR0 || turn[k:1..N-1]:CARDVAR).
+
+PROCESS(I=1) = FORLOOP[1],
+FORLOOP[k:1..N-1] = (flag[I].setto[k] -> turn[k].setto[I] -> TEST[k][1]),
+TEST[k:1..N-1][j:1..N] = (flag[j][m:Card0] -> turn[k][c:Card] -> 
+               	if(j==I || m<k || c!=I) then TEST[k][j+1]
+				else TEST[k][j]
+				),
+TEST[k:1..N-1][N+1] = FORLOOP[k+1],
+FORLOOP[N] = (enter -> exit -> flag[I].setto[0] -> PROCESS
+              )+{{flag[i:Card]}.CardActions0, turn[k:1..N-1].CardActions}.
+
+
+property SAFETY = (n[i:Card].enter -> n[i].exit -> SAFETY).
+
+||ENV = (n[i:1..N]:PROCESS(i)).
+
+||SYS = (n[i:1..N]:PROCESS(i) || {n[i:1..N]}::VARS).//<<{n[1..3].{enter, exit}}.//>>{flag[1..N][0..N-1], turn[1..N-1][1..N]}.//
+
+
+set All = {n[1..3].{{enter, exit}, flag[1..3].{[0..2], setto[0..2]}, turn[1..2].{[1..3], setto[1..3]}}}
+set Cont = {flag[1..3].{[0..2], setto[0..2]},turn[1..2].{[1..3], setto[1..3]}}
+
+
+assert G1 = CRITICAL[1]
+assert G2 = CRITICAL[2]
+assert G3 = CRITICAL[3]
+assert A1 =  FLAG[1]
+assert A2 =  FLAG[2]
+assert A3 =  FLAG[3]
+
+controller ||C = (ENV)~{Goal}.
+
+controllerSpec Goal = {
+	safety = {SAFETY}
+	assumption = {A1, A2, A3}
+	liveness = {G1, G2, G3}
+	controllable = {Cont}
+}
+
+
+
+
+/*=============================================================*/
+fluent CRITICAL[i:1..N] = <n[i].enter, n[i].exit>
+fluent TRYING[i:1..N] = <n[i].flag[i].setto[j:1..N-1], n[i].enter>
+fluent EXITING[i:1..N] = <n[i].exit, n[i].flag[i].setto[0]>
+fluent REMAINDER[i:1..N] = <n[i].flag[i].setto[0],n[i].flag[i].setto[j:1..N-1]> initially True
+fluent FLAG[i:1..N] = <n[i].flag[i].setto[i], All\{n[i].flag[i].setto[i]}>
+
+
+//safety property
+assert EXCLUSION  = []!(forall[i:1..N-1] (CRITICAL[i] && CRITICAL[i+1..N]))
+
+//liveness property 
+assert NoSTARVATION = forall[i:1..N] [] <> CRITICAL[i]
+
+assert NoSTARVATION_StrongFair = forall[i:1..N] ([] <> n[i].flag[i].setto[1] -> [] <> CRITICAL[i])
+
+assert NoSTARVATION_Reactivity = forall[i:1..N]  ([] (TRYING[i]-> <> CRITICAL[i])) //([] (n[i].flag[i].setto[1] -> <> CRITICAL[i]))
+
+assert NoSTARVATION_Reactivity1 = ([] !(TRYING[1] && !TRYING[2] && !TRYING[3] && X CRITICAL[1]))
+
+assert RETURNRESOURCE = forall[j:1..N] [](CRITICAL[j] -> <> EXITING[j])
+assert EXITOK = forall[i:1..N] [](EXITING[i] -> <> REMAINDER[i])
+
+assert WEAKFAIR = forall[i:1..N] []<> 
+	{n[i].{{enter, exit}, flag[1..3].{[0..2], setto[0..2]}, turn[1..2].{[1..3], setto[1..3]}}}
+assert WEAK_NoSTARVATION = (WEAKFAIR -> NoSTARVATION)
+
+
+//Witnesses
+assert WITNESS_EXCLUSION = !EXCLUSION
+assert WITNESS_NoSTARVATION = !NoSTARVATION
+assert WITNESS_WEAKFAIR = !WEAKFAIR 
+assert WITNESS_WEAK_NoSTARVATION = !WEAK_NoSTARVATION
+
+
+
+

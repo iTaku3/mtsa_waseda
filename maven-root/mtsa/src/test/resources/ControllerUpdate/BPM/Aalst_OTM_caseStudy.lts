@@ -1,0 +1,94 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {sendEmail,checkCredit,calculateCapacity,checkSystem,accept,reject,notify}
+//set NewControllableActions = {a,b}
+set OldA = {ControllableActions, fillForm}
+//set NewA = {NewControllableActions, c}
+
+//OLDEnvironments
+
+ENV = (fillForm -> SYSTEM),
+SYSTEM = ({sendEmail,checkCredit,calculateCapacity,checkSystem,accept,reject} -> SYSTEM |
+			notify -> ENV).
+
+
+
+//NEWEnvironments
+
+//MAPPING ENV
+
+||OldEnvironment = (ENV).
+//||NewEnvironment = ().
+
+//Fluents declaration
+fluent MailSent = <sendEmail, notify>
+fluent CreditChecked = <checkCredit, notify>
+fluent CapacityCalculated = <calculateCapacity, notify>
+fluent Accepted = <accept, fillForm>
+fluent Rejected = <reject, fillForm>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert SENT_MAIL_POLICY = ((checkCredit || calculateCapacity || checkSystem ) -> MailSent)
+assert APPROVAL_POLICY = ((accept || reject) -> (CreditChecked && CapacityCalculated))
+assert NOTIFY_POLICY = (notify -> (Accepted || Rejected))
+
+ltl_property P_SENT_MAIL_POLICY = []SENT_MAIL_POLICY
+ltl_property P_APPROVAL_POLICY = []APPROVAL_POLICY
+ltl_property P_NOTIFY_POLICY = []NOTIFY_POLICY
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_SENT_MAIL_POLICY, P_APPROVAL_POLICY, P_NOTIFY_POLICY}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+/*
+assert PHI_ = ()
+
+ltl_property P_PHI_ = []PHI_
+
+
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec= {
+    safety = {P_PHI_}
+    controllable = {NewControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+ltl_property T = ()
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = OldEnvironment,
+    hatEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+    // T = True is executed if no transition requirement is set
+	//transition = T,
+	nonblocking,
+    updateFluents = {}
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = ()
+assert S_NEW = ()
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+*/

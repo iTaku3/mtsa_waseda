@@ -1,0 +1,32 @@
+TOOL = (put->tryProcess->TRY_PROCESS),
+TRY_PROCESS = (processOk->get->TOOL | processFail->discard->TOOL).
+
+ROBOT_ARM = (put->processOk->get->ROBOT_ARM).
+||System = (TOOL||ROBOT_ARM).
+
+
+
+
+/*
+range ID = 1..2
+set PUTS = {drill.put[ID]}
+set Tools = {drill}
+set A = {Tools.{put, process, get}.[ID]}
+TOOL = (put[id:ID]->tryProcess[id]. 
+process[id]->get[id]->TOOL).
+
+fluent Just_Put[i:ID] = <drill.put[i], A\{drill.put[i]}> 
+fluent Puted[i:ID] = <drill.put[i], PUTS\{drill.put[i]}> initially 1
+
+//constraint NoPutTwice = [](forall[i:ID] (Just_Put[i] -> !Puted[i]))
+//NoPutTwice = (Tools.put[id:ID]->NO[id]),
+//NO[i:ID] = (when (
+
+NoPutTwice = (drill.put.[1]->drill.put.[2]->NoPutTwice
+				| drill.put.[2]->drill.put.[1]->NoPutTwice).
+
+ltl_property NO = [](forall[i:ID][j:ID] (Just_Put[i] -> X (!Just_Put[i] W Just_Put[j])))
+
+||System = (NO || drill:TOOL).
+
+*/

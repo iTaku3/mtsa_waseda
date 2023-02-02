@@ -1,0 +1,72 @@
+set Moves = {n,s,i,g}
+set Bridges = {b1,b2}
+set Moves_Maybe = {n?,s?,i?}
+
+set A = {Moves, Actions, Bridges}
+
+//Bridges
+Bridge1 = (b1? -> Bridge1 | {Moves_Maybe} -> Bridge1).
+Bridge2 = (b2? -> Bridge2 | {Moves_Maybe} -> Bridge2).
+ 
+Arena = Nw,
+Nw = (b1 -> Ne | i -> Nw | s -> Mw),
+Mw = (i -> Mw | n -> Nw | s -> Sw),
+Sw = (b2 -> Se | i -> Sw | n -> Mw),
+Ne = (b1 -> Nw | {i,g} -> Ne | s -> Se),
+Se = (b2 -> Sw | i -> Se | n -> Ne).
+ 
+
+fluent F_controllerSpec = <g, A\{g}>
+
+assert Goal = F_Goal
+
+controllerSpec G = {
+	permissive
+	liveness = {Goal}
+	controllable = {A}
+}
+
+||BRIDGE_EXPLORE1 = (MAZE1 || ARM).
+
+controller ||C1 = (BRIDGE_EXPLORE1)~{G}.
+
+/*
+//Abs1
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs1_System = (Abs1_MAZE || ARM).
+||REF_CHECK1 = (Abs1_System || ROBOT_EXPLORE1).
+controller ||Abs1_C = Abs1_System~{G}.
+
+//Abs2
+Abs2_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = ({Moves_Maybe}->Abs1_MAZE),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs2_System = (Abs2_MAZE || ARM).
+||REF_CHECK2 = (Abs2_System || Abs1_System).
+controller ||Abs2_C = Abs2_System~{G}.
+
+//Abs3
+Abs3_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = (e->M13 | w->M11),
+M13 = ({Moves_Maybe}->Abs1_MAZE),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs3_System = (Abs3_MAZE || ARM).
+||REF_CHECK3 = (Abs2_System || Abs3_System).
+controller ||Abs3_C = Abs3_System~{G}.
+
+//Abs4
+Abs4_MAZE = M11,
+M11 = (s->M21 | e->M12),
+M12 = (e->M13 | w->M11),
+M13 = (w->M12),
+M21 = ({Moves_Maybe}->Abs1_MAZE),
+Abs1_MAZE = ({Moves_Maybe}->Abs1_MAZE).
+||Abs4_System = (Abs4_MAZE || ARM).
+||REF_CHECK4 = (Abs4_System || Abs3_System).
+controller ||Abs4_C = Abs4_System~{G}.
+
+*/

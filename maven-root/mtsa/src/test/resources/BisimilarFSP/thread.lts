@@ -1,0 +1,34 @@
+DEFAULT = Q0,
+	Q0	= (start -> Q1
+		  |stop -> Q4),
+	Q1	= (run -> Q1
+		  |yield -> Q2
+		  |{sleep, suspend} -> Q3
+		  |{end, stop} -> Q4),
+	Q2	= (dispatch -> Q1
+		  |suspend -> Q3
+		  |stop -> Q4),
+	Q3	= (resume -> Q2
+		  |stop -> Q4),
+	Q4	= STOP.
+
+||C = DEFAULT.
+
+||ExpectedC = THREAD.
+
+THREAD       = CREATED,
+CREATED      = (start          ->RUNNING 
+               |stop           ->TERMINATED),
+RUNNING      = ({suspend,sleep}->NON_RUNNABLE  
+               |yield          ->RUNNABLE   
+               |{stop,end}     ->TERMINATED         
+               |run            ->RUNNING),
+RUNNABLE     = (suspend        ->NON_RUNNABLE 
+               |dispatch       ->RUNNING 
+               |stop           ->TERMINATED),
+NON_RUNNABLE = (resume         ->RUNNABLE    
+               |stop           ->TERMINATED),
+TERMINATED   = STOP.
+
+
+

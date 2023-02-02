@@ -1,0 +1,60 @@
+set Locations = {ww, we, ew, ee}
+set Direction = {w, e}
+set Cont = {move[Direction], pickup, putdown}
+
+ROBOT = (arrive['ww]-> R),
+R = (move[Direction] -> arrive[Locations] -> R 
+		|pickup -> R | putdown -> R).
+
+MAP = MAP['ww],
+MAP['ww] = (arrive['ww] -> (move['e] -> MAP['ew] | move['w] -> MAP['ww])),
+MAP['ew] = (arrive['ew] -> (move['e] -> MAP['we] | move['w] -> MAP['ww])),
+MAP['we] = (arrive['we] -> (move['e] -> MAP['ee] | move['w] -> MAP['ew])),
+MAP['ee] = (arrive['ee] -> (move['e] -> MAP['ee] | move['w] -> MAP['we])).
+
+DOOR = (doorOpen -> doorClosed -> DOOR).
+
+||DOMAIN = (ROBOT||MAP||DOOR||R_FAST_ENOUGH||D_SLOW_ENOUGH).
+
+set MOVES = {move[Direction]}
+set ARRIVES = {arrive[Locations]}
+set A = {MOVES, ARRIVES, pickup, putdown, doorOpen, doorClosed}
+
+R_FAST_ENOUGH = FAST_ENOUGH,
+FAST_ENOUGH = ({A\{MOVES}}->FAST_ENOUGH 
+				| MOVES->ARRIVES->FAST_ENOUGH).
+D_SLOW_ENOUGH = SLOW_ENOUGH,
+SLOW_ENOUGH = ({A\{doorOpen}}->SLOW_ENOUGH 
+				| doorOpen->Cont->SLOW_ENOUGH).
+
+fluent DOOROPEN = <doorOpen, doorClosed>
+fluent AT[x:Locations] = <arrive[x], move[Direction]>
+fluent PICKED = <pickup, putdown>
+
+ltl_property DOORSAFE = []( ((AT['ew] && !DOOROPEN) -> X!move['e]) 
+								&& ((AT['we] && !DOOROPEN) -> X!move['w]) )
+ltl_property PICKUPLOCATION = [](pickup -> AT['ee])
+ltl_property PUTDOWNLOCATION = [](putdown -> AT['ww])
+ltl_property PICKONCE = [](PICKED -> X!pickup)
+ltl_property PUTONCE = [](!PICKED -> X!putdown)
+
+||SAFEDOM = (DOMAIN||DOORSAFE||PICKUPLOCATION||PUTDOWNLOCATION
+			||PICKONCE||PUTONCE).
+
+assert ASSUMEDOOROPENS = DOOROPEN
+fluent PICKING = <pickup, Cont\{pickup}>
+fluent PUTTING = <putdown, Cont\{putdown}>
+assert A_PUTTING = PUTTING
+assert A_PICKING = PICKING
+
+controllerSpec Goal = {
+	safety = {DOORSAFE, PICKUPLOCATION, PUTDOWNLOCATION, PICKONCE, PUTONCE}
+	assumption = {ASSUMEDOOROPENS}
+	liveness = {A_PICKING, A_PUTTING}
+	controllable = {Cont}
+}
+checkCompatibility ||Compatible = (DOMAIN)~{Goal}.
+controller ||C = (DOMAIN)~{Goal}.
+
+//NEVERCLOSE = STOP + {doorClosed}.
+//||FAST = (C||NEVERCLOSE).

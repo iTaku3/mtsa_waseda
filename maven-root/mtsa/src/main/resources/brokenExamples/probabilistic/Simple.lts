@@ -1,0 +1,17 @@
+/*
+Here, we have a simple interaction between two processes, without action sharing.
+We can see that the scheduler gives equal priority to each process.
+Since there are no shared actions, both processes can act on all their actions,
+and they do so with the specified probabilities.
+>From state 0, we have two transitions, one for each process. As we see, the
+probabilities of the transition elements are exactly as specified, only divided
+by two. This shows us that the scheduler gives each process an equal share.
+*/
+
+A = ( (1) a -> STOP
+    | (1) b -> STOP
+    ).
+B = ( (1) c -> STOP
+    | (3) d -> STOP
+    ).
+||SYS = ( A || B ).

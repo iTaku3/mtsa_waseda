@@ -1,0 +1,119 @@
+const MAX = 1
+range Count = 0..MAX
+
+//ACTION SETS
+set Colours = {yellow, red}
+set ControllableActions = {in.Colours, drill.Colours, paint.Colours, out.Colours}
+
+//Domain Model
+	ARM = ({in[Colours], out[Colours]} -> ARM
+		| paint[c:Colours] -> paintOk[c][0..1] -> ARM
+		| drill[c:Colours] -> drillOk[c][0..1] -> ARM).
+
+	FORCE_PICKUP = (supply['yellow] -> YELLOW | supply['red] -> RED),
+	RED = (supply['yellow] -> FULL | in['red]  -> FORCE_PICKUP),
+	YELLOW = (supply['red] -> FULL | in['yellow] -> FORCE_PICKUP),
+	FULL = (in ['red] -> YELLOW | in['yellow] -> RED).
+
+||ENV = (ARM || FORCE_PICKUP).
+
+
+//DEFINED FLUENTS 
+fluent Paint = <paintOk[Colours][1], out[Colours]>
+fluent PaintC[c:Colours] = <paintOk[c][1], in[c]>
+fluent HaveDrilled = <drillOk[Colours][1], out[Colours]>
+fluent SupplyYellow = <supply['yellow], in['yellow]>
+fluent SupplyRed = <supply['red], in['red]>
+fluent NonEmptySupply = <supply[Colours], in[Colours]>
+
+fluent LocInFull[c:Colours] = <supply[c],in[c]>
+fluent LocPaintFullRed = <paint['red], paintOk['red][0..1]>
+fluent LocPaintFullYellow = <paint['yellow], paintOk['yellow][0..1]>
+
+fluent HaveDrilledC[c:Colours] = <drillOk[c][1],in[c]>
+
+// Old Controller
+
+fluent RedIn = <in['red],out['red]>
+fluent YellowIn = <in['yellow],out['yellow]>
+
+//OUT_PROTOCOL = (out['red] -> out['yellow] -> OUT_PROTOCOL).
+
+
+assert A_OUT_PROTOCOL = (
+	(out['red] -> X(!out['red] W out['yellow])) && 
+	(out['yellow] -> X(!out['yellow] W out['red]))
+)
+
+assert TOOL_ORDER = ((PaintC['red] -> HaveDrilledC['red]) && (PaintC['yellow] -> HaveDrilledC['yellow]))
+assert DO_SOMETHING_IF_IN = ( ( (paint['red] || drill['red] ) -> RedIn) && ((paint['yellow] || drill['yellow]) -> YellowIn) )
+assert OUT_IF_FINISHED = ((out['red] -> (PaintC['red] && HaveDrilledC['red])) && (out['yellow] -> (PaintC['yellow] && HaveDrilledC['yellow])))
+
+ltl_property P_OUT_PROTOCOL = []A_OUT_PROTOCOL
+ltl_property P_TOOL_ORDER = []TOOL_ORDER
+ltl_property P_DO_SOMETHING_IF_IN = []DO_SOMETHING_IF_IN
+ltl_property P_OUT_IF_FINISHED = []OUT_IF_FINISHED
+
+controllerSpec DRILL_PAINT = {
+	safety = {P_OUT_PROTOCOL,
+			P_TOOL_ORDER,
+			P_DO_SOMETHING_IF_IN,
+			P_OUT_IF_FINISHED}
+	controllable = {ControllableActions}
+}
+controller ||C_OLD = (ENV)~{DRILL_PAINT}.
+||EnvironmentAndController = (C_OLD || ENV).
+
+//New Controller
+assert NEW_TOOL_ORDER = ((HaveDrilledC['red] -> PaintC['red]) && (HaveDrilledC['yellow] -> PaintC['yellow]))
+ltl_property P_NEW_TOOL_ORDER = []NEW_TOOL_ORDER
+
+controllerSpec PAINT_DRILL = {
+	safety = {P_OUT_PROTOCOL,
+			P_NEW_TOOL_ORDER,
+			P_DO_SOMETHING_IF_IN,
+			P_OUT_IF_FINISHED}
+	controllable = {ControllableActions}
+}
+controller ||C_NEW = (ENV)~{PAINT_DRILL}.
+||NewEnvironmentAndNewController= (C_NEW||ENV).
+
+ltl_property T1 = [](startNewSpec -> (!Processing['red] && !Processing['yellow]) )
+ltl_property T2 = (S_OLD W startNewSpec)
+//ltl_property T3 = TRUE
+
+fluent Processing[c:Colours] = <in[c],out[c]> 
+
+fluent PaintRed = <paintOk['red][1], in['red]>
+fluent PaintYellow = <paintOk['yellow][1], in['yellow]>
+fluent HaveDrilledRed = <drillOk['red][1], in['red]>
+fluent HaveDrilledYellow = <drillOk['yellow][1], in['yellow]>
+
+fluent DrillPendingRed = <drill['red],drillOk['red][0..1]>
+fluent DrillPendingYellow = <drill['yellow],drillOk['yellow][0..1]>
+fluent PaintPendingRed = <paint['red],paintOk['red][0..1]>
+fluent PaintPendingYellow = <paint['yellow],paintOk['yellow][0..1]>
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = ENV,
+	hatEnvironment = ENV,
+    newEnvironment = ENV,
+    oldGoal = DRILL_PAINT,
+    newGoal = PAINT_DRILL,
+    // transition = T1,
+    // transition = T2,
+	nonblocking,
+    updateFluents = { PaintRed,PaintYellow, HaveDrilledRed, HaveDrilledYellow, SupplyYellow, SupplyRed,
+			 RedIn, YellowIn, DrillPendingRed, DrillPendingYellow, PaintPendingRed, PaintPendingYellow,PaintPendingYellow}
+}
+
+/*TESTS*/
+assert S_OLD = (A_OUT_PROTOCOL && TOOL_ORDER && DO_SOMETHING_IF_IN && OUT_IF_FINISHED)
+assert S_NEW = (A_OUT_PROTOCOL && NEW_TOOL_ORDER && DO_SOMETHING_IF_IN && OUT_IF_FINISHED)
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FORMULA4 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))

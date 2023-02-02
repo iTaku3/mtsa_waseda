@@ -1,0 +1,51 @@
+set A = {cook, finishedCooking, cooking, moveToBelt, overHeated, whistle}
+set Controllable = {cook, moveToBelt, whistle, startBelt, throwAway}
+
+BISCOTTI = (whistle -> WHISTLING | startBelt -> BELT_STARTED),
+BELT_STARTED = (cook->COOKING),
+WHISTLING = (whistle -> WHISTLING | cook -> COOKING_WHISTLE),
+COOKING_WHISTLE = (cook -> OVERHEATED | cooking -> COOKING_WHISTLE | finishedCooking -> WHISTLING_B),
+WHISTLING_B = (whistle -> WHISTLING_B | cook -> COOKING_WHISTLE_B),
+COOKING_WHISTLE_B = (cook -> OVERHEATED | cooking -> COOKING_WHISTLE_B | finishedCooking -> throwAway -> WHISTLING),
+COOKING = (cooking->COOKING | finishedCooking->FINISHED | cook->OVERHEATED), 
+FINISHED = (cook->COOKING | moveToBelt->BELT_STARTED),  
+OVERHEATED = (overHeated->OVERHEATED).
+
+EXP = Q0,
+	Q0	= (startBelt -> Q3),
+	Q1	= (cooking -> Q1
+		  |finishedCooking -> Q2),
+	Q2	= (cook -> Q4),
+	Q3	= (cook -> Q1),
+	Q4	= (cooking -> Q4
+		  |finishedCooking -> Q5),
+	Q5	= (moveToBelt -> Q3).
+
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+fluent F_OverHeated = <overHeated, A\{overHeated}> 
+
+//assert MoveToBelt = F_MoveToBelt
+assert MOVE_TO_BELT = F_MoveToBelt
+assert TRUE = (F_MoveToBelt || !F_MoveToBelt)
+
+assert NotCooking = !F_Cooking
+
+SUCCESSFULLY_COOKED_TWICE = (cook->cook->moveToBelt->SUCCESSFULLY_COOKED_TWICE). 
+ltl_property NotOverHeated = [] (!(F_OverHeated))+{A}
+
+starenv ||TT = (SUCCESSFULLY_COOKED_TWICE || BISCOTTI || NotOverHeated).
+starenv ||BIS = BISCOTTI.
+
+//controllers
+controller ||C = (BISCOTTI)~{G1}.
+checkCompatibility ||Comp = (BISCOTTI)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {SUCCESSFULLY_COOKED_TWICE, NotOverHeated}
+       assumption = {NotCooking}
+       liveness = {MOVE_TO_BELT}
+       controllable = {Controllable}
+}

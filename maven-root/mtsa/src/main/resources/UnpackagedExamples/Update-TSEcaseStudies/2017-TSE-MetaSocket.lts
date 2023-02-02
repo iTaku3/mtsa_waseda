@@ -1,0 +1,227 @@
+set Controllable64 = {des64, output}
+set Controllable128 = {des128, output}
+set Controllable64Com = {des64Com, output}
+set Controllable128Com = {des128Com, output}
+set Alphabet64 = {Controllable64, input}
+set Alphabet128 = {Controllable128, input}
+set Alphabet64Com = {Controllable64Com, input}
+set Alphabet128Com = {Controllable128Com, input}
+set Alphabet = {des64, des128, des64Com, des128Com, output, input}
+
+//ENVIRONMENTS
+IO = (input -> output -> IO).
+DES64 = (des64 -> DES64).
+DES128 = (des128 -> DES128).
+DES64COM = (des64Com -> DES64COM).
+DES128COM = (des128Com -> DES128COM).
+
+MAP_64_128 = (des64 -> MAP_64_128 | reconfigure -> DONE),
+DONE = (des128 -> DONE).
+||Mapping_64_128 = (MAP_64_128 || IO).
+
+MAP_64_64COM = (des64 -> MAP_64_64COM | reconfigure -> DONE),
+DONE = (des64Com -> DONE).
+||Mapping_64_64COM = (MAP_64_64COM || IO).
+
+MAP_128_64 = (des128 -> MAP_128_64 | reconfigure -> DONE),
+DONE = (des64 -> DONE).
+||Mapping_128_64 = (MAP_128_64 || IO).
+
+MAP_128_128COM = (des128 -> MAP_128_128COM | reconfigure -> DONE),
+DONE = (des128Com -> DONE).
+||Mapping_128_128COM = (MAP_128_128COM || IO).
+
+MAP_64COM_64 = (des64Com -> MAP_64COM_64 | reconfigure -> DONE),
+DONE = (des64 -> DONE).
+||Mapping_64COM_64 = (MAP_64COM_64 || IO).
+
+MAP_128COM_128 = (des128Com -> MAP_128COM_128 | reconfigure -> DONE),
+DONE = (des128 -> DONE).
+||Mapping_128COM_128 = (MAP_128COM_128 || IO).
+
+MAP_128COM_64COM = (des128Com -> MAP_128COM_64COM | reconfigure -> DONE),
+DONE = (des64Com -> DONE).
+||Mapping_128COM_64COM = (MAP_128COM_64COM || IO).
+
+MAP_64COM_128COM = (des64Com -> MAP_64COM_128COM | reconfigure -> DONE),
+DONE = (des128Com -> DONE).
+||Mapping_64COM_128COM = (MAP_64COM_128COM || IO).
+
+||ENV_DES64 = (DES64 || IO).
+||ENV_DES128 = (DES128 || IO).
+||ENV_DES64COM = (DES64COM || IO).
+||ENV_DES128COM = (DES128COM || IO).
+
+// PROPERTIES
+fluent InputRecieve = <input, output>
+fluent EncriptionDone64 = <des64, input>
+fluent EncriptionDone128 = <des128, input>
+fluent EncriptionDone64Com = <des64Com, input>
+fluent EncriptionDone128Com = <des128Com, input>
+
+ltl_property P_DES64 = []((des64 -> InputRecieve) && (output -> EncriptionDone64))
+ltl_property P_DES128 = []((des128 -> InputRecieve) && (output -> EncriptionDone128))
+ltl_property P_DES64Com = []((des64Com -> InputRecieve) && (output -> EncriptionDone64Com))
+ltl_property P_DES128Com = []((des128Com -> InputRecieve) && (output -> EncriptionDone128Com))
+
+// CONTROLLERS
+// 1
+controllerSpec DES64_SPEC = {
+	safety = {P_DES64}
+	controllable = {Controllable64}
+}
+
+controller ||CONTROLLER64 = ENV_DES64~{DES64_SPEC}.
+||CONTROLLER_ENVIRONMENT_64 = (CONTROLLER64||ENV_DES64).
+
+// 2
+controllerSpec DES128_SPEC = {
+	safety = {P_DES128}
+	controllable = {Controllable128}
+}
+
+controller ||CONTROLLER128 = ENV_DES128~{DES128_SPEC}.
+||CONTROLLER_ENVIRONMENT_128 = (CONTROLLER128||ENV_DES128).
+
+// 3
+controllerSpec DES64COM_SPEC = {
+	safety = {P_DES64Com}
+	controllable = {Controllable64Com}
+}
+
+controller ||CONTROLLER64COM = ENV_DES64COM~{DES64COM_SPEC}.
+||CONTROLLER_ENVIRONMENT_64COM = (CONTROLLER64COM||ENV_DES64COM).
+
+
+// 4
+controllerSpec DES128COM_SPEC = {
+	safety = {P_DES128Com}
+	controllable = {Controllable128Com}
+}
+
+controller ||CONTROLLER128COM = ENV_DES128COM~{DES128COM_SPEC}.
+||CONTROLLER_ENVIRONMENT_128COM = (CONTROLLER128COM||ENV_DES128COM).
+
+
+//------------------T--------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+// For avoiding overlapping
+ltl_property T_FROM_DES64 = (StartNewSpec -> !EncriptionDone64)
+ltl_property T_FROM_DES128= (StartNewSpec -> !EncriptionDone128)
+ltl_property T_FROM_DES64COM = (StartNewSpec -> !EncriptionDone64Com)
+ltl_property T_FROM_DES128COM = (StartNewSpec -> !EncriptionDone128Com)
+
+
+// For overlapping updates
+ltl_property T_OVERLAP = (StopOldSpec -> StartNewSpec)
+
+// Updates controllers
+
+
+
+// 1
+updatingController DES64_DES128 = {
+    oldController = CONTROLLER_ENVIRONMENT_64,
+	mapping = Mapping_64_128,
+	oldGoal = DES64_SPEC,
+	newGoal = DES128_SPEC,
+	transition = T_FROM_DES64,
+	//transition = T_OVERLAP,
+}
+||UPD64_128 = DES64_DES128.
+
+// 2
+updatingController DES64_DES64COM = {
+    oldController = CONTROLLER_ENVIRONMENT_64,
+	mapping = Mapping_64_64COM,
+	oldGoal = DES64_SPEC,
+	newGoal = DES64COM_SPEC,
+	transition = T_FROM_DES64,
+	//transition = T_OVERLAP,
+}
+||UPD64_64COM = DES64_DES64COM.
+
+// 3
+updatingController DES128_DES64 = {
+    oldController = CONTROLLER_ENVIRONMENT_128,
+	mapping = Mapping_128_64,
+	oldGoal = DES128_SPEC,
+	newGoal = DES64_SPEC,
+	transition = T_FROM_DES128,
+	//transition = T_OVERLAP,
+}
+||UPD128_64 = DES128_DES64.
+
+// 4
+updatingController DES128_DES128COM = {
+    oldController = CONTROLLER_ENVIRONMENT_128,
+	mapping = Mapping_128_128COM,
+	oldGoal = DES128_SPEC,
+	newGoal = DES128COM_SPEC,
+	transition = T_FROM_DES128,
+	//transition = T_OVERLAP,
+}
+
+||UPD128_128COM = DES128_DES128COM.
+
+// 5
+updatingController DES64COM_DES64 = {
+    oldController = CONTROLLER_ENVIRONMENT_64COM,
+	mapping = Mapping_64COM_64,
+	oldGoal = DES64COM_SPEC,
+	newGoal = DES64_SPEC,
+	transition = T_FROM_DES64COM,
+	//transition = T_OVERLAP,
+}
+||UPD64COM_64 = DES64COM_DES64.
+
+// 6
+updatingController DES64COM_DES128COM = {
+    oldController = CONTROLLER_ENVIRONMENT_64COM,
+	mapping = Mapping_64COM_128COM,
+	oldGoal = DES64COM_SPEC,
+	newGoal = DES128COM_SPEC,
+	transition = T_FROM_DES64COM,
+	//transition = T_OVERLAP,
+}
+||UPD64COM_128COM = DES64COM_DES128COM.
+
+// 7
+updatingController DES128COM_DES128 = {
+    oldController = CONTROLLER_ENVIRONMENT_128COM,
+	mapping = Mapping_128COM_128,
+	oldGoal = DES128COM_SPEC,
+	newGoal = DES128_SPEC,
+	transition = T_FROM_DES128COM,
+	//transition = T_OVERLAP,
+}
+||UPD128COM_128 = DES128COM_DES128.
+
+// 8
+updatingController DES128COM_DES64COM = {
+    oldController = CONTROLLER_ENVIRONMENT_128COM,
+	mapping = Mapping_128COM_64COM,
+	oldGoal = DES128COM_SPEC,
+	newGoal = DES64COM_SPEC,
+	transition = T_FROM_DES128COM,
+	//transition = T_OVERLAP,
+}
+||UPD128COM_64COM = DES128COM_DES64COM.
+
+//Update Graph
+graphUpdate Graph = { 
+	initialState = DES64_DES128
+	transitions = { 
+		DES64_DES128,
+		DES64_DES64COM,
+		DES128_DES64,
+		DES128_DES128COM,
+		DES64COM_DES64,
+		DES64COM_DES128COM,
+		DES128COM_DES128,
+		DES128COM_DES64COM
+	}
+}

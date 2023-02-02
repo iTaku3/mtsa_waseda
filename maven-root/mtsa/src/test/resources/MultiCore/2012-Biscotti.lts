@@ -1,0 +1,39 @@
+set A = {cook, finishedCooking, cooking, moveToBelt, overHeated}
+set Controllable = {idle, cook, moveToBelt}
+
+BISCOTTI = (idle->BISCOTTI | cook->COOKING),
+COOKING = (cooking->COOKING | finishedCooking->FINISHED | cook->OVERHEATED), 
+FINISHED = (cook->COOKING | moveToBelt->BISCOTTI),  
+OVERHEATED = (overHeated->OVERHEATED).
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+fluent F_OverHeated = <overHeated, A\{overHeated}> 
+
+//assert MoveToBelt = F_MoveToBelt
+assert MOVE_TO_BELT = F_MoveToBelt
+assert TRUE = (F_MoveToBelt || !F_MoveToBelt)
+
+assert NotCooking = !F_Cooking
+
+SUCCESSFULLY_COOKED_TWICE = (cook->cook->moveToBelt->SUCCESSFULLY_COOKED_TWICE). 
+ltl_property NotOverHeated = [] (!(F_OverHeated))+{A}
+
+starenv ||TT = (SUCCESSFULLY_COOKED_TWICE || BISCOTTI || NotOverHeated).
+starenv ||BIS = BISCOTTI.
+
+//controllers
+controller ||C = (BISCOTTI)~{G}.
+checkCompatibility ||Comp = (BISCOTTI)~{G1}.
+
+//Goals
+
+controllerSpec G = {
+       safety = {SUCCESSFULLY_COOKED_TWICE, NotOverHeated}
+       assumption = {NotCooking}
+       liveness = {MOVE_TO_BELT}
+       controllable = {Controllable}
+}
+
+
+assert TESTGOAL = ([]<>NotCooking -> []<>MOVE_TO_BELT)

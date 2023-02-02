@@ -1,0 +1,1165 @@
+set AvailableServices = {car, flight}//, hotel}
+set Agency = {agency.req, agency.resp}
+set ControllableC1 = {AvailableServices.{buy, query, reserve, reset}}
+set Controllable = {{ControllableC1}, agency.resp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail}}
+//set FailureSet = {FailureSetPrime\{car.queryFail}}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess}}
+set A = {Controllable, Uncontrollable, Agency}
+
+
+//Environment model
+SERVICE(SRV='car) = IDLE,
+IDLE = ([SRV].query -> ( [SRV].queryFail -> IDLE | [SRV].querySuccess -> RESULTSET) ),
+RESULTSET = ([SRV].reset -> IDLE | [SRV].reserve -> ([SRV].reserveFail -> IDLE | [SRV].reserveSuccess -> RESERVED)),
+RESERVED = ([SRV].buy -> ([SRV].buyFail -> IDLE | [SRV].buySuccess -> IDLE) ).
+
+||SERVICES = (forall[srv:AvailableServices] SERVICE(srv)).
+
+AGENCY = (agency.idle-> AGENCY | agency.req->agency.resp->AGENCY).
+
+||ENV = (forall[srv:AvailableServices] SERVICE(srv) || AGENCY || NETWORK).
+
+
+NETWORK = YES, 
+YES = ({Controllable,Uncontrollable} -> YES | noNetwork -> NO),
+NO = (yesNetwork -> NOP), 
+NOP = ({Controllable,Uncontrollable} -> YES).
+
+
+//fluent definitions
+fluent F_UsrReq = <agency.req, A\{agency.req}>
+fluent F_AgencyReq = <agency.resp, A\{agency.resp}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+//DESDE ACA 
+fluent F_Reserved[srv:AvailableServices] = <[srv].reserveSuccess, {[srv].buySuccess, [srv].buyFail}> //{agency.req, [srv].buyFail}
+fluent F_BuySuccessfully[srv:AvailableServices] = <[srv].buySuccess, A\{[srv].buySuccess}>
+fluent F_Query[srv:AvailableServices] = <[srv].query, A\{[srv].query}>
+fluent F_BoughtSuccessfully[srv:AvailableServices] = <[srv].buySuccess, agency.req>
+fluent F_TryToBuy[srv:AvailableServices] = <[srv].buy, A\{[srv].buy}>
+fluent F_PendingReq = <agency.req, agency.resp>
+fluent F_SuccessfullyFound[srv:AvailableServices] = <[srv].querySuccess, {[srv].{reserveFail, buyFail, reset}}>
+fluent F_TryToReserve[srv:AvailableServices] = <[srv].reserve, A\{[srv].reserve}>
+
+
+fluent F_NETWORK = <yesNetwork, noNetwork>
+assert A_NETWORK = F_NETWORK
+
+//assertions
+assert Failures = F_Failures
+assert UsrResp = F_AgencyReq
+assert AssumptionOnRequests = F_PendingReq
+assert AllBought = forall[srv:AvailableServices](F_BoughtSuccessfully[srv])
+assert SomeQuery =  exists[srv:AvailableServices] F_Query[srv]
+
+
+assert AllReserved = forall[srv:AvailableServices](F_Reserved[srv])
+
+//if a service fails querying, the others have to be reset.
+ltl_property ResetImpliesQueryingFailure = [] (forall[srv:AvailableServices]exists[srv2:AvailableServices] 
+										(F_Reset[srv] -> F_QueryFailed[srv2]))
+
+ltl_property SuccessfulyFoundBeforeReserve = [] (forall[srv:AvailableServices][srv2:AvailableServices] 
+										(F_TryToReserve[srv] -> (F_SuccessfullyFound[srv2]) ))
+
+
+//Safety definition
+ltl_property ReserveBeforeBuy = [] (forall[srv:AvailableServices][srv2:AvailableServices] 
+									(F_TryToBuy[srv] -> (F_BoughtSuccessfully[srv2] || F_Reserved[srv2])))
+ltl_property ServiceQueryImpliesUsrReq = [](SomeQuery -> F_PendingReq)
+ltl_property UsrRspImpliesAllBought = [](F_AgencyReq -> AllBought)
+ltl_property QueryImpliesNotBought = [](forall[srv:AvailableServices] 
+										(F_Query[srv] -> (!F_BoughtSuccessfully[srv])))
+
+fluent F_Reset[srv:AvailableServices] = <[srv].reset, A\{[srv].reset}>
+fluent F_QueryFailed[srv:AvailableServices] = <[srv].queryFail, [srv].query>
+fluent F_Querying[srv:AvailableServices] = <[srv].query, {[srv].{queryFail,reset,reserve}}>
+fluent F_Resetting[srv:AvailableServices] = <{{{AvailableServices}.{queryFail}}\{[srv].queryFail}}, {[srv].{reset, queryFail}}>//, queryFail
+fluent F_Queried[srv:AvailableServices] = <[srv].query, agency.req>
+fluent F_SomethingFailed[srv:AvailableServices] = <[srv].{queryFail, reserveFail, buyFail}, agency.req>
+
+assert Resetting = exists[srv1:AvailableServices][srv2:AvailableServices] (F_QueryFailed[srv1] && F_Querying[srv2])
+
+
+ltl_property QueryImpliesNoResetting = [](forall[srv:AvailableServices]
+										(F_Query[srv] -> (!Resetting)))
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {ReserveBeforeBuy, UsrRspImpliesAllBought, 
+				ServiceQueryImpliesUsrReq, QueryImpliesNotBought,
+				SuccessfulyFoundBeforeReserve, ResetImpliesQueryingFailure, 
+				QueryImpliesNoResetting}
+       failure = {Failures}
+       assumption = {AssumptionOnRequests, A_NETWORK}
+       liveness = {UsrResp}
+       controllable = {Controllable}
+}
+
+||System = (C || ENV).
+||Plant = (ENV||ReserveBeforeBuy || UsrRspImpliesAllBought||ServiceQueryImpliesUsrReq||QueryImpliesNotBought||
+ResetImpliesQueryingFailure||QueryImpliesNoResetting).
+
+EXP = Q0,
+	Q0	= (agency.idle -> Q0
+		  |noNetwork -> Q151
+		  |agency.req -> Q354),
+	Q1	= (car.queryFail -> Q114
+		  |noNetwork -> Q322
+		  |car.querySuccess -> Q442),
+	Q2	= (yesNetwork -> Q173),
+	Q3	= (noNetwork -> Q45
+		  |flight.reserveSuccess -> Q74
+		  |flight.reserveFail -> Q156
+		  |car.querySuccess -> Q226
+		  |car.queryFail -> Q251),
+	Q4	= (noNetwork -> Q237
+		  |car.query -> Q426),
+	Q5	= (flight.querySuccess -> Q171
+		  |flight.queryFail -> Q338),
+	Q6	= (yesNetwork -> Q254),
+	Q7	= (noNetwork -> Q234
+		  |car.query -> Q269),
+	Q8	= (noNetwork -> Q122
+		  |flight.buyFail -> Q342
+		  |flight.buySuccess -> Q346),
+	Q9	= (flight.reserveSuccess -> Q29
+		  |flight.reserveFail -> Q136
+		  |car.querySuccess -> Q226
+		  |car.queryFail -> Q392
+		  |noNetwork -> Q407),
+	Q10	= (car.reserveSuccess -> Q204
+		  |car.reserveFail -> Q341),
+	Q11	= (noNetwork -> Q49
+		  |car.query -> Q225),
+	Q12	= (flight.query -> Q124
+		  |car.reserve -> Q463),
+	Q13	= (flight.query -> Q280
+		  |noNetwork -> Q402),
+	Q14	= (noNetwork -> Q39
+		  |car.buy -> Q102
+		  |flight.buySuccess -> Q204
+		  |flight.buyFail -> Q335),
+	Q15	= (noNetwork -> Q38
+		  |flight.reserve -> Q364),
+	Q16	= (noNetwork -> Q224
+		  |flight.query -> Q323),
+	Q17	= (car.query -> Q426),
+	Q18	= (flight.query -> Q465),
+	Q19	= (flight.query -> Q323
+		  |noNetwork -> Q448),
+	Q20	= (car.reserve -> Q400
+		  |flight.querySuccess -> Q410
+		  |flight.queryFail -> Q449),
+	Q21	= (yesNetwork -> Q367),
+	Q22	= (yesNetwork -> Q336),
+	Q23	= (flight.query -> Q124
+		  |noNetwork -> Q358
+		  |car.reserve -> Q463),
+	Q24	= (flight.queryFail -> Q87
+		  |noNetwork -> Q187
+		  |flight.querySuccess -> Q410),
+	Q25	= (noNetwork -> Q54
+		  |car.buyFail -> Q293
+		  |flight.reserveSuccess -> Q303
+		  |flight.reserveFail -> Q304
+		  |car.buySuccess -> Q364),
+	Q26	= (car.query -> Q59
+		  |flight.reserveSuccess -> Q109
+		  |flight.reserveFail -> Q246),
+	Q27	= (flight.reserve -> Q359),
+	Q28	= (flight.query -> Q101
+		  |noNetwork -> Q153),
+	Q29	= (noNetwork -> Q284
+		  |car.queryFail -> Q297
+		  |car.querySuccess -> Q390),
+	Q30	= (yesNetwork -> Q86),
+	Q31	= (flight.query -> Q205
+		  |noNetwork -> Q380),
+	Q32	= (flight.query -> Q263
+		  |noNetwork -> Q351),
+	Q33	= (yesNetwork -> Q381),
+	Q34	= (car.query -> Q130),
+	Q35	= (yesNetwork -> Q287),
+	Q36	= (flight.querySuccess -> Q262
+		  |flight.queryFail -> Q306
+		  |noNetwork -> Q437),
+	Q37	= (flight.reserveSuccess -> Q172
+		  |flight.reserveFail -> Q228
+		  |noNetwork -> Q247
+		  |car.reserveFail -> Q293
+		  |car.reserveSuccess -> Q294),
+	Q38	= (yesNetwork -> Q313),
+	Q39	= (yesNetwork -> Q255),
+	Q40	= (car.query -> Q231
+		  |noNetwork -> Q273),
+	Q41	= (flight.query -> Q186),
+	Q42	= (noNetwork -> Q75
+		  |flight.query -> Q275),
+	Q43	= (yesNetwork -> Q409),
+	Q44	= (flight.querySuccess -> Q171
+		  |flight.queryFail -> Q424),
+	Q45	= (yesNetwork -> Q433),
+	Q46	= (flight.reserveFail -> Q242
+		  |flight.reserveSuccess -> Q245
+		  |noNetwork -> Q247
+		  |car.reserveSuccess -> Q359
+		  |car.reserveFail -> Q404),
+	Q47	= (flight.querySuccess -> Q171
+		  |flight.queryFail -> Q424),
+	Q48	= (noNetwork -> Q239
+		  |car.query -> Q417),
+	Q49	= (yesNetwork -> Q378),
+	Q50	= (noNetwork -> Q2
+		  |car.querySuccess -> Q154
+		  |car.queryFail -> Q160),
+	Q51	= (flight.reserve -> Q59
+		  |noNetwork -> Q296
+		  |car.queryFail -> Q372
+		  |car.querySuccess -> Q410),
+	Q52	= (car.query -> Q225
+		  |noNetwork -> Q454),
+	Q53	= (car.query -> Q74
+		  |noNetwork -> Q120),
+	Q54	= (yesNetwork -> Q414),
+	Q55	= (flight.buySuccess -> Q159
+		  |car.query -> Q264
+		  |flight.buyFail -> Q271
+		  |noNetwork -> Q278),
+	Q56	= (car.query -> Q1),
+	Q57	= (car.query -> Q231),
+	Q58	= (car.query -> Q29
+		  |noNetwork -> Q142),
+	Q59	= (noNetwork -> Q45
+		  |car.querySuccess -> Q236
+		  |car.queryFail -> Q248
+		  |flight.reserveSuccess -> Q269
+		  |flight.reserveFail -> Q373),
+	Q60	= (yesNetwork -> Q26),
+	Q61	= (flight.query -> Q36),
+	Q62	= (noNetwork -> Q461
+		  |flight.query -> Q465),
+	Q63	= (car.query -> Q130
+		  |flight.query -> Q280),
+	Q64	= (yesNetwork -> Q196),
+	Q65	= (car.reserve -> Q150
+		  |noNetwork -> Q249
+		  |flight.buyFail -> Q312
+		  |flight.buySuccess -> Q415),
+	Q66	= (yesNetwork -> Q144),
+	Q67	= (noNetwork -> Q99
+		  |flight.query -> Q191
+		  |car.reserve -> Q352
+		  |car.reset -> Q403),
+	Q68	= (car.query -> Q130
+		  |noNetwork -> Q310),
+	Q69	= (agency.idle -> Q69
+		  |agency.req -> Q147
+		  |noNetwork -> Q298),
+	Q70	= (yesNetwork -> Q408),
+	Q71	= (yesNetwork -> Q176),
+	Q72	= (car.query -> Q1
+		  |flight.query -> Q457),
+	Q73	= (car.reserveSuccess -> Q258
+		  |flight.query -> Q400
+		  |car.reserveFail -> Q424),
+	Q74	= (noNetwork -> Q66
+		  |car.queryFail -> Q300
+		  |car.querySuccess -> Q390),
+	Q75	= (yesNetwork -> Q208),
+	Q76	= (flight.buy -> Q14
+		  |car.buy -> Q214),
+	Q77	= (yesNetwork -> Q438),
+	Q78	= (noNetwork -> Q310
+		  |car.query -> Q464),
+	Q79	= (flight.query -> Q203
+		  |car.buyFail -> Q271
+		  |car.buySuccess -> Q377),
+	Q80	= (car.queryFail -> Q114
+		  |car.querySuccess -> Q442),
+	Q81	= (flight.reserve -> Q199
+		  |car.query -> Q343
+		  |noNetwork -> Q444),
+	Q82	= (yesNetwork -> Q169),
+	Q83	= (noNetwork -> Q260
+		  |flight.query -> Q465),
+	Q84	= (car.query -> Q268
+		  |noNetwork -> Q330),
+	Q85	= (flight.query -> Q205
+		  |noNetwork -> Q295),
+	Q86	= (car.buySuccess -> Q274
+		  |car.buyFail -> Q341),
+	Q87	= (flight.query -> Q24
+		  |noNetwork -> Q325
+		  |car.reset -> Q455),
+	Q88	= (yesNetwork -> Q138),
+	Q89	= (noNetwork -> Q126
+		  |car.query -> Q426),
+	Q90	= (flight.reserve -> Q59
+		  |car.queryFail -> Q372
+		  |car.querySuccess -> Q410),
+	Q91	= (flight.buySuccess -> Q84
+		  |flight.buyFail -> Q114
+		  |car.query -> Q264
+		  |noNetwork -> Q393),
+	Q92	= (flight.querySuccess -> Q171
+		  |noNetwork -> Q194
+		  |flight.queryFail -> Q424),
+	Q93	= (flight.querySuccess -> Q81
+		  |flight.queryFail -> Q157
+		  |noNetwork -> Q181),
+	Q94	= (car.reserve -> Q167
+		  |flight.reserve -> Q226
+		  |noNetwork -> Q418),
+	Q95	= (flight.query -> Q280),
+	Q96	= (yesNetwork -> Q182),
+	Q97	= (flight.buy -> Q125
+		  |noNetwork -> Q222
+		  |car.buy -> Q303),
+	Q98	= (flight.buy -> Q14
+		  |car.buy -> Q214
+		  |noNetwork -> Q222),
+	Q99	= (yesNetwork -> Q209),
+	Q100	= (car.reserve -> Q332
+		  |flight.buyFail -> Q429
+		  |flight.buySuccess -> Q445),
+	Q101	= (flight.querySuccess -> Q171
+		  |noNetwork -> Q405
+		  |flight.queryFail -> Q424),
+	Q102	= (noNetwork -> Q43
+		  |car.buyFail -> Q55
+		  |flight.buyFail -> Q166
+		  |flight.buySuccess -> Q229
+		  |car.buySuccess -> Q397),
+	Q103	= (yesNetwork -> Q394),
+	Q104	= (flight.reserveSuccess -> Q4
+		  |flight.reserveFail -> Q114
+		  |car.query -> Q207),
+	Q105	= (car.reserve -> Q245),
+	Q106	= (flight.querySuccess -> Q167
+		  |flight.queryFail -> Q179
+		  |car.reserveSuccess -> Q205
+		  |car.reserveFail -> Q277
+		  |noNetwork -> Q357),
+	Q107	= (flight.query -> Q465),
+	Q108	= (yesNetwork -> Q315),
+	Q109	= (noNetwork -> Q120
+		  |car.query -> Q269),
+	Q110	= (yesNetwork -> Q370),
+	Q111	= (car.buyFail -> Q40
+		  |car.buySuccess -> Q262
+		  |flight.reserve -> Q309),
+	Q112	= (flight.queryFail -> Q87
+		  |flight.querySuccess -> Q410),
+	Q113	= (car.query -> Q269
+		  |noNetwork -> Q281),
+	Q114	= (car.query -> Q1
+		  |noNetwork -> Q239),
+	Q115	= (yesNetwork -> Q458),
+	Q116	= (car.reserveFail -> Q19
+		  |noNetwork -> Q135
+		  |car.reserveSuccess -> Q302
+		  |flight.query -> Q337),
+	Q117	= (car.buy -> Q128
+		  |noNetwork -> Q290),
+	Q118	= (car.query -> Q1),
+	Q119	= (flight.query -> Q36),
+	Q120	= (yesNetwork -> Q469),
+	Q121	= (car.query -> Q231
+		  |flight.reset -> Q317
+		  |noNetwork -> Q434),
+	Q122	= (yesNetwork -> Q221),
+	Q123	= (yesNetwork -> Q291),
+	Q124	= (noNetwork -> Q127
+		  |car.reserve -> Q400
+		  |flight.querySuccess -> Q410
+		  |flight.queryFail -> Q449),
+	Q125	= (noNetwork -> Q39
+		  |flight.buyFail -> Q42
+		  |flight.buySuccess -> Q117
+		  |car.buy -> Q328),
+	Q126	= (yesNetwork -> Q422),
+	Q127	= (yesNetwork -> Q20),
+	Q128	= (noNetwork -> Q30
+		  |car.buyFail -> Q52
+		  |car.buySuccess -> Q346),
+	Q129	= (car.query -> Q29
+		  |noNetwork -> Q198),
+	Q130	= (car.querySuccess -> Q23
+		  |car.queryFail -> Q68
+		  |noNetwork -> Q432),
+	Q131	= (yesNetwork -> Q189),
+	Q132	= (flight.query -> Q205
+		  |noNetwork -> Q355),
+	Q133	= (car.query -> Q238
+		  |noNetwork -> Q273),
+	Q134	= (yesNetwork -> Q447),
+	Q135	= (yesNetwork -> Q360),
+	Q136	= (car.queryFail -> Q48
+		  |car.querySuccess -> Q154
+		  |noNetwork -> Q451),
+	Q137	= (car.query -> Q327),
+	Q138	= (flight.queryFail -> Q388
+		  |flight.querySuccess -> Q446),
+	Q139	= (flight.query -> Q101),
+	Q140	= (noNetwork -> Q6
+		  |flight.queryFail -> Q19
+		  |flight.querySuccess -> Q259),
+	Q141	= (yesNetwork -> Q384),
+	Q142	= (yesNetwork -> Q213),
+	Q143	= (yesNetwork -> Q10),
+	Q144	= (car.queryFail -> Q113
+		  |car.querySuccess -> Q319),
+	Q145	= (flight.querySuccess -> Q259
+		  |flight.queryFail -> Q375
+		  |noNetwork -> Q405),
+	Q146	= (flight.query -> Q24
+		  |car.reset -> Q455),
+	Q147	= (flight.query -> Q353
+		  |noNetwork -> Q398
+		  |car.query -> Q464),
+	Q148	= (noNetwork -> Q64
+		  |flight.query -> Q101
+		  |car.query -> Q252),
+	Q149	= (yesNetwork -> Q314),
+	Q150	= (car.reserveSuccess -> Q125
+		  |noNetwork -> Q134
+		  |flight.buySuccess -> Q183
+		  |car.reserveFail -> Q218
+		  |flight.buyFail -> Q228),
+	Q151	= (agency.idle -> Q151
+		  |yesNetwork -> Q340
+		  |agency.req -> Q356),
+	Q152	= (car.buy -> Q229),
+	Q153	= (yesNetwork -> Q267),
+	Q154	= (noNetwork -> Q197
+		  |flight.query -> Q452),
+	Q155	= (yesNetwork -> Q5),
+	Q156	= (noNetwork -> Q96
+		  |car.querySuccess -> Q154
+		  |car.queryFail -> Q160),
+	Q157	= (flight.query -> Q93
+		  |noNetwork -> Q110),
+	Q158	= (car.query -> Q207
+		  |flight.reserveSuccess -> Q220
+		  |flight.reserveFail -> Q271),
+	Q159	= (noNetwork -> Q49
+		  |car.query -> Q268),
+	Q160	= (car.query -> Q50
+		  |noNetwork -> Q266),
+	Q161	= (flight.buySuccess -> Q84
+		  |flight.buyFail -> Q114
+		  |car.query -> Q264),
+	Q162	= (car.reserveSuccess -> Q62
+		  |noNetwork -> Q135
+		  |car.reserveFail -> Q338
+		  |flight.query -> Q439),
+	Q163	= (car.query -> Q130
+		  |flight.query -> Q280
+		  |noNetwork -> Q398),
+	Q164	= (car.query -> Q231),
+	Q165	= (car.query -> Q327
+		  |noNetwork -> Q399),
+	Q166	= (flight.query -> Q203
+		  |car.buyFail -> Q271
+		  |noNetwork -> Q347
+		  |car.buySuccess -> Q377),
+	Q167	= (flight.reserve -> Q37
+		  |car.reserveFail -> Q133
+		  |noNetwork -> Q265
+		  |car.reserveSuccess -> Q396),
+	Q168	= (agency.req -> Q163
+		  |agency.idle -> Q168
+		  |noNetwork -> Q298),
+	Q169	= (car.reserveFail -> Q148
+		  |car.reserveSuccess -> Q333
+		  |flight.query -> Q400),
+	Q170	= (noNetwork -> Q249
+		  |car.reserve -> Q332
+		  |flight.buyFail -> Q429
+		  |flight.buySuccess -> Q445),
+	Q171	= (car.query -> Q231
+		  |noNetwork -> Q285),
+	Q172	= (car.reserveFail -> Q58
+		  |noNetwork -> Q77
+		  |car.reserveSuccess -> Q97),
+	Q173	= (car.queryFail -> Q261
+		  |car.querySuccess -> Q442),
+	Q174	= (flight.querySuccess -> Q262
+		  |flight.queryFail -> Q306),
+	Q175	= (flight.query -> Q36
+		  |noNetwork -> Q227),
+	Q176	= (flight.query -> Q465),
+	Q177	= (car.querySuccess -> Q23
+		  |car.queryFail -> Q68),
+	Q178	= (noNetwork -> Q108
+		  |car.query -> Q252),
+	Q179	= (car.reserveSuccess -> Q85
+		  |flight.query -> Q106
+		  |noNetwork -> Q349
+		  |car.reserveFail -> Q375),
+	Q180	= (car.buyFail -> Q40
+		  |noNetwork -> Q195
+		  |car.buySuccess -> Q262
+		  |flight.reserve -> Q309),
+	Q181	= (yesNetwork -> Q427),
+	Q182	= (car.queryFail -> Q261
+		  |car.querySuccess -> Q442),
+	Q183	= (car.reserveFail -> Q52
+		  |car.reserveSuccess -> Q117
+		  |noNetwork -> Q143),
+	Q184	= (noNetwork -> Q200
+		  |flight.query -> Q323
+		  |car.query -> Q417),
+	Q185	= (yesNetwork -> Q385),
+	Q186	= (noNetwork -> Q88
+		  |flight.queryFail -> Q388
+		  |flight.querySuccess -> Q446),
+	Q187	= (yesNetwork -> Q112),
+	Q188	= (car.query -> Q268),
+	Q189	= (car.query -> Q51
+		  |flight.reset -> Q165
+		  |flight.reserve -> Q217),
+	Q190	= (yesNetwork -> Q301),
+	Q191	= (flight.queryFail -> Q67
+		  |flight.querySuccess -> Q94
+		  |car.reserve -> Q106
+		  |noNetwork -> Q127),
+	Q192	= (car.reserveSuccess -> Q258
+		  |flight.query -> Q400
+		  |car.reserveFail -> Q424),
+	Q193	= (yesNetwork -> Q61),
+	Q194	= (yesNetwork -> Q47),
+	Q195	= (yesNetwork -> Q111),
+	Q196	= (flight.query -> Q101
+		  |car.query -> Q252),
+	Q197	= (yesNetwork -> Q423),
+	Q198	= (yesNetwork -> Q17),
+	Q199	= (car.query -> Q3
+		  |flight.reserveSuccess -> Q53
+		  |noNetwork -> Q60
+		  |flight.reserveFail -> Q441),
+	Q200	= (yesNetwork -> Q72),
+	Q201	= (noNetwork -> Q131
+		  |car.query -> Q343
+		  |flight.reserve -> Q361
+		  |flight.reset -> Q467),
+	Q202	= (car.query -> Q51
+		  |flight.reserve -> Q334
+		  |noNetwork -> Q444),
+	Q203	= (car.buySuccess -> Q36
+		  |flight.querySuccess -> Q180
+		  |car.buyFail -> Q256
+		  |noNetwork -> Q376
+		  |flight.queryFail -> Q420),
+	Q204	= (car.buy -> Q229
+		  |noNetwork -> Q290),
+	Q205	= (noNetwork -> Q88
+		  |flight.queryFail -> Q132
+		  |flight.querySuccess -> Q396),
+	Q206	= (car.query -> Q268),
+	Q207	= (car.querySuccess -> Q236
+		  |flight.reserveFail -> Q288
+		  |noNetwork -> Q407
+		  |flight.reserveSuccess -> Q426
+		  |car.queryFail -> Q440),
+	Q208	= (flight.query -> Q465),
+	Q209	= (car.reset -> Q28
+		  |flight.query -> Q124
+		  |car.reserve -> Q374),
+	Q210	= (flight.buy -> Q8
+		  |noNetwork -> Q115),
+	Q211	= (yesNetwork -> Q27),
+	Q212	= (noNetwork -> Q71
+		  |flight.query -> Q465),
+	Q213	= (car.query -> Q426),
+	Q214	= (flight.buy -> Q102
+		  |noNetwork -> Q185
+		  |car.buySuccess -> Q318
+		  |car.buyFail -> Q362),
+	Q215	= (noNetwork -> Q64
+		  |flight.query -> Q145
+		  |car.query -> Q270),
+	Q216	= (car.query -> Q74
+		  |noNetwork -> Q234),
+	Q217	= (flight.reserveSuccess -> Q7
+		  |car.query -> Q59
+		  |flight.reserveFail -> Q261
+		  |noNetwork -> Q387),
+	Q218	= (flight.buySuccess -> Q11
+		  |flight.buyFail -> Q184
+		  |car.query -> Q276
+		  |noNetwork -> Q278),
+	Q219	= (car.query -> Q51
+		  |flight.reserve -> Q334),
+	Q220	= (noNetwork -> Q198
+		  |car.query -> Q426),
+	Q221	= (flight.buyFail -> Q175
+		  |flight.buySuccess -> Q274),
+	Q222	= (yesNetwork -> Q76),
+	Q223	= (car.reserveSuccess -> Q31
+		  |noNetwork -> Q82
+		  |flight.query -> Q106
+		  |car.reserveFail -> Q215),
+	Q224	= (yesNetwork -> Q289),
+	Q225	= (noNetwork -> Q70
+		  |car.queryFail -> Q331
+		  |car.querySuccess -> Q415),
+	Q226	= (car.reserve -> Q37
+		  |noNetwork -> Q103
+		  |flight.reserveFail -> Q312
+		  |flight.reserveSuccess -> Q390),
+	Q227	= (yesNetwork -> Q395),
+	Q228	= (car.reserveFail -> Q184
+		  |flight.query -> Q337
+		  |noNetwork -> Q386
+		  |car.reserveSuccess -> Q406),
+	Q229	= (noNetwork -> Q30
+		  |car.buySuccess -> Q274
+		  |car.buyFail -> Q341),
+	Q230	= (flight.reserveFail -> Q175
+		  |flight.reserveSuccess -> Q318
+		  |noNetwork -> Q329),
+	Q231	= (car.queryFail -> Q121
+		  |noNetwork -> Q307
+		  |car.querySuccess -> Q410),
+	Q232	= (yesNetwork -> Q104),
+	Q233	= (flight.query -> Q457),
+	Q234	= (yesNetwork -> Q413),
+	Q235	= (yesNetwork -> Q118),
+	Q236	= (car.reserve -> Q46
+		  |noNetwork -> Q103
+		  |flight.reserveSuccess -> Q319
+		  |flight.reserveFail -> Q429),
+	Q237	= (yesNetwork -> Q344),
+	Q238	= (car.querySuccess -> Q94
+		  |noNetwork -> Q307
+		  |car.queryFail -> Q425),
+	Q239	= (yesNetwork -> Q56),
+	Q240	= (flight.query -> Q257
+		  |car.query -> Q327),
+	Q241	= (car.querySuccess -> Q23
+		  |car.queryFail -> Q178),
+	Q242	= (car.reserveSuccess -> Q83
+		  |car.reserveFail -> Q271
+		  |noNetwork -> Q386
+		  |flight.query -> Q439),
+	Q243	= (car.reserveFail -> Q40
+		  |flight.reserve -> Q46
+		  |car.reserveSuccess -> Q446),
+	Q244	= (yesNetwork -> Q73),
+	Q245	= (noNetwork -> Q77
+		  |car.reserveSuccess -> Q98
+		  |car.reserveFail -> Q362),
+	Q246	= (flight.query -> Q257
+		  |car.query -> Q327
+		  |noNetwork -> Q379),
+	Q247	= (yesNetwork -> Q292),
+	Q248	= (flight.reserveSuccess -> Q7
+		  |car.query -> Q59
+		  |noNetwork -> Q149
+		  |flight.reserveFail -> Q261),
+	Q249	= (yesNetwork -> Q100),
+	Q250	= (flight.buySuccess -> Q159
+		  |car.query -> Q264
+		  |flight.buyFail -> Q271),
+	Q251	= (car.query -> Q3
+		  |noNetwork -> Q149
+		  |flight.reserveFail -> Q160
+		  |flight.reserveSuccess -> Q216),
+	Q252	= (car.querySuccess -> Q23
+		  |car.queryFail -> Q178
+		  |noNetwork -> Q431),
+	Q253	= (noNetwork -> Q110
+		  |flight.query -> Q257),
+	Q254	= (flight.querySuccess -> Q171
+		  |flight.queryFail -> Q338),
+	Q255	= (car.buy -> Q102
+		  |flight.buySuccess -> Q204
+		  |flight.buyFail -> Q335),
+	Q256	= (noNetwork -> Q6
+		  |flight.querySuccess -> Q171
+		  |flight.queryFail -> Q338),
+	Q257	= (noNetwork -> Q181
+		  |flight.querySuccess -> Q202
+		  |flight.queryFail -> Q253),
+	Q258	= (flight.query -> Q186
+		  |noNetwork -> Q295),
+	Q259	= (car.query -> Q238
+		  |noNetwork -> Q285),
+	Q260	= (yesNetwork -> Q107),
+	Q261	= (noNetwork -> Q266
+		  |car.query -> Q327),
+	Q262	= (noNetwork -> Q38
+		  |flight.reserve -> Q230),
+	Q263	= (flight.querySuccess -> Q15
+		  |flight.queryFail -> Q428
+		  |noNetwork -> Q437),
+	Q264	= (car.queryFail -> Q91
+		  |car.querySuccess -> Q170
+		  |noNetwork -> Q190
+		  |flight.buySuccess -> Q268
+		  |flight.buyFail -> Q288),
+	Q265	= (yesNetwork -> Q243),
+	Q266	= (yesNetwork -> Q137),
+	Q267	= (flight.query -> Q101),
+	Q268	= (noNetwork -> Q70
+		  |car.queryFail -> Q339
+		  |car.querySuccess -> Q445),
+	Q269	= (noNetwork -> Q66
+		  |car.queryFail -> Q113
+		  |car.querySuccess -> Q319),
+	Q270	= (noNetwork -> Q431
+		  |car.queryFail -> Q450
+		  |car.querySuccess -> Q456),
+	Q271	= (car.query -> Q1
+		  |noNetwork -> Q200
+		  |flight.query -> Q457),
+	Q272	= (flight.reserve -> Q236
+		  |car.reserve -> Q416),
+	Q273	= (yesNetwork -> Q57),
+	Q274	= (noNetwork -> Q123
+		  |agency.resp -> Q168),
+	Q275	= (flight.queryFail -> Q389
+		  |noNetwork -> Q391
+		  |flight.querySuccess -> Q396),
+	Q276	= (car.querySuccess -> Q65
+		  |flight.buyFail -> Q136
+		  |noNetwork -> Q190
+		  |flight.buySuccess -> Q225
+		  |car.queryFail -> Q369),
+	Q277	= (noNetwork -> Q194
+		  |flight.querySuccess -> Q259
+		  |flight.queryFail -> Q375),
+	Q278	= (yesNetwork -> Q250),
+	Q279	= (car.buyFail -> Q19
+		  |car.buySuccess -> Q32
+		  |noNetwork -> Q141
+		  |flight.query -> Q435),
+	Q280	= (flight.queryFail -> Q13
+		  |flight.querySuccess -> Q202
+		  |noNetwork -> Q363),
+	Q281	= (yesNetwork -> Q443),
+	Q282	= (yesNetwork -> Q158),
+	Q283	= (car.query -> Q268),
+	Q284	= (yesNetwork -> Q324),
+	Q285	= (yesNetwork -> Q164),
+	Q286	= (car.query -> Q1
+		  |flight.query -> Q457),
+	Q287	= (flight.reserveSuccess -> Q98
+		  |flight.reserveFail -> Q335),
+	Q288	= (car.queryFail -> Q114
+		  |car.querySuccess -> Q442
+		  |noNetwork -> Q451),
+	Q289	= (flight.query -> Q457),
+	Q290	= (yesNetwork -> Q152),
+	Q291	= (agency.resp -> Q168),
+	Q292	= (flight.reserveFail -> Q242
+		  |flight.reserveSuccess -> Q245
+		  |car.reserveSuccess -> Q359
+		  |car.reserveFail -> Q404),
+	Q293	= (car.query -> Q9
+		  |flight.reserveSuccess -> Q129
+		  |flight.reserveFail -> Q184
+		  |noNetwork -> Q282),
+	Q294	= (noNetwork -> Q35
+		  |flight.reserveFail -> Q42
+		  |flight.reserveSuccess -> Q97),
+	Q295	= (yesNetwork -> Q468),
+	Q296	= (yesNetwork -> Q90),
+	Q297	= (car.query -> Q29
+		  |noNetwork -> Q126),
+	Q298	= (agency.idle -> Q298
+		  |yesNetwork -> Q321
+		  |agency.req -> Q398),
+	Q299	= (flight.queryFail -> Q212
+		  |flight.querySuccess -> Q446),
+	Q300	= (car.query -> Q74
+		  |noNetwork -> Q281),
+	Q301	= (car.queryFail -> Q91
+		  |car.querySuccess -> Q170
+		  |flight.buySuccess -> Q268
+		  |flight.buyFail -> Q288),
+	Q302	= (flight.query -> Q275
+		  |noNetwork -> Q461),
+	Q303	= (car.buyFail -> Q58
+		  |noNetwork -> Q185
+		  |car.buySuccess -> Q210
+		  |flight.buy -> Q328),
+	Q304	= (car.buyFail -> Q184
+		  |noNetwork -> Q347
+		  |car.buySuccess -> Q411
+		  |flight.query -> Q435),
+	Q305	= (flight.query -> Q186),
+	Q306	= (noNetwork -> Q33
+		  |flight.query -> Q36),
+	Q307	= (yesNetwork -> Q436),
+	Q308	= (car.querySuccess -> Q236
+		  |flight.reserveFail -> Q288
+		  |flight.reserveSuccess -> Q426
+		  |car.queryFail -> Q440),
+	Q309	= (noNetwork -> Q54
+		  |flight.reserveFail -> Q166
+		  |flight.reserveSuccess -> Q214
+		  |car.buySuccess -> Q230
+		  |car.buyFail -> Q404),
+	Q310	= (yesNetwork -> Q34),
+	Q311	= (car.query -> Q231
+		  |flight.reset -> Q317),
+	Q312	= (noNetwork -> Q22
+		  |flight.query -> Q452),
+	Q313	= (flight.reserve -> Q230),
+	Q314	= (flight.reserveSuccess -> Q7
+		  |car.query -> Q59
+		  |flight.reserveFail -> Q261),
+	Q315	= (car.query -> Q252),
+	Q316	= (yesNetwork -> Q345),
+	Q317	= (car.query -> Q1
+		  |noNetwork -> Q235),
+	Q318	= (noNetwork -> Q115
+		  |flight.buy -> Q397),
+	Q319	= (car.reserve -> Q245
+		  |noNetwork -> Q366),
+	Q320	= (car.reset -> Q16
+		  |noNetwork -> Q325
+		  |flight.query -> Q452),
+	Q321	= (agency.req -> Q63
+		  |agency.idle -> Q321),
+	Q322	= (yesNetwork -> Q371),
+	Q323	= (flight.queryFail -> Q19
+		  |noNetwork -> Q155
+		  |flight.querySuccess -> Q259),
+	Q324	= (car.queryFail -> Q89
+		  |car.querySuccess -> Q319),
+	Q325	= (yesNetwork -> Q146),
+	Q326	= (flight.queryFail -> Q13
+		  |flight.querySuccess -> Q202),
+	Q327	= (noNetwork -> Q2
+		  |car.queryFail -> Q261
+		  |car.querySuccess -> Q442),
+	Q328	= (car.buySuccess -> Q8
+		  |noNetwork -> Q43
+		  |flight.buySuccess -> Q128
+		  |car.buyFail -> Q218
+		  |flight.buyFail -> Q304),
+	Q329	= (yesNetwork -> Q421),
+	Q330	= (yesNetwork -> Q206),
+	Q331	= (car.query -> Q225
+		  |noNetwork -> Q412),
+	Q332	= (car.reserveSuccess -> Q14
+		  |car.reserveFail -> Q55
+		  |noNetwork -> Q134
+		  |flight.buyFail -> Q242
+		  |flight.buySuccess -> Q350),
+	Q333	= (flight.query -> Q186
+		  |noNetwork -> Q380),
+	Q334	= (car.query -> Q59
+		  |noNetwork -> Q60
+		  |flight.reserveSuccess -> Q109
+		  |flight.reserveFail -> Q246),
+	Q335	= (noNetwork -> Q75
+		  |flight.query -> Q465),
+	Q336	= (flight.query -> Q24),
+	Q337	= (flight.queryFail -> Q116
+		  |car.reserveFail -> Q140
+		  |flight.querySuccess -> Q167
+		  |car.reserveSuccess -> Q275
+		  |noNetwork -> Q316),
+	Q338	= (noNetwork -> Q448
+		  |flight.query -> Q457),
+	Q339	= (car.query -> Q268
+		  |noNetwork -> Q412),
+	Q340	= (agency.req -> Q286
+		  |agency.idle -> Q340),
+	Q341	= (car.query -> Q268
+		  |noNetwork -> Q454),
+	Q342	= (noNetwork -> Q227
+		  |flight.query -> Q263),
+	Q343	= (flight.reserve -> Q3
+		  |car.querySuccess -> Q94
+		  |car.queryFail -> Q201
+		  |noNetwork -> Q296),
+	Q344	= (car.query -> Q426),
+	Q345	= (flight.queryFail -> Q162
+		  |car.reserveFail -> Q256
+		  |flight.querySuccess -> Q416
+		  |car.reserveSuccess -> Q465),
+	Q346	= (agency.resp -> Q69
+		  |noNetwork -> Q123),
+	Q347	= (yesNetwork -> Q79),
+	Q348	= (flight.reserveSuccess -> Q7
+		  |car.query -> Q59
+		  |flight.reserveFail -> Q261),
+	Q349	= (yesNetwork -> Q192),
+	Q350	= (noNetwork -> Q143
+		  |car.reserveSuccess -> Q204
+		  |car.reserveFail -> Q341),
+	Q351	= (yesNetwork -> Q119),
+	Q352	= (car.reserveSuccess -> Q85
+		  |flight.query -> Q106
+		  |noNetwork -> Q244
+		  |car.reserveFail -> Q375),
+	Q353	= (flight.querySuccess -> Q81
+		  |noNetwork -> Q363
+		  |flight.queryFail -> Q459),
+	Q354	= (flight.query -> Q323
+		  |noNetwork -> Q356
+		  |car.query -> Q417),
+	Q355	= (yesNetwork -> Q41),
+	Q356	= (yesNetwork -> Q286),
+	Q357	= (yesNetwork -> Q466),
+	Q358	= (yesNetwork -> Q12),
+	Q359	= (noNetwork -> Q35
+		  |flight.reserveSuccess -> Q98
+		  |flight.reserveFail -> Q335),
+	Q360	= (car.reserveSuccess -> Q62
+		  |car.reserveFail -> Q338
+		  |flight.query -> Q439),
+	Q361	= (car.query -> Q3
+		  |flight.reserveFail -> Q160
+		  |flight.reserveSuccess -> Q216
+		  |noNetwork -> Q387),
+	Q362	= (noNetwork -> Q142
+		  |car.query -> Q426),
+	Q363	= (yesNetwork -> Q326),
+	Q364	= (flight.reserveSuccess -> Q210
+		  |noNetwork -> Q329
+		  |flight.reserveFail -> Q342),
+	Q365	= (noNetwork -> Q235
+		  |car.query -> Q417),
+	Q366	= (yesNetwork -> Q105),
+	Q367	= (car.reserve -> Q350),
+	Q368	= (car.buySuccess -> Q36
+		  |flight.querySuccess -> Q180
+		  |car.buyFail -> Q256
+		  |flight.queryFail -> Q420),
+	Q369	= (flight.buyFail -> Q48
+		  |car.query -> Q276
+		  |noNetwork -> Q393
+		  |flight.buySuccess -> Q419),
+	Q370	= (flight.query -> Q257),
+	Q371	= (car.queryFail -> Q114
+		  |car.querySuccess -> Q442),
+	Q372	= (car.query -> Q51
+		  |noNetwork -> Q131
+		  |flight.reset -> Q165
+		  |flight.reserve -> Q217),
+	Q373	= (noNetwork -> Q96
+		  |car.queryFail -> Q261
+		  |car.querySuccess -> Q442),
+	Q374	= (noNetwork -> Q244
+		  |car.reserveSuccess -> Q258
+		  |flight.query -> Q400
+		  |car.reserveFail -> Q424),
+	Q375	= (flight.query -> Q145
+		  |noNetwork -> Q383),
+	Q376	= (yesNetwork -> Q368),
+	Q377	= (flight.query -> Q36
+		  |noNetwork -> Q193),
+	Q378	= (car.query -> Q268),
+	Q379	= (yesNetwork -> Q240),
+	Q380	= (yesNetwork -> Q305),
+	Q381	= (flight.query -> Q36),
+	Q382	= (car.buySuccess -> Q15
+		  |flight.reserve -> Q25
+		  |car.buyFail -> Q133
+		  |noNetwork -> Q195),
+	Q383	= (yesNetwork -> Q139),
+	Q384	= (flight.query -> Q203
+		  |car.buyFail -> Q338
+		  |car.buySuccess -> Q453),
+	Q385	= (flight.buy -> Q102
+		  |car.buySuccess -> Q318
+		  |car.buyFail -> Q362),
+	Q386	= (yesNetwork -> Q430),
+	Q387	= (yesNetwork -> Q348),
+	Q388	= (flight.query -> Q186
+		  |noNetwork -> Q355),
+	Q389	= (noNetwork -> Q71
+		  |flight.query -> Q275),
+	Q390	= (car.reserve -> Q172
+		  |noNetwork -> Q366),
+	Q391	= (yesNetwork -> Q299),
+	Q392	= (car.query -> Q9
+		  |flight.reserveFail -> Q48
+		  |noNetwork -> Q232
+		  |flight.reserveSuccess -> Q401),
+	Q393	= (yesNetwork -> Q161),
+	Q394	= (car.reserve -> Q46
+		  |flight.reserveSuccess -> Q319
+		  |flight.reserveFail -> Q429),
+	Q395	= (flight.query -> Q36),
+	Q396	= (noNetwork -> Q211
+		  |flight.reserve -> Q294),
+	Q397	= (noNetwork -> Q122
+		  |flight.buyFail -> Q175
+		  |flight.buySuccess -> Q274),
+	Q398	= (yesNetwork -> Q63),
+	Q399	= (yesNetwork -> Q460),
+	Q400	= (car.reserveFail -> Q92
+		  |car.reserveSuccess -> Q186
+		  |noNetwork -> Q357
+		  |flight.querySuccess -> Q416
+		  |flight.queryFail -> Q462),
+	Q401	= (car.query -> Q29
+		  |noNetwork -> Q237),
+	Q402	= (yesNetwork -> Q95),
+	Q403	= (flight.query -> Q145
+		  |noNetwork -> Q153),
+	Q404	= (car.query -> Q207
+		  |flight.reserveSuccess -> Q220
+		  |flight.reserveFail -> Q271
+		  |noNetwork -> Q282),
+	Q405	= (yesNetwork -> Q44),
+	Q406	= (noNetwork -> Q260
+		  |flight.query -> Q275),
+	Q407	= (yesNetwork -> Q308),
+	Q408	= (car.queryFail -> Q339
+		  |car.querySuccess -> Q445),
+	Q409	= (car.buyFail -> Q55
+		  |flight.buyFail -> Q166
+		  |flight.buySuccess -> Q229
+		  |car.buySuccess -> Q397),
+	Q410	= (flight.reserve -> Q236
+		  |car.reserve -> Q416
+		  |noNetwork -> Q418),
+	Q411	= (noNetwork -> Q193
+		  |flight.query -> Q263),
+	Q412	= (yesNetwork -> Q188),
+	Q413	= (car.query -> Q269),
+	Q414	= (flight.reserveFail -> Q166
+		  |flight.reserveSuccess -> Q214
+		  |car.buySuccess -> Q230
+		  |car.buyFail -> Q404),
+	Q415	= (noNetwork -> Q21
+		  |car.reserve -> Q183),
+	Q416	= (car.reserveFail -> Q40
+		  |flight.reserve -> Q46
+		  |noNetwork -> Q265
+		  |car.reserveSuccess -> Q446),
+	Q417	= (car.queryFail -> Q48
+		  |car.querySuccess -> Q154
+		  |noNetwork -> Q322),
+	Q418	= (yesNetwork -> Q272),
+	Q419	= (car.query -> Q225
+		  |noNetwork -> Q330),
+	Q420	= (noNetwork -> Q141
+		  |flight.query -> Q203
+		  |car.buyFail -> Q338
+		  |car.buySuccess -> Q453),
+	Q421	= (flight.reserveFail -> Q175
+		  |flight.reserveSuccess -> Q318),
+	Q422	= (car.query -> Q426),
+	Q423	= (flight.query -> Q24),
+	Q424	= (flight.query -> Q101
+		  |noNetwork -> Q383),
+	Q425	= (car.query -> Q238
+		  |flight.reset -> Q365
+		  |noNetwork -> Q434),
+	Q426	= (car.queryFail -> Q89
+		  |noNetwork -> Q284
+		  |car.querySuccess -> Q319),
+	Q427	= (flight.querySuccess -> Q202
+		  |flight.queryFail -> Q253),
+	Q428	= (noNetwork -> Q33
+		  |flight.query -> Q263),
+	Q429	= (noNetwork -> Q22
+		  |flight.query -> Q24),
+	Q430	= (car.reserveSuccess -> Q83
+		  |car.reserveFail -> Q271
+		  |flight.query -> Q439),
+	Q431	= (yesNetwork -> Q241),
+	Q432	= (yesNetwork -> Q177),
+	Q433	= (car.querySuccess -> Q236
+		  |car.queryFail -> Q248
+		  |flight.reserveSuccess -> Q269
+		  |flight.reserveFail -> Q373),
+	Q434	= (yesNetwork -> Q311),
+	Q435	= (car.buyFail -> Q140
+		  |car.buySuccess -> Q263
+		  |flight.queryFail -> Q279
+		  |noNetwork -> Q376
+		  |flight.querySuccess -> Q382),
+	Q436	= (car.queryFail -> Q121
+		  |car.querySuccess -> Q410),
+	Q437	= (yesNetwork -> Q174),
+	Q438	= (car.reserveSuccess -> Q98
+		  |car.reserveFail -> Q362),
+	Q439	= (flight.queryFail -> Q162
+		  |car.reserveFail -> Q256
+		  |noNetwork -> Q316
+		  |flight.querySuccess -> Q416
+		  |car.reserveSuccess -> Q465),
+	Q440	= (flight.reserveSuccess -> Q4
+		  |flight.reserveFail -> Q114
+		  |car.query -> Q207
+		  |noNetwork -> Q232),
+	Q441	= (car.query -> Q50
+		  |flight.query -> Q93
+		  |noNetwork -> Q379),
+	Q442	= (flight.query -> Q24
+		  |noNetwork -> Q197),
+	Q443	= (car.query -> Q269),
+	Q444	= (yesNetwork -> Q219),
+	Q445	= (noNetwork -> Q21
+		  |car.reserve -> Q350),
+	Q446	= (noNetwork -> Q211
+		  |flight.reserve -> Q359),
+	Q447	= (car.reserveSuccess -> Q14
+		  |car.reserveFail -> Q55
+		  |flight.buyFail -> Q242
+		  |flight.buySuccess -> Q350),
+	Q448	= (yesNetwork -> Q233),
+	Q449	= (car.reset -> Q28
+		  |noNetwork -> Q99
+		  |flight.query -> Q124
+		  |car.reserve -> Q374),
+	Q450	= (noNetwork -> Q108
+		  |car.query -> Q270),
+	Q451	= (yesNetwork -> Q80),
+	Q452	= (flight.querySuccess -> Q94
+		  |noNetwork -> Q187
+		  |flight.queryFail -> Q320),
+	Q453	= (flight.query -> Q36
+		  |noNetwork -> Q351),
+	Q454	= (yesNetwork -> Q283),
+	Q455	= (noNetwork -> Q224
+		  |flight.query -> Q457),
+	Q456	= (flight.query -> Q191
+		  |car.reserve -> Q223
+		  |noNetwork -> Q358),
+	Q457	= (noNetwork -> Q155
+		  |flight.querySuccess -> Q171
+		  |flight.queryFail -> Q338),
+	Q458	= (flight.buy -> Q397),
+	Q459	= (flight.query -> Q353
+		  |noNetwork -> Q402),
+	Q460	= (car.query -> Q327),
+	Q461	= (yesNetwork -> Q18),
+	Q462	= (car.reserveSuccess -> Q258
+		  |noNetwork -> Q349
+		  |flight.query -> Q400
+		  |car.reserveFail -> Q424),
+	Q463	= (noNetwork -> Q82
+		  |car.reserveFail -> Q148
+		  |car.reserveSuccess -> Q333
+		  |flight.query -> Q400),
+	Q464	= (car.queryFail -> Q78
+		  |noNetwork -> Q432
+		  |car.querySuccess -> Q456),
+	Q465	= (flight.queryFail -> Q212
+		  |noNetwork -> Q391
+		  |flight.querySuccess -> Q446),
+	Q466	= (car.reserveFail -> Q92
+		  |car.reserveSuccess -> Q186
+		  |flight.querySuccess -> Q416
+		  |flight.queryFail -> Q462),
+	Q467	= (car.query -> Q50
+		  |noNetwork -> Q399),
+	Q468	= (flight.query -> Q186),
+	Q469	= (car.query -> Q269).
+

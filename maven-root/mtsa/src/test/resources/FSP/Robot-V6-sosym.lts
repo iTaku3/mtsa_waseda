@@ -1,0 +1,49 @@
+set Positions = {pos1, pos2, pos3, pos4}
+set Controlled = {mn, ms, getBall, putBall}
+set Uncontrolled = {Positions, ballInRoom_1, goTo_4, ballInRoom_2, pickBall, goTo_1, placeBall}
+set A = {Controlled, Uncontrolled}
+
+fluent F_Pos1 = <pos1, Positions\{pos1}>
+fluent F_Pos4 = <pos4, Positions\{pos4}>
+fluent F_GetBallOk = <getBallOk, A\{getBallOk}>
+fluent F_BallLoaded = <getBallOk, putBall>
+fluent F_DoorOpen = <doorOpen, doorClosed>
+
+assert Pos1 = (F_Pos1 && !F_BallLoaded)
+assert Pos4 = (F_Pos4 && F_BallLoaded)
+assert GetBallOk = F_GetBallOk
+assert BallLoaded = F_BallLoaded
+assert DoorOpen = F_DoorOpen
+
+//Goal definition
+controllerSpec G1 = {
+safety = {}
+assumption = {}
+liveness = {Pos1, Pos4}
+controllable = {Controlled}
+}
+
+controller ||C = PLANT~{G1}.
+
+||PLANT = (ARM || ROBOT_1 || ROBOT_2).
+
+ROBOT_1 = (pos1 -> POS_1), 
+POS_1 = (mn->pos2->POS_2),
+POS_2 = (me->EAST_2 | mn->pos3->POS_3 | ms->pos1->POS_1),
+EAST_2 = (mw->pos2->POS_2), 
+POS_3 = (me->EAST_3 | mn->pos4->POS_4 | ms->pos2->POS_2),
+EAST_3 = (mw->pos3->POS_3), 
+POS_4 = (ms->pos3->POS_3).
+
+ARM = (pos1->READY_TO_LOAD | {pos2, pos3, pos4, mn, ms}->ARM), 
+READY_TO_LOAD = (ballInRoom_1->getBall->LOADED | {mn, ms}->ARM), 
+LOADED = (pos4->POS_4 | {pos1, pos2, pos3, mn, ms}->LOADED), 
+POS_4 = (putBall->ballInRoom_2->ARM).
+
+ROBOT_2 = (ballInRoom_1->goTo_4->ballInRoom_2->pickBall->goTo_1->placeBall->ROBOT_2). 
+
+/*
+ROBOT_2 = (ballInRoom_2->pickBall->goTo_1->putBall->BALL_READY_TO_PASS), 
+BALL_READY_TO_PASS = (doorOpen->BALL_PASSING_THROUGHT | doorClosed->BALL_READY_TO_PASS), 
+BALL_PASSING_THROUGHT = (ballInRoom_1->doorClosed->goTo_4->ROBOT_2).
+*/

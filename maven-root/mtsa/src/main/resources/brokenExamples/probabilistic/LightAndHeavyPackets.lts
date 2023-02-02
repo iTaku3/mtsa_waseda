@@ -1,0 +1,14 @@
+const Max = 4
+range R = 1..Max-1
+range P = 1..Max
+
+Queue = Q[0],
+Q[0] = (add -> Q[1]),
+Q[i:R] = (add -> Q[i+1]   |   rem -> Q[i-1]),
+Q[Max] = (rem -> Q[Max-1]).
+
+Worker(L=1, H=1) = ((L) get_light[m:P] -> process -> Worker | (H) get_heavy[m:P] ->process -> Worker).
+||Fred = {f}:Worker(1, 1).
+||Bill = {b}:Worker(2, 1).
+
+||System = ( {lf, lb, h}:Queue || Fred || Bill)/{lf.rem/f.get_light, lb.rem/b.get_light, h.rem/f.get_heavy, h.rem/b.get_heavy}.

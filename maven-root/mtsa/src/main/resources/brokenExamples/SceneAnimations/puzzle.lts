@@ -1,0 +1,72 @@
+/* Sliding squares puzzle
+*/
+range Bool = 0..1
+const Xmax = 2
+const Ymax = 2
+range X = 0..Xmax
+range Y = 0..Ymax
+const MP = (Xmax+1)*(Ymax+1)-2
+range ID = 0..MP
+range Pos = 0..MP+1
+
+TILE(I=0,S=0) = (init[I][S] -> TILE[S%(Xmax+1)][S/(Xmax+1)]),
+TILE[x:X][y:Y] 
+ = ( when (y>0)    north[I][x][y] -> TILE[x][y-1]
+   | when (y<Ymax) south[I][x][y] -> TILE[x][y+1]
+   | when (x>0)    west[I][x][y]  -> TILE[x-1][y]
+   | when (x<Xmax) east[I][x][y]  -> TILE[x+1][y]
+   | when (I == y*(Xmax+1)+x) end -> STOP
+   ).
+
+set MoveAlpha = {{north,south,east,west}[ID][X][Y]}
+
+SPACE(S=0) = SPACE[S%(Xmax+1)][S/(Xmax+1)],
+SPACE[x:X][y:Y] 
+  = (when (y>0)    south[ID][x][y-1] -> SPACE[x][y-1]
+    |when (y<Ymax) north[ID][x][y+1] -> SPACE[x][y+1]
+    |when (x>0)    east[ID][x-1][y]  -> SPACE[x-1][y]
+    |when (x<Xmax) west[ID][x+1][y]  -> SPACE[x+1][y]
+    )+MoveAlpha.
+
+||PUZZLE = (  TILE(6,0) 
+           || TILE(5,1) 
+           || TILE(4,2) 
+           || TILE(7,3) 
+           || TILE(1,8) 
+           || TILE(3,5) 
+           || TILE(2,6) 
+           || TILE(0,7) 
+           || SPACE(4) 
+           )<<{init}.
+
+animation PUZZLE = "xml/puzzle.xml"
+     actions {
+        forall[i:ID] { 
+             init[i][j:Pos]/init[i][j],
+             north[i][X][Y]/north[i],
+             south[i][X][Y]/south[i],
+             east[i][X][Y]/east[i],
+             west[i][X][Y]/west[i],
+             end/end[i]
+             }
+        }
+     controls {
+        forall[i:ID] {
+            {north[i][X][Y],
+            south[i][X][Y],
+            east[i][X][Y],
+            west[i][X][Y]}/endMove
+        }    
+     }
+
+animation PLAY = "xml/puzzle.xml"
+     compose {PUZZLE}  
+     controls {
+        forall[i:ID] {
+            {north[i][X][Y],
+            south[i][X][Y],
+            east[i][X][Y],
+            west[i][X][Y]}/[i]
+        }       
+     }
+

@@ -1,0 +1,22 @@
+set Alpha = {a, req, b, ok}
+
+//NUnrealisable problem
+NoDet = (req->AB | req->AB2),
+AB = (a->OK1 | b->B),
+B = (req->B),
+OK1 = (ok->b->OK1), 
+AB2 = (b->OK2 | a->A),
+A = (req->A),
+OK2 = (ok->b->OK2).
+
+fluent A = <a, Alpha\{a}>
+fluent OK = <ok, Alpha\{ok}>
+
+assert GoalOK = OK
+
+controller ||C = NoDet~{G1}.
+
+controllerSpec G1 = {
+	liveness = {GoalOK}
+	controllable = {Cont}
+}

@@ -1,0 +1,17 @@
+/* Communication Channel */
+
+CHAN = (in ->out->CHAN
+       |in->fail->CHAN
+       ).
+
+
+animation FAILCHAN = "xml\channel.xml"
+   actions {
+        in  /channel.begin,
+        fail/explode
+   }
+   controls {
+        out/channel.end,
+        fail/channel.fail,
+        in/send
+   }

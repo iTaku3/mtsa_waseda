@@ -1,0 +1,148 @@
+const ClientsCount = 2
+range Clients = 1..ClientsCount
+
+set AvailableServices = {car,flight}
+set Agency = {agency.{req,resp,idle}}
+set Network = {yesNetwork, noNetwork}
+set ControllableC1 = {AvailableServices.{buy, query, reserve}, idle}
+set Controllable = {{ControllableC1}, agency.resp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail}}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess}, agency.{req,idle}}
+set A = {Controllable, Uncontrollable, Agency}
+
+//Environment model
+SERVICE(SRV='car, M_IDEAL=1, M_RESERVE=1, M_QINC=0) = IDLE,
+IDLE = ([SRV].query -> QUERYIDEALCHECK),
+QUERYIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].querySuccess -> REQUERYCHECK) 
+					else QUERYING,
+QUERYING = ([SRV].queryFail -> IDLE | [SRV].querySuccess -> REQUERYCHECK),
+REQUERYCHECK = if (M_QINC==1) 
+				then REQUERY 
+				else RESERVECHECK,
+RESERVECHECK = if (M_RESERVE==1) then RESULTSET else RESERVED,
+REQUERY = ([SRV].query -> REQUERYIDEALCHECK),
+REQUERYIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].querySuccess -> RESERVECHECK) 
+					else REQUERYING,
+REQUERYING = ([SRV].queryFail -> IDLE | [SRV].querySuccess -> REQUERIED),
+REQUERIED = if (M_RESERVE==1) 
+			then RESULTSET 
+			else RESERVED,
+RESULTSET = ([SRV].reserve -> RESERVEIDEALCHECK | [SRV].buy -> BUYCHECK),
+RESERVEIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].reserveSuccess->RESERVED) 
+					else RESERVING,
+BUYCHECK = if (M_RESERVE==1) 
+			then ([SRV].reserveRequired->RESULTSET) 
+			else BUYING,
+RESERVING =([SRV].reserveFail -> RESULTSET | [SRV].reserveSuccess -> RESERVED),			
+WARNING = ([SRV].reserveRequired->RESULTSET),
+RESERVED = ([SRV].buy -> BUYIDEALCHECK),
+BUYIDEALCHECK= if (M_IDEAL==1) 
+				then ([SRV].buySuccess -> IDLE)
+				else BUYING,
+BUYING = ([SRV].buyFail -> RESERVED | [SRV].buySuccess -> IDLE)
+										+{[SRV].{reserve, reserveFail, reserveSuccess}}.
+
+//||SERVICES = (forall[srv:AvailableServices] SERVICE(srv,1,0)).
+||SERVICES = (SERVICE('car,1,0,0) || SERVICE('flight,1,1,1)).
+
+
+AGENCY = (agency.idle-> AGENCY | agency.req->RESPONSE), 
+RESPONSE = (agency.resp->AGENCY).
+
+||ENV = (SERVICES || AGENCY || NETWORK).
+
+INCERTAIN_INTERFACE = (AvailableServices.{buyFail?, queryFail?}->INCERTAIN_INTERFACE).
+
+INCERTAIN_CAR_INTERFACE = (['car].buyFail?->INCERTAIN_CAR_INTERFACE).
+||INCERTAIN_CAR = (SERVICE('car,0,1,0)||INCERTAIN_CAR_INTERFACE).
+
+INCERTAIN_FLIGHT_INTERFACE = (['flight].queryFail?->INCERTAIN_FLIGHT_INTERFACE).
+||INCERTAIN_FLIGHT = (SERVICE('flight,0,0,0)||INCERTAIN_FLIGHT_INTERFACE).
+
+NETWORK = YES, 
+YES = ({Controllable,Uncontrollable} -> YES | noNetwork -> NO),
+NO = (yesNetwork -> NOBIS | network.idle->NO), 
+NOBIS = ({Controllable,Uncontrollable} -> YES).
+
+//fluent definitions
+fluent F_AgencyResp = <agency.resp, A\{agency.resp}>
+fluent F_AgencyReq = <agency.req, A\{agency.req}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+//fluent F_Reserved[srv:AvailableServices] = <[srv].reserveSuccess, {[srv].buySuccess}>
+fluent F_BoughtSuccessfully[srv:AvailableServices] = <[srv].buySuccess, agency.req>
+fluent F_PendingReq = <agency.req, agency.resp>
+fluent F_NetworkOk = <yesNetwork, noNetwork>
+
+//assertions
+assert NetworkOk = F_NetworkOk
+assert Failures = F_Failures
+assert HolidaysPackage = F_AgencyResp
+assert PendingRequest = F_PendingReq
+assert AllBought = forall[srv:AvailableServices](F_BoughtSuccessfully[srv])
+assert SomeQuery =  exists[srv:AvailableServices] ([srv].query)
+assert RequestsArrive = F_AgencyReq
+
+//Safety definition
+ltl_property NoSpontaneousQueries = [](SomeQuery -> F_PendingReq)
+ltl_property AgencyRspImpliesAllBought = [](F_AgencyResp -> AllBought)
+ltl_property QueryImpliesNotBought = [](forall[srv:AvailableServices] 
+										([srv].query -> !F_BoughtSuccessfully[srv]))
+ltl_property NoBuyIfReserveOrQueryMayFail = 
+		forall[srv1:AvailableServices] [] ([srv1].buy -> 
+			forall[srv2:AvailableServices] 
+				((![srv2].reserveFail && ![srv2].queryFail) W AllBought))
+
+
+//Controller specifications
+controller ||C_1_IdealisedEnv = (forall[srv:AvailableServices] SERVICE(srv,1,0,0) || AGENCY || NETWORK)~{G1}.
+checkCompatibility ||Compatible_1 = (forall[srv:AvailableServices] SERVICE(srv,1,0,0) || AGENCY || NETWORK)~{G1}.
+
+controller ||C_2_IdealisedEnv = (forall[srv:AvailableServices] SERVICE(srv,1,0,0) || AGENCY || NETWORK)~{G2}.
+checkCompatibility ||Compatible_2 = (forall[srv:AvailableServices] SERVICE(srv,1,0,0) || AGENCY || NETWORK)~{G2}.
+
+controller ||C_3_Fallible = (forall[srv:AvailableServices] SERVICE(srv,0,0,0) || AGENCY || NETWORK)~{G3}.
+checkCompatibility ||Compatible_3 = (forall[srv:AvailableServices] SERVICE(srv,0,0,0) || AGENCY || NETWORK)~{G3}.
+
+controller ||C_4_CarReserve_FlightRequeryNoReserve = (SERVICE('car,0,1,0) || SERVICE('flight,0,0,1) || AGENCY || NETWORK)~{G3}.
+checkCompatibility ||Compatible_4 = (SERVICE('car,0,0,0) || SERVICE('flight,0,0,0) || AGENCY || NETWORK)~{G3}.
+
+controller ||C_5_Incertain_Interface = (forall[srv:AvailableServices] SERVICE(srv,0,0,0) || INCERTAIN_INTERFACE || AGENCY || NETWORK)~{G2}.
+controller ||C_6_Incertain_Interface = (forall[srv:AvailableServices] SERVICE(srv,0,0,0) || INCERTAIN_INTERFACE || AGENCY || NETWORK)~{G3}.
+controller ||C_7_Incertain_FlightQuery_CarBuy = (INCERTAIN_FLIGHT || INCERTAIN_CAR || AGENCY || NETWORK)~{G3}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {NoBuyIfReserveOrQueryMayFail,AgencyRspImpliesAllBought,
+				NoSpontaneousQueries, QueryImpliesNotBought}
+       assumption = {RequestsArrive, NetworkOk}
+       liveness = {HolidaysPackage}
+       controllable = {Controllable}
+}
+
+controllerSpec G2 = {
+       safety = {NoBuyIfReserveOrQueryMayFail,AgencyRspImpliesAllBought,
+				NoSpontaneousQueries, QueryImpliesNotBought}
+       assumption = {PendingRequest, NetworkOk}
+       liveness = {HolidaysPackage}
+       controllable = {Controllable}
+}
+
+assert GOAL = (([]<> PendingRequest && []<> NetworkOk) -> []<> HolidaysPackage)
+
+controllerSpec G3 = {
+       safety = {NoBuyIfReserveOrQueryMayFail,AgencyRspImpliesAllBought,
+				NoSpontaneousQueries, QueryImpliesNotBought}
+       failure = {Failures}
+       assumption = {PendingRequest, NetworkOk}
+       liveness = {HolidaysPackage}
+       controllable = {Controllable}
+}
+
+//1) FLight tiene query.fail? y Car tiene buy.fail? Se anima a comprar Flight sin hacer query de Car pero no al reves.
+//2) Ambos tienen query.fail? y buy.fail?  Con Goal con failures da ALL, sin Failures da SOME
+
+
+

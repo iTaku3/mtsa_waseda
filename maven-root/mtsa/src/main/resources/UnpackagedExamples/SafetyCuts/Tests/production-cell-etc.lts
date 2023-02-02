@@ -1,0 +1,112 @@
+const MAX = 10
+range Count = 0..MAX
+
+//ACTION SETS
+set Colours = {yellow, red}
+set Tools = {drill}
+set GetLocations = {drill, paint, in}
+set PutLocations = {drill, paint, out, trash}
+set Puts = {putdownat.PutLocations.Colours}
+set Gets = {pickupfrom.GetLocations.Colours}
+set PutsSF = {putdownat_success.PutLocations.Colours}
+set GetsSF = {pickupfrom_success.GetLocations.Colours, pickupfrom_fail.GetLocations.Colours}
+set CA = {Puts,Gets,nop}
+set A = {CA, PutsSF, GetsSF, ready.Tools.Colours, ready.paint.Colours, supply.Colours,nop,yield, attemptSupply.Colours}
+
+set FORBIDDEN_PAINT = {ready['paint]['yellow],pickupfrom_success['paint]['yellow]}
+
+//Domain Model
+PAINT = (putdownat_success['paint][Colours]->COLORING), 
+COLORING = (ready['paint]['red]->pickupfrom_success['paint]['red]->PAINT)+{FORBIDDEN_PAINT}.
+TOOL(T='any)=(putdownat_success[T][c:Colours]->ready[T][c]->pickupfrom_success[T][c]->TOOL). 
+||TOOLS = (forall[t:Tools] TOOL(t)).
+ARM = (pickupfrom[l:GetLocations][c:Colours]->GET_RESULT[l][c]), 
+GET_RESULT[l:GetLocations][c:Colours]=(pickupfrom_success[l][c]->PICKED_UP[c] | pickupfrom_fail[l][c]->ARM),
+PICKED_UP[c:Colours] = (putdownat[l:PutLocations][c]->putdownat_success[l][c]-> ARM).
+
+SUPPLY = (attemptSupply[c:Colours]->SUPPLY).
+
+SUPPLYCONSTRAINT = EMPTY,
+EMPTY = (attemptSupply[c:Colours]->supply[c]->FULL[c]),
+FULL[c:Colours] = (attemptSupply[cNew:Colours]->FULL[c] 
+					| pickupfrom_success['in][c]->EMPTY).
+||SUPPLIER = (SUPPLY||SUPPLYCONSTRAINT).
+
+SCHED = ({A\{yield}}->SCHED | yield->Y),
+Y = ({CA}->SCHED). 
+
+||ENV = (SUPPLIER || PAINT || TOOLS || ARM || SCHED).
+
+OUT_PROTOCOL = (putdownat_success['out]['red] -> putdownat_success['out]['yellow] -> OUT_PROTOCOL).
+
+//DEFINED FLUENTS 
+fluent F_COLOUR_PUT[l:PutLocations][c:Colours] = <putdownat_success[l][c], A\{putdownat_success[l][c]}>
+
+fluent F_FAILURES = <pickupfrom_fail.GetLocations.Colours, A\{pickupfrom_fail.GetLocations.Colours}>
+
+assert FAILURES = F_FAILURES
+
+fluent F_PAINT = <putdownat_success['paint][Colours], putdownat_success['out][Colours]>
+fluent F_HAVE_DRILLED = <ready['drill][Colours], putdownat_success['out][Colours]>
+fluent F_SUPPLY_ATTEMPT[c:Colours] = <attemptSupply[c], A\{attemptSupply[c]}>
+fluent NON_EMPTY_SUPPLY = <supply[Colours], pickupfrom_success['in][Colours]>
+fluent PICKED_IN = <pickupfrom_success['in][Colours], A\{pickupfrom_success['in][Colours]}>
+fluent F_YIELD = <yield, A\{yield}>
+
+ltl_property TOOL_ORDER = [] (F_PAINT -> F_HAVE_DRILLED)
+
+assert TRY_TO_PICK_UP = TRY_PICK_UP['in][c:Colours]
+
+//PICKUP PRECONDITIONS
+fluent TRY_PICK_UP[l:GetLocations][c:Colours] = <pickupfrom[l][c], A\{pickupfrom[l][c]}>
+fluent LOC_FULL[l:Tools][c:Colours] = <putdownat_success[l][c], pickupfrom_success[l][c]>
+fluent LOC_IN_FULL[c:Colours] = <supply[c], pickupfrom_success['in][c]>
+fluent LOC_PAINT_FULL_RED = <{putdownat_success['paint]['red], ready['paint]['red]}, pickupfrom_success['paint]['red]>
+fluent LOC_PAINT_FULL_YELLOW = <putdownat_success['paint]['yellow], {pickupfrom_success['paint]['yellow], ready['paint]['red]}>
+
+set GetLocs = {GetLocations\{in}}
+ltl_property PICK_TOOLS_PRE = forall[t:Tools][c:Colours] [] (TRY_PICK_UP[t][c] -> LOC_FULL[t][c])
+ltl_property PICK_PAINT_YELLOW_PRE = [] (TRY_PICK_UP['paint]['yellow] -> LOC_PAINT_FULL_YELLOW)
+ltl_property PICK_PAINT_RED_PRE = [] (TRY_PICK_UP['paint]['red] -> LOC_PAINT_FULL_RED)
+ltl_property PICK_IN_PRE = forall[c:Colours] [] (TRY_PICK_UP['in][c] -> LOC_IN_FULL[c])
+
+fluent PICK_RSP_TOOLS[l:GetLocations][c:Colours] = <{pickupfrom_success[l][c], pickupfrom_fail[l][c]}, pickupfrom[l][c]> initially 1
+
+assert PICK_RSP_D_Y = PICK_RSP_TOOLS['drill]['yellow]
+assert PICK_RSP_D_R = PICK_RSP_TOOLS['drill]['red]
+
+assert PICK_RSP_P_Y = PICK_RSP_TOOLS['paint]['yellow]
+assert PICK_RSP_P_R = PICK_RSP_TOOLS['paint]['red]
+
+assert PICK_RSP_I_Y = PICK_RSP_TOOLS['in]['yellow]
+assert PICK_RSP_I_R = PICK_RSP_TOOLS['in]['red]
+
+//ltl_property EMPTY_THEN_YELLOW = (EMPTY_SUPPLY -> X F_SUPPLY_YELLOW)
+fluent F_HAVE_DRILLED_C[c:Colours] = <ready['drill][c], putdownat_success['out][c]>
+
+||TEST = (TOOL_ORDER || PICKUP_IF_OBJECT_PRESENT).
+
+||PICKUP_IF_OBJECT_PRESENT = (PICK_IN_PRE || PICK_TOOLS_PRE || PICK_PAINT_YELLOW_PRE ||	PICK_PAINT_RED_PRE).
+
+assert RED_OUT = F_COLOUR_PUT['out]['red]
+assert YELLOW_IN = F_SUPPLY_ATTEMPT['yellow]
+assert RED_IN = F_SUPPLY_ATTEMPT['red]
+//assert ETY = (F_SUPPLY_YELLOW || !PICKED_IN)//(F_SUPPLY_YELLOW || NON_EMPTY_SUPPLY) //(EMPTY_SUPPLY -> X F_SUPPLY_YELLOW)
+assert PI = PICKED_IN
+assert YIELD = F_YIELD
+
+//DEFINED CONTROLLERS
+controller ||C = (ENV)~{Objective}.
+checkCompatibility ||COMP = (ENV)~{Objective}.
+
+//DEFINED GOALS 
+controllerSpec Objective = {
+	safety = {OUT_PROTOCOL,	TOOL_ORDER, PICKUP_IF_OBJECT_PRESENT}
+	failure = {FAILURES}
+	assumption = {YELLOW_IN,RED_IN,YIELD, 
+				PICK_RSP_D_Y, PICK_RSP_D_R, 
+				PICK_RSP_P_Y, PICK_RSP_P_R, 
+				PICK_RSP_I_Y, PICK_RSP_I_R}
+	liveness = {RED_OUT}
+	controllable = {CA}
+}

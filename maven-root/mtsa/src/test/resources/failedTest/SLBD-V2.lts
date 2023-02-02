@@ -1,0 +1,79 @@
+/** Concurrency: State Models and Java Programs
+ *             Jeff Magee and Jeff Kramer
+ *  
+ */
+
+/* Revised Single Lane bridge
+*/
+
+const N = 2// number of each type of car
+range T = 0..N // type of car count
+range ID= 1..N // car identities
+
+const True = 1
+const False = 0
+range B = False..True
+
+set Controllable = {red[ID].request, blue[ID].request}
+set ControllableV2 = {red[ID].enter, blue[ID].enter}
+
+//Involved fluents
+fluent RedPassFluent[i:ID] = <red[i].enter, red[i].exit>
+fluent BluePassFluent[i:ID] = <blue[i].enter, blue[i].exit>
+fluent RedRequestFluent[i:ID] = <red[i].request, red[i].enter>
+fluent BlueRequestFluent[i:ID] = <blue[i].request, blue[i].enter>
+
+//Real assertions
+assert GeneralGoal = (([]<>GoalForBlue) &&  ([]<>GoalForRed))
+
+//Goal assertions
+assert BluePass = exists[i:ID] BluePassFluent[i]
+assert RedPass = exists[i:ID] RedPassFluent[i]
+assert BlueRequest = exists[i:ID] BlueRequestFluent[i]
+assert RedRequest = exists[i:ID] RedRequestFluent[i]
+assert GoalForBlue = (BluePass || !BlueRequest)
+assert GoalForRed = (RedPass || !RedRequest)
+
+//Goal definition
+controllerSpec G1 = {
+safety = {}
+assumption = {} 
+liveness = {GoalForRed, GoalForBlue}
+controllable = {ControllableV2}
+}
+
+controller ||CSLB = SingleLaneBridge~{G1}.
+
+BRIDGE = BRIDGE[0][0],
+BRIDGE[nr:T][nb:T] =
+		(red[ID].request -> BRIDGE[nr][nb]
+		|red[ID].enter  -> BRIDGE[nr+1][nb]
+        |red[ID].exit     -> BRIDGE[nr-1][nb]
+        |blue[ID].request -> BRIDGE[nr][nb]
+        |blue[ID].enter -> BRIDGE[nr][nb+1] 
+        |blue[ID].exit    -> BRIDGE[nr][nb-1]
+	).
+
+CAR = (request->enter->exit->CAR).
+
+/* cars may not overtake each other */
+NOPASS1   = C[1],
+C[i:ID]   = ([i].enter -> C[i%N+1]).
+
+NOPASS2   = C[1],
+C[i:ID]   = ([i].exit -> C[i%N+1]).
+
+||CONVOY = ([ID]:CAR || NOPASS1 || NOPASS2).
+
+||SingleLaneBridge = (red:CONVOY||blue:CONVOY|| BRIDGE || ONEWAY ).
+
+property ONEWAY = (red[ID].enter -> EASTBOUND[1] 
+		  | blue.[ID].enter ->WESTBOUND[1]),
+EASTBOUND[i:ID] = (when(i<N) red[ID].enter -> EASTBOUND[i+1]
+                  |when(i==1)red[ID].exit  -> ONEWAY
+                  |when( i>1)red[ID].exit  -> EASTBOUND[i-1]
+                  ),
+WESTBOUND[i:ID] = (when(i<N) blue[ID].enter -> WESTBOUND[i+1]
+                  |when(i==1)blue[ID].exit  -> ONEWAY
+                  |when( i>1)blue[ID].exit  -> WESTBOUND[i-1]
+                  ).

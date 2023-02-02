@@ -1,0 +1,335 @@
+//PCarLTL_V_1.0_866_PCar_fixed automatically_translated 
+
+set ControlledActions = {throttle.fwd, throttle.bwd, throttle.stop, throttle.blocking_bwd, throttle.blocking_fwd, steer.right, steer.left, steer.center, steer.easy_right, steer.easy_left, parkcommand.start, parkcommand.stop, parkcommand.check, policy.seeking, policy.measuring, policy.parking_0, policy.parking_1, policy.parking_2, policy.parked, tick, env_constraint[1722].respondsto.responded, not_env_constraint[1722].respondsto.responded, prev_1702_130, not_prev_1702_130, prev_1702_131, not_prev_1702_131, prev_1703_132, not_prev_1703_132, prev_1704_133, not_prev_1704_133, prev_1712_134, not_prev_1712_134, prev_1712_135, not_prev_1712_135}
+set UncontrolledActions = {obstacle.clear, obstacle.blocked, sidesense.close, sidesense.centered, sidesense.far, sidesense.close_parking, sidesense.parallel_parking, sidesense.perpendicular, parkresult.na, parkresult.parallel, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Obstacle_Actions = {obstacle.clear, obstacle.blocked}
+fluent OBSTACLE_CLEAR = <obstacle.clear, Obstacle_Actions\{obstacle.clear}>
+fluent OBSTACLE_BLOCKED = <obstacle.blocked, Obstacle_Actions\{obstacle.blocked}>
+
+set SideSense_Actions = {sidesense.close, sidesense.centered, sidesense.far, sidesense.close_parking, sidesense.parallel_parking, sidesense.perpendicular}
+fluent SIDESENSE_CLOSE = <sidesense.close, SideSense_Actions\{sidesense.close}>
+fluent SIDESENSE_CENTERED = <sidesense.centered, SideSense_Actions\{sidesense.centered}>
+fluent SIDESENSE_FAR = <sidesense.far, SideSense_Actions\{sidesense.far}>
+fluent SIDESENSE_CLOSE_PARKING = <sidesense.close_parking, SideSense_Actions\{sidesense.close_parking}>
+fluent SIDESENSE_PARALLEL_PARKING = <sidesense.parallel_parking, SideSense_Actions\{sidesense.parallel_parking}>
+fluent SIDESENSE_PERPENDICULAR = <sidesense.perpendicular, SideSense_Actions\{sidesense.perpendicular}>
+
+set ParkResult_Actions = {parkresult.na, parkresult.parallel}
+fluent PARKRESULT_NA = <parkresult.na, ParkResult_Actions\{parkresult.na}>
+fluent PARKRESULT_PARALLEL = <parkresult.parallel, ParkResult_Actions\{parkresult.parallel}>
+
+set Throttle_Actions = {throttle.fwd, throttle.bwd, throttle.stop, throttle.blocking_bwd, throttle.blocking_fwd}
+fluent THROTTLE_FWD = <throttle.fwd, Throttle_Actions\{throttle.fwd}>
+fluent THROTTLE_BWD = <throttle.bwd, Throttle_Actions\{throttle.bwd}>
+fluent THROTTLE_STOP = <throttle.stop, Throttle_Actions\{throttle.stop}>
+fluent THROTTLE_BLOCKING_BWD = <throttle.blocking_bwd, Throttle_Actions\{throttle.blocking_bwd}>
+fluent THROTTLE_BLOCKING_FWD = <throttle.blocking_fwd, Throttle_Actions\{throttle.blocking_fwd}>
+
+set Steer_Actions = {steer.right, steer.left, steer.center, steer.easy_right, steer.easy_left}
+fluent STEER_RIGHT = <steer.right, Steer_Actions\{steer.right}>
+fluent STEER_LEFT = <steer.left, Steer_Actions\{steer.left}>
+fluent STEER_CENTER = <steer.center, Steer_Actions\{steer.center}>
+fluent STEER_EASY_RIGHT = <steer.easy_right, Steer_Actions\{steer.easy_right}>
+fluent STEER_EASY_LEFT = <steer.easy_left, Steer_Actions\{steer.easy_left}>
+
+set ParkCommand_Actions = {parkcommand.start, parkcommand.stop, parkcommand.check}
+fluent PARKCOMMAND_START = <parkcommand.start, ParkCommand_Actions\{parkcommand.start}>
+fluent PARKCOMMAND_STOP = <parkcommand.stop, ParkCommand_Actions\{parkcommand.stop}>
+fluent PARKCOMMAND_CHECK = <parkcommand.check, ParkCommand_Actions\{parkcommand.check}>
+
+set Policy_Actions = {policy.seeking, policy.measuring, policy.parking_0, policy.parking_1, policy.parking_2, policy.parked}
+fluent POLICY_SEEKING = <policy.seeking, Policy_Actions\{policy.seeking}>
+fluent POLICY_MEASURING = <policy.measuring, Policy_Actions\{policy.measuring}>
+fluent POLICY_PARKING_0 = <policy.parking_0, Policy_Actions\{policy.parking_0}>
+fluent POLICY_PARKING_1 = <policy.parking_1, Policy_Actions\{policy.parking_1}>
+fluent POLICY_PARKING_2 = <policy.parking_2, Policy_Actions\{policy.parking_2}>
+fluent POLICY_PARKED = <policy.parked, Policy_Actions\{policy.parked}>
+
+set ENV_CONSTRAINT_1722_respondsTo_responded_Actions = {env_constraint[1722].respondsto.responded, not_env_constraint[1722].respondsto.responded}
+fluent ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED = <env_constraint[1722].respondsto.responded, ENV_CONSTRAINT_1722_respondsTo_responded_Actions\{env_constraint[1722].respondsto.responded}>
+
+set PREV_1702_130_Actions = {prev_1702_130, not_prev_1702_130}
+fluent PREV_1702_130 = <prev_1702_130, PREV_1702_130_Actions\{prev_1702_130}>
+
+set PREV_1702_131_Actions = {prev_1702_131, not_prev_1702_131}
+fluent PREV_1702_131 = <prev_1702_131, PREV_1702_131_Actions\{prev_1702_131}>
+
+set PREV_1703_132_Actions = {prev_1703_132, not_prev_1703_132}
+fluent PREV_1703_132 = <prev_1703_132, PREV_1703_132_Actions\{prev_1703_132}>
+
+set PREV_1704_133_Actions = {prev_1704_133, not_prev_1704_133}
+fluent PREV_1704_133 = <prev_1704_133, PREV_1704_133_Actions\{prev_1704_133}>
+
+set PREV_1712_134_Actions = {prev_1712_134, not_prev_1712_134}
+fluent PREV_1712_134 = <prev_1712_134, PREV_1712_134_Actions\{prev_1712_134}>
+
+set PREV_1712_135_Actions = {prev_1712_135, not_prev_1712_135}
+fluent PREV_1712_135 = <prev_1712_135, PREV_1712_135_Actions\{prev_1712_135}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && POLICY_SEEKING))
+minimal || Initial_0_min =  Initial_0.
+//property divided into 1 subproperties.
+ltl_property Initial_1 = (!tick W (tick && ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED))
+minimal || Initial_1_min =  Initial_1.
+//property divided into 1 subproperties.
+ltl_property Initial_2 = (!tick W (tick && !PREV_1702_130))
+minimal || Initial_2_min =  Initial_2.
+//property divided into 1 subproperties.
+ltl_property Initial_3 = (!tick W (tick && !PREV_1702_131))
+minimal || Initial_3_min =  Initial_3.
+//property divided into 1 subproperties.
+ltl_property Initial_4 = (!tick W (tick && !PREV_1703_132))
+minimal || Initial_4_min =  Initial_4.
+//property divided into 1 subproperties.
+ltl_property Initial_5 = (!tick W (tick && !PREV_1704_133))
+minimal || Initial_5_min =  Initial_5.
+//property divided into 1 subproperties.
+ltl_property Initial_6 = (!tick W (tick && !PREV_1712_134))
+minimal || Initial_6_min =  Initial_6.
+//property divided into 1 subproperties.
+ltl_property Initial_7 = (!tick W (tick && !PREV_1712_135))
+minimal || Initial_7_min =  Initial_7.
+//property divided into 1 subproperties.
+constraint Initial_8 = (!tock W (tock && (SIDESENSE_CENTERED && PARKRESULT_NA)))
+minimal || Initial_8_min =  Initial_8.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min ||  Initial_1_min ||  Initial_2_min ||  Initial_3_min ||  Initial_4_min ||  Initial_5_min ||  Initial_6_min ||  Initial_7_min ||  Initial_8_min).
+
+
+
+//property divided into 1 subproperties.
+assert G_l0 = (tick && POLICY_PARKED)
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> (POLICY_SEEKING -> ((X(!tick W (tick && POLICY_SEEKING)) || X(!tick W (tick && POLICY_MEASURING))) || X(!tick W (tick && POLICY_PARKING_0)))))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> (POLICY_SEEKING -> ((THROTTLE_FWD || THROTTLE_STOP) || THROTTLE_BWD)))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+ltl_property G2 = [](tick -> (POLICY_MEASURING -> ((X(!tick W (tick && POLICY_SEEKING)) || X(!tick W (tick && POLICY_MEASURING))) || X(!tick W (tick && POLICY_PARKING_0)))))
+minimal ||G2_min = G2.
+
+//property divided into 1 subproperties.
+ltl_property G3 = [](tick -> (POLICY_MEASURING -> ((!THROTTLE_BLOCKING_BWD && !PARKCOMMAND_START) && ((STEER_CENTER || STEER_EASY_LEFT) || STEER_EASY_RIGHT))))
+minimal ||G3_min = G3.
+
+//property divided into 1 subproperties.
+ltl_property G4 = [](tick -> (POLICY_PARKING_0 -> X(!tick W (tick && POLICY_PARKING_1))))
+minimal ||G4_min = G4.
+
+//property divided into 1 subproperties.
+ltl_property G5 = [](tick -> (POLICY_PARKING_1 -> X(!tick W (tick && POLICY_PARKING_2))))
+minimal ||G5_min = G5.
+
+//property divided into 1 subproperties.
+ltl_property G6 = [](tick -> (POLICY_PARKING_2 -> X(!tick W (tick && POLICY_PARKED))))
+minimal ||G6_min = G6.
+
+//property divided into 1 subproperties.
+ltl_property G7 = [](tick -> (POLICY_PARKED -> X(!tick W (tick && POLICY_PARKED))))
+minimal ||G7_min = G7.
+
+//property divided into 1 subproperties.
+ltl_property G8 = [](tick -> (((OBSTACLE_CLEAR && POLICY_SEEKING) && PARKRESULT_NA) -> THROTTLE_FWD))
+minimal ||G8_min = G8.
+
+//property divided into 1 subproperties.
+ltl_property G9 = [](tick -> ((OBSTACLE_BLOCKED && (POLICY_SEEKING || POLICY_MEASURING)) -> ((X(!tick W (tick && POLICY_SEEKING)) && !((THROTTLE_FWD || THROTTLE_BLOCKING_FWD) || THROTTLE_BLOCKING_BWD)) && !(STEER_EASY_RIGHT || STEER_EASY_LEFT))))
+minimal ||G9_min = G9.
+
+//property divided into 1 subproperties.
+ltl_property G10 = [](tick -> (OBSTACLE_BLOCKED -> PARKCOMMAND_STOP))
+minimal ||G10_min = G10.
+
+//property divided into 1 subproperties.
+ltl_property G11 = [](tick -> ((POLICY_SEEKING && PARKRESULT_NA) -> !THROTTLE_STOP))
+minimal ||G11_min = G11.
+
+//property divided into 1 subproperties.
+ltl_property G12 = [](tick -> (((POLICY_SEEKING && OBSTACLE_CLEAR) && SIDESENSE_CLOSE) -> STEER_EASY_LEFT))
+minimal ||G12_min = G12.
+
+//property divided into 1 subproperties.
+ltl_property G13 = [](tick -> (((POLICY_SEEKING && OBSTACLE_CLEAR) && SIDESENSE_FAR) -> STEER_EASY_RIGHT))
+minimal ||G13_min = G13.
+
+//property divided into 1 subproperties.
+ltl_property G14 = [](tick -> ((((POLICY_SEEKING && OBSTACLE_CLEAR) && SIDESENSE_CENTERED) && (PREV_1702_130 && PREV_1702_131)) -> STEER_CENTER))
+minimal ||G14_min = G14.
+
+//property divided into 1 subproperties.
+ltl_property G15 = [](tick -> ((((POLICY_SEEKING && OBSTACLE_CLEAR) && PREV_1703_132) && SIDESENSE_CENTERED) -> (STEER_EASY_LEFT && X(!tick W (tick && STEER_CENTER)))))
+minimal ||G15_min = G15.
+
+//property divided into 1 subproperties.
+ltl_property G16 = [](tick -> ((((POLICY_SEEKING && OBSTACLE_CLEAR) && PREV_1704_133) && SIDESENSE_CENTERED) -> (STEER_EASY_RIGHT && X(!tick W (tick && STEER_CENTER)))))
+minimal ||G16_min = G16.
+
+//property divided into 1 subproperties.
+ltl_property G17 = [](tick -> (((POLICY_MEASURING && OBSTACLE_CLEAR) && SIDESENSE_CLOSE_PARKING) -> STEER_EASY_LEFT))
+minimal ||G17_min = G17.
+
+//property divided into 1 subproperties.
+ltl_property G18 = [](tick -> (((POLICY_MEASURING && OBSTACLE_CLEAR) && SIDESENSE_PERPENDICULAR) -> STEER_EASY_RIGHT))
+minimal ||G18_min = G18.
+
+//property divided into 1 subproperties.
+ltl_property G19 = [](tick -> (((POLICY_MEASURING && OBSTACLE_CLEAR) && SIDESENSE_PARALLEL_PARKING) -> STEER_CENTER))
+minimal ||G19_min = G19.
+
+//property divided into 1 subproperties.
+ltl_property G20 = [](tick -> (((!POLICY_SEEKING || ((!SIDESENSE_CLOSE && !SIDESENSE_CENTERED) && !SIDESENSE_FAR)) || !PARKRESULT_NA) || ((((X(!tick W (tick && (!POLICY_MEASURING))) || POLICY_MEASURING) && (!POLICY_MEASURING || X(!tick W (tick && (POLICY_MEASURING))))) && ((X(!tick W (tick && (!POLICY_PARKED))) || POLICY_PARKED) && (!POLICY_PARKED || X(!tick W (tick && (POLICY_PARKED))))) && ((X(!tick W (tick && (!POLICY_PARKING_0))) || POLICY_PARKING_0) && (!POLICY_PARKING_0 || X(!tick W (tick && (POLICY_PARKING_0))))) && ((X(!tick W (tick && (!POLICY_PARKING_1))) || POLICY_PARKING_1) && (!POLICY_PARKING_1 || X(!tick W (tick && (POLICY_PARKING_1))))) && ((X(!tick W (tick && (!POLICY_PARKING_2))) || POLICY_PARKING_2) && (!POLICY_PARKING_2 || X(!tick W (tick && (POLICY_PARKING_2))))) && ((X(!tick W (tick && (!POLICY_SEEKING))) || POLICY_SEEKING) && (!POLICY_SEEKING || X(!tick W (tick && (POLICY_SEEKING)))))) && PARKCOMMAND_STOP)))
+minimal ||G20_min = G20.
+
+//property divided into 1 subproperties.
+ltl_property G21 = [](tick -> (((POLICY_SEEKING && !((SIDESENSE_CLOSE || SIDESENSE_CENTERED) || SIDESENSE_FAR)) && OBSTACLE_CLEAR) -> (((X(!tick W (tick && POLICY_MEASURING)) && THROTTLE_FWD) && PARKCOMMAND_START) && STEER_CENTER)))
+minimal ||G21_min = G21.
+
+//property divided into 1 subproperties.
+ltl_property G22 = [](tick -> (((POLICY_MEASURING && ((SIDESENSE_CLOSE || SIDESENSE_CENTERED) || SIDESENSE_FAR)) && PARKRESULT_NA) -> (X(!tick W (tick && POLICY_SEEKING)) && PARKCOMMAND_STOP)))
+minimal ||G22_min = G22.
+
+//property divided into 1 subproperties.
+ltl_property G23 = [](tick -> ((((!POLICY_MEASURING || ((SIDESENSE_CLOSE || SIDESENSE_CENTERED) || SIDESENSE_FAR)) || !OBSTACLE_CLEAR) || !PARKRESULT_NA) || (((((X(!tick W (tick && (!POLICY_MEASURING))) || POLICY_MEASURING) && (!POLICY_MEASURING || X(!tick W (tick && (POLICY_MEASURING))))) && ((X(!tick W (tick && (!POLICY_PARKED))) || POLICY_PARKED) && (!POLICY_PARKED || X(!tick W (tick && (POLICY_PARKED))))) && ((X(!tick W (tick && (!POLICY_PARKING_0))) || POLICY_PARKING_0) && (!POLICY_PARKING_0 || X(!tick W (tick && (POLICY_PARKING_0))))) && ((X(!tick W (tick && (!POLICY_PARKING_1))) || POLICY_PARKING_1) && (!POLICY_PARKING_1 || X(!tick W (tick && (POLICY_PARKING_1))))) && ((X(!tick W (tick && (!POLICY_PARKING_2))) || POLICY_PARKING_2) && (!POLICY_PARKING_2 || X(!tick W (tick && (POLICY_PARKING_2))))) && ((X(!tick W (tick && (!POLICY_SEEKING))) || POLICY_SEEKING) && (!POLICY_SEEKING || X(!tick W (tick && (POLICY_SEEKING)))))) && THROTTLE_FWD) && PARKCOMMAND_CHECK)))
+minimal ||G23_min = G23.
+
+//property divided into 1 subproperties.
+ltl_property G24 = [](tick -> (((((POLICY_MEASURING && SIDESENSE_PARALLEL_PARKING) || ((POLICY_SEEKING && PREV_1712_134) && PREV_1712_135)) && OBSTACLE_CLEAR) && PARKRESULT_PARALLEL) -> ((X(!tick W (tick && POLICY_PARKING_0)) && THROTTLE_BLOCKING_FWD) && PARKCOMMAND_STOP)))
+minimal ||G24_min = G24.
+
+//property divided into 1 subproperties.
+ltl_property G25 = [](tick -> (POLICY_PARKING_0 -> (((X(!tick W (tick && POLICY_PARKING_1)) && THROTTLE_STOP) && STEER_CENTER) && PARKCOMMAND_STOP)))
+minimal ||G25_min = G25.
+
+//property divided into 1 subproperties.
+ltl_property G26 = [](tick -> (POLICY_PARKING_1 -> (((X(!tick W (tick && POLICY_PARKING_2)) && THROTTLE_BLOCKING_BWD) && STEER_RIGHT) && PARKCOMMAND_STOP)))
+minimal ||G26_min = G26.
+
+//property divided into 1 subproperties.
+ltl_property G27 = [](tick -> (POLICY_PARKING_2 -> (((X(!tick W (tick && POLICY_PARKED)) && THROTTLE_BLOCKING_BWD) && STEER_LEFT) && PARKCOMMAND_STOP)))
+minimal ||G27_min = G27.
+
+//property divided into 1 subproperties.
+ltl_property G28 = [](tick -> (!POLICY_PARKED || ((((((X(!tick W (tick && (!POLICY_MEASURING))) || POLICY_MEASURING) && (!POLICY_MEASURING || X(!tick W (tick && (POLICY_MEASURING))))) && ((X(!tick W (tick && (!POLICY_PARKED))) || POLICY_PARKED) && (!POLICY_PARKED || X(!tick W (tick && (POLICY_PARKED))))) && ((X(!tick W (tick && (!POLICY_PARKING_0))) || POLICY_PARKING_0) && (!POLICY_PARKING_0 || X(!tick W (tick && (POLICY_PARKING_0))))) && ((X(!tick W (tick && (!POLICY_PARKING_1))) || POLICY_PARKING_1) && (!POLICY_PARKING_1 || X(!tick W (tick && (POLICY_PARKING_1))))) && ((X(!tick W (tick && (!POLICY_PARKING_2))) || POLICY_PARKING_2) && (!POLICY_PARKING_2 || X(!tick W (tick && (POLICY_PARKING_2))))) && ((X(!tick W (tick && (!POLICY_SEEKING))) || POLICY_SEEKING) && (!POLICY_SEEKING || X(!tick W (tick && (POLICY_SEEKING)))))) && THROTTLE_STOP) && STEER_CENTER) && PARKCOMMAND_STOP)))
+minimal ||G28_min = G28.
+
+
+//property divided into 2 subproperties.
+ltl_property G29 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED)) || (OBSTACLE_CLEAR || (ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED && !THROTTLE_BWD))))
+minimal ||G29_min = G29.
+ltl_property G30 = [](tick -> ((!OBSTACLE_CLEAR && (!ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED || THROTTLE_BWD)) || X(!tick W (tick && ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED))))
+minimal ||G30_min = G30.
+
+
+//property divided into 2 subproperties.
+ltl_property G31 = [](tick -> (X(!tick W (tick && !PREV_1702_130)) || !SIDESENSE_CLOSE))
+minimal ||G31_min = G31.
+ltl_property G32 = [](tick -> (SIDESENSE_CLOSE || X(!tick W (tick && PREV_1702_130))))
+minimal ||G32_min = G32.
+
+
+//property divided into 2 subproperties.
+ltl_property G33 = [](tick -> (X(!tick W (tick && !PREV_1702_131)) || !SIDESENSE_FAR))
+minimal ||G33_min = G33.
+ltl_property G34 = [](tick -> (SIDESENSE_FAR || X(!tick W (tick && PREV_1702_131))))
+minimal ||G34_min = G34.
+
+
+//property divided into 2 subproperties.
+ltl_property G35 = [](tick -> (X(!tick W (tick && !PREV_1703_132)) || SIDESENSE_FAR))
+minimal ||G35_min = G35.
+ltl_property G36 = [](tick -> (!SIDESENSE_FAR || X(!tick W (tick && PREV_1703_132))))
+minimal ||G36_min = G36.
+
+
+//property divided into 2 subproperties.
+ltl_property G37 = [](tick -> (X(!tick W (tick && !PREV_1704_133)) || SIDESENSE_CLOSE))
+minimal ||G37_min = G37.
+ltl_property G38 = [](tick -> (!SIDESENSE_CLOSE || X(!tick W (tick && PREV_1704_133))))
+minimal ||G38_min = G38.
+
+
+//property divided into 2 subproperties.
+ltl_property G39 = [](tick -> (X(!tick W (tick && !PREV_1712_134)) || SIDESENSE_PARALLEL_PARKING))
+minimal ||G39_min = G39.
+ltl_property G40 = [](tick -> (!SIDESENSE_PARALLEL_PARKING || X(!tick W (tick && PREV_1712_134))))
+minimal ||G40_min = G40.
+
+
+//property divided into 2 subproperties.
+ltl_property G41 = [](tick -> (X(!tick W (tick && !PREV_1712_135)) || POLICY_MEASURING))
+minimal ||G41_min = G41.
+ltl_property G42 = [](tick -> (!POLICY_MEASURING || X(!tick W (tick && PREV_1712_135))))
+minimal ||G42_min = G42.
+
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> ((PREV_1703_132 && SIDESENSE_CENTERED) -> X(!tock W (tock && SIDESENSE_CENTERED))))
+minimal ||A0_min = A0.
+
+//property divided into 1 subproperties.
+constraint A1 = [](tock -> ((PREV_1704_133 && SIDESENSE_CENTERED) -> X(!tock W (tock && SIDESENSE_CENTERED))))
+minimal ||A1_min = A1.
+
+//property divided into 1 subproperties.
+constraint A2 = [](tock -> (POLICY_SEEKING -> X(!tock W (tock && PARKRESULT_NA))))
+minimal ||A2_min = A2.
+
+//property divided into 1 subproperties.
+assert A_l0 = (tock && ((POLICY_MEASURING && PARKRESULT_PARALLEL) && OBSTACLE_CLEAR))
+
+
+//property divided into 1 subproperties.
+constraint A3 = [](tock -> (!THROTTLE_STOP || ((((!OBSTACLE_BLOCKED || X(!tock W (tock && (OBSTACLE_BLOCKED)))) && (X(!tock W (tock && (!OBSTACLE_BLOCKED))) || OBSTACLE_BLOCKED)) && ((!OBSTACLE_CLEAR || X(!tock W (tock && (OBSTACLE_CLEAR)))) && (X(!tock W (tock && (!OBSTACLE_CLEAR))) || OBSTACLE_CLEAR))) && (((!SIDESENSE_CENTERED || X(!tock W (tock && (SIDESENSE_CENTERED)))) && (X(!tock W (tock && (!SIDESENSE_CENTERED))) || SIDESENSE_CENTERED)) && ((!SIDESENSE_CLOSE || X(!tock W (tock && (SIDESENSE_CLOSE)))) && (X(!tock W (tock && (!SIDESENSE_CLOSE))) || SIDESENSE_CLOSE)) && ((!SIDESENSE_CLOSE_PARKING || X(!tock W (tock && (SIDESENSE_CLOSE_PARKING)))) && (X(!tock W (tock && (!SIDESENSE_CLOSE_PARKING))) || SIDESENSE_CLOSE_PARKING)) && ((!SIDESENSE_FAR || X(!tock W (tock && (SIDESENSE_FAR)))) && (X(!tock W (tock && (!SIDESENSE_FAR))) || SIDESENSE_FAR)) && ((!SIDESENSE_PARALLEL_PARKING || X(!tock W (tock && (SIDESENSE_PARALLEL_PARKING)))) && (X(!tock W (tock && (!SIDESENSE_PARALLEL_PARKING))) || SIDESENSE_PARALLEL_PARKING)) && ((!SIDESENSE_PERPENDICULAR || X(!tock W (tock && (SIDESENSE_PERPENDICULAR)))) && (X(!tock W (tock && (!SIDESENSE_PERPENDICULAR))) || SIDESENSE_PERPENDICULAR))))))
+minimal ||A3_min = A3.
+
+//property divided into 1 subproperties.
+assert A_l1 = (tock && ENV_CONSTRAINT_1722_RESPONDSTO_RESPONDED)
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min || A1_min || A2_min || A3_min || G0_min || G1_min || G2_min || G3_min || G4_min || G5_min || G6_min || G7_min || G8_min || G9_min || G10_min || G11_min || G12_min || G13_min || G14_min || G15_min || G16_min || G17_min || G18_min || G19_min || G20_min || G21_min || G22_min || G23_min || G24_min || G25_min || G26_min || G27_min || G28_min || G29_min || G30_min || G31_min || G32_min || G33_min || G34_min || G35_min || G36_min || G37_min || G38_min || G39_min || G40_min || G41_min || G42_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l0, A_l1, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l0 && []<>A_l1 && A_clock) -> ([]<>G_l0))
+assert ASM =   ([]<>A_l0 && []<>A_l1 && A_clock)
+assert GNT = ([]<>G_l0)
+progress Time  = {tick}

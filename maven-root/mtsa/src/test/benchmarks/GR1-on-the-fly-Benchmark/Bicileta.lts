@@ -1,0 +1,59 @@
+const MaxRow = 30
+const MaxCol  = 30
+const Initial_V_x = 1
+const Initial_V_y = 1
+const TurnsBeforeSlip = 3
+
+range Rows = 0..MaxRow
+range Cols = 0..MaxCol
+
+set ControlledActions = {up,down,left,right,pick,put}
+set MonitoredActions = {b_up,b_left,b_right,b_down,skip}
+set AllDomainActions = {ControlledActions, MonitoredActions, crash}
+
+Vehicle = V[Initial_V_x][Initial_V_y],
+V[p:Rows][q:Cols] = ({up,b_up} -> V[p+1][q] |
+					 {down,b_down} -> V[p-1][q] |
+					 {right,b_right} -> V[p][q+1] |
+					 {left,b_left} -> V[p][q-1] |
+					 when (p == 3 && q == 3) crash -> STOP |
+					 when (p == 1 && q == 1) pick -> V[p][q] |
+					 when (p== 5 && q == 5) put -> V[p][q] |
+					 skip -> V[p][q]).
+//V[i][j] with i or j out of rows and cols is automatically an ERROR.
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions} -> Controller[i-1]),
+Controller[0] = ({MonitoredActions} -> Controller[N]).
+
+PickPut = (pick -> put -> PickPut).
+
+||Env = (PickPut || Vehicle ||  Turns(TurnsBeforeSlip)).
+
+/*
+// Goal: Avoid[NoiseDisplay] (G1)
+assert Avoid_Crash_Assert = [](!crash)
+fluent Crash_Fluent = <crash, AllDomainActions\{crash}>
+ltl_property Avoid_Crash = [] (!Crash_Fluent)
+|| G1 = Avoid_Crash.
+*/
+
+fluent Put_Fluent = <put, AllDomainActions\{put}>
+assert G2 = (Put_Fluent)
+
+
+progress PICK = {pick}
+
+controllerSpec SPEC = {
+       safety = {}
+       // assumption = {UserNotRegretInfinitely}
+       liveness = {G2}
+
+       controllable = {ControlledActions}
+}
+
+assert Check = ([]<>G2)
+controller || Control = (Env)~{SPEC}.
+
+||System = (Control || Env).
+

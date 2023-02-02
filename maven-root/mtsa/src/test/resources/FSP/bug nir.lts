@@ -1,0 +1,4 @@
+M = (a?->(c->M|b->M)).
+||Model = M.
+fluent F_b = <b, {a,c}>
+assert P = []<>F_b

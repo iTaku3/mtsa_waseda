@@ -1,0 +1,118 @@
+set AlphaLib = {lib.{login, logout, search, searchOk, searchFail, order, orderOk, orderFail}}
+set AlphaPay = {pay.{login, logout, pay, payOk, payFail}}
+set AlphaCWS = {cws.{login, logout, getBook, gotBook, loginOk, logoutOk}}
+set Failureset = {lib.{searchFail, orderFail}, pay.{payFail}}
+set Controllable = {AlphaLib\{lib.{searchOk, searchFail, orderOk, orderFail}}, 
+					AlphaPay\{pay.{payFail, payOk}}, cws.{gotBook, loginOk, logoutOk}}
+set A = {AlphaLib, AlphaPay, AlphaCWS}
+
+//environment 
+L = (login->LOGGED_IN),
+LOGGED_IN = (logout->L | search->SEARCHING),
+SEARCHING = (searchOk->order->ORDERING | searchFail->LOGGED_IN),
+ORDERING = (orderOk->LOGGED_IN | orderFail->LOGGED_IN).
+||LIB = (lib:L).
+
+P = (login->LOGGED_IN),
+LOGGED_IN = (logout->P | pay->PAYING), 
+PAYING = (payOk->LOGGED_IN | payFail->LOGGED_IN ).
+||PAY = (pay:P).
+
+C = (login->loginOk->LoggedIn),
+LoggedIn = (logout->logoutOk->C | getBook->gotBook->LoggedIn).
+||CWS = (cws:C).
+
+||ENV = (PAY || LIB || CWS).
+
+//fluents 
+fluent F_Failures = <Failureset, A\{Failureset}>
+fluent F_BothLogin = <{{lib, pay}.{login}}, A\{{lib, pay}.{login}}>
+fluent F_BothLogout = <{{lib, pay}.{logout}}, A\{{lib, pay}.{logout}}>
+
+fluent F_CWSLoggedOut = <cws.logoutOk, cws.loginOk>
+fluent F_CWSTryingLogout = <cws.logout, cws.logoutOk>
+fluent F_CWSTryLogout = <cws.logout, A\{cws.logout}>
+fluent F_CWSLogoutOk = <cws.logoutOk, A\{cws.logoutOk}>
+
+fluent F_CWSLoggedIn = <cws.loginOk, cws.logoutOk>
+fluent F_CWSTryingLogin = <cws.login, cws.loginOk>
+fluent F_CWSTryLogin = <cws.login, A\{cws.login}>
+fluent F_CWSLoginOk = <cws.loginOk, A\{cws.loginOk}>
+
+fluent F_LibLoggedIn = <lib.login, lib.logout>
+fluent F_PayLoggedIn = <pay.login, pay.logout>
+
+fluent F_LibLoggedOut = <lib.logout, lib.login>
+fluent F_PayLoggedOut = <pay.logout, pay.login>
+
+fluent F_CWSGetBook = <cws.getBook, A\{cws.getBook}>
+fluent F_GotBook = <cws.gotBook, A\{cws.gotBook}>
+
+fluent F_GettingBook = <cws.getBook, cws.gotBook>
+fluent F_ProsessingGetBook = <cws.getBook, cws.gotBook>
+fluent F_Pay = <pay.pay, A\{pay.pay}>
+fluent F_Ordered = <lib.order, {lib.{search, logout}}>
+
+fluent F_Search = <lib.search, A\{lib.search}>
+//fluent F_OrderPending = <lib.order, cws.gotBook>
+fluent F_OrderedOk = <lib.orderOk, cws.gotBook>
+
+fluent F_PaidOk = <pay.payOk, cws.getBook>//pay.logout>
+fluent F_PayPending = <lib.orderOk, pay.payOk>
+
+PAYMENT = NOT_PENDING,
+NOT_PENDING = (lib.orderOk->PENDING | {{A}\{lib.orderOk, pay.pay}}->NOT_PENDING | pay.pay->ERROR ),
+PENDING = ({{A}\{pay.payOk}}->PENDING | pay.payOk->NOT_PENDING).
+||A = GetOnlyIfLoggedIn.
+
+//safety
+ltl_property CWSLogInOk = [](F_CWSLoginOk->(F_LibLoggedIn && F_PayLoggedIn))
+ltl_property CWSLogOutOk = [](F_CWSLogoutOk->(F_LibLoggedOut && F_PayLoggedOut))
+ltl_property Logins = [](F_BothLogin -> F_CWSTryingLogin)
+ltl_property Logouts = [](F_BothLogout -> F_CWSTryingLogout)
+
+ltl_property PayIfOrdered = [](F_Pay -> (F_PayPending))
+ltl_property SearchIfLoggedIn = [](F_Search -> (!F_OrderedOk && F_LibLoggedIn && F_PayLoggedIn))
+ltl_property GetBookProcess = [](F_Search-> F_ProsessingGetBook)
+ltl_property GetOnlyIfLoggedIn = [](F_CWSGetBook -> F_CWSLoggedIn) //this is redundant
+ltl_property GotBookOnlyIfPaid = [](F_GotBook -> F_PaidOk)
+
+
+assert GotBook = F_GotBook
+assert GettingBook = F_GettingBook
+assert LoggedIn = F_CWSLoggedIn
+assert LoggedInAndGettingBooks = (GettingBook && LoggedIn)
+assert Failures = F_Failures
+
+//controllers
+controller ||C = (PAY || LIB || CWS)~{G1}.
+checkCompatibility ||Compatible = (PAY || LIB || CWS)~{G1}.
+
+//controllerSpecs
+controllerSpec G1 = {
+       safety = {Logins, Logouts, SearchIfLoggedIn, GetBookProcess, 
+				GotBookOnlyIfPaid, PAYMENT, CWSLogInOk, CWSLogOutOk}
+       failure = {Failures}
+       assumption = {LoggedInAndGettingBooks}
+       liveness = {GotBook}
+       controllable = {Controllable}
+}
+
+/*
+controller ||Comp = (PAY || LIB || CWS)~{G_Comp}. 
+controllerSpec G_Comp = {
+       safety = {Logins, Logouts, SearchIfLoggedIn, 
+				GetBookProcess, GotBookOnlyIfPaid, GetOnlyIfLoggedIn,
+				PAYMENT}
+//       failure = {Failures}
+       assumption = {GettingBook}
+       liveness = {FALSE}
+       controllable = {Controllable2}
+}
+assert FALSE = (F_Pay && !F_Pay)
+set Controllable2 = {Failureset, Controllable}
+*/
+
+//testing
+||AnalysedEnv = (PAY || LIB || CWS || Logins || Logouts || PayIfOrdered || SearchIfLoggedIn 
+			|| GetBookProcess || GotBookOnlyIfPaid || PAYMENT || CWSLogInOk || CWSLogOutOk)>>{Failureset}.

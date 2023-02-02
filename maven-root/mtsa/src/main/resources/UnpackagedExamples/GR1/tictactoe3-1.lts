@@ -1,0 +1,143 @@
+// TICTACTOE or noughts and crosses
+/* Board squares are numbered:
+   	0,0 1,0 2,0
+	0,1 1,1 2,1
+	0,2 1,2 2,2
+*/
+// 0 for nought 1 for cross
+
+range R = 0..2
+set PlacesO = {placeO[R][R]}
+set PlacesX = {placeX[R][R]}
+set Places = {PlacesX,PlacesO}
+set WinsX = {winX.col[R],winX.diag[0][2],winX.diag[2][0],winX.row[R]}
+set WinsO = {winO.col[R],winO.diag[0][2],winO.diag[2][0],winO.row[R]}
+set Wins = {WinsO,WinsX}
+
+CELL(X=0,Y=0) = (clear[X][Y]-> cleared -> ({placeO[X][Y],placeX[X][Y],Wins}->FINISHED)),
+FINISHED = (Wins->FINISHED).
+
+PLAY = XMOVE,
+XMOVE = (placeX[R][R]-> OMOVE),
+OMOVE = (placeO[R][R]-> XMOVE).
+
+WINROW(Y=0)      = COUNT[0],
+COUNT[i:R]    = (placeO[R][Y] -> COUNT[i+1]),
+COUNT[3]         = (winO.row[Y] -> COUNT[3]).
+
+WINCOL(X=0)      = COUNT[0],
+COUNT[i:R]    = (placeO[X][R] ->  COUNT[i+1]),
+COUNT[3]         = (winO.col[X] -> COUNT[3]).
+
+WINDIAG(X1=0,X2=0) = COUNT[0],
+COUNT[i:R]    = (placeO[X1][0] -> COUNT[i+1]  |
+				 placeO[X2][2] -> COUNT[i+1]  |
+				 placeO[1][1] -> COUNT[i+1]),
+COUNT[3]         = (winO.diag[X1][X2] -> COUNT[3]).
+
+DRAW = COUNT[0],
+COUNT[i:0..3]    = (placeO[R][R] -> COUNT[i+1] | placeX[R][R] -> COUNT[i]),
+COUNT[4]         = (draw -> COUNT[4]).
+
+/*
+||CELLS = (forall [i:R]  forall [j:R] CELL(i,j)).
+||WINNER = ( forall [i:R](
+		       WINROW(i)
+		    || WINROW(i)/{placeX/placeO, winX/winO}
+		    || WINCOL(i)
+		    || WINCOL(i)/{placeX/placeO, winX/winO}
+	        )
+	      || WINDIAG(0,2)
+	      || WINDIAG(0,2)/{placeX/placeO, winX/winO}
+	      || WINDIAG(2,0)
+	      || WINDIAG(2,0)/{placeX/placeO, winX/winO}
+         ).
+minimal ||GAME_AUX1 = (CELLS || PLAY || WINNER || DRAW).
+*/
+
+minimal ||GAME_AUX1 = (
+			forall [i:R]  forall [j:R] CELL(i,j) 
+		 || PLAY 
+		 || forall [i:R](
+		 	      WINROW(i)
+		 	   || WINROW(i)/{placeX/placeO, winX/winO}
+		 	   || WINCOL(i)
+			   || WINCOL(i)/{placeX/placeO, winX/winO}
+	  	    )
+	        || WINDIAG(0,2)
+	        || WINDIAG(0,2)/{placeX/placeO, winX/winO}
+	        || WINDIAG(2,0)
+	        || WINDIAG(2,0)/{placeX/placeO, winX/winO}
+		 || DRAW).
+
+
+//minimal ||GAME_AUX2 = (GAME_AUX1)>>{Places}. BUGGY. Need to replace set name with the contents of the set!!!
+
+minimal ||GAME_AUX2 = (GAME_AUX1)>>{placeO[0][0],
+	  placeO[0][1],
+	  placeO[0][2],
+	  placeO[1][0],
+	  placeO[1][1],
+	  placeO[1][2],
+	  placeO[2][0],
+	  placeO[2][1],
+	  placeO[2][2],
+	  placeX[0][0],
+	  placeX[0][1],
+	  placeX[0][2],
+	  placeX[1][0],
+	  placeX[1][1],
+	  placeX[1][2],
+	  placeX[2][0],
+	  placeX[2][1],
+	  placeX[2][2]}.
+
+minimal ||GAME = (GAME_AUX2)>>{draw}.
+
+
+fluent FluentXWins = <WinsX,cleared> initially 0
+ltl_property ODoesNotLose = [](!FluentXWins)
+
+controllerSpec SPEC_SAFE = {
+       safety = {ODoesNotLose}
+       liveness = {}
+		nonblocking 
+       controllable = {PlacesO}
+}
+
+controller ||Control_SAFE = (GAME)~{SPEC_SAFE}.
+minimal ||System_SAFE = (Control_SAFE || GAME)\{cleared}.
+
+fluent FluentOWinsOrDraws = <{WinsO,draw}, cleared> initially 0
+assert OWinsOrDraws = FluentOWinsOrDraws
+
+controllerSpec SPEC_LIVE = {
+       safety = {}
+       liveness = {OWinsOrDraws}
+		nonblocking 
+       controllable = {PlacesO}
+}
+
+controller ||Control_LIVE = (GAME)~{SPEC_LIVE}.
+minimal ||System_LIVE = (Control_LIVE || GAME)\{cleared}.
+
+
+menu RUN = {placeX[0..2][0..2]}
+
+/*
+
+
+
+animation GAME = "xml/tictactoe.xml" target GAME
+      actions {
+          forall[i:{{clear,placeO,placeX}[R][R]}] {[i]/[i]},
+          forall[i:R] { {winO,winX}.col[i]/wincol[i], {winO,winX}.row[i]/winrow[i]},
+          {winO,winX}.diag[0][2]/windiag1,
+          {winO,winX}.diag[2][0]/windiag2
+      }
+      controls {
+          forall[i:{[R][R]}] { {clear[i],placeO[i],placeX[i]}/pressed[i]}
+      }
+*/
+
+

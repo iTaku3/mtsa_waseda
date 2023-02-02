@@ -1,0 +1,103 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set OldControllableActions = {startMission,endMission,go,form4,passivate,dismiss}
+set NewControllableActions = {a,b}
+set OldA = {OldControllableActions, c}
+set NewA = {NewControllableActions, c}
+
+//Old Environment
+	OLD_PLAN = ( startMission -> STARTED),
+	STARTED = (go -> STARTED | endMission -> OLD_PLAN).
+	
+	DIAMOND_FORMATION = (form4 -> PENDING | passivate -> DIAMOND_FORMATION),
+	PENDING = (form4[1] -> FORMED | form4[0] -> DIAMOND_FORMATION | passivate -> DIAMOND_FORMATION),
+	FORMED = (dismiss -> DISMISS_PENDING | passivate -> DIAMOND_FORMATION),
+	DISMISS_PENDING = (dismiss[0] -> FORMED | dismiss[1] -> DIAMOND_FORMATION | passivate -> DIAMOND_FORMATION).
+
+// New Environment
+	NEW_PLAN = ( startMission -> STARTED),
+	STARTED = (go[0..1] -> STARTED | endMission -> NEW_PLAN).
+	
+	DUO_FORMATION(N=2) = (form2[N] -> PENDING[N] | passivate -> DUO_FORMATION[N]),
+	PENDING[N] = (form2[0..1][N] -> FORMED[N] | passivate -> DUO_FORMATION[N]),
+	FORMED[N] = (dismiss[N] -> DISMISS_PENDING[N] | passivate -> DUO_FORMATION[N]),
+	DISMISS_PENDING = (dismiss[0][N] -> FORMED[N] | dismiss[1][N] -> DUO_FORMATION[N] | passivate -> DUO_FORMATION).
+
+||OldEnvironment = (OLD_PLAN || DIAMOND_FORMATION).
+||NewEnvironment = (NEW_PLAN || DUO_FORMATION(1) || DUO_FORMATION(2)).
+
+
+//Fluents declaration
+fluent MissionStarted = <startMission,endMission>
+fluent Formed = <form4[1],{dismiss[1],passivate}>
+fluent Dismissed = <dismiss[1], form4[1]>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert FlyFormed = (go -> Formed)
+assert FormIfMissionStarted = (form4 -> MissionStarted)
+assert DissmissBeforeEnd = (endMission -> Dismissed)
+
+ltl_property P_FlyFormed = []FlyFormed
+ltl_property P_FormIfMissionStarted = []FormIfMissionStarted
+ltl_property P_DissmissBeforeEnd = []DissmissBeforeEnd
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_FlyFormed, P_DissmissBeforeEnd, P_FormIfMissionStarted}
+    controllable = {OldControllableActions}
+}
+/*
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+fluent Formed0 = <form2[1][0],{dismiss[1][0]}>
+
+assert FlyFormed = (go[0] -> Formed)
+assert FormIfMissionStarted = (form4 -> MissionStarted)
+assert DissmissBeforeEnd = (endMission -> Dismissed)
+
+ltl_property P_FlyFormed = []FlyFormed
+ltl_property P_FormIfMissionStarted = []FormIfMissionStarted
+ltl_property P_DissmissBeforeEnd = []DissmissBeforeEnd
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec= {
+    safety = {P_PHI_}
+    controllable = {NewControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+ltl_property T = ()
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = OldEnvironment,
+    hatEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+    // T = True is executed if no transition requirement is set
+	//transition = T,
+	nonblocking,
+    updateFluents = {}
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = ()
+assert S_NEW = ()
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+*/

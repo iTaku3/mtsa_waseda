@@ -1,0 +1,122 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button (||).
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+set OldControllableActions = {shiftX, shiftY, shiftZ, encode, send, receive, decode[2..3], output}
+set NewControllableActions = {shiftX, shiftY, shiftZ, shiftT, encode, send, receive, decode[2..3], output}
+set AlphabetOld = {OldControllableActions}
+set AlphabetNew = {NewControllableActions}
+
+OLD_ENV = SENDER,
+SENDER = (shiftX -> shiftY -> shiftZ -> encode -> send -> RECEIVER),
+RECEIVER = (receive -> decode[2..3] -> output -> SENDER).
+
+NEW_ENV = SENDER,
+SENDER = (shiftX -> shiftY -> shiftZ -> shiftT -> encode -> send -> RECEIVER),
+RECEIVER = (receive -> decode[2..3] -> output -> SENDER).
+
+||OldEnvironment = (OLD_ENV).
+||NewEnvironment = (NEW_ENV).
+
+//Fluents declaration
+fluent ReadX = <shiftX,output>
+fluent ReadY = <shiftY,output>
+fluent ReadZ = <shiftZ,output>
+fluent ReadT = <shiftT,output>
+
+// ---------------------------OLD CONTROLLER SPEC -----------------------------
+
+assert DECODE = (!Decode3_action)
+ltl_property P_DECODE = []DECODE
+
+controllerSpec OldSpec = {
+    safety = {P_DECODE}
+    controllable = {OldControllableActions}
+}
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||OldEnvironmentController = (OldEnvironment || OldController).
+
+// ---------------------------NEW CONTROLLER SPEC -----------------------------
+
+assert NEW_DECODE = (!Decode2_action)
+
+ltl_property P_NEW_DECODE = []NEW_DECODE
+
+controllerSpec NewSpec = {
+    safety = {P_NEW_DECODE}
+    controllable = {NewControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewEnvironmentController = (NewController || NewEnvironment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+
+//Fluents for updates
+fluent EncodeDone = <encode,output>
+fluent Sending = <send,output>
+fluent ReceiveDone = <receive,output>
+fluent Decoded2 = <decode[2],output>
+fluent Decoded3 = <decode[3],output>
+fluent OutputDone = <output,shiftX>
+fluent AlreadyDecoded = <decode[2..3],output>
+
+//Action fluents
+fluent Decode3_action = <decode[3],AlphabetOld\{decode[3]}>
+fluent Decode2_action = <decode[2],AlphabetOld\{decode[2]}>
+fluent ShiftX_action = <shiftX,AlphabetOld\{shiftX}>
+fluent ShiftY_action = <shiftY,AlphabetOld\{shiftY}>
+fluent ShiftZ_action = <shiftZ,AlphabetOld\{shiftZ}>
+fluent ShiftT_action = <shiftT,AlphabetNew\{shiftT}>
+fluent Encode_action = <encode,AlphabetOld\{encode}>
+fluent Send_action = <send,AlphabetOld\{send}>
+fluent Receive_action = <receive,AlphabetOld\{receive}>
+fluent Output_action = <output,AlphabetOld\{output}>
+
+assert AnyAction = (ShiftX_action || ShiftY_action || ShiftZ_action || ShiftT_action || Encode_action ||
+					 Send_action || Receive_action || Decode2_action || Decode3_action || Output_action)
+
+ltl_property T_NO_UPDATE_WHILE_SEND = (Sending -> (!StartNewSpec && !StopOldSpec))
+ltl_property T_NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+
+updatingController UpdCont = { 
+    oldController = OldEnvironmentController,
+    oldEnvironment = OldEnvironment,
+	hatEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec,
+    newGoal = NewSpec,
+//    transition = T_NO_TP,
+	transition = T_NO_UPDATE_WHILE_SEND,
+    nonblocking,
+    updateFluents = {EncodeDone, Sending, ReceiveDone, ReadX, ReadY, Decoded2, Decoded3,
+		 OutputDone, AlreadyDecoded, ReadX, ReadY, ReadZ, ReadT, Decode3_action, Decode2_action}
+    
+}
+
+// ---------------------------TEST AND RESULTS-----------------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert S_OLD = (DECODE)
+assert S_NEW = (NEW_DECODE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert T_NO_UPDATE_WHILE_SEND = [](Sending -> (!startNewSpec && !stopOldSpec))
+
+||UPDATE_CONTROLLER = UpdCont.
+

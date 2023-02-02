@@ -1,0 +1,219 @@
+||LTKS = LTKS.
+
+	LTKS = Q0,
+	Q0	= (reconfigure -> Q1
+		  |in[1] -> Q69),
+	Q1	= (in[1] -> Q36),
+	Q2	= (in[1] -> Q3),
+	Q3	= (matt.paint[1] -> Q4
+		  |varnish[1] -> Q22
+		  |out[1] -> Q32),
+	Q4	= (matt.paintNOk[1] -> Q3 
+		  |matt.paintOk[1] -> Q5),
+	Q5	= (matt.paint[1] -> Q6
+		  |varnish[1] -> Q8
+		  |out[1] -> Q18),
+	Q6	= (matt.{paintNOk, paintOk}[1] -> Q5),
+	Q7	= (matt.{paintNOk, paintOk}[1] -> Q20),
+	Q8	= (varnishNOk[1] -> Q5
+		  |varnishOk[1] -> Q9),
+	Q9	= (matt.paint[1] -> Q10
+		  |varnish[1] -> Q12
+		  |out[1] -> Q14),
+	Q10	= (matt.{paintNOk, paintOk}[1] -> Q9),
+	Q11	= (matt.{paintNOk, paintOk}[1] -> Q16),
+	Q12	= ({varnishNOk, varnishOk}[1] -> Q9),
+	Q13	= ({varnishNOk, varnishOk}[1] -> Q16),
+	Q14	= (reset[1] -> Q1),
+	Q15	= (reset[1] -> Q68),
+	Q16	= (matt.paint[1] -> Q11
+		  |varnish[1] -> Q13
+		  |out[1] -> Q15),
+	Q17	= (varnishOk[1] -> Q16
+		  |varnishNOk[1] -> Q20),
+	Q18	= (reset[1] -> Q1),
+	Q19	= (reset[1] -> Q68),
+	Q20	= (matt.paint[1] -> Q7
+		  |varnish[1] -> Q17
+		  |out[1] -> Q19),
+	Q21	= (matt.paintOk[1] -> Q20
+		  |matt.paintNOk[1] -> Q34),
+	Q22	= (varnishNOk[1] -> Q3
+		  |varnishOk[1] -> Q23),
+	Q23	= (matt.paint[1] -> Q24
+		  |varnish[1] -> Q26
+		  |out[1] -> Q28),
+	Q24	= (matt.paintOk[1] -> Q9
+		  |matt.paintNOk[1] -> Q23),
+	Q25	= (matt.paintOk[1] -> Q16
+		  |matt.paintNOk[1] -> Q30),
+	Q26	= ({varnishNOk, varnishOk}[1] -> Q23),
+	Q27	= ({varnishNOk, varnishOk}[1] -> Q30),
+	Q28	= (reset[1] -> Q1),
+	Q29	= (reset[1] -> Q68),
+	Q30	= (matt.paint[1] -> Q25
+		  |varnish[1] -> Q27
+		  |out[1] -> Q29),
+	Q31	= (varnishOk[1] -> Q30
+		  |varnishNOk[1] -> Q34),
+	Q32	= (reset[1] -> Q1),
+	Q33	= (reset[1] -> Q68),
+	Q34	= (matt.paint[1] -> Q21
+		  |varnish[1] -> Q31
+		  |out[1] -> Q33),
+	Q35	= (in[1] -> Q34),
+	Q36	= (matt.paint[1] -> Q37
+		  |varnish[1] -> Q55
+		  |out[1] -> Q65),
+	Q37	= (matt.paintNOk[1] -> Q36
+		  |matt.paintOk[1] -> Q38),
+	Q38	= (matt.paint[1] -> Q39
+		  |varnish[1] -> Q41
+		  |out[1] -> Q51),
+	Q39	= (matt.{paintNOk, paintOk}[1] -> Q38),
+	Q40	= (matt.{paintNOk, paintOk}[1] -> Q53),
+	Q41	= (varnishNOk[1] -> Q38
+		  |varnishOk[1] -> Q42),
+	Q42	= (matt.paint[1] -> Q43
+		  |varnish[1] -> Q45
+		  |out[1] -> Q47),
+	Q43	= (matt.{paintNOk, paintOk}[1] -> Q42),
+	Q44	= (matt.{paintNOk, paintOk}[1] -> Q49),
+	Q45	= ({varnishNOk, varnishOk}[1] -> Q42),
+	Q46	= ({varnishNOk, varnishOk}[1] -> Q49),
+	Q47	= (reset[1] -> Q1),
+	Q48	= (reset[1] -> Q68),
+	Q49	= (matt.paint[1] -> Q44
+		  |varnish[1] -> Q46
+		  |out[1] -> Q48),
+	Q50	= (varnishOk[1] -> Q49
+		  |varnishNOk[1] -> Q53),
+	Q51	= (reset[1] -> Q1),
+	Q52	= (reset[1] -> Q68),
+	Q53	= (matt.paint[1] -> Q40
+		  |varnish[1] -> Q50
+		  |out[1] -> Q52),
+	Q54	= (matt.paintOk[1] -> Q53
+		  |matt.paintNOk[1] -> Q67),
+	Q55	= (varnishNOk[1] -> Q36
+		  |varnishOk[1] -> Q56),
+	Q56	= (matt.paint[1] -> Q57
+		  |varnish[1] -> Q59
+		  |out[1] -> Q61),
+	Q57	= (matt.paintOk[1] -> Q42
+		  |matt.paintNOk[1] -> Q56),
+	Q58	= (matt.paintOk[1] -> Q49
+		  |matt.paintNOk[1] -> Q63),
+	Q59	= ({varnishNOk, varnishOk}[1] -> Q56),
+	Q60	= ({varnishNOk, varnishOk}[1] -> Q63),
+	Q61	= (reset[1] -> Q1),
+	Q62	= (reset[1] -> Q68),
+	Q63	= (matt.paint[1] -> Q58
+		  |varnish[1] -> Q60
+		  |out[1] -> Q62),
+	Q64	= (varnishOk[1] -> Q63
+		  |varnishNOk[1] -> Q67),
+	Q65	= (reset[1] -> Q1),
+	Q66	= (reset[1] -> Q68),
+	Q67	= (matt.paint[1] -> Q54
+		  |varnish[1] -> Q64
+		  |out[1] -> Q66),
+	Q68	= (in[1] -> Q67),
+	Q69	= (reconfigure -> Q36
+		  |out[1] -> Q70
+		  |glossy.paint[1] -> Q71),
+	Q70	= (reset[1] -> Q0
+		  |reconfigure -> Q65),
+	Q71	= (reconfigure -> Q67
+		  |glossy.paintNOk[1] -> Q69
+		  |glossy.paintOk[1] -> Q72),
+	Q72	= (reconfigure -> Q3
+		  |out[1] -> Q73
+		  |glossy.paint[1] -> Q74),
+	Q73	= (reset[1] -> Q0
+		  |reconfigure -> Q32),
+	Q74	= (reconfigure -> Q34
+		  |glossy.{paintNOk, paintOk}[1] -> Q72).
+
+
+
+
+||LTS = LTS.
+
+LTS = Q0,
+	Q0	= (reconfigure -> Q1
+		  |in[1] -> Q18),
+	Q1	= (in[1] -> Q2),
+	Q2	= (matt.paint[1] -> Q3
+		  |varnish[1] -> Q12
+		  |out[1] -> Q17),
+	Q3	= (matt.paintNOk[1] -> Q2
+		  |matt.paintOk[1] -> Q4),
+	Q4	= (matt.paint[1] -> Q5
+		  |varnish[1] -> Q6
+		  |out[1] -> Q11),
+	Q5	= (matt.{paintNOk, paintOk}[1] -> Q4),
+	Q6	= (varnishNOk[1] -> Q4
+		  |varnishOk[1] -> Q7),
+	Q7	= (matt.paint[1] -> Q8
+		  |varnish[1] -> Q9
+		  |out[1] -> Q10),
+	Q8	= (matt.{paintNOk, paintOk}[1] -> Q7),
+	Q9	= ({varnishNOk, varnishOk}[1] -> Q7),
+	Q10	= (reset[1] -> Q1),
+	Q11	= (reset[1] -> Q1),
+	Q12	= (varnishNOk[1] -> Q2
+		  |varnishOk[1] -> Q13),
+	Q13	= (matt.paint[1] -> Q14
+		  |varnish[1] -> Q15
+		  |out[1] -> Q16),
+	Q14	= (matt.paintOk[1] -> Q7
+		  |matt.paintNOk[1] -> Q13),
+	Q15	= ({varnishNOk, varnishOk}[1] -> Q13),
+	Q16	= (reset[1] -> Q1),
+	Q17	= (reset[1] -> Q1),
+	Q18	= (reconfigure -> Q2
+		  |out[1] -> Q19
+		  |glossy.paint[1] -> Q20),
+	Q19	= (reset[1] -> Q0
+		  |reconfigure -> Q17),
+	Q20	= (reconfigure -> Q2
+		  |glossy.paintNOk[1] -> Q18
+		  |glossy.paintOk[1] -> Q21),
+	Q21	= (reconfigure -> Q22
+		  |out[1] -> Q38
+		  |glossy.paint[1] -> Q39),
+	Q22	= (matt.paint[1] -> Q23
+		  |varnish[1] -> Q32
+		  |out[1] -> Q37),
+	Q23	= (matt.paintNOk[1] -> Q22
+		  |matt.paintOk[1] -> Q24),
+	Q24	= (matt.paint[1] -> Q25
+		  |varnish[1] -> Q26
+		  |out[1] -> Q31),
+	Q25	= (matt.{paintNOk, paintOk}[1] -> Q24),
+	Q26	= (varnishNOk[1] -> Q24
+		  |varnishOk[1] -> Q27),
+	Q27	= (matt.paint[1] -> Q28
+		  |varnish[1] -> Q29
+		  |out[1] -> Q30),
+	Q28	= (matt.{paintNOk, paintOk}[1] -> Q27),
+	Q29	= ({varnishNOk, varnishOk}[1] -> Q27),
+	Q30	= (reset[1] -> Q1),
+	Q31	= (reset[1] -> Q1),
+	Q32	= (varnishNOk[1] -> Q22
+		  |varnishOk[1] -> Q33),
+	Q33	= (matt.paint[1] -> Q34
+		  |varnish[1] -> Q35
+		  |out[1] -> Q36),
+	Q34	= (matt.paintOk[1] -> Q27
+		  |matt.paintNOk[1] -> Q33),
+	Q35	= ({varnishNOk, varnishOk}[1] -> Q33),
+	Q36	= (reset[1] -> Q1),
+	Q37	= (reset[1] -> Q1),
+	Q38	= (reset[1] -> Q0
+		  |reconfigure -> Q37),
+	Q39	= (glossy.{paintNOk, paintOk}[1] -> Q21
+		  |reconfigure -> Q22).
+
+||Compare = (LTS || LTKS).

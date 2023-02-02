@@ -1,0 +1,28 @@
+set Alph = {c1, a, g1, g2}
+set Controllable = {c1, g1, g2}
+
+fluent A = <a, Alph\{a}>
+fluent G1 = <g1, Alph\{g1}>
+fluent G2 = <g2, Alph\{g2}>
+
+assert GG1 = G1
+assert GG2 = G2
+assert As = A
+
+controller ||C = M~{G1}.
+
+controllerSpec G1 = {
+	safety = {}
+    assumption = {As}
+    liveness = {GG1, GG2}
+    controllable = {Controllable}
+}
+
+
+M = (c3->MC3 | c1->MA | c2->A | c3->W),
+W = (w->W),
+A = (a->A),
+MC3 = (l->MC3 | c3->a->MC3),
+MA = (a->MM),
+MM = ({g1,g2}->MA).
+

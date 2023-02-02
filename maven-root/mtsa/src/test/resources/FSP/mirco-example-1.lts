@@ -1,0 +1,10 @@
+set Controlled = {start_action1, start_action2, start_action3}
+
+DOMAIN = (start_action1 -> sensed_event -> FINISH 
+		| start_action2 -> FINISH),
+FINISH = (start_action3 -> DOMAIN).
+
+//fluent STARTED1 = <start_action1, start_action3> //not useful
+fluent STARTED2 = <start_action2, start_action3>
+fluent SENSED = <sensed_event, start_action3>
+//fluent STARTED = <{start_action1,start_action2}, start_action3>

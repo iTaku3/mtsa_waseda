@@ -1,0 +1,7 @@
+A =  ( _menu?[i:0..5] -> ( _tau -> beep -> A | func[j:0..4] -> _tau ->  A ) ) .
+
+B = ( _menu[i:0..0] -> ( _tau -> beep -> B | func[j:0..4] -> _tau ->  B ) ) .
+
+C = ( _menu[i:0..0] -> ( _tau -> beep -> C | func[j:0..4] -> _tau -> _tau ->  C ) ) .
+
+I = ( _menu[i:0..0] -> ( _tau -> beep -> I | func[j:0..4] -> _tau ->  I )  | _menu[i:5..5] -> beep -> I) .

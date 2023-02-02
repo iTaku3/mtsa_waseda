@@ -1,0 +1,92 @@
+const CantPos = 3
+const CantCars = 2
+const CantBalls =2
+const EvilPicks = 1
+const EvilPuts = 0
+range PositionsBall = 0..1
+range Cars = 0..CantCars-1
+range Balls = 0..CantBalls-1
+range Positions = 0..(CantPos-1)
+range PositionsNoBall = 2..(CantPos-1)
+set EvilActions = {magicPick.b[0].p[EvilPicks],
+					magicPut.b[0].p[EvilPuts],
+					magicPick.b[1].p[EvilPicks],
+					magicPut.b[1].p[EvilPuts]}
+set Controllable = {[0].sPut.b[0].p[os:PositionsBall],
+                    [0].sPick.b[0].p[os:PositionsBall],
+                   	[ar:Cars].sMove[p:Positions][p:Positions],
+					[1].sPick.b[1].p[os:PositionsBall],
+					[1].sPut.b[1].p[os:PositionsBall],EvilActions}
+
+
+
+EVIL_BALL(C=1, P=1) 	= IDLE[P], 
+IDLE[pos:PositionsBall] = ([C].sPick.b[C].p[pos] -> [C].ePick.b[C].p[pos] -> PICKED/*[C]*/), 
+PICKED/*[car:Cars]*/	= ([C].sPut.b[C].p[pos:PositionsBall] -> [C].ePut.b[C].p[pos] -> if(pos==EvilPicks) then (magicPick.b[C].p[pos]-> magicPut.b[C].p[EvilPuts]-> IDLE[EvilPuts]) else  IDLE[pos]).
+
+BALL(C=1, P=1) 	= IDLE[P], 
+IDLE[pos:PositionsBall] = ([C].sPick.b[C].p[pos] -> [C].ePick.b[C].p[pos] -> PICKED/*[C]*/), 
+PICKED/*[car:Cars]*/	= ([C].sPut.b[C].p[pos:PositionsBall] -> [C].ePut.b[C].p[pos]-> IDLE[pos]).
+
+VIA(IN=0) = FREE, 
+FREE = ([car:Cars].sMove[(IN+1)%CantPos][IN] -> OCCUPPIED[car] | [car:Cars].sMove[IN][(IN+1+CantPos) % CantPos] -> OCCUPPIED[car]), 
+OCCUPPIED[car:Cars] = ([car].eMove[(IN+1)%CantPos][IN]-> FREE | [car].eMove[IN][(IN+1+CantPos) % CantPos]-> FREE ).
+
+
+CAR(C=0,P=0) = IDLE[P], 
+IDLE[p:PositionsBall] = 
+					([C].sMove[p][(p+1) % CantPos] -> MOVING[p][(p+1) % CantPos] 
+					|[C].sMove[p][(p-1+CantPos) % CantPos] -> MOVING[p][(p-1+CantPos) % CantPos]
+					|[C].sPick.b[C].p[p] -> [C].ePick.b[C].p[p]-> PICK_IDLE[p][C]), 
+IDLE[p:PositionsNoBall] = 
+					([C].sMove[p][(p+1) % CantPos] -> MOVING[p][(p+1) % CantPos] 
+					|[C].sMove[p][(p-1+CantPos) % CantPos] -> MOVING[p][(p-1+CantPos) % CantPos]),
+PICK_IDLE[p:PositionsBall][b:C..C]  = 
+						([C].sMove[p][(p+1) % CantPos] -> MOVING_BALL[p][(p+1) % CantPos][b] 
+						|[C].sMove[p][ (p-1+CantPos) % CantPos] -> MOVING_BALL[p][(p-1+CantPos) % CantPos][b]
+						|[C].sPut.b[b].p[p] -> [C].ePut.b[b].p[p]-> IDLE[p]),
+PICK_IDLE[p:PositionsNoBall][b:C..C]  = 
+						([C].sMove[p][(p+1) % CantPos] -> MOVING_BALL[p][(p+1) % CantPos][b] 
+						|[C].sMove[p][ (p-1+CantPos) % CantPos] -> MOVING_BALL[p][(p-1+CantPos) % CantPos][b]),
+MOVING_BALL[f:Positions][t:Positions][b:C..C] = ([C].eMove[f][t]-> PICK_IDLE[t][b]),
+MOVING[f:Positions][t:Positions] = ([C].eMove[f][t]-> IDLE[t]).
+
+||ENV = (forall[in:Positions] VIA(in) || forall[c:Cars] CAR(c,0) || forall[b:Balls] EVIL_BALL(b,0)).
+
+||CARLOS = (CAR(0,0)).
+
+
+//ltl_property LaBolaEnHuecos = [] forall[os:2..(CantPos-1)] forall[all:Balls] forall[ar:Cars] (![ar].sPut.b[all].p[os])
+
+fluent EnCasillero[ba:Balls][po:Positions] =   <{[ba].ePut.b[ba].p[po],magicPut.b[ba].p[ba]}, {[ba].sPick.b[ba].p[po],magicPick.b[ba].p[ba]}>
+
+fluent EnFinal[ba:Balls]  =   <{[ba].ePut.b[ba].p[1]}, {[ba].sPick.b[ba].p[1],magicPick.b[ba].p[1]}>
+
+//fluent Picking[ba:Balls]  =   <{[ba].sPick.b[ba].p[0]}, {magicPick.b[ba].p[0]}>
+
+fluent Moving[car:Cars][pos:Positions] = <{[car].sMove[pos][(pos-1+CantPos) % CantPos], [car].sMove[pos][(pos+1) % CantPos]},{[car].eMove[pos][(pos-1+CantPos) % CantPos], [car].eMove[pos][(pos+1) % CantPos]}>
+fluent Working[car:Cars][pos:Positions] = <{[car].sPut.b[car].p[pos]},{[car].ePut.b[car].p[pos]}>
+
+
+assert LlevarlasEvil = (forall[ba:Balls] EnFinal[ba])
+assert Llevarlas = (forall[ba:Balls] EnCasillero[ba][0])
+assert Traerlas  = (forall[ba:Balls] EnCasillero[ba][1])
+
+assert KeepMoving = (forall[car:Cars] forall[pos:Positions] Moving[car][pos])
+assert KeepWorking = (forall[car:Cars] forall[pos:PositionsBall] Working[car][pos])
+
+
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	liveness = {LlevarlasEvil/*,Traerlas*/}
+ 	//concurrencyFluents={KeepMoving,KeepWorking}
+	lazyness=1
+	non_transient
+	controllable = {Controllable}
+}

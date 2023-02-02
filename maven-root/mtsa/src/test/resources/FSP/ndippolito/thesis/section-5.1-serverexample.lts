@@ -1,0 +1,22 @@
+set A = {req, resp1, resp2, ping}
+set Controllable = {resp1,resp2}
+
+SERVER = (req->RESP), 
+RESP = ({resp1,resp2}->SERVER). 
+PING = (ping?->PING).
+||D = (SERVER || PING).
+
+controller ||C = D~{G1}.
+
+fluent F_RESP1 = <resp1, A\{resp1}>
+fluent F_RESP2 = <resp2, A\{resp2}>
+
+assert RESP1 = F_RESP1
+assert RESP2 = F_RESP2
+
+
+//controllerSpecs
+controllerSpec G1 = {
+       liveness = {RESP1, RESP2}
+       controllable = {Controllable}
+}

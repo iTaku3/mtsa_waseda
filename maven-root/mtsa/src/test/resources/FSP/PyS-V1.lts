@@ -1,0 +1,113 @@
+set User = {usrReq, offerRcvd, notAvail, usrAck, usrNack, respOk, respFail}
+set Producer = {prodInfoReq, infoRcvd, prodNotAvail, prodReq, prodCancel, prodOk, prodFail}
+set Shipper = {shipInfoReq, costAndTime, shipNotAvail, shipReq, shipCancel, shipOk, shipFail}
+set Controllable = {prodInfoReq, prodReq, prodCancel, shipInfoReq, shipReq, shipCancel, respOk, respFail, offerRcvd, notAvail}
+set FailureSet = {prodNotAvail, prodFail, shipNotAvail, shipFail}
+set A = {User, Producer, Shipper}
+
+PRODUCER = (prodInfoReq->REQUESTED), 
+REQUESTED = (infoRcvd->ORDER_PENDING | prodNotAvail->PRODUCER),
+ORDER_PENDING = (prodReq->PRODUCING | prodCancel->PRODUCER),
+PRODUCING = (prodOk->PRODUCER | prodFail->PRODUCER).
+
+SHIPPER = (shipInfoReq->REQUESTED), 
+REQUESTED = (costAndTime->SHIPPING_PENDING | shipNotAvail->SHIPPER),
+SHIPPING_PENDING = (shipReq->SHIPPING | shipCancel->SHIPPER),
+SHIPPING = (shipOk->SHIPPER | shipFail->SHIPPER).
+
+USER = (usrReq->REQUESTED), 
+REQUESTED = (offerRcvd->ACK_NACK | notAvail->USER),
+ACK_NACK = (usrAck->ORDER | usrNack->USER), 
+ORDER = (respOk->USER | respFail->USER).
+
+||ENV = (USER || SHIPPER || PRODUCER).
+
+//fluents definition
+fluent F_ShipInfoReq = <shipInfoReq, A\{shipInfoReq}>
+fluent F_ProdInfoReq = <prodInfoReq, A\{prodInfoReq}>
+fluent F_UsrReq = <usrReq, {offerRcvd, notAvail}>
+fluent F_OfferRcvd = <offerRcvd, A\{offerRcvd}>
+fluent F_CostAndTime = <costAndTime, {shipReq, shipCancel}>
+fluent F_InfoRcvd = <infoRcvd, {prodReq, prodCancel}>
+fluent F_ShipReq = <shipReq, A\{shipReq}>
+fluent F_ProdReq = <prodReq, A\{prodReq}>
+fluent F_UsrAck = <usrAck, {respOk, respFail}> 
+fluent F_UsrNack = <usrNack, usrReq> 
+fluent F_NotAvail = <notAvail, A\{notAvail}> 
+fluent F_ProdNotAvail = <prodNotAvail, usrReq>//prodInfoReq> 
+fluent F_ShipingNotAvail = <shipNotAvail, usrReq>//shipInfoReq> 
+fluent F_ShipCancel = <shipCancel, A\{shipCancel}>
+fluent F_ProdCancel = <prodCancel, A\{prodCancel}> 
+fluent F_RespOk = <respOk, A\{respOk}>
+fluent F_ShipOk = <shipOk, shipInfoReq>
+fluent F_ProdOk = <prodOk, prodInfoReq>
+fluent F_RespFail = <respFail, A\{respFail}>
+fluent F_ShipFail = <shipFail, shipInfoReq>
+fluent F_ProdFail = <prodFail, prodInfoReq>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Processing = <usrReq, {respFail, respOk}>
+fluent F_ShipFinished = <{shipOk, shipFail}, shipInfoReq>
+fluent F_ProdFinished = <{prodOk, prodFail}, prodInfoReq>
+fluent F_ShipReqPending = <shipReq, {shipOk, shipFail}>
+fluent F_ProdReqPending = <prodReq, {prodOk, prodFail}>
+fluent F_ShipInfoReqPending = <shipInfoReq, {costAndTime, shipNotAvail}>
+fluent F_ProdInfoReqPending = <prodInfoReq, {infoRcvd, prodNotAvail}>
+fluent F_ShipInfoRequested = <shipInfoReq, usrReq>
+fluent F_ProdInfoRequested = <prodInfoReq, usrReq>
+fluent F_ShipProdReqDidntFail = <{prodNotAvail, shipNotAvail}, usrReq>
+
+
+//shipInfoReq o prodInfoReq -> userReq
+ltl_property ShipAndProdInfoImpliesUserReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> F_UsrReq)
+ltl_property ShipAndProdInfoImpliesDintFail = []( (F_ShipInfoReq || F_ProdInfoReq) -> (!F_ShipProdReqDidntFail))
+
+//offerReceived -> (infoRcvd && costAndTime)
+ltl_property OfferRcvdImpliesInfoCostAndTime = [](F_OfferRcvd -> (F_CostAndTime && F_InfoRcvd))
+
+//notAvail -> (prodNotAvail || shipingNotAvail)
+ltl_property NotAvailImpliesProdOrShipNotAvail = [] (F_NotAvail -> (F_ProdNotAvail || F_ShipingNotAvail)) 
+
+//not available has to happen after getting a response from shipper or producer. But if one of them has failed and there's no req has been placed to the other, notAvail can happen
+ltl_property NotAvailImpliesProdOrShipAnswer = [] (F_NotAvail -> ((F_ProdNotAvail || !F_ProdInfoReqPending) && (F_ShipingNotAvail || !F_ShipInfoReqPending))) 
+
+//ship y prod reqs implies ack
+ltl_property ShipAndProdReqImpliesACK = []((F_ShipReq || F_ProdReq) -> F_UsrAck)
+
+//shipOk y prod reqs implies ack
+ltl_property ShipAndProdReqImpliesNACK = []((F_ShipCancel || F_ProdCancel) -> F_UsrNack)
+
+//response ok has to happen after ship ok and produce ok
+ltl_property RespOkImpliesShipAndProdOk = [](F_RespOk -> (F_ShipOk && F_ProdOk))
+
+
+ltl_property RespFailImpliesShipAndProdFail = [](F_RespFail -> (F_ShipFail || F_ProdFail))
+
+ltl_property RespFailImpliesShipAndProdFinished = [](F_RespFail -> 
+		((F_ShipFail || !F_ShipReqPending) && (F_ProdFail || !F_ProdReqPending)))
+
+//assertions
+assert UsrRespOk = (F_RespOk || !F_RespOk)
+assert Failures = F_Failures
+assert AssumptionOnRequests = F_Processing
+assert AssumptiononUser = F_UsrNack
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {ShipAndProdInfoImpliesUserReq, OfferRcvdImpliesInfoCostAndTime, NotAvailImpliesProdOrShipNotAvail, 
+				ShipAndProdReqImpliesACK, ShipAndProdReqImpliesNACK, NotAvailImpliesProdOrShipAnswer, 
+				RespOkImpliesShipAndProdOk, RespFailImpliesShipAndProdFail, RespFailImpliesShipAndProdFinished,
+				ShipAndProdInfoImpliesDintFail}
+       failure = {Failures}
+       assumption = {AssumptionOnRequests, AssumptiononUser}
+       liveness = {UsrRespOk}
+       controllable = {Controllable}
+}
+||PLANT = (ENV || ShipAndProdInfoImpliesUserReq || OfferRcvdImpliesInfoCostAndTime 
+			|| NotAvailImpliesProdOrShipNotAvail || ShipAndProdReqImpliesACK 
+			|| ShipAndProdReqImpliesNACK || NotAvailImpliesProdOrShipAnswer
+			|| RespOkImpliesShipAndProdOk || RespFailImpliesShipAndProdFail
+			|| RespFailImpliesShipAndProdFinished || ShipAndProdInfoImpliesDintFail).

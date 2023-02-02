@@ -1,0 +1,15 @@
+
+||SYS = ArchitectureModel >>{u.s.logout,u.s.selectMsg,u.s.closeMsg}.
+
+
+fluent REGISTERED = <a.s.enable,a.s.disable>
+fluent LOGGEDIN   = <s.u.authenticate,{a.s.disable,u.s.logout}>
+fluent MESSAGESELECTED = <u.s.selectMsg,{u.s.closeMsg,u.s.logout}>
+
+assert SAFE = [](LOGGEDIN->REGISTERED)
+assert READ = [](u.s.selectMsg -> LOGGEDIN)
+
+assert LIVE = [](LOGGEDIN -> <>MESSAGESELECTED)
+
+assert SECURITY = (SAFE && READ)
+   

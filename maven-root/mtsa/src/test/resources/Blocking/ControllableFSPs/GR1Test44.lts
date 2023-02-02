@@ -1,0 +1,36 @@
+Ejemplo = Central,
+Central = (u1 -> UP1 | u2 -> DOWN1),
+UP1 = (up1 -> UP2),
+UP2 = (c3 -> UP3a | c4 -> UP3b),
+UP3a = (up3a -> Central),
+UP3b = (up3b -> Central),
+DOWN1 = (down1 -> DOWN2),
+DOWN2 = (c1 -> DOWN3a | c2 -> DOWN3b),
+DOWN3a = (down3a -> Central),
+DOWN3b = (down3b -> Central).
+
+||Plant = Ejemplo.
+
+set All = {u1,u2,c1,c2,c3,c4,up1,up3a,up3b,down1,down3a,down3b}
+
+fluent FAUP = <{u1},All\{u1}>
+fluent FADOWN = <{u2},All\{u2}>
+fluent FG1 = <{c1}, All\{c1}>
+fluent FG3 = <{c3}, All\{c3}>
+
+assert A1 = FAUP
+assert A2 = FADOWN
+assert S1 = FG1
+assert S3 = FG3
+
+controllerSpec Goal = {
+        assumption = {A1,A2}
+        liveness = {S1,S3}
+        controllable = {c1,c2,c3,c4}
+}
+
+
+heuristic ||DirectedController = Plant~{Goal}.
+assert Check = (([]<>A1 && []<>A2) -> ([]<>S1 && []<>S3))
+
+||Sys = (DirectedController || Plant).

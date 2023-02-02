@@ -1,0 +1,28 @@
+limitaciones por lo del renombre
+
+
+
+
+property IfPickThenPaint = ([a:RangeArms].getPart.[p:Parts] -> GET[a][p] | Alphabet\{[a:RangeArms].getPart.[p:Parts]} -> IfPickThenPaint), 
+GET[a:RangeArms][p:Parts] = ([a].sPaint.[p] -> IfPickThenPaint | Alphabet\{[a].putPart.[p],[a].sPaint.[p]} -> GET).
+
+
+property IfPickThenPaint1 = ([1].getPart.[p:Parts] -> GET[p] | Alphabet\{[1].getPart.[p:Parts]} -> IfPickThenPaint), 
+GET[p:Parts] = ([1].sPaint.[p] -> IfPickThenPaint | Alphabet\{[1].putPart.[p],[1].sPaint.[p]} -> GET).
+
+
+property IfPickThenPaint2 = ([2].getPart.[p:Parts] -> GET[p] | Alphabet\{[2].getPart.[p:Parts]} -> IfPickThenPaint), 
+GET[p:Parts] = ([2].sPaint.[p] -> IfPickThenPaint | Alphabet\{[2].putPart.[p],[2].sPaint.[p]} -> GET).
+
+
+
+\begin{center}
+    \begin{tabular}{ | l | l | l |}
+    \hline
+     Pregunta 1	& Pregunta 2 & Resultado \\ \hline
+     True & True & $C1 \blacksquare C2$ (Incomparables) \\ \hline
+     False & False & $C1 \Box C2$ (¿Igual de buenos o Inconsistencia?) \\ \hline
+     True & False & $C2 \vartriangleleft C1$ ( $C2$ es mejor que $C1$ )\\ \hline
+     False & True & $C1 \vartriangleleft  C2$ ($C1$ es mejor que $C2$)\\ \hline
+    \end{tabular}
+\end{center}

@@ -1,0 +1,17 @@
+/*
+ M = ( b? -> STOP | _tau? -> ( a -> STOP | b -> STOP)).
+ N = ( b  -> STOP | _tau? -> ( _tau -> N | a -> STOP)).
+*/
+
+E_01 = ( _tau? -> a -> STOP ).
+E_02 = ( a? -> STOP ).
+E_03 = ( _tau? -> ( _tau -> E_03 | a -> STOP)).
+I = ( _tau -> ( _tau -> STOP | a -> STOP)).
+
+M_01 = ( b -> ( b -> M_01 | _tau? -> a -> STOP)).
+M_02 = ( b -> M_02_01), M_02_01 = ( b -> M_02 | _tau? -> M_02_02), M_02_02 = ( _tau -> M_02_01 | a -> STOP).
+
+
+M_03 = ( _tau? -> M_03_01 | _tau? -> M_03_02), M_03_01 = ( b -> STOP | _tau? -> M_03_02), M_03_02 = ( a -> STOP | _tau? -> M_03_01).
+N_03 = ( b -> STOP | _tau? -> ( _tau? -> N_03 | a -> STOP)).
+I_03_01 = ( _tau -> b -> STOP | _tau -> a -> STOP).

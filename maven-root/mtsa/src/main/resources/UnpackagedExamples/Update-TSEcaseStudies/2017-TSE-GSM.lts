@@ -1,0 +1,133 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button (||).
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller goal formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+set OldControllableActions = {shiftX, shiftY, shiftZ, encode, send, receive, decode[2..3], output}
+set NewControllableActions = {shiftX, shiftY, shiftZ, shiftT, encode, send, receive, decode[2..3], output}
+set AlphabetOld = {OldControllableActions}
+set AlphabetNew = {NewControllableActions}
+
+OLD_ENV = SENDER,
+SENDER = (shiftX -> X),
+X = (shiftY -> Y),
+Y = (shiftZ -> Z),
+Z = (encode -> ENCODED),
+ENCODED = (send -> SENT),
+SENT = (receive -> RECEIVED),
+RECEIVED = (decode[2..3] -> DECODED),
+DECODED = (output -> SENDER).
+
+NEW_ENV = SENDER,
+SENDER = (shiftX -> X),
+X = (shiftY -> Y),
+Y = (shiftZ -> Z),
+Z = (shiftT -> T),
+T = (encode -> ENCODED),
+ENCODED = (send -> SENT),
+SENT = (receive -> RECEIVED),
+RECEIVED = (decode[2..3] -> DECODED),
+DECODED = (output -> SENDER).
+
+//Mapping Environment
+MAP_ENV = SENDER_OLD,
+SENDER_OLD = (shiftX -> X_OLD | reconfigure -> SENDER_NEW),
+X_OLD = (shiftY -> Y_OLD | reconfigure -> X_NEW),
+Y_OLD = (shiftZ -> Z_OLD | reconfigure -> Y_NEW),
+Z_OLD = (encode -> ENCODED_OLD | reconfigure -> Z_NEW),
+ENCODED_OLD = (send -> SENT_OLD | reconfigure -> ENCODED_NEW),
+SENT_OLD = (receive -> RECEIVED_OLD | reconfigure -> SENT_NEW),
+RECEIVED_OLD = (decode[2..3] -> DECODED_OLD | reconfigure -> RECEIVED_NEW),
+DECODED_OLD = (output -> SENDER_OLD | reconfigure -> DECODED_NEW),
+
+SENDER_NEW = (shiftX -> X_NEW),
+X_NEW = (shiftY -> Y_NEW),
+Y_NEW = (shiftZ -> Z_NEW),
+Z_NEW = (shiftT -> T_NEW),
+T_NEW = (encode -> ENCODED_NEW),
+ENCODED_NEW = (send -> SENT_NEW),
+SENT_NEW = (receive -> RECEIVED_NEW),
+RECEIVED_NEW = (decode[2..3] -> DECODED_NEW),
+DECODED_NEW = (output -> SENDER_NEW).
+
+||OldEnvironment = (OLD_ENV).
+||NewEnvironment = (NEW_ENV).
+||MapEnvironment = (MAP_ENV).
+
+//Fluents declaration
+fluent ReadX = <shiftX,output>
+fluent ReadY = <shiftY,output>
+fluent ReadZ = <shiftZ,output>
+fluent ReadT = <shiftT,output>
+
+// ---------------------------OLD CONTROLLER SPEC -----------------------------
+
+assert DECODE = (!decode[3])
+ltl_property P_DECODE = []DECODE
+
+controllerSpec OldSpec = {
+    safety = {P_DECODE}
+    controllable = {OldControllableActions}
+}
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||OldEnvironmentController = (OldEnvironment || OldController).
+
+// ---------------------------NEW CONTROLLER SPEC -----------------------------
+
+assert NEW_DECODE = (!decode[2])
+
+ltl_property P_NEW_DECODE = []NEW_DECODE
+
+controllerSpec NewSpec = {
+    safety = {P_NEW_DECODE}
+    controllable = {NewControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewEnvironmentController = (NewController || NewEnvironment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+fluent Sending = <send,output>
+fluent Receiving = <receive, output>
+
+assert AnyAction = (shiftX || shiftY || shiftZ || shiftT || encode || send || receive ||
+					decode[2]|| decode[3] || output)
+
+ltl_property T_NO_UPDATE_WHILE_SEND = ((startNewSpec || reconfigure || stopOldSpec) -> (!Sending && !Receiving))
+ltl_property T_NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+updatingController UpdCont = { 
+    oldController = OldEnvironmentController,
+	mapping = MapEnvironment,
+    oldGoal = OldSpec,
+    newGoal = NewSpec,
+//    transition = T_NO_TP,
+//	transition = T_NO_UPDATE_WHILE_SEND,
+    nonblocking
+    
+}
+
+// ---------------------------TEST AND RESULTS-----------------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert S_OLD = (DECODE)
+assert S_NEW = (NEW_DECODE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert T_NO_UPDATE_WHILE_SEND = [](Sending -> (!startNewSpec && !stopOldSpec))
+
+||UPDATE_CONTROLLER = UpdCont.
+

@@ -1,0 +1,70 @@
+range Rooms = 0..4
+set TOMFlaps = {c01,c12,c20,c03,c34,c40,c13,c31}
+set JERRYFlaps = {m10,m02,m21,c04,c43,c30}
+set Controllable = {TOMFlaps, JERRYFlaps}
+
+TOM(Init=0) = (start->tom_in[Init]->TOM[Init]),
+TOM[0] = (c01 -> ETOM[1] | c03 -> ETOM[3]),
+TOM[1] = (c12 -> ETOM[2] | c13 -> ETOM[3]),
+TOM[2] = (c20 -> ETOM[0] ),
+TOM[3] = (c34 -> ETOM[4] | c31 -> ETOM[1]),
+TOM[4] = (c40 -> ETOM[0] ),
+ETOM[room:Rooms] = (tom_in[room]->TOM[room]).
+
+JERRY(Init=1) = (start->jerry_in[Init]->JERRY[Init]),
+JERRY[0] = (m02 -> EJERRY[2] | m04 -> EJERRY[4]),
+JERRY[1] = (m10 -> EJERRY[0] ),
+JERRY[2] = (m21 -> EJERRY[1] ),
+JERRY[3] = (m30 -> EJERRY[0] ),
+JERRY[4] = (m43 -> EJERRY[3] ),
+EJERRY[room:Rooms] = (jerry_in[room]->JERRY[room]).
+
+fluent JERRY1 = <jerry_in[1],{jerry_in[Rooms]}\{jerry_in[1]}>
+fluent JERRY_IN_i[i:Rooms] = <jerry_in[i],{jerry_in[Rooms]}\{jerry_in[i]}>
+fluent TOM_IN_i[i:Rooms] = <tom_in[i],{tom_in[Rooms]}\{tom_in[i]}>
+
+ltl_property TESTJERRY1 = [](JERRY_IN_i[1])
+||TEST = ElGatoNoLastra.
+
+ltl_property ElGatoNoLastra = [](forall[i:Rooms]!(JERRY_IN_i[i] && TOM_IN_i[i]))
+
+||ENV = (TOM(0) || JERRY(1)).
+
+controller ||C2 = ENV~{G2}.
+||OBSERVADOR = (C2||C2).
+
+assert ElRatonSiLastra = JERRY_IN_i[4]
+
+controllerSpec G2 = 
+{
+safety = {ElGatoNoLastra}
+//liveness = {ElRatonSiLastra}//== []<>ElRatonSiLastra
+controllable = {Controllable}
+}
+
+//([]<> A -> []<> G) && ([]<> A2 -> []<> G2)
+
+
+
+fluent TOMROOM[room:Rooms] = <tom_in[room],{tom_in[Rooms]}\{tom_in[room]}>
+fluent JERRYROOM[room:Rooms] = <jerry_in[room],{jerry_in[Rooms]}\{jerry_in[room]}>
+
+assert JERRY_IN_0 = JERRYROOM[0]
+assert JERRY_IN_1 = JERRYROOM[1]
+assert TOM_IN_0 = TOMROOM[0]
+assert TOM_IN_1 = TOMROOM[1]
+
+ltl_property SAFE = []( !exists[i:Rooms] (TOMROOM[i] && JERRYROOM[i]))
+
+controllerSpec G1 = {
+safety = {SAFE}
+liveness = {JERRY_IN_0}//, JERRY_IN_0}
+controllable = {Controllable}
+}
+
+||Tom_Jerry = (TOM || JERRY).
+controller ||C = (Tom_Jerry)~{G1}.
+//||TEST = (C||C).
+
+
+

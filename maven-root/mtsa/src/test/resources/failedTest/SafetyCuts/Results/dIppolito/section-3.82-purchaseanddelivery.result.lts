@@ -1,0 +1,13 @@
+M = (usrReq -> E_2),
+E_2 = (prodInfoReq -> E_3 | shipInfoReq -> E_12),
+E_3 = (infoRcvd -> E_4 | shipInfoReq -> E_10),
+E_4 = (shipInfoReq -> E_5),
+E_5 = (costAndTime -> E_6),
+E_6 = (offerRcvd -> E_7),
+E_7 = (usrNack -> E_8 | usrAck -> E_9),
+E_8 = (usrReq -> E_6),
+E_9 = (respOk -> E_8),
+E_10 = (infoRcvd -> E_5 | costAndTime -> E_11),
+E_11 = (infoRcvd -> E_6),
+E_12 = (prodInfoReq -> E_10 | costAndTime -> E_13),
+E_13 = (prodInfoReq -> E_11).

@@ -1,0 +1,29 @@
+set Controllable = {c, d}
+set Uncontrollable = {x, y}
+set All = {Controllable, Uncontrollable}
+
+E = (x -> E | y -> E1),
+E1 = (c -> E | d -> E2),
+E2 = (c -> E2).
+
+||Environment = (E).
+
+fluent F_B = <d, All\{d}>
+fluent F_A = <y, All\{y}>
+fluent F_G = <d, All\{d}>
+
+assert A = F_A
+assert B = F_B
+assert G = F_G
+
+//controllers
+controller ||C = (Environment)~{Goal}.
+
+
+//Goals
+controllerSpec Goal = {
+    buchi = {B}
+    assumption = {A}
+    liveness = {G}
+    controllable = {Controllable}
+}

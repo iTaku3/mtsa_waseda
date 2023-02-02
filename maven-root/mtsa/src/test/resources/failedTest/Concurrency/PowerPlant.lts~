@@ -1,0 +1,45 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {stopPump, startPump, procedure, endProcedure}
+set A = {ControllableActions, request}
+
+    //Environment
+    MAINTENANCE = (request -> endProcedure -> MAINTENANCE).
+
+    ENV = STARTED,
+    STARTED = (stopPump -> STOPPED | 
+                    procedure -> STARTED | 
+                    endProcedure -> STARTED),
+	STOPPED = (startPump -> STARTED | 
+				procedure -> STOPPED |
+				endProcedure -> STOPPED).
+
+||Environment = (MAINTENANCE || ENV).
+
+
+//Fluents declaration
+fluent PumpOff = <{stopPump},{startPump}>
+fluent PumpOn = <{startPump},{stopPump}> initially 1
+fluent RequestPending = <{request},{endProcedure}>
+fluent MainteinanceFinished = <{procedure}, {request}> 
+fluent PendingOk = <procedure, endProcedure>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert PROCEDURE_WHILE_STOPPED = (Procedure_action -> PumpOff)
+assert MAINTEINANCE_GUARANTEED = (EndProcedure_action -> (MainteinanceFinished && !PumpOff))
+assert PROCEDURE_IF_REQUEST = (Procedure_action -> RequestPending)
+assert PUMP_OFF_ONLY_OK_NOT_PENDING = (StopPump_action->!PendingOk)
+
+ltl_property P_PROCEDURE_WHILE_STOPPED = []PROCEDURE_WHILE_STOPPED
+ltl_property P_MAINTEINANCE_GUARANTEED = []MAINTEINANCE_GUARANTEED
+ltl_property P_PROCEDURE_IF_REQUEST = []PROCEDURE_IF_REQUEST
+ltl_property P_PUMP_OFF_ONLY_OK_NOT_PENDING = []PUMP_OFF_ONLY_OK_NOT_PENDING
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_PROCEDURE_WHILE_STOPPED, P_MAINTEINANCE_GUARANTEED,
+			  P_PROCEDURE_IF_REQUEST, P_PUMP_OFF_ONLY_OK_NOT_PENDING}
+    controllable = {ControllableActions}
+}

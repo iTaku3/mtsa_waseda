@@ -1,0 +1,112 @@
+// Model of a tv controller
+// ************************
+
+// data types
+const N = 2				//nbr of tv channels
+const Defailure = 1		// defailure tv channel when tv turned on
+range Channel = 1..N
+
+//Actions
+set C = {blank, unblank}
+set U = {tune, end_tune}
+set T = {select[Channel]}
+set D = {display.{[Channel], static, blank}}
+set S = {signal.{[Channel], static}}
+set A = {T, D, S, U, C}
+
+/****************************
+Agent: TUNER
+input: select[Channel]
+output: signal.{static, Channel}, tune, endtune
+*****************************/
+TUNER = TUNING[Defailure], //TUNING[Defailure],
+	TUNING[c: Channel] = ( signal.static -> TUNING[c]
+						 | signal[c] -> JUST_TUNED[c]
+						 | select[c1:Channel] -> if (c1==c) then TUNING[c] else JUST_SELECTED[c1]),		
+	JUST_TUNED[c: Channel] = ( end_tune -> TUNED[c]
+						 | select[c1:Channel] -> if (c1==c) then JUST_TUNED[c] else JUST_SELECTED[c1]),		
+	JUST_SELECTED[c: Channel] = (tune -> TUNING[c] 
+						| select[c1:Channel] -> JUST_SELECTED[c1]),
+	TUNED[c:Channel] = ( signal[c] -> TUNED[c]
+						| select[c1:Channel] -> if (c1==c) then TUNED[c] else JUST_SELECTED[c1]).
+|| TUNER = TUNER.
+// 8 States.
+// assert TunerTest = [](signal.[2] -> (!(signal.static || signal.[1]) W select.[1]))
+
+fluent TUNING = <tune, end_tune> initially 1
+fluent TUNED = <end_tune, tune> initially 0
+
+fluent TUNING_To[c:Channel] = <select[c], end_tune> initially (c==1)
+fluent TUNED_On[c:Channel] = <signal[c], tune> initially 0
+
+/* 
+assert TUNER_Fluent_Validation = (
+	[] (TUNING <-> ! TUNED)
+&&	(forall [c: Channel] [](TUNED_On[c] -> ! TUNING))
+&& 	(forall [c: Channel] [](TUNED_On[c] -> ! TUNING_To[c]))
+)
+*/
+
+/******************************
+Agent: SCREEN
+input: display[Channel], blank, unblank
+output: display
+*******************************/
+SCREEN = BLANK_STATIC,
+	BLANK[c:Channel] = ( display.blank -> BLANK[c]
+				| unblank -> DISPLAY[c]
+				| blank -> BLANK[c]
+				| signal.[c1:Channel] -> BLANK[c1]
+				| signal.static -> BLANK_STATIC),
+	BLANK_STATIC = ( display.blank -> BLANK_STATIC
+				| unblank -> DISPLAY_STATIC
+				| blank -> BLANK_STATIC
+				| signal.[c:Channel] -> BLANK[c]
+				| signal.static -> BLANK_STATIC),
+	DISPLAY[c:Channel] = (display[c] -> DISPLAY[c]
+				| blank -> BLANK[c]
+				| unblank -> DISPLAY[c]
+				| signal.[c1:Channel] -> DISPLAY[c1]
+				| signal.static -> DISPLAY_STATIC),
+	DISPLAY_STATIC = (display.static -> DISPLAY_STATIC
+				| blank -> BLANK_STATIC
+				| signal.[c1:Channel] -> DISPLAY[c1]
+				| signal.static -> DISPLAY_STATIC).
+
+|| SCREEN = SCREEN.
+// 6 states.
+
+fluent BLANKED = <blank, unblank> initially 1
+
+
+
+||ENV = (TUNER || SCREEN)@{U, C}.
+
+controller ||M = ENV~{G}.
+
+||CONTROLLED_ENV = (TUNER || SCREEN || M).
+
+/****************************
+Goal definition
+****************************/
+fluent F_STATIC = <display.static, A\{display.static}>
+//Note that as static is not visible by the controller, 
+//NoStatic fluent cannot be used in the controllerSpec. 
+//assert NoStatic = [] (!F_STATIC)
+fluent Tuning = <tune, end_tune> initially 1 
+fluent Blanked = <blank, unblank> initially 1
+ltl_property NoStatic = [] (Tuning -> Blanked)
+assert TRUE = (Tuning || !Tuning)
+assert A_NoStatic = [] (Tuning -> Blanked)
+
+assert LIVE = []<> (display.[1] ||  display.[2])
+fluent F_UNBLANK = <unblank, A\{unblank}>
+assert UNBLANK = F_UNBLANK
+
+controllerSpec G = {
+    safety = {NoStatic}
+	liveness = {UNBLANK}
+    controllable = {C}
+}
+
+

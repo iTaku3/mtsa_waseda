@@ -1,0 +1,40 @@
+set A = {mn, ms, pos1, pos2, pos3, pos4, error1, error2}
+set Controlled = {mn, ms}
+
+fluent Pos1 = <pos1, {pos2, pos3, pos4}> initially 1
+fluent Pos2 = <pos2, {pos1, pos3, pos4}>
+fluent Pos3 = <pos3, {pos2, pos1, pos4}>
+fluent Pos4 = <pos4, {pos2, pos3, pos1}>
+fluent Failure1 = <error1, A\{error1}>
+fluent Failure2 = <error2, A\{error2}>
+
+assert APos1 = Pos1
+assert APos2 = Pos2
+assert APos3 = Pos3
+assert APos4 = Pos4
+assert AFailure = (Failure1 || Failure2)
+
+assert Guarantees = (([]<>(APos4 || AFailure)) && ([]<>(APos1 || AFailure)))
+assert Assumptions = (([]<>APos2) && ([]<>APos3))
+
+//Goal definition
+controllerSpec G1 = {
+safety = {}
+failure = {AFailure}
+assumption = {}//APos2, APos3}
+liveness = {APos1, APos4}
+controllable = {Controlled}
+}
+
+controller ||C = ROBOT~{G1}.
+
+ROBOT = S1, 
+S1 = (mn->pos2->S2),
+S2 = (mn->ND | ms->pos1->S1),
+ND = (ok1->pos3->S3 | error1->pos2->S2),
+S3 = (mn->pos4->S4 | ms->SD),
+SD = (ok2->pos2->S2 | error2->pos3->S3),
+S4 = (ms->pos3->S3).
+
+
+

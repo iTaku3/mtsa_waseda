@@ -1,0 +1,16 @@
+/*
+This generates a stream of events from an exponential distribution
+with parameter Lambda. The simulation calculates the average time
+between these events. The theoretic solution to this problem is of
+course dt = 1/Lambda.
+*/
+
+float Lambda = 3.0
+
+Stream = ( start <c:exp(Lambda)> -> ?c? finish -> Stream ).
+
+timer AverageTime <start,finish>
+//counter EventCounter {start,finish}
+//measure M <start,finish>
+
+||Simulation = ( Stream || AverageTime ).//|| EventCounter || M ).

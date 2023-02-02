@@ -1,0 +1,10 @@
+P = (a-> b -> P)+{d}.
+property ||C = P.
+
+
+||ExpectedC = Q0.
+
+Q0	= ({b, d} -> ERROR
+		  |a -> Q1),
+Q1	= ({a, d} -> ERROR
+		  |b -> Q0).

@@ -1,0 +1,370 @@
+const MAX  = 2
+const PMAX = 3
+
+range R = 0..MAX
+range P = 0..PMAX
+
+// -------- BEFORE ---------
+set ControllableActions = {takeoff, land, blink, read, switchE, charge, moveTo[P], reset /*,avoid*/}
+set OLDControllableActions = {takeoffOLD, landOLD, blinkOLD, readOLD, moveToOLD[P],resetOLD}
+set Failures = {fail}
+set A = {ControllableActions, read.val[R], lowBattery, success, Failures, /* obstacle ,*/ OLDControllableActions}
+
+
+//ARDRONE = LANDED,
+//LANDED = (takeoff -> AIR | lowBattery -> LANDED | charge -> LANDED | blink -> LANDED| read -> read.val[R] -> LANDED),
+//AIR = (land -> LANDED | lowBattery -> AIR | blink -> AIR | read -> read.val[R] -> AIR | moveTo[P] -> MOVING), 
+//MOVING = (success -> AIR | fail -> EMERGENCY /*| obstacle -> avoid -> MOVING*/), 
+//EMERGENCY = (reset -> LANDED | blink -> EMERGENCY).
+
+
+fluent LowBattery = <lowBattery, charge>
+fluent Read = <{read, readOLD}, A\{read, readOLD}>
+fluent Takeoff = <{takeoff, takeoffOLD}, A\{takeoff, takeoffOLD}>
+fluent Land = <{land, landOLD}, A\{land, landOLD}>
+fluent Blink = <{blink, blinkOLD}, A\{blink, blinkOLD}>
+fluent  Move  = <{moveTo[P],moveToOLD[P]},A\{moveTo[P],moveToOLD[P]}>
+fluent Position[p:P] = <{moveTo[p],moveToOLD[p]}, {moveTo[P],moveToOLD[P], fail}\{moveTo[p],moveToOLD[p]}>
+
+fluent F_FAILURES = <Failures, A\Failures>
+
+
+fluent PosZero = <{moveTo[0],moveToOLD[0],reset}, {moveTo[P],moveToOLD[P], fail}\{moveTo[0],moveToOLD[0]}> initially 1
+
+assert ReadInPos1 =(Position[1] && Read)
+assert ReadInPos2 =(Position[2] && Read)
+assert ReadInPos3 =(Position[3] && Read)
+assert ReadInPos0 =(PosZero && Read)
+
+assert TRUE = (switchE || !switchE)
+
+fluent IN_AIR = <{takeoff,takeoffOLD},{land,landOLD, fail}> initially 0
+assert ONLY_BLINK_IN_AIR = (Blink -> IN_AIR)
+assert ONLY_READ_IN_AIR = (Read -> IN_AIR)
+assert DONT_READ_TWICE_IN_AIR = (Read -> X(!Read W (!IN_AIR)))
+assert DONT_READ_IF_LOW_BATTERY = (Read -> !LowBattery)
+
+ltl_property Invariant = [](ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR) //& DONT_READ_TWICE_IN_AIR)
+
+assert BLINK_ONLY_WITH_ONES = (read.val[1] -> PROCESS_VALUE && ((read.val[0] || read.val[2]) -> (!Blink W (Read || switchE))))
+assert BLINK_ONLY_WITH_TWOS = ((read.val[2] -> PROCESS_VALUE) && ((read.val[0] || read.val[1]) -> (!Blink W Read)))
+assert PROCESS_VALUE = ((!Read && !Land && !Move) W (Blink || switchE))
+
+
+fluent SwitchE = <switchE, switchC> initially 0 // HACK! switchC is livenessd to not happen
+fluent SwitchC = <switchC, landOLD> initially 0 // HACK! landOLD is livenessd to not happen
+assert A_SwitchC = SwitchC
+
+
+ltl_property S_OLD = (BLINK_ONLY_WITH_ONES W switchE)
+ltl_property S_NEW = [](switchE -> [](BLINK_ONLY_WITH_TWOS && DONT_READ_IF_LOW_BATTERY))
+
+
+ltl_property Transition1 = (TRUE)
+ltl_property Transition2 = ( []((read.val[1] && (!Blink W switchE)) -> [](switchE -> ((!Read && !Land) W Blink))))
+                                   // When switchE on unprocessed value, use OLD spec
+
+ltl_property Transition3 = (
+                                   []((read.val[1] && (!Blink W switchE)) -> [](switchE -> (!Blink W Read)))
+                                  )     // When switchE on unprocessed value, use NEW spec
+
+// E en fase 2 siga en el estado que estaba E en fase 1.
+// Esto se puede hacer cambiando C para que se apague al recibir switchC.
+// Entonces la composicion de C y E va a comportarse como E (fase 2) despues de switchC.
+
+// El mismo problema existe en general para fase 3 aunque justo aca no se necesita.
+
+
+        C_Original = Q00,
+        Q00      = (takeoffOLD -> Q01 | switchC -> OFF),
+
+        Q01      = (readOLD -> Q04 | switchC -> OFF),
+        Q03      = (blinkOLD -> Q02 | switchC -> OFF),
+        Q04      = (read.val.{[0], [2]} -> Q02
+                  |read.val[1] -> Q03 | switchC -> OFF),
+    Q02      = (moveToOLD[1] -> Q0M| switchC -> OFF),
+    Q0M      = (success -> Q11 | fail -> QR |  switchC -> OFF), 
+
+        Q11      = (readOLD -> Q14 | switchC -> OFF),
+        Q13      = (blinkOLD -> Q12 | switchC -> OFF),
+        Q14      = (read.val.{[0], [2]} -> Q12
+                  |read.val[1] -> Q13 | switchC -> OFF),
+    Q12      = (moveToOLD[2] -> Q1M | switchC -> OFF),
+    Q1M      = (success -> Q21 | fail -> QR |  switchC -> OFF),
+
+    Q21      = (readOLD -> Q24 | switchC -> OFF),
+        Q23      = (blinkOLD -> Q22 | switchC -> OFF),
+        Q24      = (read.val.{[0], [2]} -> Q22
+                  |read.val[1] -> Q23 | switchC -> OFF),
+    Q22      = (moveToOLD[3] -> Q2M| switchC -> OFF),
+    Q2M      = (success -> Q31 | fail -> QR |  switchC -> OFF),
+
+        Q31      = (readOLD -> Q34 | switchC -> OFF),
+        Q33      = (blinkOLD -> Q32 | switchC -> OFF),
+        Q34      = (read.val.{[0], [2]} -> Q32
+                  |read.val[1] -> Q33 | switchC -> OFF),
+    Q3M      = (success -> Q35 | fail -> QR |  switchC -> OFF),
+    Q35      = (landOLD -> Q00 | switchC -> OFF),
+    Q32    =  (moveToOLD[0] -> Q3M | switchC -> OFF),
+
+    QR        = (resetOLD -> Q00 | switchC -> OFF),
+        OFF = ({takeoffOLD, landOLD, blinkOLD, readOLD, read.val[R], moveToOLD[P], success, fail, resetOLD} -> OFF).
+
+        E_OLDandNEW = Q00, 
+      Q00      = (blinkOLD -> Q00
+                  |readOLD -> Q01
+                  |takeoffOLD -> Q02
+                  |switchC -> Q00_N),
+        Q01      = (read.val[R] -> Q00
+                  |switchC -> Q01_N),
+        Q02      = (landOLD -> Q00
+                  |blinkOLD -> Q02
+                  |readOLD -> Q03
+                  |moveToOLD[0]-> Q05
+                  |moveToOLD[1]-> Q15
+                  |moveToOLD[2]-> Q25
+                  |moveToOLD[3]-> Q35
+                  |switchC -> Q02_N),
+        Q03      = (read.val[R] -> Q02
+                  |switchC -> Q03_N),
+        Q05      = (success -> Q02 
+                  |fail -> QR 
+                  |switchC -> Q05_N),
+
+      Q10      = (blinkOLD -> Q10
+                  |readOLD -> Q11
+                  |takeoffOLD -> Q12
+                  |switchC -> Q10_N),
+        Q11      = (read.val[R] -> Q10
+                  |switchC -> Q11_N),
+        Q12      = (landOLD -> Q10
+                  |blinkOLD -> Q12
+                  |readOLD -> Q13
+                  |moveToOLD[0]-> Q05
+                  |moveToOLD[1]-> Q15
+                  |moveToOLD[2]-> Q25
+                  |moveToOLD[3]-> Q35
+                  |switchC -> Q12_N),
+        Q13      = (read.val[R] -> Q12
+                  |switchC -> Q13_N),
+        Q15      = (success -> Q12 
+                  |fail -> QR 
+                  |switchC -> Q15_N),
+
+      Q20      = (blinkOLD -> Q20
+                  |readOLD -> Q21
+                  |takeoffOLD -> Q22
+                  |switchC -> Q20_N),
+        Q21      = (read.val[R] -> Q20
+                  |switchC -> Q21_N),
+        Q22      = (landOLD -> Q20
+                  |blinkOLD -> Q22
+                  |readOLD -> Q23
+                  |moveToOLD[0]-> Q05
+                  |moveToOLD[1]-> Q15
+                  |moveToOLD[2]-> Q25
+                  |moveToOLD[3]-> Q35
+                  |switchC -> Q22_N),
+        Q23      = (read.val[R] -> Q22
+                  |switchC -> Q23_N),
+        Q25      = (success -> Q22 
+                  |fail -> QR 
+                  |switchC -> Q25_N),
+
+      Q30      = (blinkOLD -> Q30
+                  |readOLD -> Q31
+                  |takeoffOLD -> Q32
+                  |switchC -> Q30_N),
+        Q31      = (read.val[R] -> Q30
+                  |switchC -> Q31_N),
+        Q32      = (landOLD -> Q30
+                  |blinkOLD -> Q32
+                  |readOLD -> Q33
+                  |moveToOLD[0]-> Q05
+                  |moveToOLD[1]-> Q15
+                  |moveToOLD[2]-> Q25
+                  |moveToOLD[3]-> Q35
+                  |switchC -> Q32_N),
+        Q33      = (read.val[R] -> Q32
+                  |switchC -> Q33_N),
+        Q35      = (success -> Q32 
+                  |fail -> QR 
+                  |switchC -> Q35_N),
+
+    QR       = (resetOLD -> Q00 | switchC -> QR_N),
+
+      Q00_N      = (blink -> Q00_N
+                  |read -> Q01_N
+                  |takeoff -> Q02_N
+                  |switchE -> Q00_NP),
+        Q01_N      = (read.val[R] -> Q00_N
+                  |switchE -> Q01_NP),
+        Q02_N      = (land -> Q00_N
+                  |blink -> Q02_N
+                  |read -> Q03_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |moveTo[3]-> Q35_N
+                  |switchE -> Q02_NP),
+        Q03_N      = (read.val[R] -> Q02_N
+                  |switchE -> Q03_NP),
+        Q05_N      = (success -> Q02_N 
+                  |fail -> QR_N 
+                  |switchE -> Q05_NP),
+
+      Q10_N      = (blink -> Q10_N
+                  |read -> Q11_N
+                  |takeoff -> Q12_N
+                  |switchE -> Q10_NP),
+        Q11_N      = (read.val[R] -> Q10_N
+                  |switchE -> Q11_NP),
+        Q12_N      = (land -> Q10_N
+                  |blink -> Q12_N
+                  |read -> Q13_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |moveTo[3]-> Q35_N
+                  |switchE -> Q12_NP),
+        Q13_N      = (read.val[R] -> Q12_N
+                  |switchE -> Q13_NP),
+        Q15_N      = (success -> Q12_N 
+                  |fail -> QR_N 
+                  |switchE -> Q15_NP),
+
+      Q20_N      = (blink -> Q20_N
+                  |read -> Q21_N
+                  |takeoff -> Q22_N
+                  |switchE -> Q20_NP),
+        Q21_N      = (read.val[R] -> Q20_N
+                  |switchE -> Q21_NP),
+        Q22_N      = (land -> Q20_N
+                  |blink -> Q22_N
+                  |read -> Q23_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |moveTo[3]-> Q35_N
+                  |switchE -> Q22_NP),
+        Q23_N      = (read.val[R] -> Q22_N
+                  |switchE -> Q23_NP),
+        Q25_N      = (success -> Q22_N 
+                  |fail -> QR_N 
+                  |switchE -> Q25_NP),
+
+      Q30_N      = (blink -> Q30_N
+                  |read -> Q31_N
+                  |takeoff -> Q32_N
+                  |switchE -> Q30_NP),
+        Q31_N      = (read.val[R] -> Q30
+                  |switchE -> Q31_NP),
+        Q32_N      = (land -> Q30_N
+                  |blink -> Q32_N
+                  |read -> Q33_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |moveTo[3]-> Q35_N
+                  |switchE -> Q32_NP),
+        Q33_N      = (read.val[R] -> Q32_N
+                  |switchE -> Q33_NP),
+        Q35_N      = (success -> Q32_N 
+                  |fail -> QR_N 
+                  |switchE -> Q35_NP),
+    QR_N       = (reset -> Q00_N | switchE -> QR_NP),
+
+    Q00_NP      = (blink -> Q00_NP
+                  |read -> Q01_NP
+                  |takeoff -> Q02_NP
+                  |charge -> Q00_NP),
+        Q01_NP      = (read.val[R] -> Q00_NP),
+        Q02_NP      = (land -> Q00_NP
+                  |blink -> Q02_NP
+                  |read -> Q03_NP
+                  |moveTo[0]-> Q05_NP
+                  |moveTo[1]-> Q15_NP
+                  |moveTo[2]-> Q25_NP
+                  |moveTo[3]-> Q35_NP
+                  |lowBattery -> Q02_NP),
+        Q03_NP      = (read.val[R] -> Q02_NP),
+        Q05_NP      = (success -> Q02_NP 
+                  |fail -> QR_NP),
+
+      Q10_NP      = (blink -> Q10_NP
+                  |read -> Q11_NP
+                  |takeoff -> Q12_NP),
+        Q11_NP      = (read.val[R] -> Q10_NP),
+        Q12_NP      = (land -> Q10_NP
+                  |blink -> Q12_NP
+                  |read -> Q13_NP
+                  |moveTo[0]-> Q05_NP
+                  |moveTo[1]-> Q15_NP
+                  |moveTo[2]-> Q25_NP
+                  |moveTo[3]-> Q35_NP
+                  |lowBattery -> Q12_NP),
+        Q13_NP      = (read.val[R] -> Q12_NP),
+        Q15_NP      = (success -> Q12_NP 
+                  |fail -> QR_NP),
+
+      Q20_NP      = (blink -> Q20_NP
+                  |read -> Q21_NP
+                  |takeoff -> Q22_NP),
+        Q21_NP      = (read.val[R] -> Q20_NP),
+        Q22_NP      = (land -> Q20_NP
+                  |blink -> Q22_NP
+                  |read -> Q23_NP
+                  |moveTo[0]-> Q05_NP
+                  |moveTo[1]-> Q15_NP
+                  |moveTo[2]-> Q25_NP
+                  |moveTo[3]-> Q35_NP
+                  |lowBattery -> Q22_NP),
+        Q23_NP      = (read.val[R ] -> Q22_NP),
+        Q25_NP      = (success -> Q22_NP 
+                  |fail -> QR_NP),
+
+      Q30_NP      = (blink -> Q30_NP
+                  |read -> Q31_NP
+                  |takeoff -> Q32_NP),
+        Q31_NP      = (read.val[R] -> Q30),
+        Q32_NP      = (land -> Q30_NP
+                  |blink -> Q32_NP
+                  |read -> Q33_NP
+                  |moveTo[0]-> Q05_NP
+                  |moveTo[1]-> Q15_NP
+                  |moveTo[2]-> Q25_NP
+                  |moveTo[3]-> Q35_NP
+                  |lowBattery -> Q32_NP),
+        Q33_NP      = (read.val[R] -> Q32_NP),
+        Q35_NP      = (success -> Q32_NP 
+                  |fail -> QR_NP),
+
+    QR_NP       = (reset -> Q00_NP).
+
+        AUX_BATTERY_COUNTER(N=4) = Q0,
+        Q0 = (switchE -> Q0  |
+             {land, read, takeoff, blink, moveTo[P]} -> BAT[N]),
+        BAT[i:0..N]= (  when (i==5) lowBattery -> BAT[i-1] |
+                                when (i!=5) {land, read, takeoff, blink, moveTo[P]} -> BAT[i-1] |
+                                charge -> BAT[N]
+                         ).
+
+
+||FASE1a3 = (E_OLDandNEW|| C_Original || AUX_BATTERY_COUNTER(10)).
+
+||TEST = (C||FASE1a3).
+
+assert A_FAILURES = F_FAILURES
+
+controllerSpec ObjectiveBefore = {
+        safety = {S_OLD,S_NEW,Invariant,Transition3}
+      failure = {A_FAILURES}  
+        assumption = {A_SwitchC}
+        liveness = {ReadInPos0,ReadInPos1,ReadInPos2,ReadInPos3 ,SwitchE}
+        controllable = {ControllableActions}
+}
+
+controller ||C=(FASE1a3)~{ObjectiveBefore}.
+
+||K  = (C||C).
+

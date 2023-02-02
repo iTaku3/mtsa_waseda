@@ -1,0 +1,9 @@
+//Abstraccion elimina una rama con ciclos al estado inicial
+//Resultado esperado:
+//D deberia ser igual Expected. Q4 es estado de error que se ve en prism.
+//La distancia debe dar 2.3333333 (Rmin=? [F "exception"])
+R = (t -> {0.4:RA + 0.6:RB}),
+RA = (a -> R),
+RB = (b -> R).
+A = (t -> a -> A).
+probabilistic mdp ||C = (R||A).

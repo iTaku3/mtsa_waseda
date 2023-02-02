@@ -1,0 +1,33 @@
+Ejemplo = A0,
+A0 = (u02 -> A2),
+A2 = (c2b -> Bueno1),
+Bueno1 = (ub12 -> Bueno2),
+Bueno2 = (ub23 -> Bueno3),
+Bueno3 = (ub34 -> Bueno4),
+Bueno4 = (ub45 -> Bueno5 | ub42 -> Bueno2),
+Bueno5 = (ub56 -> Bueno6),
+Bueno6 = (ub6a -> A2).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {c2b}
+  marking = {ub6a}
+  nonblocking
+}
+
+heuristic ||C = Plant~{Goal}.
+
+||ExpectedC = Expected.
+
+Expected = Q0,
+	Q0	= (u02 -> Q1),
+	Q1	= (c2b -> Q2),
+	Q2	= (ub12 -> Q3),
+	Q3	= (ub23 -> Q4),
+	Q4	= (ub34 -> Q5),
+	Q5	= (ub42 -> Q3
+		  |ub45 -> Q6),
+	Q6	= (ub56 -> Q7),
+	Q7	= (ub6a -> Q8),
+	Q8	= (c2b -> Q2).

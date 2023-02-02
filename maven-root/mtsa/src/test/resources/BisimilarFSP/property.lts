@@ -1,0 +1,16 @@
+/*
+In this example the property is built using a machine with more labels in its alphabet than the ones used in the transitions
+*/
+
+P = (a->b->P)+{c}.
+
+property ||C = P.
+
+||ExpectedC = Expected.
+
+Expected = Q0,
+	Q0	= ({b, c} -> ERROR
+		  |a -> Q1),
+	Q1	= ({a, c} -> ERROR
+		  |b -> Q0).
+

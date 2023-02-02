@@ -1,0 +1,34 @@
+set Controllable = {idle, cook, moveToBelt}
+set A = {Controllable, finishedCooking, cooking, overHeated}
+
+DOMAIN = (idle->DOMAIN | cook->COOKING), 
+COOKING = (cooking->COOKING | cook->OH | finishedCooking->COOKED), 
+COOKED = (moveToBelt->DOMAIN | cook->COOKING), 
+OH = (overHeated->OH).
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_Cooked = <finishedCooking, cook>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+fluent F_OH = <overHeated, A\{overHeated}> 
+
+assert MOVE_TO_BELT = F_MoveToBelt
+assert TRUE = (F_MoveToBelt || !F_MoveToBelt)
+
+assert FinishCooking = !F_Cooking
+
+SUCCESSFULLY_COOKED_TWICE = (cook->cook->moveToBelt->SUCCESSFULLY_COOKED_TWICE). 
+ltl_property NotOverHeated = [] (!(F_OH))+{A}
+
+||TEST = (SUCCESSFULLY_COOKED_TWICE || DOMAIN).
+
+//controllers
+controller ||C = (DOMAIN)~{G1}.
+checkCompatibility ||Comp = (DOMAIN)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {SUCCESSFULLY_COOKED_TWICE, NotOverHeated}
+       assumption = {FinishCooking}
+       liveness = {MOVE_TO_BELT}
+       controllable = {Controllable}
+}

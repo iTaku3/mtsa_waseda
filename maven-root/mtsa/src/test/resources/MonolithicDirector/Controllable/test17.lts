@@ -1,0 +1,33 @@
+14 3 1 1 1 2 27 //N A C D M I T (este es sacado del paper, figura 6)
+c u d
+c
+d
+10
+2 11
+0 c 1
+1 c 3
+1 d 4
+2 c 5
+3 d 4
+3 c 9
+4 c 1
+4 c 3
+4 c 2
+5 c 2
+5 u 4
+6 c 8
+6 c 9
+7 c 6
+7 d 8
+8 d 7
+8 c 7
+8 d 10
+9 c 6
+9 c 10
+10 c 8
+10 c 9
+11 c 12
+12 c 10
+12 d 11
+12 d 13
+13 c 12

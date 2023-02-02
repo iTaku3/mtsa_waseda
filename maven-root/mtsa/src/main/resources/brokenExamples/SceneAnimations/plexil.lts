@@ -1,0 +1,392 @@
+//Model for Plexil state transition diagrams
+// more detailed diagrams
+// ignores priorities
+// ignores function calls
+// interprets green boxes as "resets" for FailureType
+// attempts to model quiescence with priorities >>
+
+
+const List = 0
+const Command = 1
+const Assignment = 2
+const FunctionCall = 3
+
+
+const No_Fail = 0
+const Node_Fail = 1
+const Parent_Fail = 2
+
+
+const True = 1
+const False = 0
+range Boolean = False..True
+
+
+range NodeType = List .. FunctionCall
+range FailureType = No_Fail .. Parent_Fail
+
+set Alpha = {enter_state_waiting, enter_state_finished, enter_state_failing, enter_state_finishing, enter_state_executing}
+
+// Comments:
+// 1) what happens if the value of the repeat_until_condition is unknown(U) -- not specified
+// 2) what happens with the node outcome after one iteration; 
+//                      e.g. at page 9, assume pre_condition is F, then node outcome is failure, repeat-until-condition is t, 
+//          node transitions back to state Waiting
+//          is outcome reset to "no failure"? In that case, when is the failure "visible"?
+//          we need a specific box that resets the outcome (similar to invoke abort)
+// CORRECTED:
+// 3) I believe a separate diagram for function call is needed (instead of using the diagrams for assignment) -- 
+//          since this is a type of node in its own right
+// 4) there is a missing transition from Failing to Finished when Ancestor Invariant F - pg 13
+
+
+Plexil(N=List) = (enter_state_inactive -> INACTIVE[N][No_Fail]),
+
+
+INACTIVE[n:NodeType][f:FailureType] =
+        ( // inactive -> INACTIVE[n][f]
+    //    |
+		parent_executing.true -> end_inactive -> enter_state_waiting -> WAITING[n][f]
+        | ancestor_end.true -> skipped -> end_inactive -> enter_state_finished -> FINISHED[n][No_Fail]
+        | ancestor_invariant.false -> skipped -> end_inactive -> enter_state_finished -> FINISHED[n][No_Fail]
+        ),
+
+
+// assert f = No_Failure -- does not hold!
+WAITING[n:NodeType][f:FailureType] = 
+                ( //waiting -> WAITING[n][f]
+//                |
+start_condition.true ->
+                        //(pre_condition.true -> enter_state_executing -> EXECUTING[n][f] // there is a missing "reset" box here
+                        (pre_condition.true -> end_waiting -> enter_state_executing -> success -> EXECUTING[n][No_Fail] 
+                        |pre_condition.{false,unknown} -> failure ->
+                                (repeat_until_condition.true -> end_waiting -> enter_state_finished -> FINISHED[n][Node_Fail] 
+                                | repeat_until_condition.false -> end_waiting -> enter_state_waiting -> WAITING[n][Node_Fail]
+                                )
+                        )
+                | ancestor_end.true -> skipped -> end_waiting -> enter_state_finished -> FINISHED[n][No_Fail]
+                | ancestor_invariant.false -> skipped -> end_waiting -> enter_state_finished -> FINISHED[n][No_Fail]
+                ),
+
+
+// assert f = No_Failure -- does not hold!
+EXECUTING[List][f:FailureType] =
+        if (f != No_Fail) then ERROR
+        else
+                ( //executing -> EXECUTING[List][f]
+//                | 
+end_condition.true -> end_executing -> enter_state_finishing -> FINISHING[List][f]
+                | invariant_condition.false -> failure -> end_executing -> enter_state_failing -> FAILING[List][Node_Fail]
+                | ancestor_invariant.false -> failure_parent -> end_executing -> enter_state_failing -> FAILING[List][Parent_Fail]
+                ),
+
+
+EXECUTING[Command][f:FailureType] = 
+        ( //executing -> EXECUTING[Command][f]
+//        |
+end_condition.true -> 
+                (post_condition.true -> success -> 
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[Command][No_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[Command][No_Fail]
+                        )
+                | post_condition.{false,unknown} -> failure ->
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[Command][Node_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[Command][Node_Fail]
+                        )
+                )                       
+        | invariant_condition.false -> failure -> invoke_abort -> end_executing -> enter_state_failing -> FAILING[Command][Node_Fail]
+        | ancestor_invariant.false -> failure_parent -> invoke_abort -> end_executing -> enter_state_failing -> FAILING[Command][Parent_Fail]
+        ),
+
+
+
+EXECUTING[Assignment][f:FailureType] = 
+        ( //executing -> EXECUTING[Assignment][f]
+//        |
+end_condition.true -> 
+                (post_condition.true -> success -> 
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[Assignment][No_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[Assignment][No_Fail]
+                        )
+                | post_condition.{false,unknown} -> failure ->
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[Assignment][Node_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[Assignment][Node_Fail]
+                        )
+                )               
+        | invariant_condition.false -> failure -> set_return_unknown -> 
+                                (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[Assignment][Node_Fail]
+                                |repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[Assignment][Node_Fail]
+                                )
+        | ancestor_invariant.false ->  failure_parent -> set_return_unknown -> end_executing -> enter_state_finished -> FINISHED[Assignment][Parent_Fail]
+        ),
+
+
+
+EXECUTING[FunctionCall][f:FailureType] = 
+        ( // executing -> EXECUTING[FunctionCall][f]
+//        |
+end_condition.true -> 
+                (post_condition.true -> success -> 
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[FunctionCall][No_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[FunctionCall][No_Fail]
+                        )
+                | post_condition.{false,unknown} -> failure ->
+                        (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[FunctionCall][Node_Fail]
+                        | repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[FunctionCall][Node_Fail]
+                        )
+                )               
+        | invariant_condition.false -> failure -> set_return_unknown -> invoke_abort ->
+                                (repeat_until_condition.true -> end_executing -> enter_state_finished -> FINISHED[FunctionCall][Node_Fail]
+                                |repeat_until_condition.false -> end_executing -> enter_state_waiting -> WAITING[FunctionCall][Node_Fail]
+                                )
+        | ancestor_invariant.false -> failure_parent -> set_return_unknown -> invoke_abort -> end_executing -> enter_state_finished -> FINISHED[FunctionCall][Parent_Fail]
+        ),
+
+
+// assert f != No_Fail
+FAILING[List][f:FailureType] = 
+        //if (f== No_Fail) then ERROR
+        //else
+                ( //failing -> FAILING[List][f]
+//                |
+/* all_children_waiting_or_finished */ child1_waiting_or_finished -> child2_waiting_or_finished -> 
+                        if (f == Parent_Fail) then 
+                                (end_failing -> enter_state_finished -> FINISHED[List][f]
+                                )
+                        else
+                                (repeat_until_condition.true -> end_failing -> enter_state_finished -> FINISHED[List][f]
+                                |repeat_until_condition.false -> end_failing -> enter_state_waiting -> WAITING[List][f]
+                                )
+                | ancestor_invariant.false -> failure_parent -> end_failing -> enter_state_finished -> FINISHED[List][Parent_Fail]
+                ),
+
+
+// assert f != No_Fail
+FAILING[Command][f:FailureType] = 
+        if (f == No_Fail) then ERROR
+        else
+                ( //failing -> FAILING[Command][f]
+//                |
+command_abort_complete.true ->
+                        if (f == Parent_Fail) then 
+                                (end_failing -> enter_state_finished -> FINISHED[Command][f]
+                                )
+                        else
+                                (repeat_until_condition.true -> end_failing -> enter_state_finished -> FINISHED[Command][f]
+                                |repeat_until_condition.false -> end_failing -> enter_state_waiting -> WAITING[Command][f]
+                                )
+                ),
+
+
+// assert f = No_Fail
+FINISHING[List][f:FailureType] = 
+        (
+// finishing -> FINISHING[List][f]
+//        |
+/* all_children_waiting_or_finished */ child1_waiting_or_finished -> child2_waiting_or_finished -> 
+                (post_condition.true -> success -> 
+                        (repeat_until_condition.true -> end_finishing -> enter_state_finished -> FINISHED[List][No_Fail]
+                        |repeat_until_condition.false -> end_finishing -> enter_state_waiting -> WAITING[List][No_Fail]
+                        )
+                | post_condition.{false,unknown} -> failure -> 
+                        (repeat_until_condition.true -> end_finishing -> enter_state_finished -> FINISHED[List][Node_Fail]
+                        |repeat_until_condition.false -> end_finishing -> enter_state_waiting -> WAITING[List][Node_Fail]
+                        ) 
+                )
+        | invariant_condition.false -> failure -> end_finishing -> enter_state_failing -> FAILING[List][Node_Fail]
+        | ancestor_invariant.false -> failure_parent -> end_finishing -> enter_state_failing -> FAILING[List][Parent_Fail]
+        ),
+        
+FINISHED[n:NodeType][f:FailureType] = (finished -> FINISHED[n][f]). 
+
+
+|| ListNode = parent:Plexil(List).
+//>> {parent.{waiting,executing,failing,finishing,finished}}. 
+//>> {pre_condition.{true,false,unknown},post_condition.{true,false,unknown},repeat_until_condition.{true,false,unknown}}.
+
+
+
+minimal
+|| MinListNode = ListNode.
+
+
+animation RunListNode = "xml/plexil.xml" target ListNode
+        actions{
+          	parent.enter_state_inactive/node[0].inactive.begin,
+          	parent.enter_state_waiting/node[0].waiting.begin,
+          	parent.enter_state_finishing/node[0].finishing.begin,
+          	parent.enter_state_executing/node[0].executing.begin,
+          	parent.enter_state_finished/node[0].finished.begin,
+          	parent.enter_state_failing/node[0].failing.begin
+         }
+
+       controls{
+         	parent.end_inactive/node[0].inactive.end,
+         	parent.end_finishing /node[0].finishing.end,
+         	parent.end_finished /node[0].finished.end,
+         	parent.end_waiting /node[0].waiting.end,
+         	parent.end_failing /node[0].failing.end,
+         	parent.end_executing /node[0].executing.end
+        }
+
+
+
+
+
+|| CommandNode = child:Plexil(Command)
+/{
+parent.invariant_condition.false/child.ancestor_invariant.false,
+parent.enter_state_executing/child.parent_executing.true,
+//parent.executing/child.parent_executing.true,
+parent.end_condition.true/child.ancestor_end.true,
+parent.all_children_waiting_or_finished/child.{waiting,finished}
+}.
+
+
+
+minimal
+|| MinCommandNode = CommandNode.
+
+
+minimal
+|| Plan1 = (MinListNode || MinCommandNode).
+
+
+|| CommandNode1 = child1:Plexil(Command)
+/{
+parent.invariant_condition.false/child1.ancestor_invariant.false,
+parent.enter_state_executing/child1.parent_executing.true,
+parent.end_condition.true/child1.ancestor_end.true,
+parent.all_children_waiting_or_finished/child1.{waiting,finished}
+}.
+
+
+animation RunCommandNode1 = "xml/plexil.xml" target CommandNode1
+        actions{
+          	child1.enter_state_inactive/node[1].inactive.begin,
+          	child1.enter_state_waiting/node[1].waiting.begin,
+          	child1.enter_state_finishing/node[1].finishing.begin,
+          	child1.enter_state_executing/node[1].executing.begin,
+          	child1.enter_state_finished/node[1].finished.begin,
+          	child1.enter_state_failing/node[1].failing.begin
+         }
+
+       controls{
+         	child1.end_inactive/node[1].inactive.end,
+         	child1.end_finishing /node[1].finishing.end,
+         	child1.end_finished /node[1].finished.end,
+         	child1.end_waiting /node[1].waiting.end,
+         	child1.end_failing /node[1].failing.end,
+         	child1.end_executing /node[1].executing.end
+        }
+
+
+minimal
+|| MinCommandNode1 = CommandNode1.
+
+
+|| CommandNode2 = child2:Plexil(Command)
+/{
+parent.invariant_condition.false/child2.ancestor_invariant.false,
+parent.enter_state_executing/child2.parent_executing.true,
+parent.end_condition.true/child2.ancestor_end.true,
+parent.all_children_waiting_or_finished/child2.{waiting,finished}
+//child1.finished/child2.start_condition.true
+}.
+
+
+animation RunCommandNode2 = "xml/plexil.xml" target CommandNode2
+        actions{
+          	child2.enter_state_inactive/node[2].inactive.begin,
+          	child2.enter_state_waiting/node[2].waiting.begin,
+          	child2.enter_state_finishing/node[2].finishing.begin,
+          	child2.enter_state_executing/node[2].executing.begin,
+          	child2.enter_state_finished/node[2].finished.begin,
+          	child2.enter_state_failing/node[2].failing.begin
+         }
+
+       controls{
+         	child2.end_inactive/node[2].inactive.end,
+         	child2.end_finishing /node[2].finishing.end,
+         	child2.end_finished /node[2].finished.end,
+         	child2.end_waiting /node[2].waiting.end,
+         	child2.end_failing /node[2].failing.end,
+         	child2.end_executing /node[2].executing.end
+        }
+
+minimal
+|| MinCommandNode2 = CommandNode2.
+
+
+//Env = (parent.repeat_until_condition.true -> END) + {parent.repeat_until_condition.false}. 
+
+Trace = Trace[0],
+Trace[i:0..30] = ({parent, child1, child2}.Alpha -> Trace[i+1]). 
+
+
+|| Plan2 = (ListNode || CommandNode1 || CommandNode2 || Trace).
+
+animation RunPlan2 = "xml/plexil.xml" 
+          compose {
+              RunListNode || RunCommandNode1 || RunCommandNode2 
+		 }
+
+
+
+animation RunPLAN = "xml/plexil.xml" target Plan2
+        actions{
+          	parent.enter_state_inactive/node[0].inactive.begin,
+          	parent.enter_state_waiting/node[0].waiting.begin,
+          	parent.enter_state_finishing/node[0].finishing.begin,
+          	parent.enter_state_executing/node[0].executing.begin,
+          	parent.enter_state_finished/node[0].finished.begin,
+          	parent.enter_state_failing/node[0].failing.begin,
+         	child1.enter_state_inactive/node[1].inactive.begin,
+          	child1.enter_state_waiting/node[1].waiting.begin,
+          	child1.enter_state_finishing/node[1].finishing.begin,
+          	child1.enter_state_executing/node[1].executing.begin,
+          	child1.enter_state_finished/node[1].finished.begin,
+          	child1.enter_state_failing/node[1].failing.begin,
+         	child2.enter_state_inactive/node[2].inactive.begin,
+          	child2.enter_state_waiting/node[2].waiting.begin,
+          	child2.enter_state_finishing/node[2].finishing.begin,
+          	child2.enter_state_executing/node[2].executing.begin,
+          	child2.enter_state_finished/node[2].finished.begin,
+          	child2.enter_state_failing/node[2].failing.begin
+         }
+       controls{
+         	parent.end_inactive/node[0].inactive.end,
+         	parent.end_finishing /node[0].finishing.end,
+         	parent.end_finished /node[0].finished.end,
+         	parent.end_waiting /node[0].waiting.end,
+         	parent.end_failing /node[0].failing.end,
+         	parent.end_executing /node[0].executing.end,
+        	child1.end_inactive/node[1].inactive.end,
+         	child1.end_finishing /node[1].finishing.end,
+         	child1.end_finished /node[1].finished.end,
+         	child1.end_waiting /node[1].waiting.end,
+         	child1.end_failing /node[1].failing.end,
+         	child1.end_executing /node[1].executing.end,
+       		child2.end_inactive/node[2].inactive.end,
+          	child2.end_finishing /node[2].finishing.end,
+          	child2.end_finished /node[2].finished.end,
+          	child2.end_waiting /node[2].waiting.end,
+          	child2.end_failing /node[2].failing.end,
+         	child2.end_executing /node[2].executing.end
+        }
+
+
+
+// properties
+//fluent NodeOutcomeFailed = <{failure, failure_parent}, {success, skipped}> initially False
+
+
+// It is always the case that if pre_condition_F then eventually the node goes to state FINISHED with FailureType Node_Fail -- does not hold
+//assert P1 = [] (pre_condition.false -> <> (enter_state_finished &&  NodeOutcomeFailed))
+
+
+// It is always the case that if ancestor_invariant_F then eventually the node goes to state FINISHED -- does hold
+//assert P2 = [] (ancestor_invariant.false -> <> enter_state_finished)
+
+
+assert P3 = [] (parent.end_condition.true -> <> parent.enter_state_finished)

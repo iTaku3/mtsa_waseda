@@ -1,0 +1,9 @@
+M = (idle -> M | cook -> E_2),
+E_2 = (finishedCooking -> E_3 | cooking -> E_2),
+E_3 = (notBroken -> E_4 | broken -> E_8),
+E_4 = (cook -> E_5),
+E_5 = (finishedCooking -> E_6 | cooking -> E_5),
+E_6 = (notBroken -> E_7 | broken -> E_8),
+E_7 = (moveToBelt -> M),
+E_8 = (fix -> E_9),
+E_9 = (cook -> E_2).

@@ -1,0 +1,75 @@
+const N = 2
+range ProductCount = 1..N
+set ProductTypes = {a, b}
+set Toolset = {drill,oven,press}
+set ProductsTypeA = {{a}.[ProductCount]}
+set ProductsTypeB = {{b}.[ProductCount]}
+set ProductTypesSet = {ProductsTypeA, ProductsTypeB}
+set BlankAlpha = {[ProductTypesSet].{inTray, getInTray, putOutTray}, {put}.Toolset.[ProductTypesSet]}
+set ArmAlpha = { [ProductTypesSet].{getInTray, putOutTray}, {put, get}.Toolset.[ProductTypesSet] }
+set ToolsAlpha  = { {put,process,get}.Toolset.[ProductTypesSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+set ControllableActions = {[ProductTypesSet].{getInTray,putOutTray}, {put,get}.Toolset.[ProductTypesSet]}
+
+INIT_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> END | [C].idle -> INIT_PRODUCT).
+TRY_TOOL(T='any, C=1) = (put[T][C] -> END).
+FINISH_PRODUCT(C=1) = ([C].putOutTray -> END).
+
+PRODUCT_A(C=1)= INIT_PRODUCT(C);
+				TRY_TOOL('oven,C);
+				TRY_TOOL('drill,C);
+				TRY_TOOL('press,C);
+				FINISH_PRODUCT(C);
+				PRODUCT_A.
+
+PRODUCT_B(C=N/2+1)= INIT_PRODUCT(C);
+					TRY_TOOL('drill,C);
+					TRY_TOOL('press,C);
+					TRY_TOOL('oven,C);
+					FINISH_PRODUCT(C);
+					PRODUCT_B.
+
+compose ||PRODUCT_PROCESS = (forall[a:ProductsTypeA] PRODUCT_A(a) || forall[b:ProductsTypeB] PRODUCT_B(b)).
+
+RAW_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> TOOLS_AVAIL 
+					| [C].idle -> RAW_PRODUCT),
+TOOLS_AVAIL = (put[t:Toolset][C] -> get[t].[C] -> TOOLS_AVAIL 
+				| [C].putOutTray -> RAW_PRODUCT).
+
+||RAW_PRODUCTS = forall[p:ProductTypesSet] RAW_PRODUCT(p).
+
+TOOL(T='any) = (put[T][e:ProductTypesSet] -> process[T][e] -> get[T][e] -> TOOL). 
+
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([e:ProductTypesSet].getInTray -> PICKED_UP[e]
+		| get[t:Toolset][e:ProductTypesSet] -> PICKED_UP[e]),
+PICKED_UP[e:ProductTypesSet] = (put[t:Toolset][e] -> IDLE
+               | [e].putOutTray -> IDLE).
+||A = ARM.
+||Plant = (
+		RAW_PRODUCTS ||
+		TOOLS || 
+		ARM).
+
+ltl_property Safety1 = [](! exists[a:ProductTypesSet][b:ProductTypesSet] (TOOL_PROCESS[a]['drill] && TOOL_PROCESS[b]['press]))
+
+fluent ADDED_TO_OUTTRAY[e:ProductTypesSet] = <[e].putOutTray, Alphabet\{[e].putOutTray}>
+fluent ADDED_TO_INTRAY[e:ProductTypesSet] = <[e].inTray, Alphabet\{[e].inTray}>
+fluent TOOL_PROCESS[e:ProductTypesSet][t:Toolset] = <put[t][e], get[t][e]>
+
+assert ASSUME_ON_A = exists[e:ProductsTypeA] ADDED_TO_INTRAY[e]
+assert ASSUME_ON_B = exists[e:ProductsTypeB] ADDED_TO_INTRAY[e]
+
+assert GOAL_FOR_A = exists[e:ProductsTypeA] ADDED_TO_OUTTRAY[e]
+assert GOAL_FOR_B = exists[e:ProductsTypeB] ADDED_TO_OUTTRAY[e]
+
+controller ||C = (Plant)~{Objective}.
+
+controllerSpec Objective = {
+	safety = {Safety1, PRODUCT_PROCESS}
+	assumption = {ASSUME_ON_A, ASSUME_ON_B}
+	liveness = {GOAL_FOR_A, GOAL_FOR_B}
+	controllable = {ControllableActions}
+}

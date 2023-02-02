@@ -1,0 +1,72 @@
+const CantPos = 4
+const CantCars = 2
+const CantBalls =2
+range PositionsBall = 0..1
+range Cars = 0..CantCars-1
+range Balls = 0..CantBalls-1
+range Positions = 0..(CantPos-1)
+range PositionsNoBall = 2..(CantPos-1)
+set Controllable = {c[0].sPut.b[0].p[os:PositionsBall],
+                    c[0].sPick.b[0].p[os:PositionsBall],
+                   	c[ar:Cars].sMove[p:Positions][p:Positions],
+					c[1].sPick.b[1].p[os:PositionsBall],
+					c[1].sPut.b[1].p[os:PositionsBall]}
+
+
+BALL(C=1, P=1) 	= IDLE[P], 
+IDLE[pos:PositionsBall] = (c[C].sPick.b[C].p[pos] -> c[C].ePick.b[C].p[pos] -> PICKED/*[C]*/), 
+PICKED/*[car:Cars]*/	= (c[C].sPut.b[C].p[pos:PositionsBall] -> c[C].ePut.b[C].p[pos]-> IDLE[pos]).
+
+VIA(IN=0) = FREE, 
+FREE = (c[car:Cars].sMove[(IN+1)%CantPos][IN] -> OCCUPPIED[car] | c[car:Cars].sMove[IN][(IN+1+CantPos) % CantPos] -> OCCUPPIED[car]), 
+OCCUPPIED[car:Cars] = (c[car].eMove[(IN+1)%CantPos][IN]-> FREE | c[car].eMove[IN][(IN+1+CantPos) % CantPos]-> FREE ).
+
+
+CAR(C=0,P=0) = IDLE[P], 
+IDLE[p:PositionsBall] = 
+					(c[C].sMove[p][(p+1) % CantPos] -> MOVING[p][(p+1) % CantPos] 
+					|c[C].sMove[p][(p-1+CantPos) % CantPos] -> MOVING[p][(p-1+CantPos) % CantPos]
+					|c[C].sPick.b[C].p[p] -> c[C].ePick.b[C].p[p]-> PICK_IDLE[p][C]), 
+IDLE[p:PositionsNoBall] = 
+					(c[C].sMove[p][(p+1) % CantPos] -> MOVING[p][(p+1) % CantPos] 
+					|c[C].sMove[p][(p-1+CantPos) % CantPos] -> MOVING[p][(p-1+CantPos) % CantPos]),
+PICK_IDLE[p:PositionsBall][b:C..C]  = 
+						(c[C].sMove[p][(p+1) % CantPos] -> MOVING_BALL[p][(p+1) % CantPos][b] 
+						|c[C].sMove[p][ (p-1+CantPos) % CantPos] -> MOVING_BALL[p][(p-1+CantPos) % CantPos][b]
+						|c[C].sPut.b[b].p[p] -> c[C].ePut.b[b].p[p]-> IDLE[p]),
+PICK_IDLE[p:PositionsNoBall][b:C..C]  = 
+						(c[C].sMove[p][(p+1) % CantPos] -> MOVING_BALL[p][(p+1) % CantPos][b] 
+						|c[C].sMove[p][ (p-1+CantPos) % CantPos] -> MOVING_BALL[p][(p-1+CantPos) % CantPos][b]),
+MOVING_BALL[f:Positions][t:Positions][b:C..C] = (c[C].eMove[f][t]-> PICK_IDLE[t][b]),
+MOVING[f:Positions][t:Positions] = (c[C].eMove[f][t]-> IDLE[t]).
+
+||ENV = (forall[in:Positions] VIA(in) || forall[c:Cars] CAR(c,0) || forall[b:Balls] BALL(b,1)).
+
+
+ltl_property LaBolaEnHuecos = [] forall[os:2..(CantPos-1)] forall[all:Balls] forall[ar:Cars] (!c[ar].sPut.b[all].p[os])
+
+fluent EnCasillero[ba:Balls][po:Positions] =   <c[ba].ePut.b[ba].p[po], c[ba].sPick.b[ba].p[po]>
+
+fluent Moving[car:Cars][pos:Positions] = <{c[car].sMove[pos][(pos-1+CantPos) % CantPos], c[car].sMove[pos][(pos+1) % CantPos]},{c[car].eMove[pos][(pos-1+CantPos) % CantPos], c[car].eMove[pos][(pos+1) % CantPos]}>
+fluent Working[car:Cars][pos:Positions] = <{c[car].sPut.b[car].p[pos]},{c[car].ePut.b[car].p[pos]}>
+
+assert Llevarlas = (forall[ba:Balls] EnCasillero[ba][0])
+assert Traerlas  = (forall[ba:Balls] EnCasillero[ba][1])
+
+assert KeepMoving = (forall[car:Cars] forall[pos:Positions] Moving[car][pos])
+assert KeepWorking = (forall[car:Cars] forall[pos:PositionsBall] Working[car][pos])
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	//safety={LaBolaEnHuecos}
+	liveness = {Llevarlas,Traerlas}
+ 	concurrencyFluents={KeepMoving,KeepWorking}
+	lazyness=2
+	//non_transient
+	controllable = {Controllable}
+}

@@ -1,0 +1,39 @@
+set A = {mnn, mnf, msn, msf, do, dc}
+set Controlled = {mnn, mnf, msn, msf}
+
+fluent F2 = <msn, {do, dc}> initially 1
+fluent F3 = <mnn, {do, dc}> initially 1
+fluent FG1 = <mnf, A\{mnf}> initially 1
+fluent FG2 = <msf, A\{msf}>
+fluent Failure = <dc, A\{dc}>
+
+assert AF2 = !F2
+assert AF3 = !F3
+assert AFG1 = FG1
+assert AFG2 = FG2
+assert AFailure = Failure
+
+
+assert Guarantees = (([]<>(AFG1 || AFailure)) && ([]<>(AFG2 || AFailure)))
+assert Assumptions = (([]<>AF2) && ([]<>AF3))
+
+//Goal definition
+controllerSpec G1 = {
+safety = {}
+failure = {AFailure}
+assumption = {AF2, AF3}
+liveness = {AFG2, AFG1}
+controllable = {Controlled}
+}
+
+controller ||CROBOT = ROBOT~{G1}.
+
+ROBOT = (mnn->NN),
+NN = (msn->ND | mnf->ROBOT),
+ND = (do->SN | dc->NN),
+SN = (msf->SF | mnn->SD),
+SD = (do->NN | dc->SN),
+SF = (msn->SN).
+
+
+

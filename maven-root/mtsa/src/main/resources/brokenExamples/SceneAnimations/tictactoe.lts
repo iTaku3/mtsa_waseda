@@ -1,0 +1,61 @@
+// TICTACTOE or noughts and crosses
+/* Board squares are numbered:
+   	0,0 1,0 2,0
+	0,1 1,1 2,1
+	0,2 1,2 2,2
+*/
+// 0 for nought 1 for cross
+
+range R = 0..2
+
+
+CELL(X=0,Y=0) = (clear[X][Y]->{placeO[X][Y],placeX[X][Y]}->STOP).
+
+||CELLS = (forall [i:R]  forall [j:R] CELL(i,j)).
+
+PLAY = XMOVE,
+XMOVE = (placeX[R][R]-> OMOVE),
+OMOVE = (placeO[R][R]-> XMOVE).
+
+WINROW(Y=0)      = COUNT[0],
+COUNT[i:R]    = (placeO[R][Y] -> COUNT[i+1]),
+COUNT[3]         = (winO.row[Y] -> ERROR).
+
+WINCOL(X=0)      = COUNT[0],
+COUNT[i:R]    = (placeO[X][R] -> COUNT[i+1]),
+COUNT[3]         = (winO.col[X] -> ERROR).
+
+WINDIAG(X1=0,X2=0) = COUNT[0],
+COUNT[i:R]    = ({placeO[X1][0],placeO[1][1],placeO[X2][2]} -> COUNT[i+1]),
+COUNT[3]         = (winO.diag[X1][X2] -> ERROR)\{success}.
+
+||WINNER = ( forall [i:R](
+		       WINROW(i)
+		    || WINROW(i)/{placeX/placeO, winX/winO}
+		    || WINCOL(i)
+		    || WINCOL(i)/{placeX/placeO, winX/winO}
+	        )
+	      || WINDIAG(0,2)
+	      || WINDIAG(0,2)/{placeX/placeO, winX/winO}
+	      || WINDIAG(2,0)
+	      || WINDIAG(2,0)/{placeX/placeO, winX/winO}
+         ).
+
+
+
+menu RUN = {placeX[0..2][0..2]}
+
+||GAME = (CELLS || PLAY || WINNER)>>{placeX,placeO}.
+
+animation GAME = "xml/tictactoe.xml" target GAME
+      actions {
+          forall[i:{{clear,placeO,placeX}[R][R]}] {[i]/[i]},
+          forall[i:R] { {winO,winX}.col[i]/wincol[i], {winO,winX}.row[i]/winrow[i]},
+          {winO,winX}.diag[0][2]/windiag1,
+          {winO,winX}.diag[2][0]/windiag2
+      }
+      controls {
+          forall[i:{[R][R]}] { {clear[i],placeO[i],placeX[i]}/pressed[i]}
+      }
+
+

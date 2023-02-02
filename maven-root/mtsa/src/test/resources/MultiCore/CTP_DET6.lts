@@ -1,0 +1,85 @@
+const N = 3
+const I = 2
+const F = 2
+const Cant = 2
+range CantRoads = 0..Cant
+
+//0=[(route.0.way.1,9), (route.0.observe,15), (win,1), (route.0.observe.way.0,0), (route.0.way.0,3), (route.0.observe.way.1,0)]
+//[route.0.observe, route.0.way.1, route.0.way.0, win]
+
+set Name = {route}
+set Prefix = {way}
+set Roads = {Prefix.[m:CantRoads]}
+set Controllable = {Name.[0..N-1].{observe,Roads},win}
+
+set Uncontrollable = {Name.[0..N-1].{observe.Roads,crash,arrived}}
+set Alphabet = {Controllable,Uncontrollable}
+
+DOUBLE_EDGE =(
+	observe -> OBS |
+    Prefix.[r:CantRoads] -> UNCERTAINTY[r] 
+),
+
+UNCERTAINTY[r:CantRoads] = (crash -> ERROR | arrived -> AVAILABLE[r]), 
+
+AVAILABLE[r:CantRoads] = (
+foreach[w:CantRoads] 
+	when (w==r) Prefix.[w] -> arrived -> AVAILABLE[w] |
+    when (w!=r) Prefix.[w] -> crash -> ERROR), 
+
+OBS = (observe.Prefix.[r:CantRoads] -> AVAILABLE[r]).
+
+
+MAP = POS[I], 
+POS[i:0..N-1] = (
+				Name.{[(i-1+N)%N],[i]}.observe-> POS[i] 
+				| Name.[(i-1+N)%N].Roads -> MOV[(i-1+N)%N][(i-1+N)%N]
+				| Name.[i].Roads -> MOV[i][(i+1)%N]
+				| when (i==F) win -> WIN// POS[i]
+),
+MOV[i:0..N-1][p:0..N-1] = (
+	Name.[i].arrived -> POS[p]
+), 
+
+WIN = (win-> WIN).
+
+
+fluent TAKE_ROUTE[f:0..N] = <{Name.[f].Roads}, {Name.[f].arrived}> 
+
+fluent TAKE_ROUTE0 = <{Name.[0].Roads}, {Name.[0].arrived}> 
+fluent TAKE_ROUTE1 = <{Name.[1].Roads}, {Name.[1].arrived}> 
+fluent TAKE_ROUTE2 = <{Name.[2].Roads}, {Name.[2].arrived}> 
+fluent TAKE_ROUTE3 = <{Name.[3].Roads}, {Name.[3].arrived}> 
+fluent TAKE_ROUTE4 = <{Name.[4].Roads}, {Name.[4].arrived}> 
+fluent TAKE_ROUTE5 = <{Name.[5].Roads}, {Name.[5].arrived}> 
+fluent TAKE_ROUTE6 = <{Name.[6].Roads}, {Name.[6].arrived}> 
+fluent TAKE_ROUTE7 = <{Name.[7].Roads}, {Name.[7].arrived}> 
+
+fluent OBSERVE0 = <{Name.[0].observe}, {Name.[0].observe.Roads}> 
+fluent OBSERVE1 = <{Name.[1].observe}, {Name.[1].observe.Roads}> 
+fluent OBSERVE2 = <{Name.[2].observe}, {Name.[2].observe.Roads}> 
+fluent OBSERVE3 = <{Name.[3].observe}, {Name.[3].observe.Roads}> 
+fluent OBSERVE4 = <{Name.[4].observe}, {Name.[4].observe.Roads}> 
+fluent OBSERVE5 = <{Name.[5].observe}, {Name.[5].observe.Roads}> 
+fluent OBSERVE6 = <{Name.[6].observe}, {Name.[6].observe.Roads}> 
+fluent OBSERVE7 = <{Name.[7].observe}, {Name.[7].observe.Roads}> 
+
+
+assert ALL_ROUTES = forall [f:0..N-1] TAKE_ROUTE[f]
+
+||Game = (forall [i:0..N-1] Name.[i]::DOUBLE_EDGE || MAP).
+
+
+fluent Win = <win, Alphabet\{win}>
+
+controllerSpec Goal = {
+  liveness = {Win}
+  controllable = {Controllable}
+}
+
+assert TESTGOAL = []<>Win
+
+controller ||C = Game~{Goal}.
+
+
+

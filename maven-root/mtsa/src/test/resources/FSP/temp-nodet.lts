@@ -1,0 +1,3 @@
+minimal M = (a->(b->v->M | e->d->M))\{b,e}.
+
+||MM = M.

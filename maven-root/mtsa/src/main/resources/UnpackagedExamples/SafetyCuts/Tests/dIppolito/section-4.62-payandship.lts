@@ -1,0 +1,274 @@
+/*
+This version extends the previous one only by adding the possibility
+of cancelling a ship or prod requests if the other has failed. 
+*/
+set User = {usrReq, offerRcvd, notAvail, usrAck, usrNack, respOk, respFail}
+set Producer = {prodInfoReq, infoRcvd, prodNotAvail, prodReq, prodCancel, prodOk, prodFail}
+set Shipper = {shipInfoReq, costAndTime, shipNotAvail, shipReq, shipCancel, shipOk, shipFail}
+set Controllable = {prodInfoReq, prodReq, prodCancel, shipInfoReq, shipReq, shipCancel, respOk, respFail, offerRcvd, notAvail}
+set FailureSet = {prodNotAvail, prodFail, shipNotAvail, shipFail}
+set A = {User, Producer, Shipper}
+
+PRODUCER = (prodInfoReq->REQUESTED), 
+REQUESTED = (infoRcvd->ORDER_PENDING | prodNotAvail->PRODUCER),
+ORDER_PENDING = (prodReq->PRODUCING | prodCancel->PRODUCER),
+PRODUCING = (prodOk->PRODUCER | prodFail->PRODUCER).
+
+SHIPPER = (shipInfoReq->REQUESTED), 
+REQUESTED = (costAndTime->SHIPPING_PENDING | shipNotAvail->SHIPPER),
+SHIPPING_PENDING = (shipReq->SHIPPING | shipCancel->SHIPPER),
+SHIPPING = (shipOk->SHIPPER | shipFail->SHIPPER).
+
+USER = (usrReq->REQUESTED), 
+REQUESTED = (offerRcvd->ACK_NACK | notAvail->USER),
+ACK_NACK = (usrAck->ORDER | usrNack->USER), 
+ORDER = (respOk->USER | respFail->USER).
+
+||ENV = (USER || SHIPPER || PRODUCER).//>>{FailureSet}.
+
+//fluents definition
+fluent F_ShipInfoReq = <shipInfoReq, A\{shipInfoReq}>
+fluent F_ProdInfoReq = <prodInfoReq, A\{prodInfoReq}>
+fluent F_UsrReq = <usrReq, {offerRcvd, notAvail}>
+fluent F_OfferRcvd = <offerRcvd, A\{offerRcvd}>
+fluent F_CostAndTime = <costAndTime, {shipReq, shipCancel}>
+fluent F_InfoRcvd = <infoRcvd, {prodReq, prodCancel}>
+fluent F_ShipReq = <shipReq, A\{shipReq}>
+fluent F_ProdReq = <prodReq, A\{prodReq}>
+fluent F_UsrAckPending = <usrAck, usrReq>//{respOk, respFail}> 
+fluent F_UsrAck = <usrAck, A\{usrAck}> 
+fluent F_UsrNack = <usrNack, usrReq> 
+fluent F_NotAvail = <notAvail, A\{notAvail}> 
+fluent F_ProdNotAvail = <prodNotAvail, usrReq>//prodInfoReq> //
+fluent F_ShipNotAvail = <shipNotAvail, usrReq>//shipInfoReq> //
+fluent F_ShipCancel = <shipCancel, A\{shipCancel}>
+fluent F_ProdCancel = <prodCancel, A\{prodCancel}> 
+fluent F_RespOk = <respOk, A\{respOk}>
+fluent F_ShipOk = <shipOk, usrReq> //shipInfoReq>
+fluent F_ProdOk = <prodOk, usrReq> //prodInfoReq>
+fluent F_RespFail = <respFail, A\{respFail}>
+fluent F_ShipFailed = <shipFail, usrReq>//shipInfoReq>
+fluent F_ProdFailed = <prodFail, usrReq>//prodInfoReq>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Processing = <usrReq, {usrNack, notAvail, respFail, respOk}>
+fluent F_ShipFinished = <{shipOk, shipFail}, shipInfoReq>
+fluent F_ProdFinished = <{prodOk, prodFail}, prodInfoReq>
+fluent F_ShipInfoRequested = <shipInfoReq, usrReq>
+fluent F_ProdInfoRequested = <prodInfoReq, usrReq>
+fluent F_ShipProdInfoReqFailed = <{prodNotAvail, shipNotAvail}, usrReq>
+fluent F_ShipProdReqFailed = <{prodFail, shipFail}, usrReq>
+fluent F_ShipInfoReqAnswered = <{costAndTime, shipNotAvail}, usrReq>
+fluent F_ProdInfoReqAnswered = <{infoRcvd, prodNotAvail}, usrReq>
+fluent F_ShipCancelled = <shipCancel, shipInfoReq>
+fluent F_ProdCancelled = <prodCancel, prodInfoReq> 
+fluent F_ShipRequested = <shipReq, shipInfoReq>
+fluent F_ProdRequested = <prodReq, prodInfoReq>
+
+assert ProdInfoReqFulfilled = (F_ProdInfoRequested -> (F_ProdNotAvail || F_ProdCancelled))
+assert ShipInfoReqFulfilled = (F_ShipInfoRequested -> (F_ShipNotAvail || F_ShipCancelled))
+
+assert ProdReqFulfilled = (F_ProdCancelled || (F_ProdRequested -> (F_ProdFailed || F_ProdOk)))
+assert ShipReqFulfilled = (F_ShipCancelled || (F_ShipRequested -> (F_ShipFailed || F_ShipOk)))
+
+fluent NackAndNoShipCancel = <usrNack, shipCancel>
+fluent NackAndNoProdCancel = <usrNack, prodCancel>
+assert A2 = (!NackAndNoProdCancel && !NackAndNoShipCancel)
+
+//Safety requirements
+ltl_property NoInfoReqBeforeUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> F_UsrReq)
+ltl_property OnlyOneInfoReqPerUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> !F_ShipProdInfoReqFailed)
+
+ltl_property OfferRcvdImpliesInfoAvailable = [](F_OfferRcvd -> (F_CostAndTime && F_InfoRcvd))
+
+ltl_property ProdCancelRestrictions = [](F_ProdCancel -> (F_UsrNack || F_ShipNotAvail))
+ltl_property ShipCancelRestrictions = [](F_ShipCancel -> (F_UsrNack || F_ProdNotAvail || F_ProdFailed))
+
+ltl_property NotAvailImpliesSomeInfoNotAvail = [] (F_NotAvail -> (F_ProdNotAvail || F_ShipNotAvail))
+ltl_property NotAvailImpliesInfoReqFulfilled = [] (F_NotAvail -> (ProdInfoReqFulfilled && ShipInfoReqFulfilled))
+
+ltl_property ProdReqImpliesACK = [](F_ProdReq -> F_UsrAckPending)
+ltl_property ShipReqImpliesProdReq= [](F_ShipReq -> F_ProdOk)
+
+ltl_property RespOkImpliesShipAndProdOk = [](F_RespOk -> (F_ProdOk && F_ShipOk))
+
+ltl_property ShipReqIfProdFailed = [](F_ShipReq -> F_ProdOk)
+
+ltl_property RespFailImpliesShipFailedOrCancelled = [](F_RespFail -> (F_ShipCancelled || F_ShipFailed))
+
+ltl_property ShipAndProdReqDidntFail = [](F_ShipProdReqFailed -> (!F_ShipInfoReq && !F_ProdInfoReq))
+
+//assertions
+assert UsrRespOk = F_RespOk
+assert Failures = F_Failures
+assert AssumptionOnRequests = F_Processing
+assert AssumptionOnUser = F_UsrAckPending
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+fluent F_CAT = <costAndTime, A\{costAndTime}>
+fluent F_InfoR = <infoRcvd, A\{infoRcvd}>
+fluent F_SOk = <shipOk, A\{shipOk}>
+fluent F_POk = <prodOk, A\{prodOk}>
+
+assert Successful = (([]<> AssumptionOnRequests) && ([]<> AssumptionOnUser) &&
+					(([]<> F_ProdInfoReq) -> ([]<>(F_InfoR && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ShipInfoReq) -> ([]<>(F_CAT && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ProdReq) -> ([]<>(F_POk && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ShipReq) -> ([]<>(F_SOk && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))))
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {NoInfoReqBeforeUsrReq, OfferRcvdImpliesInfoAvailable, NotAvailImpliesSomeInfoNotAvail, 
+				RespOkImpliesShipAndProdOk, OnlyOneInfoReqPerUsrReq, ShipAndProdReqDidntFail,
+				ShipCancelRestrictions, ProdCancelRestrictions, RespFailImpliesShipFailedOrCancelled,
+				ProdReqImpliesACK, ShipReqImpliesProdReq, ShipReqIfProdFailed,
+				NotAvailImpliesInfoReqFulfilled}
+       failure = {Failures}
+       assumption = {AssumptionOnUser}
+       liveness = {UsrRespOk}
+       controllable = {Controllable}
+}
+
+EXP = Q0,
+	Q0	= (usrReq -> Q38),
+	Q1	= (offerRcvd -> Q57),
+	Q2	= (offerRcvd -> Q62),
+	Q3	= (usrReq -> Q38),
+	Q4	= (infoRcvd -> Q2
+		  |prodNotAvail -> Q45),
+	Q5	= (costAndTime -> Q18
+		  |shipNotAvail -> Q93),
+	Q6	= (usrReq -> Q38),
+	Q7	= (shipNotAvail -> Q59
+		  |costAndTime -> Q90),
+	Q8	= (shipCancel -> Q9),
+	Q9	= (respFail -> Q76),
+	Q10	= (shipFail -> Q14
+		  |shipOk -> Q82),
+	Q11	= (shipCancel -> Q9),
+	Q12	= (notAvail -> Q42
+		  |prodCancel -> Q53),
+	Q13	= (usrNack -> Q22
+		  |usrAck -> Q78),
+	Q14	= (respFail -> Q26),
+	Q15	= (costAndTime -> Q1
+		  |shipNotAvail -> Q12),
+	Q16	= (prodReq -> Q83),
+	Q17	= (shipCancel -> Q31
+		  |usrReq -> Q86),
+	Q18	= (offerRcvd -> Q39),
+	Q19	= (usrReq -> Q38),
+	Q20	= (notAvail -> Q30),
+	Q21	= (infoRcvd -> Q41
+		  |prodNotAvail -> Q59),
+	Q22	= (prodCancel -> Q17
+		  |shipCancel -> Q27
+		  |usrReq -> Q48),
+	Q23	= (prodOk -> Q28
+		  |prodFail -> Q56),
+	Q24	= (usrReq -> Q86
+		  |shipCancel -> Q89),
+	Q25	= (respFail -> Q68),
+	Q26	= (usrReq -> Q38),
+	Q27	= (prodCancel -> Q31
+		  |usrReq -> Q79),
+	Q28	= (shipReq -> Q10),
+	Q29	= (infoRcvd -> Q5
+		  |prodNotAvail -> Q7
+		  |shipNotAvail -> Q21
+		  |costAndTime -> Q52),
+	Q30	= (usrReq -> Q38),
+	Q31	= (usrReq -> Q69),
+	Q32	= (prodFail -> Q8
+		  |prodOk -> Q74),
+	Q33	= (prodCancel -> Q36
+		  |shipCancel -> Q37
+		  |usrReq -> Q48),
+	Q34	= (shipCancel -> Q25),
+	Q35	= (usrReq -> Q38),
+	Q36	= (shipCancel -> Q31
+		  |usrReq -> Q86),
+	Q37	= (prodCancel -> Q31
+		  |usrReq -> Q79),
+	Q38	= (shipInfoReq -> Q40
+		  |prodInfoReq -> Q77),
+	Q39	= (usrNack -> Q33
+		  |usrAck -> Q44),
+	Q40	= (shipNotAvail -> Q20
+		  |prodInfoReq -> Q29
+		  |costAndTime -> Q61),
+	Q41	= (prodCancel -> Q53),
+	Q42	= (prodCancel -> Q30
+		  |usrReq -> Q81),
+	Q43	= (prodReq -> Q50),
+	Q44	= (prodReq -> Q23),
+	Q45	= (notAvail -> Q24
+		  |shipCancel -> Q73),
+	Q46	= (respOk -> Q75),
+	Q47	= (shipReq -> Q60),
+	Q48	= (offerRcvd -> Q13),
+	Q49	= (shipInfoReq -> Q5),
+	Q50	= (prodFail -> Q34
+		  |prodOk -> Q47),
+	Q51	= (shipInfoReq -> Q29
+		  |prodNotAvail -> Q70
+		  |infoRcvd -> Q71),
+	Q52	= (infoRcvd -> Q18
+		  |prodNotAvail -> Q66),
+	Q53	= (notAvail -> Q30),
+	Q54	= (usrReq -> Q38),
+	Q55	= (shipCancel -> Q27
+		  |prodCancel -> Q36
+		  |usrReq -> Q48),
+	Q56	= (shipCancel -> Q25),
+	Q57	= (usrAck -> Q16
+		  |usrNack -> Q55),
+	Q58	= (shipFail -> Q65
+		  |shipOk -> Q88),
+	Q59	= (notAvail -> Q91),
+	Q60	= (shipOk -> Q84
+		  |shipFail -> Q92),
+	Q61	= (prodInfoReq -> Q52),
+	Q62	= (usrAck -> Q43
+		  |usrNack -> Q85),
+	Q63	= (usrReq -> Q38),
+	Q64	= (notAvail -> Q3),
+	Q65	= (respFail -> Q19),
+	Q66	= (shipCancel -> Q73),
+	Q67	= (usrReq -> Q38),
+	Q68	= (usrReq -> Q69),
+	Q69	= (shipInfoReq -> Q40
+		  |prodInfoReq -> Q51),
+	Q70	= (notAvail -> Q89),
+	Q71	= (shipInfoReq -> Q5),
+	Q72	= (respFail -> Q35),
+	Q73	= (notAvail -> Q89),
+	Q74	= (shipReq -> Q58),
+	Q75	= (usrReq -> Q38),
+	Q76	= (usrReq -> Q69),
+	Q77	= (shipInfoReq -> Q29
+		  |infoRcvd -> Q49
+		  |prodNotAvail -> Q64),
+	Q78	= (prodReq -> Q32),
+	Q79	= (shipInfoReq -> Q15),
+	Q80	= (shipOk -> Q46
+		  |shipFail -> Q72),
+	Q81	= (shipInfoReq -> Q15),
+	Q82	= (respOk -> Q63),
+	Q83	= (prodFail -> Q11
+		  |prodOk -> Q87),
+	Q84	= (respOk -> Q67),
+	Q85	= (prodCancel -> Q17
+		  |shipCancel -> Q37
+		  |usrReq -> Q48),
+	Q86	= (prodInfoReq -> Q4),
+	Q87	= (shipReq -> Q80),
+	Q88	= (respOk -> Q54),
+	Q89	= (usrReq -> Q69),
+	Q90	= (shipCancel -> Q73),
+	Q91	= (usrReq -> Q38),
+	Q92	= (respFail -> Q6),
+	Q93	= (prodCancel -> Q53).
+

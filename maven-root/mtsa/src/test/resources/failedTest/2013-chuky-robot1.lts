@@ -1,0 +1,31 @@
+set Directions = {n,s,e,o}
+
+ROBOT = ({Directions}->ROBOT).
+
+const MAX = 2
+range DIM = 1..MAX
+GRID = GRID[1][1], 
+GRID[row:DIM][col:DIM] = 
+	(when(row == 1 && col==1)     (s->GRID[row+1][col] | e->GRID[row][col+1])
+	|when(row == MAX && col==MAX) n->GRID[MAX-1][MAX] | w->GRID[MAX][MAX-1]
+	|when(row == MAX && col>1 && col<MAX) n->GRID[row-1][col] | w->GRID[row][col-1] | e->GRID[row][col+1]
+	|when(row == 1 && col>1 && col<MAX)   s->GRID[row+1][col] | w->GRID[row][col-1] | e->GRID[row][col+1]
+	|when(col == MAX && row>1 && row<MAX) n->GRID[row-1][col] | w->GRID[row][col-1] | s->GRID[row+1][col]
+	|when(col == 1 && row>1 && row<MAX)   n->GRID[row-1][col] | e->GRID[row][col+1] | s->GRID[row+1][col]
+	|when(row > 1 && row < MAX && col>1 && col<MAX) 
+			s->GRID[row+1][col] | e->GRID[row][col+1] 
+			|n->GRID[row-1][col] | w->GRID[row][col-1]).
+
+fluent F_N = <n, Directions\{n}>
+
+assert TRUE = (F_N || !F_N)
+
+controller ||C = (ROBOT || GRID)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+//       safety = {TRUE}
+       liveness = {TRUE}
+       controllable = {Directions}
+}
+

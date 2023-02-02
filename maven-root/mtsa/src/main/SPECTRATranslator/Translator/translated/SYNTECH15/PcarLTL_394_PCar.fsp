@@ -1,0 +1,103 @@
+//PcarLTL_394_PCar automatically_translated 
+
+set ControlledActions = {throttle.fwd, throttle.bwd, throttle.stop, steer.right, steer.left, steer.center, tick, env_constraint[685].respondsto.responded, not_env_constraint[685].respondsto.responded}
+set UncontrolledActions = {obstacle.clear, obstacle.blocked, obstacle.object, sidesense.clear, sidesense.p_o, sidesense.blocked, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Obstacle_Actions = {obstacle.clear, obstacle.blocked, obstacle.object}
+fluent OBSTACLE_CLEAR = <obstacle.clear, Obstacle_Actions\{obstacle.clear}>
+fluent OBSTACLE_BLOCKED = <obstacle.blocked, Obstacle_Actions\{obstacle.blocked}>
+fluent OBSTACLE_OBJECT = <obstacle.object, Obstacle_Actions\{obstacle.object}>
+
+set SideSense_Actions = {sidesense.clear, sidesense.p_o, sidesense.blocked}
+fluent SIDESENSE_CLEAR = <sidesense.clear, SideSense_Actions\{sidesense.clear}>
+fluent SIDESENSE_P_O = <sidesense.p_o, SideSense_Actions\{sidesense.p_o}>
+fluent SIDESENSE_BLOCKED = <sidesense.blocked, SideSense_Actions\{sidesense.blocked}>
+
+set Throttle_Actions = {throttle.fwd, throttle.bwd, throttle.stop}
+fluent THROTTLE_FWD = <throttle.fwd, Throttle_Actions\{throttle.fwd}>
+fluent THROTTLE_BWD = <throttle.bwd, Throttle_Actions\{throttle.bwd}>
+fluent THROTTLE_STOP = <throttle.stop, Throttle_Actions\{throttle.stop}>
+
+set Steer_Actions = {steer.right, steer.left, steer.center}
+fluent STEER_RIGHT = <steer.right, Steer_Actions\{steer.right}>
+fluent STEER_LEFT = <steer.left, Steer_Actions\{steer.left}>
+fluent STEER_CENTER = <steer.center, Steer_Actions\{steer.center}>
+
+set ENV_CONSTRAINT_685_respondsTo_responded_Actions = {env_constraint[685].respondsto.responded, not_env_constraint[685].respondsto.responded}
+fluent ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED = <env_constraint[685].respondsto.responded, ENV_CONSTRAINT_685_respondsTo_responded_Actions\{env_constraint[685].respondsto.responded}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED))
+minimal || Initial_0_min =  Initial_0.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min).
+
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> (OBSTACLE_BLOCKED -> !THROTTLE_FWD))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> ((OBSTACLE_CLEAR && SIDESENSE_CLEAR) -> STEER_CENTER))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+assert G_l0 = (tick && (THROTTLE_FWD && STEER_CENTER))
+
+
+//property divided into 2 subproperties.
+ltl_property G2 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED)) || (SIDESENSE_CLEAR || (ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED && ((!THROTTLE_FWD || !STEER_CENTER) || !SIDESENSE_BLOCKED)))))
+minimal ||G2_min = G2.
+ltl_property G3 = [](tick -> ((!SIDESENSE_CLEAR && (!ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED || ((THROTTLE_FWD && STEER_CENTER) && SIDESENSE_BLOCKED))) || X(!tick W (tick && ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED))))
+minimal ||G3_min = G3.
+
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> (THROTTLE_BWD -> X(!tock W (tock && OBSTACLE_CLEAR))))
+minimal ||A0_min = A0.
+
+//property divided into 1 subproperties.
+assert A_l0 = (tock && ENV_CONSTRAINT_685_RESPONDSTO_RESPONDED)
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min || G0_min || G1_min || G2_min || G3_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l0, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l0 && A_clock) -> ([]<>G_l0))
+assert ASM =   ([]<>A_l0 && A_clock)
+assert GNT = ([]<>G_l0)
+progress Time  = {tick}

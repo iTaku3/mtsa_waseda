@@ -1,0 +1,23 @@
+set A = {c1,c2, g}
+set C = {c1, c2, g}
+set U = {A\{C}}
+
+//Fluents: para poder hablar de estados, cuando estamos en una semantica de etiquetas
+fluent FG = <g, A\{g}>
+
+//Formulas FLTL
+assert Goal = FG
+assert TRUE = [](FA || !FA)
+
+M = (c2->A | c1->g->G),
+A = (c2->A),
+G = (g->G).
+
+controllerSpec G = {
+	safety = {}
+	assumption = {TRUE}
+	liveness = {Goal1, Goal2}
+	controllable = {C}
+}
+controller ||C = M~{G}.
+

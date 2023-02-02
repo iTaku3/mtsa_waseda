@@ -1,0 +1,8 @@
+M = (a-> TRYA  | b->TRYB),
+TRYA = (scc->A | fail-> M),
+A = (b -> ATRYB),
+ATRYB = (succ -> SUCC | fail -> M),
+TRYB = (succ -> B | fail -> M),
+B = (a -> BTRYA),
+BTRYA = (succ -> SUCC | fail -> M),
+SUCC = (ret->M).

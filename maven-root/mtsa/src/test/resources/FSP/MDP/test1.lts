@@ -1,0 +1,11 @@
+//Abstraccion agrega no determinismo eliminando 
+//probabilidades sin perder transiciones. 
+//Resultado esperado: 
+//Dist deberia ser igual a R. 
+//La distancia debe dar infinito (Rmin=? [F "exception"])
+R = (t -> {0.4:RA + 0.6:RB}),
+RA = (a -> STOP),
+RB = (b -> STOP).
+A = (t -> a -> STOP | t -> b -> STOP).
+probabilistic mdp ||C = (R||A).
+

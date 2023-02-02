@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jardesc>
+<jar path="C:/Datos/Dari/eclipseWorkspace/deploy/MTSChecker.jar"/>
+<options buildIfNeeded="true" compress="true" descriptionLocation="/FSP2MTS/MTSCheckerJarExport.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" useSourceFolders="false"/>
+<manifest generateManifest="false" manifestLocation="/FSP2MTS/META-INF/MANIFEST.MF" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+<sealing sealJar="true">
+<packagesToSeal/>
+<packagesToUnSeal/>
+</sealing>
+</manifest>
+<selectedElements exportClassFiles="false" exportJavaFiles="false" exportOutputFolder="true">
+<javaElement handleIdentifier="=MTSTools/src"/>
+<javaElement handleIdentifier="=FSP2MTS/src"/>
+</selectedElements>
+</jardesc>

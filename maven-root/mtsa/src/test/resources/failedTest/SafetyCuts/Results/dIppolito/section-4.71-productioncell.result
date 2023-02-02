@@ -1,0 +1,4 @@
+NAME	Initial State Count	Final State Count	State Delta	Initial Time	Final Time	Time Delta (ms)
+GR + cuts	4239	2065	-2174	Wed Apr 29 14:56:21 ART 2015	Wed Apr 29 14:56:22 ART 2015	842
+opposite gr	4239	4239	0	Wed Apr 29 14:56:21 ART 2015	Wed Apr 29 14:56:21 ART 2015	162
+opposite safe	4239	4239	0	Wed Apr 29 14:56:21 ART 2015	Wed Apr 29 14:56:21 ART 2015	378

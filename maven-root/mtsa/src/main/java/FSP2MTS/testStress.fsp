@@ -1,0 +1,12 @@
+P0 = ( _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 | a->P1 ),
+P1 = ( _tau?->P0 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 ),
+P2 = ( _tau?->P0 | _tau?->P1 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 ),
+P3 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 ),
+P4 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 | a->P5 ),
+P5 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 | a->P6 ),
+P6 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P7 | _tau?->P8 | _tau?->P9 | _tau?->P10 | a->P7 ),
+P7 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P8 | _tau?->P9 | _tau?->P10 | a->P8 ),
+P8 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P9 | _tau?->P10 | a->P9 ),
+P9 = ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P10 | a->P10 ),
+P10= ( _tau?->P0 | _tau?->P1 | _tau?->P2 | _tau?->P3 | _tau?->P4 | _tau?->P5 | _tau?->P6 | _tau?->P7 | _tau?->P8 | _tau?->P9 |  a->P0 ).
+

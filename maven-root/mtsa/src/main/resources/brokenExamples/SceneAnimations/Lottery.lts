@@ -1,0 +1,28 @@
+range Numbers   = 1..49
+range Choice    = 1..6
+
+
+CHOICES           = (start -> CHOICE[1]),
+CHOICE[i:Choice]  = (ball[i][Numbers] -> PICKED[i]),
+PICKED[i:Choice]  = (picked -> if (i<6) then 
+                        CHOICE[i+1]
+                    else
+                       (end->CHOICES)
+                    ).
+
+BALL(I=1) = (ball[Choice][I]->PICKED
+            |end-> BALL
+            ),
+PICKED    = (end -> BALL).
+
+||LOTTERY =(CHOICES || forall[i:Numbers] BALL(i)).
+
+menu Run = {start}
+
+animation Lottery = "xml/lottery.xml"
+   actions {ball[c:Choice][n:Numbers]/ball[c][n],
+            start/reset[Choice]
+           }
+   controls{picked/end, start/start}
+
+              

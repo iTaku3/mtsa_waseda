@@ -1,0 +1,497 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+//ACTION SETS
+set ControllableActions = {drill, polish, clean, out, stamp, drillOk, drillNOk, polishOk, polishNOk, cleanOk, cleanNOk, stampOk}
+set OldAlphabet = {ControllableActions, in, reset}
+set NewControllableActions = {drill, paint, clean, out, stamp, drillOk, drillNOk, paintOk, paintNOk, cleanOk, cleanNOk, stampOk}
+set NewAlphabet = {NewControllableActions, in, reset}
+
+//Domain Old Model
+	PRODUCTION_CELL_OLD = (in -> ARM),
+	ARM = ( polish -> POLISHED 
+		| drill -> DRILLED
+		| clean -> CLEANED
+		| stamp -> TRASHED
+		| out -> reset -> PRODUCTION_CELL_OLD),
+	DRILLED = ({drillOk,drillNOk}  -> ARM),
+	POLISHED = ({polishOk,polishNOk} -> ARM),
+	CLEANED = ({cleanOk,cleanNOk} -> ARM),
+	TRASHED = (stampOk -> ARM).
+
+//Domain New Model
+	PRODUCTION_CELL_NEW = (in -> ARM),
+	ARM = ( paint -> PAINTED 
+		| drill -> DRILLED
+		| clean -> CLEANED
+		| stamp -> TRASHED
+		| out -> reset -> PRODUCTION_CELL_NEW),
+	DRILLED = ({drillOk,drillNOk} -> ARM),
+	PAINTED = ({paintOk,paintNOk} -> ARM),
+	CLEANED = ({cleanOk,cleanNOk} -> ARM),
+	TRASHED = (stampOk -> ARM).
+
+//Domain mapping Model
+	PRODUCTION_CELL_MAP =  PRODUCTION_CELL_OLD,
+	PRODUCTION_CELL_OLD = (in -> ARM_OLD | reconfigure -> PRODUCTION_CELL_NEW),
+	ARM_OLD = ( polish -> POLISHED_OLD 
+		| drill -> DRILLED_OLD
+		| clean -> CLEANED_OLD
+		| stamp -> TRASHED_OLD
+		| out -> OUT_OLD
+		| reconfigure -> ARM_NEW),
+	OUT_OLD = (reset -> PRODUCTION_CELL_OLD | reconfigure -> OUT_NEW),
+	DRILLED_OLD = ({drillOk,drillNOk}  -> ARM_OLD | reconfigure -> DRILLED_NEW),
+	POLISHED_OLD = ({polishOk,polishNOk} -> ARM_OLD | reconfigure -> ARM_NEW),
+	CLEANED_OLD = ({cleanOk,cleanNOk} -> ARM_OLD | reconfigure -> CLEANED_NEW),
+	TRASHED_OLD = (stampOk -> ARM_OLD | reconfigure -> TRASHED_NEW),
+
+	PRODUCTION_CELL_NEW = (in -> ARM_NEW),
+	ARM_NEW = ( paint -> PAINTED_NEW 
+		| drill -> DRILLED_NEW
+		| clean -> CLEANED_NEW
+		| stamp -> TRASHED_NEW
+		| out -> OUT_NEW),
+	OUT_NEW = (reset -> PRODUCTION_CELL_NEW),
+	DRILLED_NEW = ({drillOk,drillNOk} -> ARM_NEW),
+	PAINTED_NEW = ({paintOk,paintNOk} -> ARM_NEW),
+	CLEANED_NEW = ({cleanOk,cleanNOk} -> ARM_NEW),
+	TRASHED_NEW = (stampOk -> ARM_NEW).
+
+||OLD_ENV = (PRODUCTION_CELL_OLD).
+||NEW_ENV = (PRODUCTION_CELL_NEW).
+||MAPPING_ENV = (PRODUCTION_CELL_MAP).
+
+
+//DEFINED FLUENTS 
+fluent Drilled = <drillOk,reset>
+fluent DrillPending = <drill,{drillOk,drillNOk}>
+fluent Polished = <polishOk,reset>
+fluent PolishPending = <polish,{polishOk,polishNOk}>
+fluent Cleaned = <cleanOk,reset>
+fluent CleanPending = <clean,{cleanOk,cleanNOk}>
+fluent Painted = <paintOk,reset>
+fluent PaintPending = <paint,{paintOk,paintNOk}>
+fluent Faulty = <stampOk,reset>
+fluent FaultyPending = <stamp,stampOk>
+
+fluent OldToolApplied = <{drillOk,cleanOk,polishOk},reset>
+fluent NewToolApplied = <{paintOk,drillOk,cleanOk},reset>
+fluent AnyToolApplied = <{paintOk,drillOk,cleanOk,polishOk},reset>
+fluent Processing = <in,reset>
+fluent OutDone = <out,reset>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+assert OLD_TOOL_ORDER = ((CleanPending -> Polished) && (PolishPending -> Drilled))
+assert OLD_OUT_IF_FINISHED = (out-> (Drilled && Polished && Cleaned))
+assert DRILL_ONCE = ( drill-> !Drilled )
+assert POLISH_ONCE = ( polish -> !Polished )
+assert CLEAN_ONCE = ( clean -> !Cleaned )
+assert AVOID_STAMPING = ( !stamp )
+
+ltl_property P_OLD_TOOL_ORDER = []OLD_TOOL_ORDER
+ltl_property P_OLD_OUT_IF_FINISHED = []OLD_OUT_IF_FINISHED
+ltl_property P_DRILL_ONCE = []DRILL_ONCE
+ltl_property P_POLISH_ONCE = []POLISH_ONCE
+ltl_property P_CLEAN_ONCE = []CLEAN_ONCE
+ltl_property P_AVOID_STAMPING = []AVOID_STAMPING
+
+controllerSpec DRILL_POLISH_CLEAN = {
+	safety = {P_OLD_TOOL_ORDER, P_OLD_OUT_IF_FINISHED,
+			P_DRILL_ONCE, P_POLISH_ONCE, P_CLEAN_ONCE,
+			P_AVOID_STAMPING 
+			}
+	controllable = {ControllableActions}
+}
+controller ||C_DRILL_POLISH_CLEAN = (OLD_ENV)~{DRILL_POLISH_CLEAN}.
+||DrillPolishClean = (C_DRILL_POLISH_CLEAN || OLD_ENV).
+
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert NEW_TOOL_ORDER = ((DrillPending -> (Painted && Cleaned)) && (PaintPending -> (Cleaned && !Drilled)) && (CleanPending -> (!Painted && !Drilled)))
+assert NEW_OUT_IF_FINISHED = (out -> (Drilled && Cleaned && Painted))
+assert PAINT_ONCE =   ( paint -> !Painted )
+
+ltl_property P_NEW_TOOL_ORDER = []NEW_TOOL_ORDER
+ltl_property P_NEW_OUT_IF_FINISHED = []NEW_OUT_IF_FINISHED
+ltl_property P_PAINT_ONCE = []PAINT_ONCE
+
+
+controllerSpec CLEAN_PAINT_DRILL = {
+	safety = {P_NEW_TOOL_ORDER, P_NEW_OUT_IF_FINISHED,
+			P_DRILL_ONCE, P_CLEAN_ONCE,
+			P_PAINT_ONCE, P_AVOID_STAMPING
+			}
+	controllable = {NewControllableActions}
+}
+controller ||C_CLEAN_PAINT_DRILL = (NEW_ENV)~{CLEAN_PAINT_DRILL}.
+||CleanPaintDrill = (C_CLEAN_PAINT_DRILL || NEW_ENV).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+assert AnyAction = (drill || polish || clean || out || stamp || paint || in || drillOk || drillNOk || 
+				polishOk || polishNOk || cleanOk || cleanNOk || stampOk || reset || paintOk || paintNOk)
+
+
+ltl_property T_UPDATE_WHILE_EMPTY = (StartNewSpec -> !Processing) // should give no controller because in is uncontrollable
+ltl_property T_NO_POLISH_ON_UPDATE = (startNewSpec -> (Processing -> !Polished))
+ltl_property T_REMOVE_POLISHED_OR_NEW_REQ = ((StopOldSpec && !StartNewSpec) -> (S_NEW || (out -> Faulty)) )
+ltl_property T_NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+
+fluent ToolApplied = <{drillOk,polishOk, cleanOk}, {reset}>
+ltl_property T_FINISH_WITH_OLD_REQ = ((ToolApplied && StopOldSpec && !StartNewSpec) -> OLD_TOOL_ORDER)
+ltl_property T_SWITCH_TO_NEW_ASAP = ((ToolApplied && StopOldSpec && !StartNewSpec) -> NEW_TOOL_ORDER)
+
+updatingController UpdCont = {
+    oldController = DrillPolishClean,
+    mapping = MAPPING_ENV,
+    oldGoal = DRILL_POLISH_CLEAN,
+    newGoal = CLEAN_PAINT_DRILL,
+//    transition = T_NO_TP,
+//    transition = T_REMOVE_POLISHED_OR_NEW_REQ,
+//	  transition = T_UPDATE_WHILE_EMPTY,
+//    transition = T_NO_POLISH_ON_UPDATE,
+//    transition = T_FINISH_WITH_OLD_REQ,
+//	  transition = T_SWITCH_TO_NEW_ASAP,
+    nonblocking
+}
+
+||C = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec,beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert S_OLD = (OLD_TOOL_ORDER  && OLD_OUT_IF_FINISHED && DRILL_ONCE && POLISH_ONCE && CLEAN_ONCE)
+assert S_NEW = (NEW_TOOL_ORDER && NEW_OUT_IF_FINISHED && DRILL_ONCE && PAINT_ONCE && CLEAN_ONCE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+
+
+
+||ExpectedC = UPDATE_CONTROLLER.
+
+
+
+	UPDATE_CONTROLLER = Q0,
+	Q0	= (beginUpdate -> Q1
+		  |in -> Q107),
+	Q1	= (stopOldSpec -> Q2
+		  |in -> Q66),
+	Q2	= (startNewSpec -> Q3
+		  |reconfigure -> Q32
+		  |in -> Q34),
+	Q3	= (reconfigure -> Q4
+		  |in -> Q31),
+	Q4	= (in -> Q5),
+	Q5	= (clean -> Q6),
+	Q6	= (cleanNOk -> Q7
+		  |cleanOk -> Q29),
+	Q7	= (clean -> Q8),
+	Q8	= (cleanNOk -> Q9
+		  |cleanOk -> Q27),
+	Q9	= (clean -> Q10),
+	Q10	= (cleanNOk -> Q5
+		  |cleanOk -> Q11),
+	Q11	= (paint -> Q12),
+	Q12	= (paintOk -> Q13
+		  |paintNOk -> Q29),
+	Q13	= (drill -> Q14),
+	Q14	= (drillOk -> Q15
+		  |drillNOk -> Q18),
+	Q15	= (out -> Q16),
+	Q16	= (reset -> Q17),
+	Q17	= (in -> Q9),
+	Q18	= (drill -> Q19),
+	Q19	= (drillOk -> Q20
+		  |drillNOk -> Q22),
+	Q20	= (out -> Q21),
+	Q21	= (reset -> Q4),
+	Q22	= (drill -> Q23),
+	Q23	= (drillNOk -> Q13
+		  |drillOk -> Q24),
+	Q24	= (out -> Q25),
+	Q25	= (reset -> Q26),
+	Q26	= (in -> Q7),
+	Q27	= (paint -> Q28),
+	Q28	= (paintNOk -> Q11
+		  |paintOk -> Q22),
+	Q29	= (paint -> Q30),
+	Q30	= (paintOk -> Q18
+		  |paintNOk -> Q27),
+	Q31	= (reconfigure -> Q7),
+	Q32	= (startNewSpec -> Q26
+		  |in -> Q33),
+	Q33	= (startNewSpec -> Q9),
+	Q34	= (startNewSpec -> Q35),
+	Q35	= (reconfigure -> Q7
+		  |polish -> Q36
+		  |clean -> Q64),
+	Q36	= (reconfigure -> Q37),
+	Q37	= (clean -> Q38),
+	Q38	= (cleanNOk -> Q39
+		  |cleanOk -> Q62),
+	Q39	= (clean -> Q40),
+	Q40	= (cleanNOk -> Q41
+		  |cleanOk -> Q60),
+	Q41	= (clean -> Q42),
+	Q42	= (cleanNOk -> Q37
+		  |cleanOk -> Q43),
+	Q43	= (paint -> Q44),
+	Q44	= (paintOk -> Q45
+		  |paintNOk -> Q62),
+	Q45	= (drill -> Q46),
+	Q46	= (drillOk -> Q47
+		  |drillNOk -> Q50),
+	Q47	= (out -> Q48),
+	Q48	= (reset -> Q49),
+	Q49	= (in -> Q41),
+	Q50	= (drill -> Q51),
+	Q51	= (drillOk -> Q52
+		  |drillNOk -> Q55),
+	Q52	= (out -> Q53),
+	Q53	= (reset -> Q54),
+	Q54	= (in -> Q37),
+	Q55	= (drill -> Q56),
+	Q56	= (drillNOk -> Q45
+		  |drillOk -> Q57),
+	Q57	= (out -> Q58),
+	Q58	= (reset -> Q59),
+	Q59	= (in -> Q39),
+	Q60	= (paint -> Q61),
+	Q61	= (paintNOk -> Q43
+		  |paintOk -> Q55),
+	Q62	= (paint -> Q63),
+	Q63	= (paintOk -> Q50
+		  |paintNOk -> Q60),
+	Q64	= (reconfigure -> Q65),
+	Q65	= (cleanNOk -> Q5
+		  |cleanOk -> Q11),
+	Q66	= (stopOldSpec -> Q67),
+	Q67	= (reconfigure -> Q33
+		  |startNewSpec -> Q35
+		  |polish -> Q68
+		  |out -> Q95
+		  |drill -> Q100
+		  |clean -> Q101
+		  |stamp -> Q104),
+	Q68	= (startNewSpec -> Q69),
+	Q69	= (polishNOk -> Q31
+		  |reconfigure -> Q37
+		  |polishOk -> Q70),
+	Q70	= (reconfigure -> Q71),
+	Q71	= (clean -> Q72),
+	Q72	= (cleanNOk -> Q73
+		  |cleanOk -> Q93),
+	Q73	= (clean -> Q74),
+	Q74	= (cleanNOk -> Q75
+		  |cleanOk -> Q91),
+	Q75	= (clean -> Q76),
+	Q76	= (cleanNOk -> Q71
+		  |cleanOk -> Q77),
+	Q77	= (paint -> Q78),
+	Q78	= (paintOk -> Q79
+		  |paintNOk -> Q93),
+	Q79	= (drill -> Q80),
+	Q80	= (drillOk -> Q81
+		  |drillNOk -> Q83),
+	Q81	= (out -> Q82),
+	Q82	= (reset -> Q4),
+	Q83	= (drill -> Q84),
+	Q84	= (drillOk -> Q85
+		  |drillNOk -> Q87),
+	Q85	= (out -> Q86),
+	Q86	= (reset -> Q26),
+	Q87	= (drill -> Q88),
+	Q88	= (drillNOk -> Q79
+		  |drillOk -> Q89),
+	Q89	= (out -> Q90),
+	Q90	= (reset -> Q17),
+	Q91	= (paint -> Q92),
+	Q92	= (paintNOk -> Q77
+		  |paintOk -> Q87),
+	Q93	= (paint -> Q94),
+	Q94	= (paintOk -> Q83
+		  |paintNOk -> Q91),
+	Q95	= (reset -> Q96
+		  |startNewSpec -> Q97),
+	Q96	= (startNewSpec -> Q3
+		  |in -> Q34),
+	Q97	= (reset -> Q98
+		  |reconfigure -> Q99),
+	Q98	= (reconfigure -> Q4
+		  |in -> Q31),
+	Q99	= (reset -> Q17),
+	Q100	= (drillNOk -> Q34),
+	Q101	= (startNewSpec -> Q102),
+	Q102	= (cleanNOk -> Q31
+		  |reconfigure -> Q65
+		  |cleanOk -> Q103),
+	Q103	= (reconfigure -> Q29),
+	Q104	= (startNewSpec -> Q105),
+	Q105	= (stampOk -> Q31
+		  |reconfigure -> Q106),
+	Q106	= (stampOk -> Q5),
+	Q107	= (beginUpdate -> Q66
+		  |drill -> Q108),
+	Q108	= (drillNOk -> Q107
+		  |beginUpdate -> Q109
+		  |drillOk -> Q116),
+	Q109	= (stopOldSpec -> Q110),
+	Q110	= (drillNOk -> Q34
+		  |reconfigure -> Q111
+		  |drillOk -> Q112),
+	Q111	= (drillNOk -> Q33),
+	Q112	= (out -> Q113),
+	Q113	= (reset -> Q96
+		  |startNewSpec -> Q114),
+	Q114	= (reset -> Q98
+		  |reconfigure -> Q115),
+	Q115	= (reset -> Q17),
+	Q116	= (polish -> Q117
+		  |beginUpdate -> Q173),
+	Q117	= (polishNOk -> Q116
+		  |beginUpdate -> Q118
+		  |polishOk -> Q129),
+	Q118	= (stopOldSpec -> Q119),
+	Q119	= (polishNOk -> Q112
+		  |polishOk -> Q120
+		  |reconfigure -> Q124),
+	Q120	= (out -> Q121),
+	Q121	= (reset -> Q96
+		  |startNewSpec -> Q122),
+	Q122	= (reset -> Q98
+		  |reconfigure -> Q123),
+	Q123	= (reset -> Q17),
+	Q124	= (out -> Q125),
+	Q125	= (reset -> Q126
+		  |startNewSpec -> Q128),
+	Q126	= (startNewSpec -> Q54
+		  |in -> Q127),
+	Q127	= (startNewSpec -> Q39),
+	Q128	= (reset -> Q49),
+	Q129	= (beginUpdate -> Q130
+		  |clean -> Q150),
+	Q130	= (stopOldSpec -> Q131),
+	Q131	= (out -> Q121
+		  |polish -> Q132
+		  |drill -> Q136
+		  |reconfigure -> Q137
+		  |clean -> Q140
+		  |stamp -> Q149),
+	Q132	= ({polishNOk, polishOk} -> Q120
+		  |reconfigure -> Q133),
+	Q133	= (out -> Q134),
+	Q134	= (reset -> Q126
+		  |startNewSpec -> Q135),
+	Q135	= (reset -> Q49),
+	Q136	= ({drillNOk, drillOk} -> Q120),
+	Q137	= (out -> Q138),
+	Q138	= (reset -> Q32
+		  |startNewSpec -> Q139),
+	Q139	= (reset -> Q4),
+	Q140	= (cleanNOk -> Q120
+		  |cleanOk -> Q141
+		  |reconfigure -> Q148),
+	Q141	= (out -> Q142
+		  |reconfigure -> Q145),
+	Q142	= (reset -> Q96
+		  |startNewSpec -> Q143),
+	Q143	= (reset -> Q98
+		  |reconfigure -> Q144),
+	Q144	= (reset -> Q17),
+	Q145	= (paint -> Q146),
+	Q146	= (paintOk -> Q147),
+	Q147	= (startNewSpec -> Q89),
+	Q148	= (cleanOk -> Q145),
+	Q149	= (stampOk -> Q120),
+	Q150	= (cleanNOk -> Q129
+		  |cleanOk -> Q151
+		  |beginUpdate -> Q171),
+	Q151	= (out -> Q152
+		  |beginUpdate -> Q157),
+	Q152	= (reset -> Q0
+		  |beginUpdate -> Q153),
+	Q153	= (reset -> Q1
+		  |stopOldSpec -> Q154),
+	Q154	= (reset -> Q96
+		  |startNewSpec -> Q143
+		  |reconfigure -> Q155),
+	Q155	= (reset -> Q32
+		  |startNewSpec -> Q156),
+	Q156	= (reset -> Q4),
+	Q157	= (stopOldSpec -> Q158),
+	Q158	= (out -> Q142
+		  |reconfigure -> Q145
+		  |polish -> Q159
+		  |drill -> Q165
+		  |clean -> Q167
+		  |stamp -> Q169),
+	Q159	= (reconfigure -> Q160),
+	Q160	= (paint -> Q161),
+	Q161	= (paintOk -> Q162),
+	Q162	= (startNewSpec -> Q163),
+	Q163	= (out -> Q164),
+	Q164	= (reset -> Q59),
+	Q165	= ({drillNOk, drillOk} -> Q141
+		  |reconfigure -> Q166),
+	Q166	= ({drillNOk, drillOk} -> Q145),
+	Q167	= ({cleanNOk, cleanOk} -> Q141
+		  |reconfigure -> Q168),
+	Q168	= ({cleanNOk, cleanOk} -> Q145),
+	Q169	= (stampOk -> Q141
+		  |reconfigure -> Q170),
+	Q170	= (stampOk -> Q145),
+	Q171	= (stopOldSpec -> Q172),
+	Q172	= (cleanNOk -> Q120
+		  |cleanOk -> Q141
+		  |reconfigure -> Q148),
+	Q173	= (stopOldSpec -> Q174),
+	Q174	= (out -> Q113
+		  |polish -> Q175
+		  |drill -> Q176
+		  |reconfigure -> Q177
+		  |clean -> Q180
+		  |stamp -> Q189),
+	Q175	= (polishNOk -> Q112
+		  |polishOk -> Q120
+		  |reconfigure -> Q124),
+	Q176	= ({drillNOk, drillOk} -> Q112),
+	Q177	= (out -> Q178),
+	Q178	= (reset -> Q32
+		  |startNewSpec -> Q179),
+	Q179	= (reset -> Q4),
+	Q180	= (cleanNOk -> Q112
+		  |cleanOk -> Q181
+		  |reconfigure -> Q188),
+	Q181	= (out -> Q182
+		  |reconfigure -> Q185),
+	Q182	= (reset -> Q96
+		  |startNewSpec -> Q183),
+	Q183	= (reset -> Q98
+		  |reconfigure -> Q184),
+	Q184	= (reset -> Q17),
+	Q185	= (paint -> Q186),
+	Q186	= (paintOk -> Q187),
+	Q187	= (startNewSpec -> Q15),
+	Q188	= (cleanOk -> Q185),
+	Q189	= (stampOk -> Q112).
+
+
+
+
+

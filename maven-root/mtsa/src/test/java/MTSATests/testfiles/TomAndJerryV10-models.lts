@@ -1,0 +1,306 @@
+	Models = Q0,
+	Q0	= (start -> Q1),
+	Q1	= (cat_in[2] -> Q2
+		  |mouse_in[4] -> Q121),
+	Q2	= (c3 -> Q3
+		  |mouse_in[4] -> Q120),
+	Q3	= (cat_in[0] -> Q4
+		  |mouse_in[4] -> Q119),
+	Q4	= (c1 -> Q5
+		  |c4 -> Q116
+		  |mouse_in[4] -> Q118),
+	Q5	= (cat_in[1] -> Q6
+		  |mouse_in[4] -> Q115),
+	Q6	= (c2 -> Q7
+		  |c7b -> Q108
+		  |mouse_in[4] -> Q114),
+	Q7	= (cat_in[2] -> Q2
+		  |mouse_in[4] -> Q8),
+	Q8	= (m5 -> Q9
+		  |cat_in[2] -> Q120),
+	Q9	= (cat_in[2] -> Q10
+		  |mouse_in[3] -> Q107),
+	Q10	= (c3 -> Q11
+		  |mouse_in[3] -> Q106),
+	Q11	= (cat_in[0] -> Q12
+		  |mouse_in[3] -> Q105),
+	Q12	= (c1 -> Q13
+		  |c4 -> Q102
+		  |mouse_in[3] -> Q104),
+	Q13	= (cat_in[1] -> Q14
+		  |mouse_in[3] -> Q101),
+	Q14	= (c2 -> Q9
+		  |c7b -> Q15
+		  |mouse_in[3] -> Q93),
+	Q15	= (cat_in[3] -> Q16
+		  |mouse_in[3] -> Q19),
+	Q16	= (mouse_in[3] -> ERROR
+		  |c5 -> Q17
+		  |c7a -> Q18),
+	Q17	= ({cat_in[4], mouse_in[3]} -> ERROR),
+	Q18	= (mouse_in[3] -> ERROR
+		  |cat_in[1] -> Q14),
+	Q19	= (cat_in[3] -> ERROR
+		  |m6 -> Q20),
+	Q20	= (cat_in[3] -> ERROR
+		  |mouse_in[0] -> Q21),
+	Q21	= (m4 -> Q22
+		  |m1 -> Q36
+		  |cat_in[3] -> Q92),
+	Q22	= (cat_in[3] -> Q23
+		  |mouse_in[4] -> Q35),
+	Q23	= (c5 -> Q24
+		  |c7a -> Q28
+		  |mouse_in[4] -> Q34),
+	Q24	= (cat_in[4] -> Q25
+		  |mouse_in[4] -> Q27),
+	Q25	= (mouse_in[4] -> ERROR
+		  |c6 -> Q26),
+	Q26	= ({cat_in[0], mouse_in[4]} -> ERROR),
+	Q27	= (cat_in[4] -> ERROR
+		  |m5 -> Q17),
+	Q28	= (cat_in[1] -> Q29
+		  |mouse_in[4] -> Q33),
+	Q29	= (c7b -> Q22
+		  |c2 -> Q30
+		  |mouse_in[4] -> Q114),
+	Q30	= (mouse_in[4] -> Q8
+		  |cat_in[2] -> Q31),
+	Q31	= (c3 -> Q32
+		  |mouse_in[4] -> Q120),
+	Q32	= (cat_in[0] -> ERROR
+		  |mouse_in[4] -> Q119),
+	Q33	= (m5 -> Q18
+		  |cat_in[1] -> Q114),
+	Q34	= (m5 -> Q16
+		  |c5 -> Q27
+		  |c7a -> Q33),
+	Q35	= (m5 -> Q15
+		  |cat_in[3] -> Q34),
+	Q36	= (cat_in[3] -> Q37
+		  |mouse_in[2] -> Q91),
+	Q37	= (c5 -> Q38
+		  |c7a -> Q88
+		  |mouse_in[2] -> Q90),
+	Q38	= (cat_in[4] -> Q39
+		  |mouse_in[2] -> Q87),
+	Q39	= (c6 -> Q40
+		  |mouse_in[2] -> Q86),
+	Q40	= (cat_in[0] -> ERROR
+		  |mouse_in[2] -> Q41),
+	Q41	= (m2 -> Q42
+		  |cat_in[0] -> Q83),
+	Q42	= (cat_in[0] -> Q43
+		  |mouse_in[1] -> Q82),
+	Q43	= (c1 -> Q44
+		  |c4 -> Q79
+		  |mouse_in[1] -> Q81),
+	Q44	= (cat_in[1] -> Q45
+		  |mouse_in[1] -> Q78),
+	Q45	= (mouse_in[1] -> ERROR
+		  |c2 -> Q46
+		  |c7b -> Q47),
+	Q46	= ({cat_in[2], mouse_in[1]} -> ERROR),
+	Q47	= (mouse_in[1] -> ERROR
+		  |cat_in[3] -> Q48),
+	Q48	= (c5 -> Q49
+		  |c7a -> Q75
+		  |mouse_in[1] -> Q77),
+	Q49	= (cat_in[4] -> Q50
+		  |mouse_in[1] -> Q74),
+	Q50	= (c6 -> Q42
+		  |mouse_in[1] -> Q51),
+	Q51	= (m3 -> Q52
+		  |c6 -> Q82),
+	Q52	= (c6 -> Q53
+		  |mouse_in[0] -> Q73),
+	Q53	= (cat_in[0] -> Q54
+		  |mouse_in[0] -> Q72),
+	Q54	= (mouse_in[0] -> ERROR
+		  |c1 -> Q55
+		  |c4 -> Q56),
+	Q55	= ({cat_in[1], mouse_in[0]} -> ERROR),
+	Q56	= (mouse_in[0] -> ERROR
+		  |cat_in[3] -> Q57),
+	Q57	= (c5 -> Q58
+		  |c7a -> Q60
+		  |mouse_in[0] -> Q92),
+	Q58	= (cat_in[4] -> Q52
+		  |mouse_in[0] -> Q59),
+	Q59	= (m4 -> Q24
+		  |m1 -> Q38
+		  |cat_in[4] -> Q73),
+	Q60	= (cat_in[1] -> ERROR
+		  |mouse_in[0] -> Q61),
+	Q61	= (m4 -> Q28
+		  |cat_in[1] -> Q62
+		  |m1 -> Q88),
+	Q62	= (c7b -> Q21
+		  |m4 -> Q29
+		  |m1 -> Q63
+		  |c2 -> Q69),
+	Q63	= (c7b -> Q36
+		  |c2 -> Q64
+		  |mouse_in[2] -> Q68),
+	Q64	= (cat_in[2] -> Q65
+		  |mouse_in[2] -> Q67),
+	Q65	= (mouse_in[2] -> ERROR
+		  |c3 -> Q66),
+	Q66	= ({cat_in[0], mouse_in[2]} -> ERROR),
+	Q67	= (cat_in[2] -> ERROR
+		  |m2 -> Q46),
+	Q68	= (m2 -> Q45
+		  |c2 -> Q67
+		  |c7b -> Q91),
+	Q69	= (m4 -> Q30
+		  |m1 -> Q64
+		  |cat_in[2] -> Q70),
+	Q70	= (m4 -> Q31
+		  |m1 -> Q65
+		  |c3 -> Q71),
+	Q71	= (cat_in[0] -> ERROR
+		  |m4 -> Q32
+		  |m1 -> Q66),
+	Q72	= (cat_in[0] -> ERROR
+		  |m4 -> Q26
+		  |m1 -> Q40),
+	Q73	= (m4 -> Q25
+		  |m1 -> Q39
+		  |c6 -> Q72),
+	Q74	= (cat_in[4] -> Q51
+		  |m3 -> Q58),
+	Q75	= (cat_in[1] -> Q45
+		  |mouse_in[1] -> Q76),
+	Q76	= (cat_in[1] -> ERROR
+		  |m3 -> Q60),
+	Q77	= (m3 -> Q57
+		  |c5 -> Q74
+		  |c7a -> Q76),
+	Q78	= (cat_in[1] -> ERROR
+		  |m3 -> Q55),
+	Q79	= (cat_in[3] -> Q48
+		  |mouse_in[1] -> Q80),
+	Q80	= (m3 -> Q56
+		  |cat_in[3] -> Q77),
+	Q81	= (m3 -> Q54
+		  |c1 -> Q78
+		  |c4 -> Q80),
+	Q82	= (m3 -> Q53
+		  |cat_in[0] -> Q81),
+	Q83	= (m2 -> Q43
+		  |c1 -> Q84
+		  |c4 -> Q85),
+	Q84	= (m2 -> Q44
+		  |cat_in[1] -> Q68),
+	Q85	= (m2 -> Q79
+		  |cat_in[3] -> Q90),
+	Q86	= (c6 -> Q41
+		  |m2 -> Q50),
+	Q87	= (m2 -> Q49
+		  |cat_in[4] -> Q86),
+	Q88	= (cat_in[1] -> Q63
+		  |mouse_in[2] -> Q89),
+	Q89	= (cat_in[1] -> Q68
+		  |m2 -> Q75),
+	Q90	= (m2 -> Q48
+		  |c5 -> Q87
+		  |c7a -> Q89),
+	Q91	= (m2 -> Q47
+		  |cat_in[3] -> Q90),
+	Q92	= (m4 -> Q23
+		  |m1 -> Q37
+		  |c5 -> Q59
+		  |c7a -> Q61),
+	Q93	= (c7b -> Q19
+		  |m6 -> Q94
+		  |c2 -> Q107),
+	Q94	= (c7b -> Q20
+		  |mouse_in[0] -> Q62
+		  |c2 -> Q95),
+	Q95	= (mouse_in[0] -> Q69
+		  |cat_in[2] -> Q96),
+	Q96	= (mouse_in[0] -> Q70
+		  |c3 -> Q97),
+	Q97	= (mouse_in[0] -> Q71
+		  |cat_in[0] -> Q98),
+	Q98	= (mouse_in[0] -> ERROR
+		  |c1 -> Q99
+		  |c4 -> Q100),
+	Q99	= (mouse_in[0] -> ERROR
+		  |cat_in[1] -> Q94),
+	Q100	= ({cat_in[3], mouse_in[0]} -> ERROR),
+	Q101	= (cat_in[1] -> Q93
+		  |m6 -> Q99),
+	Q102	= (cat_in[3] -> Q16
+		  |mouse_in[3] -> Q103),
+	Q103	= (cat_in[3] -> ERROR
+		  |m6 -> Q100),
+	Q104	= (m6 -> Q98
+		  |c1 -> Q101
+		  |c4 -> Q103),
+	Q105	= (m6 -> Q97
+		  |cat_in[0] -> Q104),
+	Q106	= (m6 -> Q96
+		  |c3 -> Q105),
+	Q107	= (m6 -> Q95
+		  |cat_in[2] -> Q106),
+	Q108	= (mouse_in[4] -> Q35
+		  |cat_in[3] -> Q109),
+	Q109	= (mouse_in[4] -> Q34
+		  |c5 -> Q110
+		  |c7a -> Q113),
+	Q110	= (mouse_in[4] -> Q27
+		  |cat_in[4] -> Q111),
+	Q111	= (mouse_in[4] -> ERROR
+		  |c6 -> Q112),
+	Q112	= (mouse_in[4] -> ERROR
+		  |cat_in[0] -> Q4),
+	Q113	= (cat_in[1] -> Q6
+		  |mouse_in[4] -> Q33),
+	Q114	= (c2 -> Q8
+		  |m5 -> Q14
+		  |c7b -> Q35),
+	Q115	= (m5 -> Q13
+		  |cat_in[1] -> Q114),
+	Q116	= (cat_in[3] -> Q109
+		  |mouse_in[4] -> Q117),
+	Q117	= (cat_in[3] -> Q34
+		  |m5 -> Q102),
+	Q118	= (m5 -> Q12
+		  |c1 -> Q115
+		  |c4 -> Q117),
+	Q119	= (m5 -> Q11
+		  |cat_in[0] -> Q118),
+	Q120	= (m5 -> Q10
+		  |c3 -> Q119),
+	Q121	= (cat_in[2] -> Q120
+		  |m5 -> Q122),
+	Q122	= (cat_in[2] -> Q10
+		  |mouse_in[3] -> Q123),
+	Q123	= (cat_in[2] -> Q106
+		  |m6 -> Q124),
+	Q124	= (cat_in[2] -> Q96
+		  |mouse_in[0] -> Q125),
+	Q125	= (cat_in[2] -> Q70
+		  |m4 -> Q126
+		  |m1 -> Q127),
+	Q126	= (cat_in[2] -> Q31
+		  |mouse_in[4] -> Q121),
+	Q127	= (cat_in[2] -> Q65
+		  |mouse_in[2] -> Q128),
+	Q128	= (cat_in[2] -> ERROR
+		  |m2 -> Q129),
+	Q129	= (cat_in[2] -> ERROR
+		  |mouse_in[1] -> Q130),
+	Q130	= (m3 -> Q131
+		  |cat_in[2] -> Q134),
+	Q131	= (mouse_in[0] -> Q125
+		  |cat_in[2] -> Q132),
+	Q132	= (mouse_in[0] -> Q70
+		  |c3 -> Q133),
+	Q133	= (cat_in[0] -> Q54
+		  |mouse_in[0] -> Q71),
+	Q134	= (m3 -> Q132
+		  |c3 -> Q135),
+	Q135	= (cat_in[0] -> Q81
+		  |m3 -> Q133).

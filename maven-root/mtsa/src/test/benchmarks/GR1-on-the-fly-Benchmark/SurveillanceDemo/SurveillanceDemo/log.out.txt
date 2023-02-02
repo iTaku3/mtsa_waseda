@@ -1,0 +1,868 @@
+Adding [systemProperties] PropertySource with lowest search precedence
+Adding [systemEnvironment] PropertySource with lowest search precedence
+Initialized StandardEnvironment with PropertySources [systemProperties,systemEnvironment]
+Refreshing org.springframework.context.support.ClassPathXmlApplicationContext@4a60104: startup date [Sat Jan 13 22:27:42 GMT 2018]; root of context hierarchy
+Adding [systemProperties] PropertySource with lowest search precedence
+Adding [systemEnvironment] PropertySource with lowest search precedence
+Initialized StandardEnvironment with PropertySources [systemProperties,systemEnvironment]
+Resolved classpath location [newtool-context.xml] to resources [URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/newtool-context.xml]]
+Loading XML bean definitions from URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/newtool-context.xml]
+Using JAXP provider [com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl]
+Loading schema mappings from [META-INF/spring.schemas]
+Loaded schema mappings: {http://www.springframework.org/schema/jee/spring-jee-3.2.xsd=org/springframework/ejb/config/spring-jee-3.2.xsd, http://www.springframework.org/schema/context/spring-context-4.3.xsd=org/springframework/context/config/spring-context-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.2.xsd=org/springframework/ejb/config/spring-jee-4.2.xsd, http://www.springframework.org/schema/cache/spring-cache-4.3.xsd=org/springframework/cache/config/spring-cache-4.3.xsd, http://www.springframework.org/schema/task/spring-task.xsd=org/springframework/scheduling/config/spring-task-4.3.xsd, http://www.springframework.org/schema/lang/spring-lang-4.3.xsd=org/springframework/scripting/config/spring-lang-4.3.xsd, http://www.springframework.org/schema/cache/spring-cache.xsd=org/springframework/cache/config/spring-cache-4.3.xsd, http://www.springframework.org/schema/task/spring-task-3.1.xsd=org/springframework/scheduling/config/spring-task-3.1.xsd, http://www.springframework.org/schema/task/spring-task-4.1.xsd=org/springframework/scheduling/config/spring-task-4.1.xsd, http://www.springframework.org/schema/jee/spring-jee-2.5.xsd=org/springframework/ejb/config/spring-jee-2.5.xsd, http://www.springframework.org/schema/context/spring-context-4.2.xsd=org/springframework/context/config/spring-context-4.2.xsd, http://www.springframework.org/schema/jee/spring-jee-3.1.xsd=org/springframework/ejb/config/spring-jee-3.1.xsd, http://www.springframework.org/schema/context/spring-context-3.2.xsd=org/springframework/context/config/spring-context-3.2.xsd, http://www.springframework.org/schema/jee/spring-jee-4.1.xsd=org/springframework/ejb/config/spring-jee-4.1.xsd, http://www.springframework.org/schema/lang/spring-lang-3.2.xsd=org/springframework/scripting/config/spring-lang-3.2.xsd, http://www.springframework.org/schema/cache/spring-cache-4.2.xsd=org/springframework/cache/config/spring-cache-4.2.xsd, http://www.springframework.org/schema/cache/spring-cache-3.2.xsd=org/springframework/cache/config/spring-cache-3.2.xsd, http://www.springframework.org/schema/lang/spring-lang-4.2.xsd=org/springframework/scripting/config/spring-lang-4.2.xsd, http://www.springframework.org/schema/task/spring-task-3.0.xsd=org/springframework/scheduling/config/spring-task-3.0.xsd, http://www.springframework.org/schema/task/spring-task-4.0.xsd=org/springframework/scheduling/config/spring-task-4.0.xsd, http://www.springframework.org/schema/context/spring-context-2.5.xsd=org/springframework/context/config/spring-context-2.5.xsd, http://www.springframework.org/schema/lang/spring-lang.xsd=org/springframework/scripting/config/spring-lang-4.3.xsd, http://www.springframework.org/schema/lang/spring-lang-2.5.xsd=org/springframework/scripting/config/spring-lang-2.5.xsd, http://www.springframework.org/schema/context/spring-context-4.1.xsd=org/springframework/context/config/spring-context-4.1.xsd, http://www.springframework.org/schema/jee/spring-jee-3.0.xsd=org/springframework/ejb/config/spring-jee-3.0.xsd, http://www.springframework.org/schema/jee/spring-jee-2.0.xsd=org/springframework/ejb/config/spring-jee-2.0.xsd, http://www.springframework.org/schema/context/spring-context-3.1.xsd=org/springframework/context/config/spring-context-3.1.xsd, http://www.springframework.org/schema/task/spring-task-4.3.xsd=org/springframework/scheduling/config/spring-task-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.0.xsd=org/springframework/ejb/config/spring-jee-4.0.xsd, http://www.springframework.org/schema/lang/spring-lang-3.1.xsd=org/springframework/scripting/config/spring-lang-3.1.xsd, http://www.springframework.org/schema/cache/spring-cache-4.1.xsd=org/springframework/cache/config/spring-cache-4.1.xsd, http://www.springframework.org/schema/cache/spring-cache-3.1.xsd=org/springframework/cache/config/spring-cache-3.1.xsd, http://www.springframework.org/schema/lang/spring-lang-4.1.xsd=org/springframework/scripting/config/spring-lang-4.1.xsd, http://www.springframework.org/schema/context/spring-context.xsd=org/springframework/context/config/spring-context-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee.xsd=org/springframework/ejb/config/spring-jee-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.3.xsd=org/springframework/ejb/config/spring-jee-4.3.xsd, http://www.springframework.org/schema/task/spring-task-3.2.xsd=org/springframework/scheduling/config/spring-task-3.2.xsd, http://www.springframework.org/schema/context/spring-context-4.0.xsd=org/springframework/context/config/spring-context-4.0.xsd, http://www.springframework.org/schema/context/spring-context-3.0.xsd=org/springframework/context/config/spring-context-3.0.xsd, http://www.springframework.org/schema/task/spring-task-4.2.xsd=org/springframework/scheduling/config/spring-task-4.2.xsd, http://www.springframework.org/schema/lang/spring-lang-3.0.xsd=org/springframework/scripting/config/spring-lang-3.0.xsd, http://www.springframework.org/schema/cache/spring-cache-4.0.xsd=org/springframework/cache/config/spring-cache-4.0.xsd, http://www.springframework.org/schema/lang/spring-lang-2.0.xsd=org/springframework/scripting/config/spring-lang-2.0.xsd, http://www.springframework.org/schema/lang/spring-lang-4.0.xsd=org/springframework/scripting/config/spring-lang-4.0.xsd}
+Found XML schema [http://www.springframework.org/schema/context/spring-context-3.0.xsd] in classpath: org/springframework/context/config/spring-context-3.0.xsd
+Loading bean definitions
+Loaded NamespaceHandler mappings: {http://www.springframework.org/schema/lang=org.springframework.scripting.config.LangNamespaceHandler, http://www.springframework.org/schema/jee=org.springframework.ejb.config.JeeNamespaceHandler, http://www.springframework.org/schema/cache=org.springframework.cache.config.CacheNamespaceHandler, http://www.springframework.org/schema/task=org.springframework.scheduling.config.TaskNamespaceHandler, http://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler}
+Resolved classpath location [ltsa-context.xml] to resources [URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/ltsa-context.xml]]
+Loading XML bean definitions from URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/ltsa-context.xml]
+Using JAXP provider [com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl]
+Found XML schema [http://www.springframework.org/schema/context/spring-context-3.0.xsd] in classpath: org/springframework/context/config/spring-context-3.0.xsd
+Loading bean definitions
+Loaded 14 bean definitions from location pattern [classpath*:ltsa-context.xml]
+Imported 14 bean definitions from URL location [classpath*:ltsa-context.xml]
+Loaded 23 bean definitions from location pattern [classpath*:newtool-context.xml]
+Bean factory for org.springframework.context.support.ClassPathXmlApplicationContext@4a60104: org.springframework.beans.factory.support.DefaultListableBeanFactory@311ce99a: defining beans [org.springframework.context.annotation.internalConfigurationAnnotationProcessor,org.springframework.context.annotation.internalAutowiredAnnotationProcessor,org.springframework.context.annotation.internalRequiredAnnotationProcessor,org.springframework.context.annotation.internalCommonAnnotationProcessor,org.springframework.context.event.internalEventListenerProcessor,org.springframework.context.event.internalEventListenerFactory,ARDrone,enviromentChange,ARDroneII,enviromentChangeII,ARDroneUpdatingController,PainterEnvironment,PainterEnvironmentSimulation,counterEnactor,enactorFactory,controllerScheduler,randomScheduler,UpdateControllerScheduler,UIController,schedullerFactory,GridSimulationEnactor,UIRandomScheduler,GridSimulationAdaptedUIRandomScheduler]; root of factory hierarchy
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+Eagerly caching bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Unable to locate MessageSource with name 'messageSource': using default [org.springframework.context.support.DelegatingMessageSource@53948bf4]
+Unable to locate ApplicationEventMulticaster with name 'applicationEventMulticaster': using default [org.springframework.context.event.SimpleApplicationEventMulticaster@350aecb4]
+Pre-instantiating singletons in org.springframework.beans.factory.support.DefaultListableBeanFactory@311ce99a: defining beans [org.springframework.context.annotation.internalConfigurationAnnotationProcessor,org.springframework.context.annotation.internalAutowiredAnnotationProcessor,org.springframework.context.annotation.internalRequiredAnnotationProcessor,org.springframework.context.annotation.internalCommonAnnotationProcessor,org.springframework.context.event.internalEventListenerProcessor,org.springframework.context.event.internalEventListenerFactory,ARDrone,enviromentChange,ARDroneII,enviromentChangeII,ARDroneUpdatingController,PainterEnvironment,PainterEnvironmentSimulation,counterEnactor,enactorFactory,controllerScheduler,randomScheduler,UpdateControllerScheduler,UIController,schedullerFactory,GridSimulationEnactor,UIRandomScheduler,GridSimulationAdaptedUIRandomScheduler]; root of factory hierarchy
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerProcessor'
+Creating instance of bean 'org.springframework.context.event.internalEventListenerProcessor'
+Eagerly caching bean 'org.springframework.context.event.internalEventListenerProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.event.internalEventListenerProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
+Creating instance of bean 'org.springframework.context.event.internalEventListenerFactory'
+Eagerly caching bean 'org.springframework.context.event.internalEventListenerFactory' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.event.internalEventListenerFactory'
+Creating shared instance of singleton bean 'ARDrone'
+Creating instance of bean 'ARDrone'
+Eagerly caching bean 'ARDrone' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDrone'
+Creating shared instance of singleton bean 'enviromentChange'
+Creating instance of bean 'enviromentChange'
+Eagerly caching bean 'enviromentChange' to allow for resolving potential circular references
+Finished creating instance of bean 'enviromentChange'
+Creating shared instance of singleton bean 'ARDroneII'
+Creating instance of bean 'ARDroneII'
+Eagerly caching bean 'ARDroneII' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDroneII'
+Creating shared instance of singleton bean 'enviromentChangeII'
+Creating instance of bean 'enviromentChangeII'
+Eagerly caching bean 'enviromentChangeII' to allow for resolving potential circular references
+Finished creating instance of bean 'enviromentChangeII'
+Creating shared instance of singleton bean 'ARDroneUpdatingController'
+Creating instance of bean 'ARDroneUpdatingController'
+Eagerly caching bean 'ARDroneUpdatingController' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDroneUpdatingController'
+Creating shared instance of singleton bean 'PainterEnvironment'
+Creating instance of bean 'PainterEnvironment'
+Eagerly caching bean 'PainterEnvironment' to allow for resolving potential circular references
+Finished creating instance of bean 'PainterEnvironment'
+Creating shared instance of singleton bean 'PainterEnvironmentSimulation'
+Creating instance of bean 'PainterEnvironmentSimulation'
+Eagerly caching bean 'PainterEnvironmentSimulation' to allow for resolving potential circular references
+Finished creating instance of bean 'PainterEnvironmentSimulation'
+Creating shared instance of singleton bean 'counterEnactor'
+Creating instance of bean 'counterEnactor'
+Eagerly caching bean 'counterEnactor' to allow for resolving potential circular references
+Finished creating instance of bean 'counterEnactor'
+Creating shared instance of singleton bean 'enactorFactory'
+Creating instance of bean 'enactorFactory'
+Registered injected element on class [ltsa.enactment.EnactorFactory]: AutowiredMethodElement for private void ltsa.enactment.EnactorFactory.setEnactors(java.util.Set)
+Eagerly caching bean 'enactorFactory' to allow for resolving potential circular references
+Processing injected element of bean 'enactorFactory': AutowiredMethodElement for private void ltsa.enactment.EnactorFactory.setEnactors(java.util.Set)
+Returning cached instance of singleton bean 'ARDrone'
+Returning cached instance of singleton bean 'enviromentChange'
+Returning cached instance of singleton bean 'ARDroneII'
+Returning cached instance of singleton bean 'enviromentChangeII'
+Returning cached instance of singleton bean 'ARDroneUpdatingController'
+Returning cached instance of singleton bean 'PainterEnvironment'
+Returning cached instance of singleton bean 'PainterEnvironmentSimulation'
+Returning cached instance of singleton bean 'counterEnactor'
+Creating shared instance of singleton bean 'controllerScheduler'
+Creating instance of bean 'controllerScheduler'
+Eagerly caching bean 'controllerScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'controllerScheduler'
+Creating shared instance of singleton bean 'randomScheduler'
+Creating instance of bean 'randomScheduler'
+No property editor [MTSTools.ac.ic.doc.mtstools.model.LTSEditor] found for type MTSTools.ac.ic.doc.mtstools.model.LTS according to 'Editor' suffix convention
+Eagerly caching bean 'randomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'randomScheduler'
+Creating shared instance of singleton bean 'UpdateControllerScheduler'
+Creating instance of bean 'UpdateControllerScheduler'
+Eagerly caching bean 'UpdateControllerScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'UpdateControllerScheduler'
+Creating shared instance of singleton bean 'UIController'
+Creating instance of bean 'UIController'
+Eagerly caching bean 'UIController' to allow for resolving potential circular references
+Finished creating instance of bean 'UIController'
+Creating shared instance of singleton bean 'GridSimulationEnactor'
+Creating instance of bean 'GridSimulationEnactor'
+Eagerly caching bean 'GridSimulationEnactor' to allow for resolving potential circular references
+Finished creating instance of bean 'GridSimulationEnactor'
+Creating shared instance of singleton bean 'UIRandomScheduler'
+Creating instance of bean 'UIRandomScheduler'
+Eagerly caching bean 'UIRandomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'UIRandomScheduler'
+Creating shared instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Creating instance of bean 'GridSimulationAdaptedUIRandomScheduler'
+Eagerly caching bean 'GridSimulationAdaptedUIRandomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'GridSimulationAdaptedUIRandomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDrone'
+Autowiring by type from bean name 'enactorFactory' to bean named 'enviromentChange'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDroneII'
+Autowiring by type from bean name 'enactorFactory' to bean named 'enviromentChangeII'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDroneUpdatingController'
+Autowiring by type from bean name 'enactorFactory' to bean named 'PainterEnvironment'
+Autowiring by type from bean name 'enactorFactory' to bean named 'PainterEnvironmentSimulation'
+Autowiring by type from bean name 'enactorFactory' to bean named 'counterEnactor'
+Autowiring by type from bean name 'enactorFactory' to bean named 'controllerScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'randomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UpdateControllerScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UIController'
+Autowiring by type from bean name 'enactorFactory' to bean named 'GridSimulationEnactor'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UIRandomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'GridSimulationAdaptedUIRandomScheduler'
+Finished creating instance of bean 'enactorFactory'
+Returning cached instance of singleton bean 'controllerScheduler'
+Returning cached instance of singleton bean 'randomScheduler'
+Returning cached instance of singleton bean 'UpdateControllerScheduler'
+Returning cached instance of singleton bean 'UIController'
+Creating shared instance of singleton bean 'schedullerFactory'
+Creating instance of bean 'schedullerFactory'
+Registered injected element on class [ltsa.enactment.SchedulerFactory]: AutowiredMethodElement for public void ltsa.enactment.SchedulerFactory.setSchedulers(java.util.Set)
+Eagerly caching bean 'schedullerFactory' to allow for resolving potential circular references
+Processing injected element of bean 'schedullerFactory': AutowiredMethodElement for public void ltsa.enactment.SchedulerFactory.setSchedulers(java.util.Set)
+Returning cached instance of singleton bean 'controllerScheduler'
+Returning cached instance of singleton bean 'randomScheduler'
+Returning cached instance of singleton bean 'UpdateControllerScheduler'
+Returning cached instance of singleton bean 'UIController'
+Returning cached instance of singleton bean 'UIRandomScheduler'
+Returning cached instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'controllerScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'randomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UpdateControllerScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UIController'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UIRandomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'GridSimulationAdaptedUIRandomScheduler'
+Finished creating instance of bean 'schedullerFactory'
+Returning cached instance of singleton bean 'GridSimulationEnactor'
+Returning cached instance of singleton bean 'UIRandomScheduler'
+Returning cached instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Returning cached instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
+Unable to locate LifecycleProcessor with name 'lifecycleProcessor': using default [org.springframework.context.support.DefaultLifecycleProcessor@7a6fa777]
+Returning cached instance of singleton bean 'lifecycleProcessor'
+Could not find key 'spring.liveBeansView.mbeanDomain' in any property source
+Returning cached instance of singleton bean 'schedullerFactory'
+Returning cached instance of singleton bean 'enactorFactory'
+Returning cached instance of singleton bean 'enactorFactory'
+Returning cached instance of singleton bean 'schedullerFactory'
+Simulation setup: 
+Scheduler: GridSimulationAdaptedUIRandomScheduler
+UIRandomScheduler takeNextAction go.s out of [go.s]
+Simulation started
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.4.2 out of [arrive.4.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.4.2 out of [arrive.4.2]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.5.2 out of [arrive.5.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.5.2 out of [arrive.5.2]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.6.2 out of [arrive.6.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.2 out of [arrive.6.2]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.10.6 out of [arrive.10.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.6 out of [arrive.10.6]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.10.5 out of [arrive.10.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.5 out of [arrive.10.5]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.2.3 out of [arrive.2.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.3 out of [arrive.2.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction go.n out of [go.n, go.e]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.1.11 out of [arrive.1.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.11 out of [arrive.1.11]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.3.12 out of [arrive.3.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.12 out of [arrive.3.12]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.0.12 out of [arrive.0.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.12 out of [arrive.0.12]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction go.s out of [go.w, go.s]
+UIRandomScheduler takeNextAction arrive.1.4 out of [arrive.1.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.4 out of [arrive.1.4]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.s]
+UIRandomScheduler takeNextAction arrive.1.2 out of [arrive.1.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.2 out of [arrive.1.2]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.10.3 out of [arrive.10.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.3 out of [arrive.10.3]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.11.3 out of [arrive.11.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.3 out of [arrive.11.3]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.2.3 out of [arrive.2.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.3 out of [arrive.2.3]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction go.n out of [go.n, go.e]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.0.12 out of [arrive.0.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.12 out of [arrive.0.12]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.3.12 out of [arrive.3.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.12 out of [arrive.3.12]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.12 out of [arrive.2.12]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.12 out of [arrive.1.12]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.n]
+UIRandomScheduler takeNextAction arrive.1.11 out of [arrive.1.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.11 out of [arrive.1.11]
+UIRandomScheduler takeNextAction go.n out of [go.n]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.11 out of [arrive.0.11]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.10 out of [arrive.0.10]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.9 out of [arrive.0.9]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.8 out of [arrive.0.8]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.7 out of [arrive.0.7]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.6 out of [arrive.0.6]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.5 out of [arrive.0.5]
+UIRandomScheduler takeNextAction go.w out of [go.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.4 out of [arrive.0.4]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.s]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.0.3 out of [arrive.0.3]
+UIRandomScheduler takeNextAction go.s out of [go.w, go.s]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.3 out of [arrive.1.3]
+UIRandomScheduler takeNextAction go.w out of [go.w, go.s]
+UIRandomScheduler takeNextAction arrive.1.2 out of [arrive.1.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.1.2 out of [arrive.1.2]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.2.2 out of [arrive.2.2]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.2 out of [arrive.3.2]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.3.3 out of [arrive.3.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.4.3 out of [arrive.4.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.5.3 out of [arrive.5.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.6.3 out of [arrive.6.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.7.3 out of [arrive.7.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.8.3 out of [arrive.8.3]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.3 out of [arrive.9.3]
+UIRandomScheduler takeNextAction go.e out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.9.4 out of [arrive.9.4]
+UIRandomScheduler takeNextAction go.s out of [go.s]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.10.4 out of [arrive.10.4]
+UIRandomScheduler takeNextAction go.s out of [go.s, go.e]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.4 out of [arrive.11.4]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.5 out of [arrive.11.5]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.6 out of [arrive.11.6]
+UIRandomScheduler takeNextAction go.e out of [go.e]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+UIRandomScheduler takeNextAction nowind out of [nowind, wind.n, wind.e, wind.s, wind.w]
+UIRandomScheduler takeNextAction arrive.11.7 out of [arrive.11.7]
+Simulation ended
+UIRandomScheduler takeNextAction go.n out of [go.w, go.n]
+Adding [systemProperties] PropertySource with lowest search precedence
+Adding [systemEnvironment] PropertySource with lowest search precedence
+Initialized StandardEnvironment with PropertySources [systemProperties,systemEnvironment]
+Refreshing org.springframework.context.support.ClassPathXmlApplicationContext@145891af: startup date [Sat Jan 13 22:32:29 GMT 2018]; root of context hierarchy
+Adding [systemProperties] PropertySource with lowest search precedence
+Adding [systemEnvironment] PropertySource with lowest search precedence
+Initialized StandardEnvironment with PropertySources [systemProperties,systemEnvironment]
+Resolved classpath location [newtool-context.xml] to resources [URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/newtool-context.xml]]
+Loading XML bean definitions from URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/newtool-context.xml]
+Using JAXP provider [com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl]
+Loading schema mappings from [META-INF/spring.schemas]
+Loaded schema mappings: {http://www.springframework.org/schema/jee/spring-jee-3.2.xsd=org/springframework/ejb/config/spring-jee-3.2.xsd, http://www.springframework.org/schema/context/spring-context-4.3.xsd=org/springframework/context/config/spring-context-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.2.xsd=org/springframework/ejb/config/spring-jee-4.2.xsd, http://www.springframework.org/schema/cache/spring-cache-4.3.xsd=org/springframework/cache/config/spring-cache-4.3.xsd, http://www.springframework.org/schema/task/spring-task.xsd=org/springframework/scheduling/config/spring-task-4.3.xsd, http://www.springframework.org/schema/lang/spring-lang-4.3.xsd=org/springframework/scripting/config/spring-lang-4.3.xsd, http://www.springframework.org/schema/cache/spring-cache.xsd=org/springframework/cache/config/spring-cache-4.3.xsd, http://www.springframework.org/schema/task/spring-task-3.1.xsd=org/springframework/scheduling/config/spring-task-3.1.xsd, http://www.springframework.org/schema/task/spring-task-4.1.xsd=org/springframework/scheduling/config/spring-task-4.1.xsd, http://www.springframework.org/schema/jee/spring-jee-2.5.xsd=org/springframework/ejb/config/spring-jee-2.5.xsd, http://www.springframework.org/schema/context/spring-context-4.2.xsd=org/springframework/context/config/spring-context-4.2.xsd, http://www.springframework.org/schema/jee/spring-jee-3.1.xsd=org/springframework/ejb/config/spring-jee-3.1.xsd, http://www.springframework.org/schema/context/spring-context-3.2.xsd=org/springframework/context/config/spring-context-3.2.xsd, http://www.springframework.org/schema/jee/spring-jee-4.1.xsd=org/springframework/ejb/config/spring-jee-4.1.xsd, http://www.springframework.org/schema/lang/spring-lang-3.2.xsd=org/springframework/scripting/config/spring-lang-3.2.xsd, http://www.springframework.org/schema/cache/spring-cache-4.2.xsd=org/springframework/cache/config/spring-cache-4.2.xsd, http://www.springframework.org/schema/cache/spring-cache-3.2.xsd=org/springframework/cache/config/spring-cache-3.2.xsd, http://www.springframework.org/schema/lang/spring-lang-4.2.xsd=org/springframework/scripting/config/spring-lang-4.2.xsd, http://www.springframework.org/schema/task/spring-task-3.0.xsd=org/springframework/scheduling/config/spring-task-3.0.xsd, http://www.springframework.org/schema/task/spring-task-4.0.xsd=org/springframework/scheduling/config/spring-task-4.0.xsd, http://www.springframework.org/schema/context/spring-context-2.5.xsd=org/springframework/context/config/spring-context-2.5.xsd, http://www.springframework.org/schema/lang/spring-lang.xsd=org/springframework/scripting/config/spring-lang-4.3.xsd, http://www.springframework.org/schema/lang/spring-lang-2.5.xsd=org/springframework/scripting/config/spring-lang-2.5.xsd, http://www.springframework.org/schema/context/spring-context-4.1.xsd=org/springframework/context/config/spring-context-4.1.xsd, http://www.springframework.org/schema/jee/spring-jee-3.0.xsd=org/springframework/ejb/config/spring-jee-3.0.xsd, http://www.springframework.org/schema/jee/spring-jee-2.0.xsd=org/springframework/ejb/config/spring-jee-2.0.xsd, http://www.springframework.org/schema/context/spring-context-3.1.xsd=org/springframework/context/config/spring-context-3.1.xsd, http://www.springframework.org/schema/task/spring-task-4.3.xsd=org/springframework/scheduling/config/spring-task-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.0.xsd=org/springframework/ejb/config/spring-jee-4.0.xsd, http://www.springframework.org/schema/lang/spring-lang-3.1.xsd=org/springframework/scripting/config/spring-lang-3.1.xsd, http://www.springframework.org/schema/cache/spring-cache-4.1.xsd=org/springframework/cache/config/spring-cache-4.1.xsd, http://www.springframework.org/schema/cache/spring-cache-3.1.xsd=org/springframework/cache/config/spring-cache-3.1.xsd, http://www.springframework.org/schema/lang/spring-lang-4.1.xsd=org/springframework/scripting/config/spring-lang-4.1.xsd, http://www.springframework.org/schema/context/spring-context.xsd=org/springframework/context/config/spring-context-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee.xsd=org/springframework/ejb/config/spring-jee-4.3.xsd, http://www.springframework.org/schema/jee/spring-jee-4.3.xsd=org/springframework/ejb/config/spring-jee-4.3.xsd, http://www.springframework.org/schema/task/spring-task-3.2.xsd=org/springframework/scheduling/config/spring-task-3.2.xsd, http://www.springframework.org/schema/context/spring-context-4.0.xsd=org/springframework/context/config/spring-context-4.0.xsd, http://www.springframework.org/schema/context/spring-context-3.0.xsd=org/springframework/context/config/spring-context-3.0.xsd, http://www.springframework.org/schema/task/spring-task-4.2.xsd=org/springframework/scheduling/config/spring-task-4.2.xsd, http://www.springframework.org/schema/lang/spring-lang-3.0.xsd=org/springframework/scripting/config/spring-lang-3.0.xsd, http://www.springframework.org/schema/cache/spring-cache-4.0.xsd=org/springframework/cache/config/spring-cache-4.0.xsd, http://www.springframework.org/schema/lang/spring-lang-2.0.xsd=org/springframework/scripting/config/spring-lang-2.0.xsd, http://www.springframework.org/schema/lang/spring-lang-4.0.xsd=org/springframework/scripting/config/spring-lang-4.0.xsd}
+Found XML schema [http://www.springframework.org/schema/context/spring-context-3.0.xsd] in classpath: org/springframework/context/config/spring-context-3.0.xsd
+Loading bean definitions
+Loaded NamespaceHandler mappings: {http://www.springframework.org/schema/lang=org.springframework.scripting.config.LangNamespaceHandler, http://www.springframework.org/schema/jee=org.springframework.ejb.config.JeeNamespaceHandler, http://www.springframework.org/schema/cache=org.springframework.cache.config.CacheNamespaceHandler, http://www.springframework.org/schema/task=org.springframework.scheduling.config.TaskNamespaceHandler, http://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler}
+Resolved classpath location [ltsa-context.xml] to resources [URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/ltsa-context.xml]]
+Loading XML bean definitions from URL [jar:file:/Users/su2/Desktop/Fabian/SurveillanceDemo/newTool.jar!/ltsa-context.xml]
+Using JAXP provider [com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl]
+Found XML schema [http://www.springframework.org/schema/context/spring-context-3.0.xsd] in classpath: org/springframework/context/config/spring-context-3.0.xsd
+Loading bean definitions
+Loaded 14 bean definitions from location pattern [classpath*:ltsa-context.xml]
+Imported 14 bean definitions from URL location [classpath*:ltsa-context.xml]
+Loaded 23 bean definitions from location pattern [classpath*:newtool-context.xml]
+Bean factory for org.springframework.context.support.ClassPathXmlApplicationContext@145891af: org.springframework.beans.factory.support.DefaultListableBeanFactory@654a1855: defining beans [org.springframework.context.annotation.internalConfigurationAnnotationProcessor,org.springframework.context.annotation.internalAutowiredAnnotationProcessor,org.springframework.context.annotation.internalRequiredAnnotationProcessor,org.springframework.context.annotation.internalCommonAnnotationProcessor,org.springframework.context.event.internalEventListenerProcessor,org.springframework.context.event.internalEventListenerFactory,ARDrone,enviromentChange,ARDroneII,enviromentChangeII,ARDroneUpdatingController,PainterEnvironment,PainterEnvironmentSimulation,counterEnactor,enactorFactory,controllerScheduler,randomScheduler,UpdateControllerScheduler,UIController,schedullerFactory,GridSimulationEnactor,UIRandomScheduler,GridSimulationAdaptedUIRandomScheduler]; root of factory hierarchy
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+Eagerly caching bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Creating instance of bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Eagerly caching bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Unable to locate MessageSource with name 'messageSource': using default [org.springframework.context.support.DelegatingMessageSource@7da577aa]
+Unable to locate ApplicationEventMulticaster with name 'applicationEventMulticaster': using default [org.springframework.context.event.SimpleApplicationEventMulticaster@2f0298f6]
+Pre-instantiating singletons in org.springframework.beans.factory.support.DefaultListableBeanFactory@654a1855: defining beans [org.springframework.context.annotation.internalConfigurationAnnotationProcessor,org.springframework.context.annotation.internalAutowiredAnnotationProcessor,org.springframework.context.annotation.internalRequiredAnnotationProcessor,org.springframework.context.annotation.internalCommonAnnotationProcessor,org.springframework.context.event.internalEventListenerProcessor,org.springframework.context.event.internalEventListenerFactory,ARDrone,enviromentChange,ARDroneII,enviromentChangeII,ARDroneUpdatingController,PainterEnvironment,PainterEnvironmentSimulation,counterEnactor,enactorFactory,controllerScheduler,randomScheduler,UpdateControllerScheduler,UIController,schedullerFactory,GridSimulationEnactor,UIRandomScheduler,GridSimulationAdaptedUIRandomScheduler]; root of factory hierarchy
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalRequiredAnnotationProcessor'
+Returning cached instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerProcessor'
+Creating instance of bean 'org.springframework.context.event.internalEventListenerProcessor'
+Eagerly caching bean 'org.springframework.context.event.internalEventListenerProcessor' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.event.internalEventListenerProcessor'
+Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
+Creating instance of bean 'org.springframework.context.event.internalEventListenerFactory'
+Eagerly caching bean 'org.springframework.context.event.internalEventListenerFactory' to allow for resolving potential circular references
+Finished creating instance of bean 'org.springframework.context.event.internalEventListenerFactory'
+Creating shared instance of singleton bean 'ARDrone'
+Creating instance of bean 'ARDrone'
+Eagerly caching bean 'ARDrone' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDrone'
+Creating shared instance of singleton bean 'enviromentChange'
+Creating instance of bean 'enviromentChange'
+Eagerly caching bean 'enviromentChange' to allow for resolving potential circular references
+Finished creating instance of bean 'enviromentChange'
+Creating shared instance of singleton bean 'ARDroneII'
+Creating instance of bean 'ARDroneII'
+Eagerly caching bean 'ARDroneII' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDroneII'
+Creating shared instance of singleton bean 'enviromentChangeII'
+Creating instance of bean 'enviromentChangeII'
+Eagerly caching bean 'enviromentChangeII' to allow for resolving potential circular references
+Finished creating instance of bean 'enviromentChangeII'
+Creating shared instance of singleton bean 'ARDroneUpdatingController'
+Creating instance of bean 'ARDroneUpdatingController'
+Eagerly caching bean 'ARDroneUpdatingController' to allow for resolving potential circular references
+Finished creating instance of bean 'ARDroneUpdatingController'
+Creating shared instance of singleton bean 'PainterEnvironment'
+Creating instance of bean 'PainterEnvironment'
+Eagerly caching bean 'PainterEnvironment' to allow for resolving potential circular references
+Finished creating instance of bean 'PainterEnvironment'
+Creating shared instance of singleton bean 'PainterEnvironmentSimulation'
+Creating instance of bean 'PainterEnvironmentSimulation'
+Eagerly caching bean 'PainterEnvironmentSimulation' to allow for resolving potential circular references
+Finished creating instance of bean 'PainterEnvironmentSimulation'
+Creating shared instance of singleton bean 'counterEnactor'
+Creating instance of bean 'counterEnactor'
+Eagerly caching bean 'counterEnactor' to allow for resolving potential circular references
+Finished creating instance of bean 'counterEnactor'
+Creating shared instance of singleton bean 'enactorFactory'
+Creating instance of bean 'enactorFactory'
+Registered injected element on class [ltsa.enactment.EnactorFactory]: AutowiredMethodElement for private void ltsa.enactment.EnactorFactory.setEnactors(java.util.Set)
+Eagerly caching bean 'enactorFactory' to allow for resolving potential circular references
+Processing injected element of bean 'enactorFactory': AutowiredMethodElement for private void ltsa.enactment.EnactorFactory.setEnactors(java.util.Set)
+Returning cached instance of singleton bean 'ARDrone'
+Returning cached instance of singleton bean 'enviromentChange'
+Returning cached instance of singleton bean 'ARDroneII'
+Returning cached instance of singleton bean 'enviromentChangeII'
+Returning cached instance of singleton bean 'ARDroneUpdatingController'
+Returning cached instance of singleton bean 'PainterEnvironment'
+Returning cached instance of singleton bean 'PainterEnvironmentSimulation'
+Returning cached instance of singleton bean 'counterEnactor'
+Creating shared instance of singleton bean 'controllerScheduler'
+Creating instance of bean 'controllerScheduler'
+Eagerly caching bean 'controllerScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'controllerScheduler'
+Creating shared instance of singleton bean 'randomScheduler'
+Creating instance of bean 'randomScheduler'
+Eagerly caching bean 'randomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'randomScheduler'
+Creating shared instance of singleton bean 'UpdateControllerScheduler'
+Creating instance of bean 'UpdateControllerScheduler'
+Eagerly caching bean 'UpdateControllerScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'UpdateControllerScheduler'
+Creating shared instance of singleton bean 'UIController'
+Creating instance of bean 'UIController'
+Eagerly caching bean 'UIController' to allow for resolving potential circular references
+Finished creating instance of bean 'UIController'
+Creating shared instance of singleton bean 'GridSimulationEnactor'
+Creating instance of bean 'GridSimulationEnactor'
+Eagerly caching bean 'GridSimulationEnactor' to allow for resolving potential circular references
+Finished creating instance of bean 'GridSimulationEnactor'
+Creating shared instance of singleton bean 'UIRandomScheduler'
+Creating instance of bean 'UIRandomScheduler'
+Eagerly caching bean 'UIRandomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'UIRandomScheduler'
+Creating shared instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Creating instance of bean 'GridSimulationAdaptedUIRandomScheduler'
+Eagerly caching bean 'GridSimulationAdaptedUIRandomScheduler' to allow for resolving potential circular references
+Finished creating instance of bean 'GridSimulationAdaptedUIRandomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDrone'
+Autowiring by type from bean name 'enactorFactory' to bean named 'enviromentChange'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDroneII'
+Autowiring by type from bean name 'enactorFactory' to bean named 'enviromentChangeII'
+Autowiring by type from bean name 'enactorFactory' to bean named 'ARDroneUpdatingController'
+Autowiring by type from bean name 'enactorFactory' to bean named 'PainterEnvironment'
+Autowiring by type from bean name 'enactorFactory' to bean named 'PainterEnvironmentSimulation'
+Autowiring by type from bean name 'enactorFactory' to bean named 'counterEnactor'
+Autowiring by type from bean name 'enactorFactory' to bean named 'controllerScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'randomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UpdateControllerScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UIController'
+Autowiring by type from bean name 'enactorFactory' to bean named 'GridSimulationEnactor'
+Autowiring by type from bean name 'enactorFactory' to bean named 'UIRandomScheduler'
+Autowiring by type from bean name 'enactorFactory' to bean named 'GridSimulationAdaptedUIRandomScheduler'
+Finished creating instance of bean 'enactorFactory'
+Returning cached instance of singleton bean 'controllerScheduler'
+Returning cached instance of singleton bean 'randomScheduler'
+Returning cached instance of singleton bean 'UpdateControllerScheduler'
+Returning cached instance of singleton bean 'UIController'
+Creating shared instance of singleton bean 'schedullerFactory'
+Creating instance of bean 'schedullerFactory'
+Registered injected element on class [ltsa.enactment.SchedulerFactory]: AutowiredMethodElement for public void ltsa.enactment.SchedulerFactory.setSchedulers(java.util.Set)
+Eagerly caching bean 'schedullerFactory' to allow for resolving potential circular references
+Processing injected element of bean 'schedullerFactory': AutowiredMethodElement for public void ltsa.enactment.SchedulerFactory.setSchedulers(java.util.Set)
+Returning cached instance of singleton bean 'controllerScheduler'
+Returning cached instance of singleton bean 'randomScheduler'
+Returning cached instance of singleton bean 'UpdateControllerScheduler'
+Returning cached instance of singleton bean 'UIController'
+Returning cached instance of singleton bean 'UIRandomScheduler'
+Returning cached instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'controllerScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'randomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UpdateControllerScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UIController'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'UIRandomScheduler'
+Autowiring by type from bean name 'schedullerFactory' to bean named 'GridSimulationAdaptedUIRandomScheduler'
+Finished creating instance of bean 'schedullerFactory'
+Returning cached instance of singleton bean 'GridSimulationEnactor'
+Returning cached instance of singleton bean 'UIRandomScheduler'
+Returning cached instance of singleton bean 'GridSimulationAdaptedUIRandomScheduler'
+Returning cached instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
+Unable to locate LifecycleProcessor with name 'lifecycleProcessor': using default [org.springframework.context.support.DefaultLifecycleProcessor@4f20ae3a]
+Returning cached instance of singleton bean 'lifecycleProcessor'
+Could not find key 'spring.liveBeansView.mbeanDomain' in any property source
+Returning cached instance of singleton bean 'schedullerFactory'
+Returning cached instance of singleton bean 'enactorFactory'

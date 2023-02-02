@@ -1,0 +1,122 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button (||).
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+set ControllableActions = {initInventory, initCredit, eval, initShipping, initBilling, archive, rollback}
+set FirstStep = {initInventory,endInventory,initCredit,endCredit}
+set SecondStep = {initShipping, endShipping, initBilling, endBilling}
+set All = {ControllableActions, orderEntry, approve, reject, endInventory, endCredit, endShipping, endBilling}
+
+ENTRY = (orderEntry -> PROCESSING1),
+PROCESSING1 = (FirstStep -> PROCESSING1 | eval -> EVAL_RESPONSE | rollback -> ENTRY),
+EVAL_RESPONSE = (approve -> PROCESSING2 | reject -> ENTRY),
+PROCESSING2 = (SecondStep -> PROCESSING2 | {archive,rollback} -> ENTRY).
+INVENTORY = (initInventory -> endInventory -> INVENTORY).
+CREDIT = (initCredit-> endCredit-> CREDIT).
+SHIPPING = (initShipping -> endShipping -> SHIPPING).
+BILLING = (initBilling -> endBilling -> BILLING).
+
+   //Mapping Environment
+	RECONF = (reconfigure -> AFTER_RECONF | All -> RECONF),
+	AFTER_RECONF = (All -> AFTER_RECONF).
+
+||Environment = (ENTRY || INVENTORY || CREDIT || SHIPPING || BILLING).
+||MappingEnvironment = (ENTRY || INVENTORY || CREDIT || SHIPPING || BILLING || RECONF).
+
+//Fluents declaration
+fluent InventoryFinished = <endInventory,{orderEntry}>
+fluent CreditFinished = <endCredit,{orderEntry}>
+fluent ShippingFinished = <endShipping,{orderEntry}>
+fluent BillingFinished = <endBilling,{orderEntry}>
+
+fluent InventoryInitiated = <initInventory,{orderEntry}>
+fluent CreditInitiated = <initCredit,{orderEntry}>
+fluent ShippingInitiated = <initShipping,{orderEntry}>
+fluent BillingInitiated = <initBilling,{orderEntry}>
+
+fluent OrderArrived = <orderEntry, {archive,rollback,reject}>
+fluent OrderApproved = <approve, {orderEntry}>
+
+// ---------------------------CONCURRENT CONTROLLER SPEC (old system)-----------------------------
+//Action Fluents
+
+assert ARCHIVE_POLICY = (archive -> (ShippingFinished && BillingFinished))
+assert EVAL_POLICY = (eval-> (InventoryFinished && CreditFinished))
+assert INITS_POLICY = ((initInventory -> OrderArrived) && (initCredit -> OrderArrived) &&
+					 (initShipping -> OrderApproved) && (initBilling -> OrderApproved))
+assert DONT_INIT_TWICE = ((InventoryFinished -> !initInventory) && (CreditFinished -> !initCredit) &&
+					(ShippingFinished -> !initShipping) && (BillingFinished -> !initBilling) )
+
+assert AVOID_ROLLBACK = (!rollback)
+
+ltl_property P_ARCHIVE_POLICY = []ARCHIVE_POLICY
+ltl_property P_EVAL_POLICY = []EVAL_POLICY
+ltl_property P_INITS_POLICY = []INITS_POLICY
+ltl_property P_DONT_INIT_TWICE = []DONT_INIT_TWICE
+ltl_property P_AVOID_ROLLBACK = []AVOID_ROLLBACK
+
+controllerSpec ConcurrentSpec = {
+    safety = {P_AVOID_ROLLBACK, P_EVAL_POLICY, P_ARCHIVE_POLICY, P_INITS_POLICY, P_DONT_INIT_TWICE}
+    controllable = {ControllableActions}
+}
+
+controller ||ConcurrentController = Environment~{ConcurrentSpec}.
+||Concurrent = (ConcurrentController || Environment).
+
+// ---------------------------SEQUENTIAL CONTROLLER SPEC (new system)-----------------------------
+
+assert SEQUENTIAL = (((ShippingInitiated || ShippingFinished) -> BillingFinished))
+
+ltl_property P_SEQUENTIAL = []SEQUENTIAL
+
+controllerSpec SequentialSpec = {
+    safety = {P_SEQUENTIAL,P_AVOID_ROLLBACK,P_EVAL_POLICY, P_ARCHIVE_POLICY, P_INITS_POLICY, P_DONT_INIT_TWICE}
+    controllable = {ControllableActions}
+}
+
+controller ||SequentialController = Environment~{SequentialSpec}.
+||Sequential = (SequentialController || Environment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+
+//Fluents for updates
+fluent EvalPending = <eval,{approve,reject}>
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert AnyAction = (initInventory || initCredit || endInventory || endCredit || eval || endShipping || endBilling 
+							|| initShipping || initBilling || archive || rollback || orderEntry || approve || reject)
+
+ltl_property NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+
+updatingController UpdCont = { 
+    oldController = Concurrent,
+	mapping = MappingEnvironment,
+    oldGoal = ConcurrentSpec,
+    newGoal = SequentialSpec,
+//	transition = NO_TP,
+    nonblocking
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+// ---------------------------TEST AND RESULTS-----------------------------
+
+assert S_OLD = (ARCHIVE_POLICY && EVAL_POLICY && INITS_POLICY && DONT_INIT_TWICE)
+assert S_NEW = (SEQUENTIAL && ARCHIVE_POLICY && EVAL_POLICY && INITS_POLICY && DONT_INIT_TWICE)
+
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+

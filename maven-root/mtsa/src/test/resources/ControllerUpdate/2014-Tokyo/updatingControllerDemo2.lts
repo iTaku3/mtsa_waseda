@@ -1,0 +1,223 @@
+const MAX = 2
+const PMAX = 2
+
+range R = 0..MAX
+range P = 0..PMAX
+
+set ControllableActions = {takeoff, land, blink, read, charge, moveTo[P], reset}
+set Failures = {fail}
+set A = {ControllableActions, read.val[R], lowBattery, success, Failures}
+
+fluent LowBattery = <lowBattery, charge>
+fluent Read = <{read}, A\{read}>
+fluent Takeoff = <{takeoff}, A\{takeoff}>
+fluent Land = <{land}, A\{land}>
+fluent Blink = <{blink}, A\{blink}>
+fluent Move = <{moveTo[P]}, A\{moveTo[P]}>
+fluent Position[p:P] = <{moveTo[p]}, {moveTo[P], fail}\{moveTo[p]}>
+
+fluent FAILURES = <Failures, A\Failures>
+fluent PosZero = <{moveTo[0], reset}, {moveTo[P], fail}\{moveTo[0]}> initially 1
+assert A_FAILURES = FAILURES
+
+assert ReadInPos0 = (PosZero && Read)
+assert ReadInPos1 = (Position[1] && Read)
+assert ReadInPos2 = (Position[2] && Read)
+
+assert TRUE = (read || !read)
+
+fluent IN_AIR = <{takeoff,takeoffOLD},{land,landOLD, fail}> initially 0
+assert ONLY_BLINK_IN_AIR = (Blink -> IN_AIR)
+assert ONLY_READ_IN_AIR = (Read -> IN_AIR)
+assert DONT_READ_TWICE_IN_AIR = (Read -> X(!Read W (!IN_AIR)))
+assert DONT_READ_IF_LOW_BATTERY = (Read -> !LowBattery)
+
+ltl_property Invariant = [](ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR)
+
+assert BLINK_ONLY_WITH_ONES = (read.val[1] -> PROCESS_VALUE && ((read.val[0] || read.val[2]) ->
+(!Blink W (Read || switchE))))
+assert BLINK_ONLY_WITH_TWOS = ((read.val[2] -> PROCESS_VALUE) && ((read.val[0] || read.val[1]) ->
+(!Blink W Read)))
+assert PROCESS_VALUE = ((!Read && !Land && !Move) W (Blink || switchE))
+
+
+fluent SwitchE = <switchE, switchC> initially 0 // HACK! switchC is livenessd to not happen
+fluent SwitchC = <switchC, landOLD> initially 0 // HACK! landOLD is livenessd to not happen
+assert A_SwitchC = SwitchC
+
+
+ltl_property S_OLD = (BLINK_ONLY_WITH_ONES W switchE)
+ltl_property S_NEW = [](switchE -> [](BLINK_ONLY_WITH_TWOS && DONT_READ_IF_LOW_BATTERY))
+
+ltl_property Straddle = (
+                                   []((read.val[1] && (!Blink W switchE)) -> [](switchE -> (!Blink W
+Read)))
+                                  )     // When switchE on unprocessed value, use NEW spec
+
+
+      C_Original = C00,
+      C00      = (takeoff -> C01),
+      C01      = (read -> C04 ),
+      C03      = (blink -> C02 ),
+      C04      = (read.val.{[0], [2]} -> C02
+                     |read.val[1] -> C03 ),
+      C02      = (moveTo[1] -> C0M ),
+      C0M      = (success -> C11 | fail -> CR),
+
+      C11      = (read -> C14),
+      C13      = (blink -> C12),
+      C14      = (read.val.{[0], [2]} -> C12
+                     |read.val[1] -> C13),
+      C12      = (moveTo[2] -> C1M),
+      C1M      = (success -> C21 | fail -> CR),
+
+      C21      = (read -> C24),
+      C23      = (blink -> C22),
+      C24      = (read.val.{[0], [2]} -> C22
+                     |read.val[1] -> C23),
+      C2M      = (success -> C25 | fail -> CR),
+      C25      = (land -> C00),
+      C22    =  (moveTo[0] -> C2M),
+
+      CR        = (reset -> C00).
+
+
+
+      OLD_Environment = Q00,
+      Q00      = (blink -> Q00
+                  |read -> Q01
+                  |takeoff -> Q02),
+      Q01      = (read.val[R] -> Q00),
+      Q02      = (land -> Q00
+                  |blink -> Q02
+                  |read -> Q03
+                  |moveTo[0]-> Q05
+                  |moveTo[1]-> Q15
+                  |moveTo[2]-> Q25),
+      Q03      = (read.val[R] -> Q02),
+      Q05      = (success -> Q02
+                  |fail -> QR),
+      Q10      = (blink -> Q10
+                  |read -> Q11
+                  |takeoff -> Q12),
+      Q11      = (read.val[R] -> Q10),
+      Q12      = (land -> Q10
+                  |blink -> Q12
+                  |read -> Q13
+                  |moveTo[0]-> Q05
+                  |moveTo[1]-> Q15
+                  |moveTo[2]-> Q25),
+      Q13      = (read.val[R] -> Q12),
+      Q15      = (success -> Q12
+                  |fail -> QR),
+      Q20      = (blink -> Q20
+                  |read -> Q21
+                  |takeoff -> Q22),
+      Q21      = (read.val[R] -> Q20),
+      Q22      = (land -> Q20
+                  |blink -> Q22
+                  |read -> Q23
+                  |moveTo[0]-> Q05
+                  |moveTo[1]-> Q15
+                  |moveTo[2]-> Q25),
+      Q23      = (read.val[R] -> Q22),
+      Q25      = (success -> Q22
+                  |fail -> QR),
+      QR       = (reset -> Q00).
+                                        
+
+      NEW_Environment = Q00_N,
+      Q00_N      = (blink -> Q00_N
+                  |read -> Q01_N
+                  |takeoff -> Q02_N
+                  |charge -> Q00_N),
+      Q01_N      = (read.val[R] -> Q00_N),
+      Q02_N      = (land -> Q00_N
+                  |blink -> Q02_N
+                  |read -> Q03_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |lowBattery -> Q02_N),
+      Q03_N      = (read.val[R] -> Q02_N),
+      Q05_N      = (success -> Q02_N
+                  |fail -> QR_N),
+      Q10_N      = (blink -> Q10_N
+                  |read -> Q11_N
+                  |takeoff -> Q12_N),
+      Q11_N      = (read.val[R] -> Q10_N),
+      Q12_N      = (land -> Q10_N
+                  |blink -> Q12_N
+                  |read -> Q13_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |lowBattery -> Q12_N),
+      Q13_N      = (read.val[R] -> Q12_N),
+      Q15_N      = (success -> Q12_N
+                  |fail -> QR_N),
+
+      Q20_N      = (blink -> Q20_N
+                  |read -> Q21_N
+                  |takeoff -> Q22_N),
+      Q21_N      = (read.val[R] -> Q20_N),
+      Q22_N      = (land -> Q20_N
+                  |blink -> Q22_N
+                  |read -> Q23_N
+                  |moveTo[0]-> Q05_N
+                  |moveTo[1]-> Q15_N
+                  |moveTo[2]-> Q25_N
+                  |lowBattery -> Q22_N),
+      Q23_N      = (read.val[R] -> Q22_N),
+      Q25_N      = (success -> Q22_N
+                  |fail -> QR_N),
+      QR_N       = (reset -> Q00_N).
+
+      BATTERY_COUNTER(N=4) = BAT[N],
+      BAT[i:0..N]= (  when (i==2) lowBattery -> BAT[i-1] |
+                              when (i!=2) {read, takeoff, land} -> BAT[i-1] |
+                              charge -> BAT[N]
+                       ).
+
+     
+
+fluent INAIR = <takeoff, land>
+fluent READING = <read, read.val[0..2]>
+fluent LOWBATTERYSTATE = <lowBattery, charge>
+fluent FALSE = <charge,{takeoff, land, blink, read, read.val[R], lowBattery}> initially 0
+fluent IN0 = <moveTo[0], {moveTo[1], moveTo[2]}>
+fluent IN1 = <moveTo[1], {moveTo[0], moveTo[2]}>
+fluent IN2 = <moveTo[2], {moveTo[1], moveTo[0]}>
+fluent FAILURE = <{fail}, {reset}>
+
+controllerSpec ObjectiveBefore = {
+      safety = {S_OLD}
+      failure = {A_FAILURES}
+      //asumption empty
+      liveness = {ReadInPos0,ReadInPos1,ReadInPos2}
+      controllable = {ControllableActions}
+}
+
+||E_NEW_COMPOSED = (NEW_Environment || BATTERY_COUNTER(3)).
+||E_OLD  = (OLD_Environment).
+||C_Original = (C_Original).
+
+controllerSpec ObjectiveAfter = {
+        safety = {S_NEW,Invariant,Straddle}
+        failure = {A_FAILURES}
+        assumption = {A_SwitchC}
+        liveness = {ReadInPos0,ReadInPos1,ReadInPos2,SwitchE}
+        controllable = {ControllableActions}
+}
+
+updatingController UpdCont = { 
+   oldController = C_Original,
+   oldEnvironment = E_OLD,
+   newEnvironment = E_NEW_COMPOSED,
+   newGoal = ObjectiveAfter, 
+   updateFluents ={ 
+         {INAIR,INAIR},{READING,READING},{FALSE,LOWBATTERYSTATE},{IN0,IN0},
+		   {IN1,IN1},{IN2,IN2},{FAILURE,FAILURE}
+   }
+}
+
