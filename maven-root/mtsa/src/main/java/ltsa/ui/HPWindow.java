@@ -129,6 +129,7 @@ public class HPWindow extends JFrame implements Runnable {
     JMenuItem build_compile;
     JMenuItem build_compose;
     JMenuItem build_minimise;
+    JMenuItem build_stepwise;
     JMenuItem help_about;
     JMenuItem help_version;
     JMenuItem supertrace_options;
@@ -392,7 +393,7 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(compileTool = createTool("icon/compile.gif", "Compile", new DoAction(DO_compile)));
         tools.add(composeTool = createTool("icon/compose.gif", "Compose", new DoAction(DO_doComposition)));
         tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
-        tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_minimiseComposition)));
+        tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_stepwiseControllerSynthesis)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
         targetChoice.setEditable(false);
@@ -625,12 +626,12 @@ public class HPWindow extends JFrame implements Runnable {
         window_print.addActionListener(new WinPrintAction());
         window.add(window_print);
         window_draw = new JCheckBoxMenuItem("Draw");
-        window_draw.setSelected(false);
+        window_draw.setSelected(true);
         window_draw.addActionListener(new WinDrawAction());
         window.add(window_draw);
         //layout
         window_layout = new JCheckBoxMenuItem("Layout");
-        window_layout.setSelected(false);
+        window_layout.setSelected(true);
         window_layout.addActionListener(new WinLayoutAction());
         window.add(window_layout);
         //stepwise
@@ -659,6 +660,9 @@ public class HPWindow extends JFrame implements Runnable {
         build_minimise = new JMenuItem("Minimise");
         build_minimise.addActionListener(new DoAction(DO_minimiseComposition));
         build.add(build_minimise);
+        build_stepwise = new JMenuItem("Stepwise");
+        build_stepwise.addActionListener(new DoAction(DO_stepwiseControllerSynthesis));
+        build.add(build_stepwise);
     }
 
     private void checkMenu(JMenuBar mb) {
@@ -836,6 +840,7 @@ public class HPWindow extends JFrame implements Runnable {
         build_compile.setEnabled(flag);
         build_compose.setEnabled(flag);
         build_minimise.setEnabled(flag);
+        build_stepwise.setEnabled(flag);
         stopTool.setEnabled(true);
         parseTool.setEnabled(flag);
         safetyTool.setEnabled(flag);
@@ -866,6 +871,9 @@ public class HPWindow extends JFrame implements Runnable {
     private final static int DO_progress = 8;
     private final static int DO_liveness = 9;
     private final static int DO_parse = 10;
+
+    //Stepwise Controller Synthesis
+    private final static int DO_stepwiseControllerSynthesis = 101;
 
     // Dipi
     private final static int DO_PLUS_CR = 11;
@@ -968,6 +976,11 @@ public class HPWindow extends JFrame implements Runnable {
                     break;
                 case DO_minimiseComposition:
                     showOutput();
+                    minimiseComposition();
+                    break;
+                case DO_stepwiseControllerSynthesis:
+                    showOutput();
+                    // ここに段階的制御器合成の実行関数を配置
                     minimiseComposition();
                     break;
                 case DO_progress:
