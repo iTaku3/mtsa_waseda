@@ -67,6 +67,7 @@ public class HPWindow extends JFrame implements Runnable {
     PrintWindow prints;
     LTSDrawWindow draws;
     LTSLayoutWindow layouts;
+    StepwiseWindow stepwise;
     JTabbedPane textIO;
     JToolBar tools;
     JTextField stepscount;
@@ -178,6 +179,7 @@ public class HPWindow extends JFrame implements Runnable {
     JCheckBoxMenuItem window_print;
     JCheckBoxMenuItem window_draw;
     JCheckBoxMenuItem window_layout;
+    JCheckBoxMenuItem window_stepwise;
     JRadioButtonMenuItem strategyDFS, strategyBFS, strategyRandom;
     ButtonGroup strategyGroup;
     JMenuItem maxStateGeneration;
@@ -190,6 +192,7 @@ public class HPWindow extends JFrame implements Runnable {
             newFileTool,
             openFileTool, saveFileTool, compileTool, composeTool,
             minimizeTool,
+            stepwiseTool,
             undoTool, redoTool;
 
     public static final Font FIXED = new Font("Monospaced", Font.PLAIN, 12);
@@ -389,6 +392,7 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(compileTool = createTool("icon/compile.gif", "Compile", new DoAction(DO_compile)));
         tools.add(composeTool = createTool("icon/compose.gif", "Compose", new DoAction(DO_doComposition)));
         tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
+        tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_minimiseComposition)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
         targetChoice.setEditable(false);
@@ -621,14 +625,19 @@ public class HPWindow extends JFrame implements Runnable {
         window_print.addActionListener(new WinPrintAction());
         window.add(window_print);
         window_draw = new JCheckBoxMenuItem("Draw");
-        window_draw.setSelected(true);
+        window_draw.setSelected(false);
         window_draw.addActionListener(new WinDrawAction());
         window.add(window_draw);
         //layout
         window_layout = new JCheckBoxMenuItem("Layout");
-        window_layout.setSelected(true);
+        window_layout.setSelected(false);
         window_layout.addActionListener(new WinLayoutAction());
         window.add(window_layout);
+        //stepwise
+        window_stepwise = new JCheckBoxMenuItem("Stepwise");
+        window_stepwise.setSelected(false);
+        window_stepwise.addActionListener(new WinStepwiseAction());
+        window.add(window_stepwise);
     }
 
     private void buildMenu(JMenuBar mb) {
@@ -834,6 +843,7 @@ public class HPWindow extends JFrame implements Runnable {
         compileTool.setEnabled(flag);
         composeTool.setEnabled(flag);
         minimizeTool.setEnabled(flag);
+        stepwiseTool.setEnabled(flag);
 
         file_save.setEnabled(application);
         file_saveAs.setEnabled(application);
@@ -1686,6 +1696,12 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
+    class WinStepwiseAction implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            newStepwiseWindow(window_stepwise.isSelected());
+        }
+    }
+
     class HelpAboutAction implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             aboutDialog();
@@ -2451,6 +2467,23 @@ public class HPWindow extends JFrame implements Runnable {
             alphabet = null;
         }
     }
+
+    // ------------------------------------------------------------------------
+
+    private void newStepwiseWindow(boolean disp) {
+        if (disp && textIO.indexOfTab("Stepwise") < 0) {
+            // create Stepwise window
+            stepwise = new StepwiseWindow(current, eman);
+            textIO.addTab("Stepwise", stepwise);
+            swapto(textIO.indexOfTab("Stepwise"));
+        } else if (!disp && textIO.indexOfTab("Stepwise") > 0) {
+            swapto(0);
+            textIO.removeTabAt(textIO.indexOfTab("Stepwise"));
+            stepwise.removeClient();
+            stepwise = null;
+        }
+    }
+
 
     // ------------------------------------------------------------------------
 
