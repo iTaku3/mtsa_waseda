@@ -466,7 +466,7 @@ public class LTSLayoutWindow extends JSplitPane implements EventClient {
         output.clear();
     }
 
-    //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //	Parameter setters
 //-----------------------------------------------------------------------------
     public void setBigFont(boolean b) {

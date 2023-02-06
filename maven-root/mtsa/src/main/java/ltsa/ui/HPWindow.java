@@ -980,8 +980,7 @@ public class HPWindow extends JFrame implements Runnable {
                     break;
                 case DO_stepwiseControllerSynthesis:
                     showOutput();
-                    // ここに段階的制御器合成の実行関数を配置
-                    minimiseComposition();
+                    stepwiseControllerSynthesis();
                     break;
                 case DO_progress:
                     showOutput();
@@ -2123,6 +2122,43 @@ public class HPWindow extends JFrame implements Runnable {
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput);
             TransitionSystemDispatcher.minimise(current, ltsOutput);
             postState(current);
+        }
+    }
+
+    // ------------------------------------------------------------------------
+
+    private void stepwiseControllerSynthesis() {
+        ltsOutput.clearOutput();
+        ltsOutput.outln("Let's start Stepwise Controller Synthesis!");
+        
+        compile();
+
+        // ltsOutput.outln("[debug]current. is :" + current.);
+        ltsOutput.outln("---------------------------------------------");
+        ltsOutput.outln("[debug]current.name is :" + current.name);
+        ltsOutput.outln("[debug]current.env is :" + current.env);
+        ltsOutput.outln("[debug]current.getCompositionType() is :" + current.getCompositionType());
+        ltsOutput.outln("[debug]current.machines is :" + current.machines); //並列合成されるコンポーネントのCompositeClassが格納されている
+        // ltsOutput.outln("[debug]current.getComposition() is :" + current.getComposition());
+        // ltsOutput.outln("[debug]current.getComponentAlphabet() is :" + current.getComponentAlphabet());
+        // ltsOutput.outln("[debug]current.composition is :" + current.composition);
+        // ltsOutput.outln("[debug]current.hidden is :" + current.hidden);
+        ltsOutput.outln("---------------------------------------------");
+
+        for (int i = 0; i < current.machines.size(); i++) {
+            String[] current_alphabet = new String[current.machines.get(i).alphabet.length / 2 - 1];
+            int cnt = 0;
+            for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
+                if (!current.machines.get(i).alphabet[j].equals("tau")) {
+                    if(!current.machines.get(i).alphabet[j].contains("?")) {
+                        current_alphabet[cnt] = current.machines.get(i).alphabet[j];
+                        cnt = cnt +1;
+                    }
+                }
+            }
+            ltsOutput.outln("Action set of " + current.machines.get(i).name + " is :" + Arrays.toString(current_alphabet));
+            ltsOutput.outln("Stete set of " + current.machines.get(i).name + " is :" + Arrays.toString(current_alphabet));
+            // ltsOutput.outln("> Action set of " + current.machines.get(i).name + " is :" + Arrays.toString(current.machines.get(i).alphabet));
         }
     }
 
