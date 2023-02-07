@@ -2127,6 +2127,30 @@ public class HPWindow extends JFrame implements Runnable {
 
     // ------------------------------------------------------------------------
 
+    /* For StepwiseControllerSynthesis (Generate synthesis process) */
+    private class StepwiseLTSInfo {
+        // Integer[] id;
+        String name;
+        String[] actionSet;
+
+    }
+
+    private boolean checkIn(StepwiseLTSInfo env, StepwiseLTSInfo req) {
+        for (int i = 0; i < req.actionSet.length; i++) {
+            if(!Arrays.asList(env.actionSet).contains(req.actionSet[i]))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean checkRelation(StepwiseLTSInfo env, StepwiseLTSInfo req) {
+        for (int i = 0; i < req.actionSet.length; i++) {
+            if(Arrays.asList(env.actionSet).contains(req.actionSet[i]))
+                return true;
+        }
+        return false;
+    }
+
     private void stepwiseControllerSynthesis() {
         ltsOutput.clearOutput();
         ltsOutput.outln("Let's start Stepwise Controller Synthesis!");
@@ -2138,27 +2162,84 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[debug]current.name is :" + current.name);
         ltsOutput.outln("[debug]current.env is :" + current.env);
         ltsOutput.outln("[debug]current.getCompositionType() is :" + current.getCompositionType());
-        ltsOutput.outln("[debug]current.machines is :" + current.machines); //並列合成されるコンポーネントのCompositeClassが格納されている
-        // ltsOutput.outln("[debug]current.getComposition() is :" + current.getComposition());
-        // ltsOutput.outln("[debug]current.getComponentAlphabet() is :" + current.getComponentAlphabet());
-        // ltsOutput.outln("[debug]current.composition is :" + current.composition);
-        // ltsOutput.outln("[debug]current.hidden is :" + current.hidden);
+        ltsOutput.outln("[debug]current.machines is :" + current.machines); //環境モデルと監視モデル（各コンポーネント）のCompactState Classの配列
         ltsOutput.outln("---------------------------------------------");
+        /* Step1 : 各モデルごとにアクションセットを用意 */
+        int env_num = 0;
+        int req_num = 0;
+        for (int i = 0; i < current.machines.size(); i++) {
+            if (current.machines.get(i).name.startsWith("P_")) {
+                req_num++;
+            } else {
+                env_num++;
+            }
+        }
+
+        /* env_info ... <name>環境モデル名, <actionSet>環境モデルに含まれる全てのアクション（アルファベット）*/
+        /* req_info ... <name>監視モデル名, <actionSet>監視モデルに含まれる全てのアクション（アルファベット）*/
+        StepwiseLTSInfo[] env_info = new StepwiseLTSInfo[env_num];
+        StepwiseLTSInfo[] req_info = new StepwiseLTSInfo[req_num];
+
+        int env_cnt = 0;
+        int req_cnt = 0;
 
         for (int i = 0; i < current.machines.size(); i++) {
-            String[] current_alphabet = new String[current.machines.get(i).alphabet.length / 2 - 1];
-            int cnt = 0;
-            for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
-                if (!current.machines.get(i).alphabet[j].equals("tau")) {
-                    if(!current.machines.get(i).alphabet[j].contains("?")) {
-                        current_alphabet[cnt] = current.machines.get(i).alphabet[j];
-                        cnt = cnt +1;
+            if (current.machines.get(i).name.startsWith("P_")) {
+                req_info[req_cnt] = new StepwiseLTSInfo();
+                req_info[req_cnt].name = current.machines.get(i).name;
+                req_info[req_cnt].actionSet = new String[current.machines.get(i).alphabet.length / 2 - 1];
+                int cnt = 0;
+                for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
+                    if (!current.machines.get(i).alphabet[j].equals("tau")) {
+                        if(!current.machines.get(i).alphabet[j].contains("?")) {
+                            req_info[req_cnt].actionSet[cnt] = current.machines.get(i).alphabet[j];
+                            cnt = cnt +1;
+                        }
                     }
                 }
+                req_cnt++;
+            } else {
+                env_info[env_cnt] = new StepwiseLTSInfo();
+                env_info[env_cnt].name = current.machines.get(i).name;
+                env_info[env_cnt].actionSet = new String[current.machines.get(i).alphabet.length / 2 - 1];
+                int cnt = 0;
+                for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
+                    if (!current.machines.get(i).alphabet[j].equals("tau")) {
+                        if(!current.machines.get(i).alphabet[j].contains("?")) {
+                            env_info[env_cnt].actionSet[cnt] = current.machines.get(i).alphabet[j];
+                            cnt = cnt +1;
+                        }
+                    }
+                }
+                env_cnt++;
             }
-            ltsOutput.outln("Action set of " + current.machines.get(i).name + " is :" + Arrays.toString(current_alphabet));
-            ltsOutput.outln("Stete set of " + current.machines.get(i).name + " is :" + Arrays.toString(current_alphabet));
-            // ltsOutput.outln("> Action set of " + current.machines.get(i).name + " is :" + Arrays.toString(current.machines.get(i).alphabet));
+        }
+
+        ltsOutput.outln("Environment Models Infomation");
+        for (int i = 0; i < env_info.length; i++) {
+            ltsOutput.outln("> " + env_info[i].name + "'s action set : " + Arrays.toString(env_info[i].actionSet));
+        }
+        ltsOutput.outln("---------------------------------------------");
+        ltsOutput.outln("Monitor Models Infomation");
+        for (int i = 0; i < req_info.length; i++) {
+            ltsOutput.outln("> " + req_info[i].name + "'s action set : " + Arrays.toString(req_info[i].actionSet));
+        }
+        ltsOutput.outln("---------------------------------------------");
+
+        /* Step2 : 部分合成の条件を満たす環境モデルと監視モデルのセットを作る */
+        for (int i = 0; i < req_info.length; i++) {
+            int relation_env_num = 0;
+            for (int j = 0; j < env_info.length; j++) {
+                // if (checkIn(req_info[i],env_info[j]))
+                //     ltsOutput.outln(req_info[i].name + " can do part synthesis with " + env_info[j].name);
+                if (checkRelation(req_info[i],env_info[j])) {
+                    ltsOutput.outln(req_info[i].name + " need " + env_info[j].name);
+                    relation_env_num++;
+                } else {
+                    ltsOutput.outln(req_info[i].name + " don't need " + env_info[j].name);
+                }
+            }
+            ltsOutput.outln(req_info[i].name + "'s number of models needed : " + relation_env_num);
         }
     }
 
