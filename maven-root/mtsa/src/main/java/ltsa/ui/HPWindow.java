@@ -2129,33 +2129,67 @@ public class HPWindow extends JFrame implements Runnable {
 
     /* For StepwiseControllerSynthesis (Generate synthesis process) */
     private class StepwiseLTSInfo {
-        // Integer[] id;
         String name;
-        String[] actionSet;
-
+        String[] actions;
+        String[] componentModels; // Only part controller
+        List<String> monitoredModels; // Only req_info
+        Integer cost; // Only req_info (needEnvNameの要素数)
     }
 
-    private boolean checkIn(StepwiseLTSInfo env, StepwiseLTSInfo req) {
-        for (int i = 0; i < req.actionSet.length; i++) {
-            if(!Arrays.asList(env.actionSet).contains(req.actionSet[i]))
-                return false;
-        }
-        return true;
-    }
+    // private boolean checkIn(StepwiseLTSInfo env, StepwiseLTSInfo req) {
+    //     for (int i = 0; i < req.actions.length; i++) {
+    //         if(!Arrays.asList(env.actions).contains(req.actions[i]))
+    //             return false;
+    //     }
+    //     return true;
+    // }
 
     private boolean checkRelation(StepwiseLTSInfo env, StepwiseLTSInfo req) {
-        for (int i = 0; i < req.actionSet.length; i++) {
-            if(Arrays.asList(env.actionSet).contains(req.actionSet[i]))
+        for (int i = 0; i < req.actions.length; i++) {
+            if(Arrays.asList(env.actions).contains(req.actions[i]))
                 return true;
         }
         return false;
     }
 
+    private boolean checkContain(List<String> small, List<String> large) {
+        for (String s : small) {
+            if(large.contains(s))
+                return true;
+        }
+        return false;
+    }
+
+    // private int checkComposedNum(List<String> small, List<String> large) {
+    //     int cnt = 0;
+    //     for (String s : small) {
+    //         if(large.contains(s))
+    //             cnt++;
+    //     }
+    //     return cnt;
+    // }
+
+    // private int checkUncomposedNum(List<String> small, List<String> large) {
+    //     int cnt = 0;
+    //     for (String s : small) {
+    //         if(!large.contains(s))
+    //             cnt++;
+    //     }
+    //     return cnt;
+    // }
+
+    private StepwiseLTSInfo getMonitoredModels(StepwiseLTSInfo[] req_info, String name) {
+        for (int i = 0; i < req_info.length; i++) {
+            if(name.equals(req_info[i].name)) return req_info[i];
+        }
+        return null;
+    }
+
     private void stepwiseControllerSynthesis() {
         ltsOutput.clearOutput();
-        ltsOutput.outln("Let's start Stepwise Controller Synthesis!");
-        
         compile();
+        ltsOutput.clearOutput(); //コンパイルログが見たい場合はこの行をコメントアウト
+        ltsOutput.outln("Let's start Stepwise Controller Synthesis!");
 
         // ltsOutput.outln("[debug]current. is :" + current.);
         ltsOutput.outln("---------------------------------------------");
@@ -2164,6 +2198,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[debug]current.getCompositionType() is :" + current.getCompositionType());
         ltsOutput.outln("[debug]current.machines is :" + current.machines); //環境モデルと監視モデル（各コンポーネント）のCompactState Classの配列
         ltsOutput.outln("---------------------------------------------");
+        
         /* Step1 : 各モデルごとにアクションセットを用意 */
         int env_num = 0;
         int req_num = 0;
@@ -2175,8 +2210,8 @@ public class HPWindow extends JFrame implements Runnable {
             }
         }
 
-        /* env_info ... <name>環境モデル名, <actionSet>環境モデルに含まれる全てのアクション（アルファベット）*/
-        /* req_info ... <name>監視モデル名, <actionSet>監視モデルに含まれる全てのアクション（アルファベット）*/
+        /* env_info ... <name>環境モデル名, <actions>環境モデルに含まれる全てのアクション（アルファベット）*/
+        /* req_info ... <name>監視モデル名, <actions>監視モデルに含まれる全てのアクション（アルファベット）*/
         StepwiseLTSInfo[] env_info = new StepwiseLTSInfo[env_num];
         StepwiseLTSInfo[] req_info = new StepwiseLTSInfo[req_num];
 
@@ -2187,12 +2222,12 @@ public class HPWindow extends JFrame implements Runnable {
             if (current.machines.get(i).name.startsWith("P_")) {
                 req_info[req_cnt] = new StepwiseLTSInfo();
                 req_info[req_cnt].name = current.machines.get(i).name;
-                req_info[req_cnt].actionSet = new String[current.machines.get(i).alphabet.length / 2 - 1];
+                req_info[req_cnt].actions = new String[current.machines.get(i).alphabet.length / 2 - 1];
                 int cnt = 0;
                 for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
                     if (!current.machines.get(i).alphabet[j].equals("tau")) {
                         if(!current.machines.get(i).alphabet[j].contains("?")) {
-                            req_info[req_cnt].actionSet[cnt] = current.machines.get(i).alphabet[j];
+                            req_info[req_cnt].actions[cnt] = current.machines.get(i).alphabet[j];
                             cnt = cnt +1;
                         }
                     }
@@ -2201,12 +2236,12 @@ public class HPWindow extends JFrame implements Runnable {
             } else {
                 env_info[env_cnt] = new StepwiseLTSInfo();
                 env_info[env_cnt].name = current.machines.get(i).name;
-                env_info[env_cnt].actionSet = new String[current.machines.get(i).alphabet.length / 2 - 1];
+                env_info[env_cnt].actions = new String[current.machines.get(i).alphabet.length / 2 - 1];
                 int cnt = 0;
                 for (int j = 0; j < current.machines.get(i).alphabet.length; j++) {
                     if (!current.machines.get(i).alphabet[j].equals("tau")) {
                         if(!current.machines.get(i).alphabet[j].contains("?")) {
-                            env_info[env_cnt].actionSet[cnt] = current.machines.get(i).alphabet[j];
+                            env_info[env_cnt].actions[cnt] = current.machines.get(i).alphabet[j];
                             cnt = cnt +1;
                         }
                     }
@@ -2217,30 +2252,79 @@ public class HPWindow extends JFrame implements Runnable {
 
         ltsOutput.outln("Environment Models Infomation");
         for (int i = 0; i < env_info.length; i++) {
-            ltsOutput.outln("> " + env_info[i].name + "'s action set : " + Arrays.toString(env_info[i].actionSet));
+            ltsOutput.outln("> " + env_info[i].name + "'s action set : " + Arrays.toString(env_info[i].actions));
         }
         ltsOutput.outln("---------------------------------------------");
         ltsOutput.outln("Monitor Models Infomation");
         for (int i = 0; i < req_info.length; i++) {
-            ltsOutput.outln("> " + req_info[i].name + "'s action set : " + Arrays.toString(req_info[i].actionSet));
+            ltsOutput.outln("> " + req_info[i].name + "'s action set : " + Arrays.toString(req_info[i].actions));
         }
         ltsOutput.outln("---------------------------------------------");
 
+
         /* Step2 : 部分合成の条件を満たす環境モデルと監視モデルのセットを作る */
         for (int i = 0; i < req_info.length; i++) {
-            int relation_env_num = 0;
+            int cost = 0;
+            List<String> monitoredModelsList = new ArrayList<String>();
+
             for (int j = 0; j < env_info.length; j++) {
-                // if (checkIn(req_info[i],env_info[j]))
-                //     ltsOutput.outln(req_info[i].name + " can do part synthesis with " + env_info[j].name);
                 if (checkRelation(req_info[i],env_info[j])) {
-                    ltsOutput.outln(req_info[i].name + " need " + env_info[j].name);
-                    relation_env_num++;
+                    // 要求と関係ある環境モデルはこちら
+                    // ltsOutput.outln(req_info[i].name + " need " + env_info[j].name);
+                    monitoredModelsList.add(env_info[j].name);
+                    cost++;
                 } else {
-                    ltsOutput.outln(req_info[i].name + " don't need " + env_info[j].name);
+                    // 要求と関係ない環境モデルはこちら
+                    // ltsOutput.outln(req_info[i].name + " don't need " + env_info[j].name);
                 }
             }
-            ltsOutput.outln(req_info[i].name + "'s number of models needed : " + relation_env_num);
+            req_info[i].monitoredModels = monitoredModelsList;
+            req_info[i].cost = cost;
+            ltsOutput.outln("> " + req_info[i].name + "'s monitored models : " + req_info[i].monitoredModels.toString());
+            ltsOutput.outln("> " + req_info[i].name + "'s cost : " + req_info[i].cost);
         }
+        ltsOutput.outln("---------------------------------------------");
+
+
+        //costの低い要求から順番に分析（すでに分析していない部分から優先的に分析）
+        List<String> synthesisProcessList = new ArrayList<>();
+        // List<String> synthesisedComponent = new ArrayList<>();
+        List<List<String>> synthesisedComponentList = new ArrayList<>();
+        
+
+        //①初めに分析する対象の発見
+        for (int n = 1; n <= env_info.length; n++) {
+            for (int i = 0; i < req_info.length; i++) {
+                if (n == req_info[i].cost) 
+                {
+                    if(synthesisProcessList==null)
+                    {
+                        //１回目（どれを１個目にするかより詳細な分析をしてもいいかも）
+                        synthesisProcessList.add(req_info[i].name);
+                        synthesisedComponentList.add(req_info[i].monitoredModels);
+                    }
+                    else {
+                        //２回目以降（分析範囲が被らないもの全て洗い出し）
+                        boolean cannotSynthesize = false;
+                        for (List<String> synthesisedComponent : synthesisedComponentList) {
+                            cannotSynthesize = cannotSynthesize || checkContain(synthesisedComponent,req_info[i].monitoredModels);
+                        }
+                        if (!cannotSynthesize)
+                        {
+                            synthesisProcessList.add(req_info[i].name);
+                            synthesisedComponentList.add(req_info[i].monitoredModels);
+                        }
+                    }
+                }
+            }
+        }
+
+        int process_id = 0;
+        for (String req_name : synthesisProcessList) {
+            ltsOutput.outln("No." + process_id + ":" + req_name + " " + getMonitoredModels(req_info,req_name).monitoredModels.toString());
+            process_id++;
+        }
+
     }
 
     // ------------------------------------------------------------------------
