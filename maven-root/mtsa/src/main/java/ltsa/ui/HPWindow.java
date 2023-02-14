@@ -2193,7 +2193,7 @@ public class HPWindow extends JFrame implements Runnable {
     //合成プロセスの生成時に利用：同じプロセス内で処理できる要求を見つける
     private void findSameSynthesisProcess(StepwiseLTSInfo[] req_info, List<String> monitoredModels, List<String> synthesisProcessList) {
         for (StepwiseLTSInfo req : req_info) {
-            if (req.monitoredModels.equals(monitoredModels) && synthesisProcessList.contains(req.name)) {
+            if (req.monitoredModels.equals(monitoredModels) && !synthesisProcessList.contains(req.name)) {
                 synthesisProcessList.add(req.name);
             }
         }
@@ -2203,7 +2203,9 @@ public class HPWindow extends JFrame implements Runnable {
     private void generate_N_Cost_SynthesisProcess(StepwiseLTSInfo[] req_info, int n, List<String> synthesisProcessList, List<String> unsynthesized_env_name, List<List<String>> synthesisedComponentList) {
         for (StepwiseLTSInfo req : req_info) {
             if ((n == req.cost) && (!synthesisProcessList.contains(req.name))) {
+                
                 List<List<String>> tmp = new ArrayList<>();
+                req.componentModels = new ArrayList<>();
                 for (List<String> synthesisedComponent : synthesisedComponentList) {
                     if (checkInList(synthesisedComponent, req.monitoredModels)) {
                         if (req.componentModels == null)
@@ -2221,12 +2223,17 @@ public class HPWindow extends JFrame implements Runnable {
                 for(List<String> t : tmp) {
                     synthesisedComponentList.remove(synthesisedComponentList.indexOf(t));
                 }
+
+                List<String> tmp2 = new ArrayList<>();
                 for (String env_name : unsynthesized_env_name) {
                     if (req.monitoredModels.contains(env_name))
                     {
                         req.componentModels.add(env_name);
-                        unsynthesized_env_name.remove(unsynthesized_env_name.indexOf(env_name));
+                        tmp2.add(env_name);
                     }
+                }
+                for(String t : tmp2) {
+                    unsynthesized_env_name.remove(unsynthesized_env_name.indexOf(t));
                 }
                 synthesisProcessList.add(req.name);
                 synthesisedComponentList.add(req.componentModels);
@@ -2412,9 +2419,9 @@ public class HPWindow extends JFrame implements Runnable {
 
 
         /* 合成プロセス②：部分合成の出力を利用する場合 */
-        // for (int n = 1; n <= env_info.length; n++) {
-        //     generate_N_Cost_SynthesisProcess(req_info, n, synthesisProcessList, unsynthesized_env_name, synthesisedComponentList);
-        // }
+        for (int n = 1; n <= env_info.length; n++) {
+            generate_N_Cost_SynthesisProcess(req_info, n, synthesisProcessList, unsynthesized_env_name, synthesisedComponentList);
+        }
 
 
         //合成プロセスの出力
