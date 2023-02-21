@@ -401,8 +401,8 @@ public class Symbol {
 		case WEAKUNTIL:
 			return "W";
 
-			// _______________________________________________________________________________________
-			// Others
+		// _______________________________________________________________________________________
+		// Others
 
 		case LCURLY:
 			return "{";
@@ -426,8 +426,12 @@ public class Symbol {
 			return "->";
 		case BACKSLASH:
 			return "\\";
-			// _______________________________________________________________________________________
-			// Special
+		
+		// _______________________________________________________________________________________
+		// Stepwise Controller Synthesis
+
+		case STEPWISE_CONTROLLER:
+			return "stepwiseController";
 
 		// _______________________________________________________________________________________
 		// Probabilistic
@@ -539,7 +543,7 @@ public class Symbol {
 	public static final int ENACTMENT = 3103; 
 	// _______________________________________________________________________________________
 	// Updating controller symbols
-	
+
 	public static final int UPDATING_CONTROLLER = 3200; // 3200 series are for updating controller problem
 	public static final int OLD_CONTROLLER = 3201;
 	public static final int MAPPING = 3202;
@@ -628,6 +632,10 @@ public class Symbol {
 	public static final int COMMENT = 100;
 
 	// _______________________________________________________________________________________
+	// StepwiseControllerSynthesis
+
+	public static final int STEPWISE_CONTROLLER = 10000;
+
 	// _______________________________________________________________________________________
 
 	public static final int INT_VALUE = 125;
@@ -701,6 +709,7 @@ public class Symbol {
 		blueSymbols.add(MARKING);
 		blueSymbols.add(DISTURBANCE);
 		blueSymbols.add(ENACTMENT);
+		blueSymbols.add(STEPWISE_CONTROLLER);
 	}
 
 	@Override

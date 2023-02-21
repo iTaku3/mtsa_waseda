@@ -156,7 +156,7 @@ public class LTSCompiler {
                 ce.output = fce.output;
                 ce.priorityIsLow = true;
                 ce.compositionType = 45;
-                ce.makeController = true;
+                ce.makeController = true; //default:true
                 ce.goal = explorerDefinition.getGoal();
                 ce.compiledProcesses = new Hashtable<String, CompactState>(0);
 
@@ -195,7 +195,7 @@ public class LTSCompiler {
                 ce.output = output;
                 ce.priorityIsLow = true;
                 ce.compositionType = 45;
-                ce.makeController = true;
+                ce.makeController = true; //default:true
                 ce.goal = explorerDefinition.getGoal();
                 ce.compiledProcesses = new Hashtable<String, CompactState>(0);
 
@@ -416,6 +416,10 @@ public class LTSCompiler {
 
                     output.outln("Explorer: " + explorerDefinition.getName());
 
+                } else if (current.kind == Symbol.STEPWISE_CONTROLLER) {
+                    next_symbol();
+                    output.outln("Stepwise Controller Synthesis");
+                    
                 } else if (current.kind == Symbol.UPDATING_CONTROLLER) {
                     next_symbol();
 

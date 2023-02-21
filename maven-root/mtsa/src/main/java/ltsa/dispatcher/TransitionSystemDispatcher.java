@@ -1884,15 +1884,23 @@ public class TransitionSystemDispatcher {
                 CompactState synthesiseController = synthesise(compositeState, compositeState.goal, output);
                 if (synthesiseController != null) {
                     synthesiseController = applyLatencyHeuristic(compositeState, synthesiseController);
-                    //compositeState.setComposition(synthesiseController);
-                    compositeState.machines.set(0,synthesiseController); //replace environment with controller
+                    // compositeState.setComposition(synthesiseController);
+                    /* 環境モデルを全て削除して，出力と要求のセット（compositeState.machines）を作成 */
+                    List<CompactState> removeMachineList = new ArrayList<>();
+                    for (CompactState machine : compositeState.machines) {
+                        if (!machine.name.startsWith("P_"))
+                            removeMachineList.add(machine);
+                    }
+                    for(CompactState removeMachine : removeMachineList) {
+                        compositeState.machines.remove(compositeState.machines.indexOf(removeMachine));
+                    }
+                    compositeState.machines.add(0,synthesiseController); //replace environment with controller
                     compositeState.compose(output);
 
                 } else if (!composition.name.contains(ControlConstants.NO_CONTROLLER)) {
                     // Issue #71
                     throw new LTSCompositionException("No controller");
                     //composition.name = composition.name + ControlConstants.NO_CONTROLLER;
-
                 }
             } else {
                 Diagnostics.fatal("The controller must have a goal.");

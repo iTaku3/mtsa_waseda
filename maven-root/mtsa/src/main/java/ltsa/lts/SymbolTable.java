@@ -110,6 +110,9 @@ public class SymbolTable {
         addSymbols("monolithicDirector", Symbol.MONOLITHIC_DIRECTOR);
         addSymbols("marking", Symbol.MARKING);
         addSymbols("disturbances", Symbol.DISTURBANCE);
+
+        //Stepwise controller synthesis
+        addSymbols("stepwiseController", Symbol.STEPWISE_CONTROLLER);
     }
 
     private static void addSymbols(String key, Integer elem) {
