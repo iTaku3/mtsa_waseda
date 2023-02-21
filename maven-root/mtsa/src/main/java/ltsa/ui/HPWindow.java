@@ -2256,6 +2256,7 @@ public class HPWindow extends JFrame implements Runnable {
         return cnt;
     }
 
+    //関連モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         for (CompactState req : unsynthesized_req_list)
         {
@@ -2269,7 +2270,7 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    //コストの再計算：unsynthesized_env_listに合成後のpartControllerは追加していく
+    //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         List<List<String>> partControllers = new ArrayList<>();
         for (CompactState env : unsynthesized_env_list) {
@@ -2293,7 +2294,6 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    /*ToDo：calculationChangeCost()を使って，コストの増加量が少ないものから最優先で合成し，合計の合成コストが最小になる合成プロセスを算出*/
     //合成プロセスの生成時に利用：本状況における合成コストの変化値の合計を算出
     private int calculationInfluenceQuantity(StepwiseLTSInfo[] req_info, List<String> synthesised_req_name_list, List<String> unsynthesized_env_name, List<List<String>> synthesisedComponentList) {
         int influence_quantity = 0;
