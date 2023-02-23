@@ -2225,6 +2225,7 @@ public class HPWindow extends JFrame implements Runnable {
 
         /* 段階的制御器合成 */
         stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list);
+
         postState(current);
 
         ltsOutput.outln("");
@@ -2644,7 +2645,7 @@ public class HPWindow extends JFrame implements Runnable {
 
     private void animate() {
         ltsOutput.clearOutput();
-        compileIfChange();
+        // compileIfChange();
         boolean replay = false;
         if (current != null) {
             if (current instanceof UpdatingControllerCompositeState && current.getComposition() == null) {
