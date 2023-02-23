@@ -1291,7 +1291,7 @@ public class HPWindow extends JFrame implements Runnable {
 				ltsOutput.outln("Exported to: " + fd.getDirectory() + file);
 			} catch (IOException e) {
 				ltsOutput.outln("Error exporting file: " + e);
-			}
+		}
     }
 
     // ------------------------------------------------------------------------
@@ -2117,13 +2117,20 @@ public class HPWindow extends JFrame implements Runnable {
 
     private void minimiseComposition() {
         ltsOutput.clearOutput();
-        compileIfChange();
-        if (compileIfChange() && current != null) {
-            if (current.composition == null)
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput);
-            postState(current);
-        }
+        compile();
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        postState(current);
+
+        /* When reusing other results */
+        // ltsOutput.clearOutput();
+        // compileIfChange();
+        // if (compileIfChange() && current != null) {
+        //     if (current.composition == null)
+        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        //     TransitionSystemDispatcher.minimise(current, ltsOutput);
+        //     postState(current);
+        // }
     }
 
     // ------------------------------------------------------------------------
@@ -2163,205 +2170,16 @@ public class HPWindow extends JFrame implements Runnable {
         }
         ltsOutput.outln("---------------------------------------------");
 
-
-
-        /*[ToDo] 合成したPartControllerはunsynthesized_env_listに追加する*/
-
-        //***********************************************************//
-        // 他の要求における分析対象の数（コスト）の増加量が最小の要求から合成
-        //***********************************************************//
-
-        /* 合成プロセス生成 Step1：分析対象の数（コスト）が1のものを先に合成（他のモデルのコストを増加させることがないため） */
-        // analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
-        // calculationCost(unsynthesized_req_list, unsynthesized_env_list);
-
         stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list);
-        postState(current); //current.compositionを出力？
-
-        // ltsOutput.outln("---------------------------------------------");
+        postState(current);
     }
 
+    // ------------------------------------------------------------------------
     /* For StepwiseControllerSynthesis */
-    private class StepwiseLTSInfo {
-        String name;
-        List<String> actions;
-        List<String> componentModels; // Use generateSynthesisProcess
-        List<String> monitoredModels; // Only req_info
-        Integer cost; // Only req_info (needEnvNameの要素数)
-        Integer influence_quantity; // Only req_info
-    }
-
-    private class PartControllerInfo {
-        String name;
-        CompactState machine;
-        List<CompactState> req_machines;
-        List<CompactState> env_machines;
-    }
-
-    private Vector<CompactState> getMachines(Vector<CompactState> machines, List<String> machine_names) {
-        Vector<CompactState> output = new Vector<>();
-        for (CompactState machine : machines) {
-            if(machine_names.contains(machine.name))
-                output.add(machine);
-        }
-        return output;
-    }
-
-    //smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）
-    private boolean checkContainList(List<String> small, List<String> large) {
-        for (String s : small) {
-            if(large.contains(s)) return true;
-        }
-        return false;
-    }
-
-    //smallリストの要素が全てlargeリストに含まれるか（全て含まれるならtrue）
-    private boolean checkInList(List<String> small, List<String> large) {
-        for (String s : small) {
-            if(!large.contains(s)) return false;
-        }
-        return true;
-    }
-
-    //関連モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
-    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        for (CompactState req : unsynthesized_req_list)
-        {
-            req.ideal_monitoredModels = new ArrayList<>();
-            for (CompactState env : unsynthesized_env_list) 
-            {
-                if (checkContainList(req.actions,env.actions))
-                    req.ideal_monitoredModels.add(env.name);
-            }
-            ltsOutput.outln("> " + req.name + "'s monitored models : " + req.ideal_monitoredModels.toString());
-        }
-    }
-
-    //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
-    private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        //すでに分析済の
-        List<List<String>> partControllers = new ArrayList<>();
-        for (CompactState env : unsynthesized_env_list) {
-            if (env.componentModels!=null) 
-                partControllers.add(env.componentModels);
-        }
-        for (CompactState req : unsynthesized_req_list) {
-            req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
-            if (partControllers != null) {
-                //PartControllerを含む場合
-                for (List<String> partController : partControllers) {
-                    if (checkContainList(req.ideal_monitoredModels, partController)) {
-                        req.actual_monitoredModels.addAll(partController);
-                    }
-                }
-                //重複するモデルを削除
-                req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
-            }
-            req.cost = req.actual_monitoredModels.size();
-            ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
-        }
-    }
-
-    //合成プロセスの生成時に利用：本状況における合成コストの変化値の合計を算出
-    private void calculationInfluenceQuantity(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, List<CompactState> this_step_req_list) {
-        
-        List<List<String>> partControllers = new ArrayList<>();
-        List<String> unsynthesized_envs = new ArrayList<>();
-        for (CompactState env : unsynthesized_env_list) {
-            if (env.componentModels == null)
-                unsynthesized_envs.add(env.name);
-            else
-                partControllers.add(env.componentModels);
-        }
-
-        // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
-        CompactState candidate_req = new CompactState();
-        boolean first_req = true;
-        for (CompactState req : unsynthesized_req_list) {
-            req.influence_quantity = 0;
-
-            // reqを合成した時の環境モデルの変化をtmp_partControllersで再現
-            List<List<String>> tmp_partControllers = new ArrayList<>(partControllers);
-            List<List<String>> tmp_monitoredModels = new ArrayList<>();
-            if (tmp_partControllers != null) {
-                // reqが監視対象となる部分制御器をtmp_monitoredModelsに格納
-                for (List<String> partController : tmp_partControllers) {
-                    if (checkContainList(req.ideal_monitoredModels, partController)) {
-                        tmp_monitoredModels.add(partController);
-                    }
-                }
-
-                // reqが監視対象となる部分制御器をtmp_partControllersから削除
-                for (List<String> model : tmp_monitoredModels) {
-                    tmp_partControllers.remove(tmp_partControllers.indexOf(model));
-                }
-
-                // 合成後のコンポーネント（new_partController）をtmp_partControllersに追加
-                // ToDo：分配則を考慮すべき
-                req.tmp_actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
-                for (List<String> model : tmp_monitoredModels) {
-                    req.tmp_actual_monitoredModels.addAll(model);
-                }
-                req.tmp_actual_monitoredModels = new ArrayList<>(new HashSet<>(req.tmp_actual_monitoredModels));
-                tmp_partControllers.add(req.tmp_actual_monitoredModels);
-            }
-            else {
-                req.tmp_actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
-                tmp_partControllers.add(req.ideal_monitoredModels);
-            }
-
-
-            // tmp_partControllersを使って，コストの増加量を算出
-            // ToDo：分配則を考慮すべき
-            for (CompactState another_req : unsynthesized_req_list) {
-                int cost = 0;
-                for (List<String> partController : tmp_partControllers) {
-                    if (checkContainList(partController, another_req.actual_monitoredModels))
-                        cost = cost + partController.size();
-                }
-                for (String env_name : unsynthesized_envs){
-                    if (another_req.actual_monitoredModels.contains(env_name))
-                        cost = cost + 1;
-                }
-                req.influence_quantity = req.influence_quantity + (cost-another_req.cost);
-            }
-
-            // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
-            if (first_req) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-                first_req = false;
-            }
-            else if (req.influence_quantity < candidate_req.influence_quantity) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-            }
-        }
-        // 一番影響量が小さいモデルをthis_step_req_listに追加
-        for (CompactState req : unsynthesized_req_list) {
-            if (candidate_req.name.equals(req.name))
-                this_step_req_list.add(req);
-        }
-    }
-
-    //合成プロセスの生成時に利用：同じプロセス内で処理できる要求を見つける
-    private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
-        List<CompactState> remove_req_list = new ArrayList<>();
-        for (CompactState req : unsynthesized_req_list) {
-            if (checkInList(req.actual_monitoredModels, this_step_req_list.get(0).actual_monitoredModels)) {
-                req.actual_monitoredModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels); //実際に分析する監視対象モデルリストを更新
-                this_step_req_list.add(req); //今回のステップで合成する要求リストに追加
-                remove_req_list.add(req); //unsynthesized_req_listから削除する要素として記録
-            }
-        }
-        for (CompactState req : remove_req_list)
-            unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
-    }
-
-
+    
+    /* 段階的制御器合成を行う */
     private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         List<CompactState> this_step_req_list = new ArrayList<>();
-
         if (unsynthesized_req_list.size()!=0)
         {
             // Step 1 : 入力のモデルの監視対象モデルとコストを更新 
@@ -2401,18 +2219,18 @@ public class HPWindow extends JFrame implements Runnable {
                 current.env = null;
             }
 
+            ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("[debug]current.name is :" + current.name);
+            ltsOutput.outln("[debug]current.machines is :" + current.machines);
+            ltsOutput.outln("[debug]current.composition is :" + current.composition);
+            ltsOutput.outln("---------------------------------------------------");
+
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
             TransitionSystemDispatcher.minimise(current, ltsOutput); //モデル最適化
             
             current.composition.initActions();
             current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
             unsynthesized_env_list.add(current.composition);
-
-            ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[debug]current.name is :" + current.name);
-            ltsOutput.outln("[debug]current.machines is :" + current.machines);
-            ltsOutput.outln("[debug]current.composition is :" + current.composition);
-            ltsOutput.outln("---------------------------------------------------");
 
             stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list);
         }
@@ -2425,34 +2243,190 @@ public class HPWindow extends JFrame implements Runnable {
             TransitionSystemDispatcher.minimise(current, ltsOutput); //モデル最適化
         }
     }
-    
+
+    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
+    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+        for (CompactState req : unsynthesized_req_list)
+        {
+            req.ideal_monitoredModels = new ArrayList<>();
+            for (CompactState env : unsynthesized_env_list) 
+            {
+                if (checkContainList(req.actions,env.actions))
+                    req.ideal_monitoredModels.add(env.name);
+            }
+            ltsOutput.outln("> " + req.name + "'s monitored models : " + req.ideal_monitoredModels.toString());
+        }
+    }
+
+    //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
+    private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+        //すでに分析済の
+        List<List<String>> partControllers = new ArrayList<>();
+        for (CompactState env : unsynthesized_env_list) {
+            if (env.componentModels!=null) 
+                partControllers.add(env.componentModels);
+        }
+        for (CompactState req : unsynthesized_req_list) {
+            req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
+            if (partControllers != null) {
+                //PartControllerを含む場合
+                for (List<String> partController : partControllers) {
+                    if (checkContainList(req.ideal_monitoredModels, partController)) {
+                        req.actual_monitoredModels.addAll(partController);
+                    }
+                }
+                //重複するモデルを削除
+                req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
+            }
+            req.cost = req.actual_monitoredModels.size();
+            ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
+        }
+    }
+
+    /* ある要求reqがこのあと合成された際の，他の要求の合成コストの増加量（影響量）を計算し，最も影響量の小さい要求ひとつをremove_req_listに追加 */
+    private void calculationInfluenceQuantity(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, List<CompactState> this_step_req_list) {
+        
+        List<List<String>> partControllers = new ArrayList<>();
+        List<String> unsynthesized_envs = new ArrayList<>();
+        for (CompactState env : unsynthesized_env_list) {
+            if (env.componentModels == null)
+                unsynthesized_envs.add(env.name);
+            else
+                partControllers.add(env.componentModels);
+        }
+
+        // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
+        CompactState candidate_req = new CompactState();
+        boolean first_req = true;
+        for (CompactState req : unsynthesized_req_list)
+        {
+            // reqを合成した時の環境モデルの変化をtmp_partControllersで再現
+            List<List<String>> tmp_partControllers = new ArrayList<>(partControllers);
+            List<List<String>> tmp_monitoredModels = new ArrayList<>();
+            if (tmp_partControllers != null) {
+                // reqが監視対象となる部分制御器をtmp_monitoredModelsに格納
+                for (List<String> partController : tmp_partControllers) {
+                    if (checkContainList(req.ideal_monitoredModels, partController))
+                        tmp_monitoredModels.add(partController);
+                }
+                // reqが監視対象となる部分制御器をtmp_partControllersから削除
+                tmp_partControllers.removeAll(tmp_monitoredModels);
+
+                // 合成後のコンポーネント（new_partController）をtmp_partControllersに追加
+                // ToDo：分配則を考慮すべき
+                req.tmp_actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
+                for (List<String> model : tmp_monitoredModels) {
+                    req.tmp_actual_monitoredModels.addAll(model);
+                }
+                req.tmp_actual_monitoredModels = new ArrayList<>(new HashSet<>(req.tmp_actual_monitoredModels));
+                tmp_partControllers.add(req.tmp_actual_monitoredModels);
+            }
+            else {
+                req.tmp_actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
+                tmp_partControllers.add(req.ideal_monitoredModels);
+            }
+
+            // tmp_partControllersを使って，コストの増加量を算出
+            // ToDo：分配則を考慮すべき
+            req.influence_quantity = 0;
+            for (CompactState another_req : unsynthesized_req_list) {
+                int cost = 0;
+                for (List<String> partController : tmp_partControllers) {
+                    if (checkContainList(partController, another_req.actual_monitoredModels))
+                        cost = cost + partController.size();
+                }
+                for (String env_name : unsynthesized_envs){
+                    if (another_req.actual_monitoredModels.contains(env_name))
+                        cost = cost + 1;
+                }
+                req.influence_quantity = req.influence_quantity + (cost-another_req.cost);
+            }
+
+            // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
+            if (first_req) {
+                candidate_req.name = new String(req.name);
+                candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                first_req = false;
+            }
+            else if (req.influence_quantity < candidate_req.influence_quantity) {
+                candidate_req.name = new String(req.name);
+                candidate_req.influence_quantity = new Integer(req.influence_quantity);
+            }
+        }
+        // 一番影響量が小さいモデルをthis_step_req_listに追加
+        for (CompactState req : unsynthesized_req_list) {
+            if (candidate_req.name.equals(req.name))
+                this_step_req_list.add(req);
+        }
+    }
+
+    /* 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加 */
+    private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
+        List<CompactState> remove_req_list = new ArrayList<>();
+        for (CompactState req : unsynthesized_req_list) {
+            if (checkInList(req.actual_monitoredModels, this_step_req_list.get(0).actual_monitoredModels)) {
+                req.actual_monitoredModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels); //実際に分析する監視対象モデルリストを更新
+                this_step_req_list.add(req); //今回のステップで合成する要求リストに追加
+                remove_req_list.add(req); //unsynthesized_req_listから削除する要素として記録
+            }
+        }
+        for (CompactState req : remove_req_list)
+            unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
+    }
+
+    /* smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）*/
+    private boolean checkContainList(List<String> small, List<String> large) {
+        for (String s : small) {
+            if(large.contains(s)) return true;
+        }
+        return false;
+    }
+
+    /* smallリストの要素が全てlargeリストに含まれるか（全て含まれるならtrue）*/
+    private boolean checkInList(List<String> small, List<String> large) {
+        for (String s : small) {
+            if(!large.contains(s)) return false;
+        }
+        return true;
+    }
 
     // ------------------------------------------------------------------------
 
     private void doComposition() {
         ltsOutput.clearOutput();
-        compileIfChange();
-        if (current != null) {
-            try {
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        compile();
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        postState(current);
+
+        int[] current_states = new int[current.machines.size() + 1];
+        for (int i = 0; i < current.machines.size() + 1; i++)
+            current_states[i] = 0;
+        layouts.setCurrentState(current_states);
+
+        /* When reuse other results */
+        // ltsOutput.clearOutput();
+        // compileIfChange();
+        // if (current != null) {
+        //     try {
+        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
                 
-            } catch (LTSCompositionException e) {
-                return;
-            }
+        //     } catch (LTSCompositionException e) {
+        //         return;
+        //     }
             
-            boolean isControllable = current.composition != null;
-            if (!isControllable) {
-                return;
-                //throw new LTSException("Composition not controllable.");
+        //     boolean isControllable = current.composition != null;
+        //     if (!isControllable) {
+        //         return;
+        //         //throw new LTSException("Composition not controllable.");
                 
-            }
+        //     }
             
-            postState(current);
-            int[] current_states = new int[current.machines.size() + 1];
-            for (int i = 0; i < current.machines.size() + 1; i++)
-                current_states[i] = 0;
-            layouts.setCurrentState(current_states);
-        }
+        //     postState(current);
+        //     int[] current_states = new int[current.machines.size() + 1];
+        //     for (int i = 0; i < current.machines.size() + 1; i++)
+        //         current_states[i] = 0;
+        //     layouts.setCurrentState(current_states);
+        // }
     }
 
 
