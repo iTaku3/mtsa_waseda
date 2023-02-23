@@ -2115,6 +2115,50 @@ public class HPWindow extends JFrame implements Runnable {
 
     // ------------------------------------------------------------------------
 
+    private void doComposition() {
+        ltsOutput.clearOutput();
+        compile();
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        postState(current);
+
+        int[] current_states = new int[current.machines.size() + 1];
+        for (int i = 0; i < current.machines.size() + 1; i++)
+            current_states[i] = 0;
+        layouts.setCurrentState(current_states);
+
+        /* When reusing other results */
+        // ltsOutput.clearOutput();
+        // compileIfChange();
+        // if (current != null) {
+        //     try {
+        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+                
+        //     } catch (LTSCompositionException e) {
+        //         return;
+        //     }
+            
+        //     boolean isControllable = current.composition != null;
+        //     if (!isControllable) {
+        //         return;
+        //         //throw new LTSException("Composition not controllable.");
+                
+        //     }
+            
+        //     postState(current);
+        //     int[] current_states = new int[current.machines.size() + 1];
+        //     for (int i = 0; i < current.machines.size() + 1; i++)
+        //         current_states[i] = 0;
+        //     layouts.setCurrentState(current_states);
+        // }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Composition is Complete!");
+        ltsOutput.outln("");
+    }
+
+    // ------------------------------------------------------------------------
+
     private void minimiseComposition() {
         ltsOutput.clearOutput();
         compile();
@@ -2131,6 +2175,11 @@ public class HPWindow extends JFrame implements Runnable {
         //     TransitionSystemDispatcher.minimise(current, ltsOutput);
         //     postState(current);
         // }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Minimise Composition is Complete!");
+        ltsOutput.outln("");
     }
 
     // ------------------------------------------------------------------------
@@ -2139,13 +2188,12 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.clearOutput();
         compile();
         ltsOutput.clearOutput();
-        ltsOutput.outln("---------------------------------------------");
-        ltsOutput.outln("Let's start Stepwise Controller Synthesis!");
-        ltsOutput.outln("---------------------------------------------");
-        ltsOutput.outln("[debug]current.name is :" + current.name);
-        ltsOutput.outln("[debug]current.env is :" + current.env);
-        ltsOutput.outln("[debug]current.machines is :" + current.machines); //環境モデルと監視モデル（各コンポーネント）のCompactState Classの配列
-        ltsOutput.outln("---------------------------------------------");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("           Stepwise Controller Synthesis           ");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("[info] current.name     : " + current.name);
+        ltsOutput.outln("[info] current.machines : " + current.machines); //環境モデルと監視モデル（各コンポーネント）のCompactState Classの配列
+        ltsOutput.outln("");
 
         CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
         List<CompactState> unsynthesized_req_list = new ArrayList<>();
@@ -2159,31 +2207,55 @@ public class HPWindow extends JFrame implements Runnable {
                 unsynthesized_env_list.add(machine);
         }
 
-        ltsOutput.outln("Environment Models Infomation");
-        for (CompactState env : unsynthesized_env_list) {
-            ltsOutput.outln("> " + env.name + " : " + env.actions.toString());
-        }
-        ltsOutput.outln("---------------------------------------------");
-        ltsOutput.outln("Monitor Models Infomation");
-        for (CompactState req : unsynthesized_req_list) {
-            ltsOutput.outln("> " + req.name + " : " + req.actions.toString());
-        }
-        ltsOutput.outln("---------------------------------------------");
+        // ltsOutput.outln("[info.] Environment Models");
+        // for (CompactState env : unsynthesized_env_list) {
+        //     ltsOutput.outln("> " + env.name + " : " + env.actions.toString());
+        // }
+        // ltsOutput.outln("---------------------------------------------------");
+        // ltsOutput.outln("[info.] Monitor Models");
+        // for (CompactState req : unsynthesized_req_list) {
+        //     ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
+        // }
+        // ltsOutput.outln("---------------------------------------------------");
 
+        /* 各要求の監視対象モデルを分析 */
+        ltsOutput.outln("[info] Model Relationships");
+        analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
+        ltsOutput.outln("");
+
+        /* 段階的制御器合成 */
         stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list);
         postState(current);
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("");
     }
 
     // ------------------------------------------------------------------------
     /* For StepwiseControllerSynthesis */
+
+    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
+    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+        for (CompactState req : unsynthesized_req_list)
+        {
+            req.ideal_monitoredModels = new ArrayList<>();
+            for (CompactState env : unsynthesized_env_list) 
+            {
+                if (checkContainList(req.actions,env.actions))
+                    req.ideal_monitoredModels.add(env.name);
+            }
+            ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
+        }
+    }
     
     /* 段階的制御器合成を行う */
     private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         List<CompactState> this_step_req_list = new ArrayList<>();
         if (unsynthesized_req_list.size()!=0)
         {
-            // Step 1 : 入力のモデルの監視対象モデルとコストを更新 
-            analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
+            // Step 1 : 入力のモデルの実際の監視対象モデルとコストを更新 
             calculationCost(unsynthesized_req_list, unsynthesized_env_list);
 
             // Step 2 : 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
@@ -2219,10 +2291,10 @@ public class HPWindow extends JFrame implements Runnable {
                 current.env = null;
             }
 
+            ltsOutput.outln("");
             ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[debug]current.name is :" + current.name);
-            ltsOutput.outln("[debug]current.machines is :" + current.machines);
-            ltsOutput.outln("[debug]current.composition is :" + current.composition);
+            ltsOutput.outln("[info] current.name     : " + current.name);
+            ltsOutput.outln("[info] current.machines : " + current.machines);
             ltsOutput.outln("---------------------------------------------------");
 
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
@@ -2231,6 +2303,8 @@ public class HPWindow extends JFrame implements Runnable {
             current.composition.initActions();
             current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
             unsynthesized_env_list.add(current.composition);
+
+            ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
 
             stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list);
         }
@@ -2244,23 +2318,9 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
-    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        for (CompactState req : unsynthesized_req_list)
-        {
-            req.ideal_monitoredModels = new ArrayList<>();
-            for (CompactState env : unsynthesized_env_list) 
-            {
-                if (checkContainList(req.actions,env.actions))
-                    req.ideal_monitoredModels.add(env.name);
-            }
-            ltsOutput.outln("> " + req.name + "'s monitored models : " + req.ideal_monitoredModels.toString());
-        }
-    }
-
     //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        //すでに分析済の
+        ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
         List<List<String>> partControllers = new ArrayList<>();
         for (CompactState env : unsynthesized_env_list) {
             if (env.componentModels!=null) 
@@ -2389,46 +2449,6 @@ public class HPWindow extends JFrame implements Runnable {
         }
         return true;
     }
-
-    // ------------------------------------------------------------------------
-
-    private void doComposition() {
-        ltsOutput.clearOutput();
-        compile();
-        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-        postState(current);
-
-        int[] current_states = new int[current.machines.size() + 1];
-        for (int i = 0; i < current.machines.size() + 1; i++)
-            current_states[i] = 0;
-        layouts.setCurrentState(current_states);
-
-        /* When reuse other results */
-        // ltsOutput.clearOutput();
-        // compileIfChange();
-        // if (current != null) {
-        //     try {
-        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-                
-        //     } catch (LTSCompositionException e) {
-        //         return;
-        //     }
-            
-        //     boolean isControllable = current.composition != null;
-        //     if (!isControllable) {
-        //         return;
-        //         //throw new LTSException("Composition not controllable.");
-                
-        //     }
-            
-        //     postState(current);
-        //     int[] current_states = new int[current.machines.size() + 1];
-        //     for (int i = 0; i < current.machines.size() + 1; i++)
-        //         current_states[i] = 0;
-        //     layouts.setCurrentState(current_states);
-        // }
-    }
-
 
     // ------------------------------------------------------------------------
     private boolean checkReplay(Animator a) {
