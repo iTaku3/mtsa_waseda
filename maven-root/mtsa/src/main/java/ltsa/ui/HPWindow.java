@@ -2195,11 +2195,13 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] current.machines : " + current.machines);
         ltsOutput.outln("");
 
-        boolean do_minimise = true; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+        boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
         CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
         List<CompactState> unsynthesized_req_list = new ArrayList<>();
         List<CompactState> unsynthesized_env_list = new ArrayList<>();
 
+        /* 分配則に対応する場合，unsynthesized_req_listに追加するとき，監視対象をモデルで分けて，一つの監視モデルを複数に複製して追加する */
+        /* analysisMonitoredModels()内でやった方がいいかも */
         for (CompactState machine : all_models.machines) {
             machine.initActions();
             if (machine.name.startsWith("P_")) 
@@ -2219,11 +2221,6 @@ public class HPWindow extends JFrame implements Runnable {
         // }
         // ltsOutput.outln("---------------------------------------------------");
 
-        /* 各要求の監視対象モデルを分析 */
-        ltsOutput.outln("[info] Model Relationships");
-        analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
-        ltsOutput.outln("");
-
         /* 段階的制御器合成 */
         stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
 
@@ -2237,24 +2234,13 @@ public class HPWindow extends JFrame implements Runnable {
 
     // ------------------------------------------------------------------------
     /* For StepwiseControllerSynthesis */
-
-    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
-    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        for (CompactState req : unsynthesized_req_list) {
-            req.ideal_monitoredModels = new ArrayList<>();
-            for (CompactState env : unsynthesized_env_list) {
-                if (checkContainList(req.actions,env.actions))
-                    req.ideal_monitoredModels.add(env.name);
-            }
-            ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
-        }
-    }
     
     /* 段階的制御器合成を行う */
     private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, boolean do_minimise) {
         List<CompactState> this_step_req_list = new ArrayList<>();
         if (unsynthesized_req_list.size()!=0) {
             // Step 1 : 入力のモデルの実際の監視対象モデルとコストを更新 
+            analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
             calculationCost(unsynthesized_req_list, unsynthesized_env_list);
 
             // Step 2 : 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
@@ -2315,6 +2301,22 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
+    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
+    private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+        ltsOutput.outln("[info] Monitored Models");
+        for (CompactState req : unsynthesized_req_list) {
+            req.ideal_monitoredModels = new ArrayList<>();
+            for (CompactState env : unsynthesized_env_list) {
+                if (checkContainList(req.actions,env.actions))
+                    if (env.componentModels!=null)
+                        req.ideal_monitoredModels.addAll(env.componentModels);
+                    else
+                        req.ideal_monitoredModels.add(env.name);
+            }
+            ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
+        }
+    }
+
     //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
@@ -2323,6 +2325,7 @@ public class HPWindow extends JFrame implements Runnable {
             if (env.componentModels!=null) 
                 partControllers.add(env.componentModels);
         }
+        ltsOutput.outln("partControllers : " + partControllers.toString());
         for (CompactState req : unsynthesized_req_list) {
             req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
             if (partControllers != null) {
