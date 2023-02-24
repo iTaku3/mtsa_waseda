@@ -2192,9 +2192,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("           Stepwise Controller Synthesis           ");
         ltsOutput.outln("===================================================");
         ltsOutput.outln("[info] current.name     : " + current.name);
-        ltsOutput.outln("[info] current.machines : " + current.machines); //環境モデルと監視モデル（各コンポーネント）のCompactState Classの配列
+        ltsOutput.outln("[info] current.machines : " + current.machines);
         ltsOutput.outln("");
 
+        boolean do_minimise = true; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
         CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
         List<CompactState> unsynthesized_req_list = new ArrayList<>();
         List<CompactState> unsynthesized_env_list = new ArrayList<>();
@@ -2224,7 +2225,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
 
         /* 段階的制御器合成 */
-        stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list);
+        stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
 
         postState(current);
 
@@ -2252,7 +2253,7 @@ public class HPWindow extends JFrame implements Runnable {
     }
     
     /* 段階的制御器合成を行う */
-    private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+    private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, boolean do_minimise) {
         List<CompactState> this_step_req_list = new ArrayList<>();
         if (unsynthesized_req_list.size()!=0)
         {
@@ -2299,7 +2300,7 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("---------------------------------------------------");
 
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            TransitionSystemDispatcher.minimise(current, ltsOutput); //モデル最適化
+            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
             
             current.composition.initActions();
             current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
@@ -2307,7 +2308,7 @@ public class HPWindow extends JFrame implements Runnable {
 
             ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
 
-            stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list);
+            stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
         }
         else if (unsynthesized_env_list.size() >= 2)
         {
@@ -2315,7 +2316,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.name = "StepwiseController"; //入力時の名前に変えるべき
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput); //モデル最適化
+            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
         }
     }
 
