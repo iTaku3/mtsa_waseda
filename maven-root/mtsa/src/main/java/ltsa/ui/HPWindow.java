@@ -2240,11 +2240,9 @@ public class HPWindow extends JFrame implements Runnable {
 
     //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        for (CompactState req : unsynthesized_req_list)
-        {
+        for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
-            for (CompactState env : unsynthesized_env_list) 
-            {
+            for (CompactState env : unsynthesized_env_list) {
                 if (checkContainList(req.actions,env.actions))
                     req.ideal_monitoredModels.add(env.name);
             }
@@ -2255,8 +2253,7 @@ public class HPWindow extends JFrame implements Runnable {
     /* 段階的制御器合成を行う */
     private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, boolean do_minimise) {
         List<CompactState> this_step_req_list = new ArrayList<>();
-        if (unsynthesized_req_list.size()!=0)
-        {
+        if (unsynthesized_req_list.size()!=0) {
             // Step 1 : 入力のモデルの実際の監視対象モデルとコストを更新 
             calculationCost(unsynthesized_req_list, unsynthesized_env_list);
 
@@ -2286,8 +2283,7 @@ public class HPWindow extends JFrame implements Runnable {
                 current.name = "StepwiseController"; //入力時の名前に変えるべき
                 current.env = null;
             }
-            else 
-            {
+            else {
                 current.machines = new Vector<>(this_step_machines);
                 current.name = "PartController_" + step_num;
                 current.env = null;
@@ -2310,8 +2306,7 @@ public class HPWindow extends JFrame implements Runnable {
 
             stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
         }
-        else if (unsynthesized_env_list.size() >= 2)
-        {
+        else if (unsynthesized_env_list.size() >= 2) {
             current.machines = new Vector<>(unsynthesized_env_list);
             current.name = "StepwiseController"; //入力時の名前に変えるべき
             current.env = null;
@@ -2360,8 +2355,7 @@ public class HPWindow extends JFrame implements Runnable {
         // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
         CompactState candidate_req = new CompactState();
         boolean first_req = true;
-        for (CompactState req : unsynthesized_req_list)
-        {
+        for (CompactState req : unsynthesized_req_list) {
             // reqを合成した時の環境モデルの変化をtmp_partControllersで再現
             List<List<String>> tmp_partControllers = new ArrayList<>(partControllers);
             List<List<String>> tmp_monitoredModels = new ArrayList<>();
