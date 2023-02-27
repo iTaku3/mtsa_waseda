@@ -2195,7 +2195,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] current.machines : " + current.machines);
         ltsOutput.outln("");
 
-        boolean do_minimise = true; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+        boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
         CompositeState initial_models = current; //Compileによって確認されたモデル全てを格納
         List<CompactState> req_list = new ArrayList<>();
         List<CompactState> env_list = new ArrayList<>();
