@@ -435,7 +435,7 @@ public class ProgressCheck {
 		Runtime r = Runtime.getRuntime();
 		output.outln("-- States: " + states + " Transitions: " + transitions
 				+ " Memory used: " + (r.totalMemory() - r.freeMemory()) / 1000
-				+ "K");
+				+ "KB");
 	}
 
 	/* --------------------------------------------------------------- */
