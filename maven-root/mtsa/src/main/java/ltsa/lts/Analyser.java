@@ -533,6 +533,7 @@ public class Analyser implements Animator, Automata {
                 + " Memory used: " + (r.totalMemory() - r.freeMemory()) / 1000
                 + "KB");
         HPWindow.checkMemoryUsage();
+        HPWindow.checkSpace(states,transitions);
     }
 
     private int endSequence = LTSConstants.NO_SEQUENCE_FOUND;

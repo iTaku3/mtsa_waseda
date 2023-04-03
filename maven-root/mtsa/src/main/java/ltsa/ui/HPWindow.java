@@ -2120,8 +2120,10 @@ public class HPWindow extends JFrame implements Runnable {
     /*                             Synthesis                                  */
     /**************************************************************************/
 
-    /* Check Memory for Synthesis */
+    /* Check Data for Synthesis */
     public static long maxMemoryUsage;
+    public static int maxStates;
+    public static int maxTransitions;
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
         long free = Runtime.getRuntime().freeMemory() /1000;
@@ -2131,10 +2133,19 @@ public class HPWindow extends JFrame implements Runnable {
             maxMemoryUsage = used;
         }
     }
+    public static void checkSpace(int states, int transitions) {
+        if (transitions > maxTransitions) {
+            maxTransitions = transitions;
+            maxStates = states;
+        }
+    }
+
 
     /* Composition */
     private void doComposition() {
         maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
         ltsOutput.clearOutput();
         compile();
         long startTime = System.currentTimeMillis();
@@ -2180,6 +2191,8 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Composition is Complete!");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
         ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
+        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
+        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
     }
 
@@ -2187,6 +2200,8 @@ public class HPWindow extends JFrame implements Runnable {
     /* Composition + Minimize */
     private void minimiseComposition() {
         maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
         ltsOutput.clearOutput();
         compile();
         long startTime = System.currentTimeMillis();
@@ -2213,6 +2228,8 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Minimise Composition is Complete!");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
         ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
+        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
+        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
     }
 
@@ -2222,6 +2239,8 @@ public class HPWindow extends JFrame implements Runnable {
     private void stepwiseControllerSynthesis() {
         policyTime = 0;
         maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
         ltsOutput.clearOutput();
         compile();
         ltsOutput.clearOutput();
@@ -2259,7 +2278,7 @@ public class HPWindow extends JFrame implements Runnable {
             //     ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
             // }
             // ltsOutput.outln("---------------------------------------------------");
-            
+
             /* 段階的制御器合成 */
             stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
             postState(current);
@@ -2270,9 +2289,11 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
-        ltsOutput.outln("[info] Execution Time (All)    : " + executionTime + " ms");
-        ltsOutput.outln("[info] Execution Time (Policy) : " + policyTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory          : " + maxMemoryUsage + " KB");
+        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms (all process)");
+        ltsOutput.outln("                      : " + policyTime    + " ms (policy only)");
+        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
+        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
+        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
     }
 
