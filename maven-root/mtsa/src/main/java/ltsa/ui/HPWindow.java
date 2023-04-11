@@ -2124,6 +2124,7 @@ public class HPWindow extends JFrame implements Runnable {
     public static long maxMemoryUsage;
     public static int maxStates;
     public static int maxTransitions;
+
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
         long free = Runtime.getRuntime().freeMemory() /1000;
@@ -2140,16 +2141,21 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-
     /* Composition */
     private void doComposition() {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        compile();
         long startTime = System.currentTimeMillis();
 
+            compile();
+            ltsOutput.outln("Compile is Complete!");
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("                    Composition                    ");
+            ltsOutput.outln("===================================================");
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
             postState(current);
 
@@ -2203,9 +2209,15 @@ public class HPWindow extends JFrame implements Runnable {
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        compile();
         long startTime = System.currentTimeMillis();
 
+            compile();
+            ltsOutput.outln("Compile is Complete!");
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("               Composition + Minimise              ");
+            ltsOutput.outln("===================================================");
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
             TransitionSystemDispatcher.minimise(current, ltsOutput);
             postState(current);
@@ -2242,10 +2254,12 @@ public class HPWindow extends JFrame implements Runnable {
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        compile();
-        ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
-
+            compile();
+            // ltsOutput.clearOutput();
+            ltsOutput.outln("Compile is Complete!");
+            ltsOutput.outln("");
+            ltsOutput.outln("");
             ltsOutput.outln("===================================================");
             ltsOutput.outln("           Stepwise Controller Synthesis           ");
             ltsOutput.outln("===================================================");
