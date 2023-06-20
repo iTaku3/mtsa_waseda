@@ -3,7 +3,7 @@ maven-root/mtsa/mtsa.iml
 maven-root/mtsa/mtsa.ipr
 maven-root/mtsa/mtsa.iws
 maven-root/mtsa/log.out
-*.xml
+# *.xml
 *.sha1
 *.md5
 *.jar
