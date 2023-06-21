@@ -2255,64 +2255,82 @@ public class HPWindow extends JFrame implements Runnable {
         maxTransitions = 0;
         ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
-            compile();
-            // ltsOutput.clearOutput();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("      Problem-Splitting Controller Synthesis       ");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("[info] current.name     : " + current.name);
-            ltsOutput.outln("[info] current.machines : " + current.machines);
-            ltsOutput.outln("");
 
-            boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
-            CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
-            List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
-            List<CompactState> unsynthesized_req_list = new ArrayList<>();
-            List<CompactState> unsynthesized_env_list = new ArrayList<>();
+        compile();
+        // ltsOutput.clearOutput();
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("      Problem-Splitting Controller Synthesis       ");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("[info] current.name     : " + current.name);
+        ltsOutput.outln("[info] current.machines : " + current.machines);
+        ltsOutput.outln("");
 
-            /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
-            /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
-            for (CompactState machine : all_models.machines) {
-                machine.initActions();
-                if (machine.name.startsWith("P_")) 
-                    unsynthesized_req_list.add(machine);
-                else 
-                    unsynthesized_env_list.add(machine);
-            }
+        boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+        CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
+        List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
+        List<CompactState> unsynthesized_req_list = new ArrayList<>();
+        List<CompactState> unsynthesized_env_list = new ArrayList<>();
 
-            // ltsOutput.outln("[info.] Environment Models");
-            // for (CompactState env : unsynthesized_env_list) {
-            //     ltsOutput.outln("> " + env.name + " : " + env.actions.toString());
-            // }
-            // ltsOutput.outln("---------------------------------------------------");
-            // ltsOutput.outln("[info.] Monitor Models");
-            // for (CompactState req : unsynthesized_req_list) {
-            //     ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
-            // }
-            // ltsOutput.outln("---------------------------------------------------");
+        /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
+        /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
+        for (CompactState machine : all_models.machines) {
+            machine.initActions();
+            if (machine.name.startsWith("P_")) 
+                unsynthesized_req_list.add(machine);
+            else 
+                unsynthesized_env_list.add(machine);
+        }
 
-            // Step 2 : 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
-            analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list);
-            int step_num = 0;
-            for(CompactState partController : synthesisProcess) {
-                ltsOutput.outln("[STEP" + step_num + "] " + partController.name);
-                ltsOutput.outln(" > input models     : " + partController.inputModels.toString());
-                ltsOutput.outln(" > component models : " + partController.componentModels.toString());
-                ltsOutput.outln(" > analyzed models  : " + partController.analyzedModels.toString());
-                ltsOutput.outln(" > actions          : " + partController.actions.toString());
-                ltsOutput.outln("");
-                step_num = step_num + 1;
-            }
+        // ltsOutput.outln("[info.] Environment Models");
+        // for (CompactState env : unsynthesized_env_list) {
+        //     ltsOutput.outln("> " + env.name + " : " + env.actions.toString());
+        // }
+        // ltsOutput.outln("---------------------------------------------------");
+        // ltsOutput.outln("[info.] Monitor Models");
+        // for (CompactState req : unsynthesized_req_list) {
+        //     ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
+        // }
+        // ltsOutput.outln("---------------------------------------------------");
 
-            /* 最適分割統治制御器合成 */
-            // stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
-            postState(current);
+        long startPolicyTime = System.currentTimeMillis();
+
+        // 事前分析１：影響量を考えた合成の段階化
+        analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list);
+        ltsOutput.outln("--------------------------------------");
+        ltsOutput.outln("[info] Non-Optimized Synthesis Process");
+        ltsOutput.outln("--------------------------------------");
+        printSynthesisProcess(synthesisProcess);
+        ltsOutput.outln("--------------------------------------");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+
+        // 事前分析２：合成の効率化（部分制御器を一つしか含まない合成の集約）
+        optimizeSynthesisProcess(synthesisProcess);
+
+        ltsOutput.outln("--------------------------------------");
+        ltsOutput.outln("[info] Optimized Synthesis Process");
+        ltsOutput.outln("--------------------------------------");
+        printSynthesisProcess(synthesisProcess);
+        ltsOutput.outln("--------------------------------------");
+        ltsOutput.outln("");
+
+        long endPolicyTime = System.currentTimeMillis();
+
+
+        /* 最適分割統治制御器合成 */
+        // stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
+        // postState(current);
 
         long endTime = System.currentTimeMillis();
+
+
+
+        //今回の制御器合成の詳細の出力
         long executionTime = endTime - startTime; //ms
+        long policyTime    = endPolicyTime - startPolicyTime;
 
         ltsOutput.outln("");
         ltsOutput.outln("");
@@ -2329,13 +2347,14 @@ public class HPWindow extends JFrame implements Runnable {
     // ------------------------------------------------------------------------
     /* For StepwiseControllerSynthesis */
 
-    /* 合成プロセスの策定 */
-    //現フェーズで影響量の少ない要求群を抽出
-    //中身のない部分合成結果のCompactStateを"unsynthesized_env_list"に追加：name，componentModelsと，actionsは追加する必要あり
+    /* analysisSynthesisProcess() */
+    // Where used : 
+    // Parameters : 
+    // Comment    : 現フェーズで影響量の少ない要求群を抽出する，再帰関数．
     private void analysisSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         List<CompactState> this_step_req_list = new ArrayList<>();
-        if (unsynthesized_req_list.size()!=0) {
-            
+        if (unsynthesized_req_list.size()!=0)
+        {    
             // Step 1 : 各監視モデルの合成コストを更新
             analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
             calculationCost(unsynthesized_req_list, unsynthesized_env_list);
@@ -2352,6 +2371,8 @@ public class HPWindow extends JFrame implements Runnable {
             this_step_partController.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
             this_step_partController.analyzedModels = new ArrayList<>();
             this_step_partController.actions = new Vector<>();
+            this_step_partController.inputPartControllers = new ArrayList<>();
+            this_step_partController.num_of_PartController = new Integer(0);
             for (CompactState req : this_step_req_list) {
                 this_step_partController.inputModels.add(req.name);
                 this_step_partController.analyzedModels.add(req.name);
@@ -2362,23 +2383,21 @@ public class HPWindow extends JFrame implements Runnable {
                     this_step_partController.actions.addAll(env.actions);
                 }
                 else if (env.componentModels != null) {
-                    if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels))
+                    if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels)){
                         this_step_partController.inputModels.add(env.name);
                         this_step_partController.analyzedModels.addAll(env.analyzedModels);
                         this_step_partController.actions.addAll(env.actions);
+                        this_step_partController.inputPartControllers.add(env.name);
+                        this_step_partController.num_of_PartController = this_step_partController.num_of_PartController + 1;
+                    }
                 }
             }
+            for (String model_name : this_step_partController.inputModels) unsynthesized_env_list.removeIf(env -> env.name.equals(model_name));
             this_step_partController.actions = new Vector<>(new HashSet<>(this_step_partController.actions)); //重複回避
             this_step_partController.analyzedModels = new ArrayList<>(new HashSet<>(this_step_partController.analyzedModels)); //重複回避
-            for (String model_name : this_step_partController.inputModels) {
-                unsynthesized_env_list.removeIf(env -> env.name.equals(model_name));
-                unsynthesized_req_list.removeIf(req -> req.name.equals(model_name));
-            }
-
             //モデル名の決定
             if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0) this_step_partController.name = new String("Controller");
             else this_step_partController.name = new String("PartController_" + synthesisProcess.size());
-
 
             //全て部分制御機の要素を埋め終わったらsynthesisProcessとunsynthesized_env_listに格納
             synthesisProcess.add(this_step_partController);
@@ -2386,19 +2405,24 @@ public class HPWindow extends JFrame implements Runnable {
 
             analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list);
         }
-        else if (unsynthesized_env_list.size() >= 2) {
+        else if (unsynthesized_env_list.size() >= 2)
+        {
             CompactState this_step_partController = new CompactState();
             this_step_partController.name = new String("Controller");
             this_step_partController.componentModels = new ArrayList<>();
             this_step_partController.actions = new Vector<>(); //Stringのリスト
             this_step_partController.inputModels = new ArrayList<>(); //Stringのリスト
             this_step_partController.analyzedModels = new ArrayList<>(); //Stringのリスト
+            this_step_partController.inputPartControllers = new ArrayList<>();
+            this_step_partController.num_of_PartController = new Integer(0);
 
             for (CompactState env : unsynthesized_env_list) {
                 if (env.componentModels != null) {
                     this_step_partController.inputModels.add(env.name);
                     this_step_partController.actions.addAll(env.actions);
                     this_step_partController.analyzedModels.addAll(env.analyzedModels);
+                    this_step_partController.inputPartControllers.add(env.name);
+                    this_step_partController.num_of_PartController = this_step_partController.num_of_PartController + 1;
                 }
                 else {
                     this_step_partController.inputModels.add(env.name);
@@ -2409,6 +2433,60 @@ public class HPWindow extends JFrame implements Runnable {
             this_step_partController.analyzedModels = new ArrayList<>(new HashSet<>(this_step_partController.analyzedModels)); //重複回避
             unsynthesized_env_list.clear();
             synthesisProcess.add(this_step_partController);
+        }
+    }
+
+    /* optimizeSynthesisProcess() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : 無駄な段階化プロセスを削除する．入力にpartControllerを一つしか含まない場合，入力の合成プロセスは削除する．
+    private void optimizeSynthesisProcess(List<CompactState> synthesisProcess){
+
+        List<CompactState> unoptimized_synthesisProcess = new ArrayList<>(synthesisProcess);
+        synthesisProcess.clear(); //synthesisProcessに最適化後の合成プロセスを格納する．
+
+        //合成プロセスの入力をまとめる（入力の部分制御器が１つのプロセスのみ）
+        for (CompactState partController : unoptimized_synthesisProcess){
+            if (partController.num_of_PartController == 1) {
+                partController.inputModels.remove(partController.inputPartControllers.get(0));
+                partController.inputModels.addAll(findModel(unoptimized_synthesisProcess, partController.inputPartControllers.get(0)).inputModels);
+                partController.inputPartControllers = new ArrayList<>(findModel(unoptimized_synthesisProcess, partController.inputPartControllers.get(0)).inputPartControllers);
+                partController.num_of_PartController = partController.inputPartControllers.size();
+            }
+        }
+
+        //必要な合成プロセスのみ取り出す
+        Collections.reverse(unoptimized_synthesisProcess);
+        for (CompactState partController : unoptimized_synthesisProcess){
+            if (partController.num_of_PartController > 1) {
+                synthesisProcess.add(partController);
+                for (String partController_name : partController.inputPartControllers){
+                    synthesisProcess.add(findModel(unoptimized_synthesisProcess, partController_name));
+                }
+            }
+            else if (partController.name.equals("Controller")) {
+                synthesisProcess.add(partController);
+            }
+        }
+        Collections.reverse(synthesisProcess);
+    }
+
+    /* printSynthesisProcess() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : 合成プロセスを表示する．
+    private void printSynthesisProcess(List<CompactState> synthesisProcess){
+        int step_num = 0;
+        for (CompactState partController : synthesisProcess){
+            ltsOutput.outln("[STEP" + step_num + "] " + partController.name);
+            ltsOutput.outln(" > Component Models : " + partController.componentModels.toString());
+            ltsOutput.outln(" > Analyzed Models  : " + partController.analyzedModels.toString());
+            ltsOutput.outln(" > Input Models     : " + partController.inputModels.toString());
+            ltsOutput.outln(" > Actions          : " + partController.actions.toString());
+            ltsOutput.outln(" > Input PartController  : " + partController.inputPartControllers);
+            ltsOutput.outln(" > Num of PartController : " + partController.num_of_PartController);
+            ltsOutput.outln("");
+            step_num = step_num + 1;
         }
     }
     
@@ -2597,9 +2675,11 @@ public class HPWindow extends JFrame implements Runnable {
         }
         // 一番影響量が小さいモデルをthis_step_req_listに追加
         for (CompactState req : unsynthesized_req_list) {
-            if (candidate_req.name.equals(req.name))
+            if (candidate_req.name.equals(req.name)){
                 this_step_req_list.add(req);
+            }
         }
+        unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(this_step_req_list.get(0)));
     }
 
     /* 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加 */
@@ -2614,6 +2694,15 @@ public class HPWindow extends JFrame implements Runnable {
         }
         for (CompactState req : remove_req_list)
             unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
+    }
+
+    /* 入力の名前と同じCompactStateを取り出してくる */
+    // 該当modelがない時，nullとなるため注意
+    private CompactState findModel(List<CompactState> compactStateList, String model_name) {
+        for (CompactState model : compactStateList) {
+            if (model.name.equals(model_name)) return model;
+        }
+        return null;
     }
 
     /* smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）*/

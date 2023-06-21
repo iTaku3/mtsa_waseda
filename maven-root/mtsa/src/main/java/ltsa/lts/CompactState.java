@@ -18,6 +18,7 @@ public class CompactState implements Automata {
 
     /* Stepwise Controller Synthesis */
     public List<String> inputModels;
+    public List<String> inputPartControllers;
     public List<String> analyzedModels; //安全性が保証される要求
     public List<String> componentModels; //部分合成の出力の場合のみ使われる（自身に含まれるモデルの構成）
     public List<String> ideal_monitoredModels; //想定時のmonitoredModels（監視に必要な最小のモデル構成）
@@ -25,6 +26,7 @@ public class CompactState implements Automata {
     public List<String> tmp_actual_monitoredModels; //合成時のmonitoredModels
     public int cost;
     public int influence_quantity;
+    public int num_of_PartController;
 
 
     /* AMES: Promoted visibility to public. */
