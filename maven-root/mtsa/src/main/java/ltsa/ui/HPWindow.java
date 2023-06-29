@@ -2326,6 +2326,7 @@ public class HPWindow extends JFrame implements Runnable {
         long endTime_all = System.currentTimeMillis();
 
         //データを整理して出力に格納
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
         current.machines.addAll(all_req_models);
         postState(current);
 
@@ -2463,10 +2464,16 @@ public class HPWindow extends JFrame implements Runnable {
         //必要な合成プロセスのみ取り出す
         Collections.reverse(unoptimized_synthesisProcess);
         for (CompactState partController : unoptimized_synthesisProcess){
-            if (partController.num_of_PartController > 1) {
-                synthesisProcess.add(partController);
-                for (String partController_name : partController.inputPartControllers){
-                    synthesisProcess.add(findModel(unoptimized_synthesisProcess, partController_name));
+            if (partController.num_of_PartController > 1 ) {
+                boolean unsynthesized = true;
+                for (String model_name : partController.inputPartControllers) {
+                    if (findModel(synthesisProcess, model_name)!=null) unsynthesized = false;
+                }
+                if (unsynthesized) {
+                    if (findModel(synthesisProcess, partController.name)==null) synthesisProcess.add(partController);
+                    for (String partController_name : partController.inputPartControllers){
+                        synthesisProcess.add(findModel(unoptimized_synthesisProcess, partController_name));
+                    }
                 }
             }
             else if (partController.name.equals(final_model_name)) synthesisProcess.add(partController);
