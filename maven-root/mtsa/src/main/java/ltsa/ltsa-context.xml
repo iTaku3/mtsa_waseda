@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+   <context:annotation-config/>
+   
+   <!-- Enactors -->
+   
+   
+   <!-- Demo I -->
+   <!-- This DEMO needs the HACK in isControllable method -->
+	<bean id="ARDrone" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.robot.ARDroneRobotChange">
+  		<constructor-arg index="0" value="ARDrone I"/>
+  		<constructor-arg index="1" value="success"/>
+  		<constructor-arg index="2" value="fail"/>
+  		<constructor-arg index="3" value="lost"/>
+  		<constructor-arg index="4" value="takeoff"/>
+  		<constructor-arg index="5" value="land"/>
+  		<constructor-arg index="6" value="blink"/>
+  		<constructor-arg index="7" value="read"/>
+  		<constructor-arg index="8" value="read.val.0"/>
+  		<constructor-arg index="9" value="read.val.1"/>
+  		<constructor-arg index="10" value="read.val.2"/>
+  		<constructor-arg index="11" value="takeoffOLD"/>
+  		<constructor-arg index="12" value="landOLD"/>
+  		<constructor-arg index="13" value="blinkOLD"/>
+  		<constructor-arg index="14" value="readOLD"/>
+  		<constructor-arg index="15" value="lowBattery"/>
+  		<constructor-arg index="16" value="charge"/>
+	</bean>
+	
+	<bean id="enviromentChange" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.RecoverEnactor">
+		<constructor-arg index="0" value="Env Change Demo"/>
+		<!-- Transitions that triggers the enactor -->
+		<property name="triggerActions">	<!-- Available options to replay -->
+        	<list>
+        	</list>
+	    </property> 	
+		<property name="optionActions">	<!-- Available options to replay -->
+        	<list>
+          		<value>switchC</value>	        
+          		<value>lowBattery</value> 
+        	</list>
+    	</property>      
+	</bean>
+	
+	
+	<!-- Demo II -->
+	<!-- This DEMO needs the HACK in isControllable method -->
+	<bean id="ARDroneII" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.robot.ARDroneRobotMoving">
+  		<constructor-arg index="0" value="ARDrone II"/>
+  		<constructor-arg index="1" value="success"/>
+  		<constructor-arg index="2" value="fail"/>
+  		<constructor-arg index="3" value="lost"/>
+  		<constructor-arg index="4" value="takeoff"/>
+  		<constructor-arg index="5" value="land"/>
+  		<constructor-arg index="6" value="blink"/>
+  		<constructor-arg index="7" value="read"/>
+  		<constructor-arg index="8" value="read.val.0"/>
+  		<constructor-arg index="9" value="read.val.1"/>
+  		<constructor-arg index="10" value="read.val.2"/>
+  		<constructor-arg index="11" value="takeoffOLD"/>
+  		<constructor-arg index="12" value="landOLD"/>
+  		<constructor-arg index="13" value="blinkOLD"/>
+  		<constructor-arg index="14" value="readOLD"/>
+  		<constructor-arg index="15" value="lowBattery"/>
+  		<constructor-arg index="16" value="charge"/>
+  		
+  		<constructor-arg index="17" value="moveTo.0"/>
+  		<constructor-arg index="18" value="moveTo.1"/>
+  		<constructor-arg index="19" value="moveTo.2"/>
+  		<constructor-arg index="20" value="moveTo.3"/>
+  		<constructor-arg index="21" value="moveToOLD.0"/>
+  		<constructor-arg index="22" value="moveToOLD.1"/>
+  		<constructor-arg index="23" value="moveToOLD.2"/>
+  		<constructor-arg index="24" value="moveToOLD.3"/>
+  		
+  		<constructor-arg index="25" value="reset"/>
+  		<constructor-arg index="26" value="avoid"/>
+  		<constructor-arg index="27" value="obstacle"/>  	
+  		<constructor-arg index="28" value="resetOLD"/>
+  		
+  		
+  		
+	</bean>
+	
+	<bean id="enviromentChangeII" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.RecoverEnactor">
+		<constructor-arg index="0" value="Env Change Demo II"/>
+		<!-- Transitions that triggers the enactor -->
+		<property name="triggerActions">	<!-- Available options to replay -->
+        	<list>
+        	</list>
+	    </property> 	
+		<property name="optionActions">	<!-- Available options to replay -->
+        	<list>
+          		<value>switchC</value>	        
+          		<value>lowBattery</value> 
+          		<value>reset</value>	        
+        	</list>
+    	</property>      
+	</bean>
+	
+	
+	<!-- Demo III -->
+	<bean id="ARDroneUpdatingController" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.robot.ARDroneUpdatingControllers">
+  		<constructor-arg index="0" value="ARDrone Updating Controller"/>
+  		<constructor-arg index="1" value="success"/>
+  		<constructor-arg index="2" value="fail"/>
+  		<constructor-arg index="3" value="lost"/>
+  		<constructor-arg index="4" value="takeoff"/>
+  		<constructor-arg index="5" value="land"/>
+  		<constructor-arg index="6" value="blink"/>
+  		<constructor-arg index="7" value="read"/>
+  		<constructor-arg index="8" value="read.val.0"/>
+  		<constructor-arg index="9" value="read.val.1"/>
+  		<constructor-arg index="10" value="read.val.2"/>
+  		<constructor-arg index="11" value="lowBattery"/>
+  		<constructor-arg index="12" value="charge"/>
+	</bean>
+
+	<bean id="PainterEnvironment" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.RecoverEnactor">
+		<constructor-arg index="0" value="ProductionCell Environment"/>
+		<!-- Transitions that triggers the enactor -->
+		<property name="triggerActions">	<!-- Available options to replay -->
+			<list>
+			</list>
+		</property>
+		<property name="optionActions">	<!-- Available options to replay -->
+			<list>
+				<value>in.1</value>
+				<value>in.2</value>
+				<value>glossy.paintOk.1</value>
+				<value>glossy.paintNOk.1</value>
+				<value>glossy.paintOk.2</value>
+				<value>glossy.paintNOk.2</value>
+				<value>dryOk.1</value>
+				<value>dryNOk.1</value>
+				<value>dryOk.2</value>
+				<value>dryNOk.2</value>
+				<value>reset.1</value>
+				<value>reset.2</value>
+
+				<value>matt.paintOk.1</value>
+				<value>matt.paintNOk.1</value>
+				<value>matt.paintOk.2</value>
+				<value>matt.paintNOk.2</value>
+				<value>varnishOk.1</value>
+				<value>varnishNOk.1</value>
+				<value>varnishOk.2</value>
+				<value>varnishNOk.2</value>
+
+			</list>
+		</property>
+	</bean>
+
+
+
+	<bean id="PainterEnvironmentSimulation" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.robot.PainterEnvironmentSimulation">
+		<constructor-arg index="0" value="Painter Environment Simulation"/>
+		<constructor-arg index="1" value="success"/>
+		<constructor-arg index="2" value="fail"/>
+		<constructor-arg index="3" value="lost"/>
+
+		<constructor-arg index="4" value="glossy.paint.1"/>
+		<constructor-arg index="5" value="glossy.paint.2"/>
+		<constructor-arg index="6" value="dry.1"/>
+		<constructor-arg index="7" value="dry.2"/>
+		<constructor-arg index="8" value="out.1"/>
+		<constructor-arg index="9" value="out.2"/>
+		<constructor-arg index="10" value="in.1"/>
+		<constructor-arg index="11" value="in.2"/>
+		<constructor-arg index="12" value="glossy.paintOk.1"/>
+		<constructor-arg index="13" value="glossy.paintOk.2"/>
+		<constructor-arg index="14" value="glossy.paintNOk.1"/>
+		<constructor-arg index="15" value="glossy.paintNOk.2"/>
+		<constructor-arg index="16" value="dryOk.1"/>
+		<constructor-arg index="17" value="dryOk.2"/>
+		<constructor-arg index="18" value="dryNOk.1"/>
+		<constructor-arg index="19" value="dryNOk.2"/>
+		<constructor-arg index="20" value="reset.1"/>
+		<constructor-arg index="21" value="reset.2"/>
+
+		<constructor-arg index="22" value="matt.paint.1"/>
+		<constructor-arg index="23" value="matt.paint.2"/>
+		<constructor-arg index="24" value="varnish.1"/>
+		<constructor-arg index="25" value="varnish.2"/>
+		<constructor-arg index="26" value="matt.paintOk.1"/>
+		<constructor-arg index="27" value="matt.paintOk.2"/>
+		<constructor-arg index="28" value="matt.paintNOk.1"/>
+		<constructor-arg index="29" value="matt.paintNOk.2"/>
+		<constructor-arg index="30" value="varnishOk.1"/>
+		<constructor-arg index="31" value="varnishOk.2"/>
+		<constructor-arg index="32" value="varnishNOk.1"/>
+		<constructor-arg index="33" value="varnishNOk.2"/>
+
+	</bean>
+	
+	
+	
+	
+	
+
+<!-- 	<bean id="nxt1" class="ar.uba.dc.lafhis.enactment.robot.NXTRobot"> -->
+<!-- 	  <constructor-arg index="0" value="NXT Robot"/>	Name -->
+<!-- 	  <constructor-arg index="1" value="success"/>	Success -->
+<!-- 	  <constructor-arg index="2" value="fail"/>	Failure -->
+<!-- 	  <constructor-arg index="3" value="lost"/>		Lost -->
+<!-- 	  <constructor-arg index="4" value="follow"/>	Follow -->
+<!-- 	  <constructor-arg index="5" value="turnLeft"/>	TurnLeft -->
+<!-- 	  <constructor-arg index="6" value="turnRight"/>		TurnRight -->
+<!-- 	  <constructor-arg index="7" value="turnAround"/>	TurnAround -->
+<!-- 	  <constructor-arg index="8" value="calibrar"/>		Calibrar -->
+<!-- 	  <constructor-arg index="9" value="0016531b6519"/> Bluetooth address -->
+<!-- 	  <constructor-arg index="10" value=""/>	Port -->
+<!-- 	</bean> -->
+<!-- 
+	<bean id="N6" class="ar.uba.dc.lafhis.enactment.robot.N6Robot">
+	  <constructor-arg index="0" value="N6 Robot"/>	Name
+	  <constructor-arg index="1" value="success"/>	Success
+	  <constructor-arg index="2" value="fail"/>	Failure
+	  <constructor-arg index="3" value="lost"/>		Lost
+	  <constructor-arg index="4" value="follow"/>	Follow
+	  <constructor-arg index="5" value="turnLeft"/>	TurnLeft
+	  <constructor-arg index="6" value="turnRight"/>		TurnRight
+	  <constructor-arg index="7" value="turnAround"/>	TurnAround
+	  <constructor-arg index="8" value="readSensors"/>
+	  <constructor-arg index="9" value="readSensorsReply"/>
+	  <constructor-arg index="10" value="readUSSensor"/>
+	  <constructor-arg index="11" value="readUSSensorReply"/>
+	  <constructor-arg index="12" value="retry"/>
+	  <constructor-arg index="13" value="successRetry"/>
+	</bean>
+ -->	
+<!-- 	<bean id="uiRobot1" class="ar.uba.dc.lafhis.enactment.robot.UIRobot"> -->
+<!-- 	  <constructor-arg index="0" value="UI Robot 1"/> -->
+<!-- 	  <constructor-arg index="1" value="[1].success"/> -->
+<!-- 	  <constructor-arg index="2" value="[1].fail"/> -->
+<!-- 	  <constructor-arg index="3" value="[1].lost"/> -->
+<!-- 	  <constructor-arg index="4" value="[1].follow"/> -->
+<!-- 	  <constructor-arg index="5" value="[1].turnLeft"/> -->
+<!-- 	  <constructor-arg index="6" value="[1].turnRight"/> -->
+<!-- 	  <constructor-arg index="7" value="[1].turnAround"/> -->
+<!-- 	</bean> -->
+
+	
+	<bean id="counterEnactor" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.CounterEnactor">
+		<constructor-arg index="0" value="Counter"/>
+		<constructor-arg index="1" value="resetCounter"/>
+	</bean>
+	
+<!-- 	<bean id="recoverEnactor1" class="ar.uba.dc.lafhis.enactment.RecoverEnactor"> -->
+<!-- 		<constructor-arg index="0" value="Reobot 1"/> -->
+ 		<!-- Transitions that triggers the enactor --> 
+<!-- 		<property name="triggerActions">	Available options to replay -->
+<!-- 	        <list> -->
+<!-- 	           <value>1.este</value> -->
+<!-- 	           <value>1.oeste</value> -->
+<!-- 	           <value>1.norte</value> -->
+<!-- 	           <value>1.sur</value> -->
+<!-- 	        </list> -->
+<!-- 	     </property> 				 -->
+<!-- 		<property name="optionActions">	Available options to replay -->
+<!-- 	        <list> -->
+<!-- 	        </list> -->
+<!-- 	     </property>       -->
+<!-- 	</bean> -->	
+
+	<!-- Enactor Factory -->
+	<bean id="enactorFactory" class="ltsa.enactment.EnactorFactory"/>
+
+	<!-- Controller Enviroments / Schedulers-->
+	<bean id="controllerScheduler" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.TakeFirstController">
+		<constructor-arg index="0" value="Take First Controller"/>	
+	</bean>
+	
+	<!-- Schedulers -->
+	<bean id="randomScheduler" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.RandomController">
+		<constructor-arg index="0" value="Random Controller"/>	
+	</bean>
+
+	<bean id="UpdateControllerScheduler" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.UpdateControllerScheduler">
+		<constructor-arg index="0" value="Update Controller Scheduler"/>
+	</bean>
+	
+	<!-- Schedulers -->
+	<bean id="UIController" class="MTSAEnactment.ar.uba.dc.lafhis.enactment.UIController">
+		<constructor-arg index="0" value="UI Controller"/>	
+	</bean>
+	
+	
+	<!-- Scheduler Factory -->
+	<bean id="schedullerFactory" class="ltsa.enactment.SchedulerFactory"/>
+	
+	
+	
+</beans>
+

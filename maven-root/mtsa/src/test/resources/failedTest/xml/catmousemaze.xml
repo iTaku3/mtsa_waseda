@@ -1,0 +1,228 @@
+<?xml version="1.0"?>
+
+<animation width="750" height="500">
+
+<behaviour id="cat.y" algorithm="relativeMove" event="end.y">
+  <param name="duration" value="2.0"/>
+  <param name="from" value = "160"/>
+</behaviour>
+
+<behaviour id="cat.x" algorithm="relativeMove" event="end.x">
+  <param name="duration" value="2.0"/>
+  <param name="from" value = "100"/>
+</behaviour>
+
+<behaviour id="mouse.y" algorithm="relativeMove" event="mend.y">
+  <param name="duration" value="2.0"/>
+  <param name="from" value = "160"/>
+</behaviour>
+
+<behaviour id="mouse.x" algorithm="relativeMove" event="mend.x">
+  <param name="duration" value="2.0"/>
+  <param name="from" value = "650"/>
+</behaviour>
+
+<define id="cat">
+ 	<primitive type = "sprite">
+        <param name ="src" value="image/cat_sprite.gif"/>
+	<param name="hotspot" value="(25,25)" />
+	</primitive>
+</define>
+
+<define id="mouse">
+	<primitive type = "sprite">
+        <param name ="src" value="image/mouse_sprite.gif"/>
+        <param name="hotspot" value="(25,25)" />
+	</primitive>
+</define>
+
+
+<draw>
+	<transform type="translate">
+	  <param name="x" value="100"/>
+	  <param name="y" value="160"/>
+	  <animate param="x" behaviour="cat.x"/>
+	  <animate param="y" behaviour="cat.y"/>
+	  <paste object="cat" /> 
+	</transform>
+	<transform type="translate">
+	  <param name="x" value="650"/>
+	  <param name="y" value="160"/>
+	  <animate param="x" behaviour="mouse.x"/>
+	  <animate param="y" behaviour="mouse.y"/>
+	  <paste object="mouse" /> 
+	</transform>
+	<primitive type = "sprite">
+       <param name ="src" value="image/catmousemaze.gif"/>
+	   <param name="hotspot" value="(0,0)" />
+	</primitive>
+</draw>
+
+<command name="c1">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <reset behaviour="cat.y"/>
+  <set object="cat.y" param="delta" value="215"/>
+  <start behaviour="cat.y"/>
+  <set object="cat.x" param="delta" value="-275"/>
+  <start behaviour="cat.x"/>
+</command>
+
+
+<command name="c2">
+  <announce event = "~end"/>
+  <reset behaviour="cat.y"/>
+  <set object="cat.y" param="delta" value="-215"/>
+  <start behaviour="cat.y"/>
+</command>
+
+<command name="c3">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <set object="cat.x" param="delta" value="275"/>
+  <start behaviour="cat.x"/>
+</command>
+
+
+<command name="c4">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <reset behaviour="cat.y"/>
+  <set object="cat.y" param="delta" value="215"/>
+  <start behaviour="cat.y"/>
+  <set object="cat.x" param="delta" value="275"/>
+  <start behaviour="cat.x"/> 
+</command>
+
+<command name="c5">
+  <announce event = "~end"/>
+  <reset behaviour="cat.y"/>
+  <set object="cat.y" param="delta" value="-215"/>
+  <start behaviour="cat.y"/>
+</command>
+
+<command name="c6">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <set object="cat.x" param="delta" value="-275"/>
+  <start behaviour="cat.x"/>
+</command>
+
+
+<command name="c7a">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <set object="cat.x" param="delta" value="-550"/>
+  <start behaviour="cat.x"/>
+</command>
+
+<command name="c7b">
+  <announce event = "~end"/>
+  <reset behaviour="cat.x"/>
+  <set object="cat.x" param="delta" value="550"/>
+  <start behaviour="cat.x"/>
+</command>
+
+
+
+<event object="cat.y" event="end.y">
+  <announce event="end"/>
+    <announce event = "~c1"/>
+     <announce event = "~c2"/>
+     <announce event = "~c3"/>
+     <announce event = "~c4"/>
+    <announce event = "~c5"/>
+     <announce event = "~c6"/>
+     <announce event = "~c7a"/>
+     <announce event = "~c7b"/>
+   <stop behaviour = "cat.y"/>
+</event>
+
+<event object="cat.x" event="end.x">
+  <announce event="end"/>
+    <announce event = "~c1"/>
+     <announce event = "~c2"/>
+     <announce event = "~c3"/>
+     <announce event = "~c4"/>
+    <announce event = "~c5"/>
+     <announce event = "~c6"/>
+     <announce event = "~c7a"/>
+     <announce event = "~c7b"/>
+  <stop behaviour = "cat.x"/>
+</event>
+
+<command name="m1">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.x"/>
+  <set object="mouse.x" param="delta" value="-275"/>
+  <start behaviour="mouse.x"/>
+</command>
+
+<command name="m2">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.y"/>
+  <set object="mouse.y" param="delta" value="215"/>
+  <start behaviour="mouse.y"/>
+ </command>
+
+<command name="m3">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.x"/>
+  <reset behaviour="mouse.y"/>
+  <set object="mouse.y" param="delta" value="-215"/>
+  <start behaviour="mouse.y"/>
+  <set object="mouse.x" param="delta" value="275"/>
+  <start behaviour="mouse.x"/>
+</command>
+
+<command name="m4">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.x"/>
+  <set object="mouse.x" param="delta" value="275"/>
+  <start behaviour="mouse.x"/>
+</command>
+
+<command name="m5">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.y"/>
+  <set object="mouse.y" param="delta" value="215"/>
+  <start behaviour="mouse.y"/>
+ </command>
+
+<command name="m6">
+  <announce event = "~mend"/>
+  <reset behaviour="mouse.x"/>
+  <reset behaviour="mouse.y"/>
+  <set object="mouse.y" param="delta" value="-215"/>
+  <start behaviour="mouse.y"/>
+  <set object="mouse.x" param="delta" value="-275"/>
+  <start behaviour="mouse.x"/>
+</command>
+
+
+
+
+<event object="mouse.y" event="mend.y">
+  <announce event="mend"/>
+    <announce event = "~m1"/>
+     <announce event = "~m2"/>
+     <announce event = "~m3"/>
+     <announce event = "~m4"/>
+    <announce event = "~m5"/>
+     <announce event = "~m6"/>
+   <stop behaviour = "mouse.y"/>
+</event>
+
+<event object="mouse.x" event="mend.x">
+  <announce event="mend"/>
+    <announce event = "~m1"/>
+     <announce event = "~m2"/>
+     <announce event = "~m3"/>
+     <announce event = "~m4"/>
+    <announce event = "~m5"/>
+     <announce event = "~m6"/>
+  <stop behaviour = "mouse.x"/>
+</event>
+
+
+</animation>
