@@ -2196,10 +2196,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Composition is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2240,10 +2240,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Minimise Composition is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2326,7 +2326,7 @@ public class HPWindow extends JFrame implements Runnable {
         long endTime_all = System.currentTimeMillis();
 
         //データを整理して出力に格納
-        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
         current.machines.addAll(all_req_models);
         postState(current);
 
@@ -2338,13 +2338,13 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Problem-Splitting Controller Synthesis is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime_all   + " ms (all process)");
-        ltsOutput.outln("                      : " + executionTime_step1 + " ms (step1)");
-        ltsOutput.outln("                      : " + executionTime_step2 + " ms (step2)");
-        ltsOutput.outln("                      : " + executionTime_step3 + " ms (step3)");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime_all   + "(all process)");
+        ltsOutput.outln("                           : " + executionTime_step1 + "(step1)");
+        ltsOutput.outln("                           : " + executionTime_step2 + "(step2)");
+        ltsOutput.outln("                           : " + executionTime_step3 + "(step3)");
         ltsOutput.outln("");
     }
 
