@@ -2542,11 +2542,11 @@ public class HPWindow extends JFrame implements Runnable {
                 //重複するモデルを削除
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
-            // costが最小のreqをthis_step_req<CompactState>に格納する（先に最小となったものが格納）
+            // costの算出
             req.cost = req.actual_monitoredModels.size();
             ltsOutput.outln("> " + req.name + " cost : " + req.cost);
-
-            // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
+            
+            // costが最小のreqをthis_step_req<CompactState>に格納する（先に最小となったものが格納）
             if (first_req) {
                 this_step_req.name = new String(req.name);
                 this_step_req.cost = new Integer(req.cost);
