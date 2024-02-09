@@ -2195,10 +2195,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Composition is Complete!");
+        ltsOutput.outln("[info] Max Space      : " + maxStates);
+        ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+        ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
     }
 
@@ -2238,18 +2238,21 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Minimise Composition is Complete!");
+        ltsOutput.outln("[info] Max Space      : " + maxStates);
+        ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+        ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
+
     }
 
     
     /* Stepwise Synthesis */
-    private long policyTime;
+    private long policyTime_total;
+    private long synthesisTime_total;
     private void stepwiseControllerSynthesis() {
-        policyTime = 0;
+        policyTime_total = 0;
+        synthesisTime_total = 0;
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
@@ -2263,9 +2266,9 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("===================================================");
             ltsOutput.outln("           Stepwise Controller Synthesis           ");
             ltsOutput.outln("===================================================");
-            ltsOutput.outln("[info] current.name     : " + current.name);
-            ltsOutput.outln("[info] current.machines : " + current.machines);
-            ltsOutput.outln("");
+            // ltsOutput.outln("[info] current.name     : " + current.name);
+            // ltsOutput.outln("[info] current.machines : " + current.machines);
+            // ltsOutput.outln("");
 
             boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
             CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
@@ -2282,16 +2285,20 @@ public class HPWindow extends JFrame implements Runnable {
                     unsynthesized_env_list.add(machine);
             }
 
-            // ltsOutput.outln("[info.] Environment Models");
-            // for (CompactState env : unsynthesized_env_list) {
-            //     ltsOutput.outln("> " + env.name + " : " + env.actions.toString());
-            // }
-            // ltsOutput.outln("---------------------------------------------------");
-            // ltsOutput.outln("[info.] Monitor Models");
-            // for (CompactState req : unsynthesized_req_list) {
-            //     ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
-            // }
-            // ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Monitor Models");
+            for (CompactState req : unsynthesized_req_list) {
+                ltsOutput.outln("     * " + req.name + " : " + req.actions.toString());
+            }
+
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Environment Models");
+            for (CompactState env : unsynthesized_env_list) {
+                ltsOutput.outln("     * " + env.name + " : " + env.actions.toString());
+            }
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+
 
             /* 段階的制御器合成 */
             stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
@@ -2303,11 +2310,14 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms (all process)");
-        ltsOutput.outln("                      : " + policyTime    + " ms (policy only)");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] Max Space      : " + maxStates);
+        ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+        ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
+        ltsOutput.outln("[info] Execution Time");
+        ltsOutput.outln("     * policy only    : " + policyTime_total+ " ms");
+        ltsOutput.outln("     * synthesis only : " + synthesisTime_total+ " ms");
+        ltsOutput.outln("     * total          : " + executionTime + " ms");
+        ltsOutput.outln("");
         ltsOutput.outln("");
     }
 
@@ -2315,69 +2325,93 @@ public class HPWindow extends JFrame implements Runnable {
     // ------------------------------------------------------------------------
     /* For StepwiseControllerSynthesis */
     
-    /* 段階的制御器合成を行う */
+    /* stepwiseSynthesis() */
+    // Where used : 
+    // Parameters : do_minimise
+    // Comment    : 段階的に部分合成を適用し制御器を合成する．再帰関数．
     private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, boolean do_minimise) {
+        long startTime;
+        long endTime;
+        long policyTime;
+        long synthesisTime;
         List<CompactState> this_step_req_list = new ArrayList<>();
         if (unsynthesized_req_list.size()!=0) {
-            long startTime = System.currentTimeMillis();
             
-                // Step 1 : 入力のモデルの実際の監視対象モデルとコストを更新 
+            ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("                     STEP "+ step_num);
+            ltsOutput.outln("---------------------------------------------------");
+
+            // Policy : 部分合成を行う監視モデルを導出
+            startTime = System.currentTimeMillis();
+            
+                // 入力のモデルの実際の監視対象モデルとコストを更新 
                 analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
                 calculationCost(unsynthesized_req_list, unsynthesized_env_list);
 
-                // Step 2 : 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
+                // 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
                 calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
-                // Step 3 : 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
+                // 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
                 findSameStepReq(unsynthesized_req_list, this_step_req_list);
 
-            long endTime = System.currentTimeMillis();
-            long searchTime = endTime - startTime;
-            policyTime = policyTime + searchTime;
+            endTime = System.currentTimeMillis();
+            policyTime = endTime - startTime;
+            policyTime_total = policyTime_total + policyTime;
 
-            // Step 4 : Step3の要求と対応する環境モデルを使って実際に部分合成
-            Vector<CompactState> this_step_machines = new Vector<>();
-            for (CompactState env : unsynthesized_env_list) {
-                if (this_step_req_list.get(0).tmp_actual_monitoredModels.contains(env.name)) {
-                    this_step_machines.add(env);
-                }
-                else if (env.componentModels != null) {
-                    if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels))
+            // Synthesis : Policyによって導出された監視モデルと，対応する環境モデルを用いて部分合成する
+            startTime = System.currentTimeMillis();
+                
+                Vector<CompactState> this_step_machines = new Vector<>();
+                for (CompactState env : unsynthesized_env_list) {
+                    if (this_step_req_list.get(0).tmp_actual_monitoredModels.contains(env.name)) {
                         this_step_machines.add(env);
+                    }
+                    else if (env.componentModels != null) {
+                        if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels))
+                            this_step_machines.add(env);
+                    }
                 }
-            }
-            unsynthesized_env_list.removeAll(this_step_machines);
-            this_step_machines.addAll(this_step_req_list);
-            unsynthesized_req_list.removeAll(this_step_req_list);
+                unsynthesized_env_list.removeAll(this_step_machines);
+                this_step_machines.addAll(this_step_req_list);
+                unsynthesized_req_list.removeAll(this_step_req_list);
 
-            if (unsynthesized_req_list.size()==0 && unsynthesized_env_list.size()==0) {
-                current.machines = new Vector<>(this_step_machines);
-                current.name = "StepwiseController"; //入力時の名前に変えるべき
-                current.env = null;
-            }
-            else {
-                current.machines = new Vector<>(this_step_machines);
-                current.name = "PartController_" + step_num;
-                current.env = null;
-            }
+                if (unsynthesized_req_list.size()==0 && unsynthesized_env_list.size()==0) {
+                    current.machines = new Vector<>(this_step_machines);
+                    current.name = "StepwiseController"; //入力時の名前に変えるべき
+                    current.env = null;
+                }
+                else {
+                    current.machines = new Vector<>(this_step_machines);
+                    current.name = "PartController_" + step_num;
+                    current.env = null;
+                }
+
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+                
+                current.composition.initActions();
+                current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
+                unsynthesized_env_list.add(current.composition);
+
+                // ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
+
+            endTime = System.currentTimeMillis();
+            synthesisTime = endTime - startTime;
+            synthesisTime_total = synthesisTime_total + synthesisTime;
 
             ltsOutput.outln("");
-            ltsOutput.outln("-- Synthesis --------------------------------------");
-            ltsOutput.outln("[info] Output Model : " + current.name);
-            ltsOutput.outln("[info] Input Models : " + current.machines);
-            ltsOutput.outln("[info] Policy Time  : " + searchTime + " ms");
-            ltsOutput.outln("---------------------------------------------------");
-
-            checkMemoryUsage();
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-            checkMemoryUsage();
-            
-            current.composition.initActions();
-            current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
-            unsynthesized_env_list.add(current.composition);
-
-            ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
+            ltsOutput.outln("[info] STEP" + step_num + " Infomation");
+            ltsOutput.outln("[info] Output Model     : " + current.name);
+            ltsOutput.outln("[info] Input Models     : " + convertToNameList(this_step_machines));
+            ltsOutput.outln("[info] Component Models : " + current.composition.componentModels.toString());
+            ltsOutput.outln("[info] Execution Time");
+            ltsOutput.outln("     * policy only      : " + policyTime + " ms");
+            ltsOutput.outln("     * synthesis only   : " + synthesisTime + " ms");
+            ltsOutput.outln("     * total            : " + (policyTime + synthesisTime) + " ms");
+            ltsOutput.outln("");
+            ltsOutput.outln("");
 
             stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
         }
@@ -2390,9 +2424,12 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
+    /* analysisMonitoredModels() */
+    // Where used : -
+    // Parameters : -
+    // Comment    : 監視対象モデルの分析し，req.ideal_monitoredModelsに結果を格納する．unsynthesized_env_listが更新される度に実行必須．
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        ltsOutput.outln("[info] Monitored Models");
+        ltsOutput.outln("[info] Monitor Models");
         for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
@@ -2402,19 +2439,28 @@ public class HPWindow extends JFrame implements Runnable {
                     else
                         req.ideal_monitoredModels.add(env.name);
             }
-            ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
+            ltsOutput.outln("     * " + req.name + " : " + req.ideal_monitoredModels.toString());
         }
+        ltsOutput.outln("");
     }
 
-    //コストの計算：eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
+    /* calculationCost() */
+    // Where used : -
+    // Parameters : -
+    // Comment    : 合成コストの計算を行う．eq.actual_monitoredModelsとreq.costを計算して格納する．PartControllerにはenv.componentModelsに必ず構成要素を格納しておく．
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
-        List<List<String>> partControllers = new ArrayList<>();
+       List<List<String>> partControllers = new ArrayList<>();
+       ltsOutput.outln("[info] Environment Models");
         for (CompactState env : unsynthesized_env_list) {
-            if (env.componentModels!=null)
+            if (env.componentModels!=null) {
                 partControllers.add(env.componentModels);
+                ltsOutput.outln("     * " + env.name + " : " +env.componentModels.toString());
+            }
+            else ltsOutput.outln("     * " + env.name + " : []");
         }
-        ltsOutput.outln("partControllers : " + partControllers.toString());
+        ltsOutput.outln("");
+
+        ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
         for (CompactState req : unsynthesized_req_list) {
             req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
             if (partControllers != null) {
@@ -2428,11 +2474,15 @@ public class HPWindow extends JFrame implements Runnable {
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
             req.cost = req.actual_monitoredModels.size();
-            ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
+            ltsOutput.outln("     * " + req.name + " : " + req.cost);
         }
+        ltsOutput.outln("");
     }
 
-    /* ある要求reqがこのあと合成された際の，他の要求の合成コストの増加量（影響量）を計算し，最も影響量の小さい要求ひとつをremove_req_listに追加 */
+    /* calculationInfluenceQuantity() */
+    // Where used : -
+    // Parameters : -
+    // Comment    : 影響量ある要求reqがこのあと合成された際の，他の要求の合成コストの増加量（影響量）を計算し，最も影響量の小さい要求ひとつをremove_req_listに追加する．
     private void calculationInfluenceQuantity(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, List<CompactState> this_step_req_list) {
         
         List<List<String>> partControllers = new ArrayList<>();
@@ -2508,7 +2558,10 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    /* 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加 */
+    /* findSameStepReq() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加．
     private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
         List<CompactState> remove_req_list = new ArrayList<>();
         for (CompactState req : unsynthesized_req_list) {
@@ -2522,7 +2575,10 @@ public class HPWindow extends JFrame implements Runnable {
             unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
     }
 
-    /* smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）*/
+    /* checkContainList() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）
     private boolean checkContainList(List<String> small, List<String> large) {
         for (String s : small) {
             if(large.contains(s)) return true;
@@ -2530,12 +2586,27 @@ public class HPWindow extends JFrame implements Runnable {
         return false;
     }
 
-    /* smallリストの要素が全てlargeリストに含まれるか（全て含まれるならtrue）*/
+    /* checkInList() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : smallリストの要素が全てlargeリストに含まれるか（全て含まれるならtrue）
     private boolean checkInList(List<String> small, List<String> large) {
         for (String s : small) {
             if(!large.contains(s)) return false;
         }
         return true;
+    }
+
+    /* convertToNameList() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : Vector<CompactState>を，モデル名のList<String>に変換する
+    private List<String> convertToNameList(Vector<CompactState> machines) {
+        List<String> name_list = new ArrayList<>();
+        for (CompactState machine : machines) {
+            name_list.add(machine.name);
+        }
+        return name_list;
     }
 
     /**************************************************************************/
