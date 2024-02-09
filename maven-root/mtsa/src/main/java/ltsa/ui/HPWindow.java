@@ -2341,9 +2341,10 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("                     STEP "+ step_num);
             ltsOutput.outln("---------------------------------------------------");
 
+            /* ToDo : 監視対象モデルが一番少ないもののうち，影響量が最大のものを優先的に合成 */
             // Policy : 部分合成を行う監視モデルを導出
             startTime = System.currentTimeMillis();
-            
+
                 // 入力のモデルの実際の監視対象モデルとコストを更新 
                 analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
                 calculationCost(unsynthesized_req_list, unsynthesized_env_list);
