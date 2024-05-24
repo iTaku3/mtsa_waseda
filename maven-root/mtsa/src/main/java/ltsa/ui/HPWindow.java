@@ -2353,7 +2353,7 @@ public class HPWindow extends JFrame implements Runnable {
                 calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
                 // 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
-                findSameStepReq(unsynthesized_req_list, this_step_req_list);
+                // findSameStepReq(unsynthesized_req_list, this_step_req_list);
 
             endTime = System.currentTimeMillis();
             policyTime = endTime - startTime;
@@ -2495,6 +2495,18 @@ public class HPWindow extends JFrame implements Runnable {
                 partControllers.add(env.componentModels);
         }
 
+        // 最小のコストを導出
+        int min_cost = Integer.MAX_VALUE;
+        for (CompactState req : unsynthesized_req_list) {
+            if (req.cost < min_cost) min_cost = req.cost;
+        }
+
+        // // 最大のコストを導出
+        // int max_cost = Integer.MIN_VALUE;
+        // for (CompactState req : unsynthesized_req_list) {
+        //     if (req.cost > max_cost) max_cost = req.cost;
+        // }
+
         // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
         CompactState candidate_req = new CompactState();
         boolean first_req = true;
@@ -2542,17 +2554,34 @@ public class HPWindow extends JFrame implements Runnable {
             }
 
             // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
-            if (first_req) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-                first_req = false;
+            if (min_cost == req.cost) {
+                if (first_req) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                    first_req = false;
+                }
+                else if (req.influence_quantity > candidate_req.influence_quantity) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);   
+                }
             }
-            else if (req.influence_quantity < candidate_req.influence_quantity) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-            }
+
+            // // 影響量（influence_quantity）が最大の要件をcandidate_reqに格納
+            // if (max_cost == req.cost) {
+            //     if (first_req) {
+            //         candidate_req.name = new String(req.name);
+            //         candidate_req.influence_quantity = new Integer(req.influence_quantity);
+            //         first_req = false;
+            //     }
+            //     else if (req.influence_quantity > candidate_req.influence_quantity) {
+            //         candidate_req.name = new String(req.name);
+            //         candidate_req.influence_quantity = new Integer(req.influence_quantity);   
+            //     }
+            // }
+
         }
-        // 一番影響量が小さいモデルをthis_step_req_listに追加
+
+        // 該当のreqモデルをthis_step_req_listに追加
         for (CompactState req : unsynthesized_req_list) {
             if (candidate_req.name.equals(req.name))
                 this_step_req_list.add(req);
