@@ -2135,9 +2135,11 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
     public static void checkSpace(int states, int transitions) {
+        if (states > maxStates) {
+            maxStates = states;
+        }
         if (transitions > maxTransitions) {
             maxTransitions = transitions;
-            maxStates = states;
         }
     }
 
