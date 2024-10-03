@@ -2135,9 +2135,11 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
     public static void checkSpace(int states, int transitions) {
+        if (states > maxStates) {
+            maxStates = states;
+        }
         if (transitions > maxTransitions) {
             maxTransitions = transitions;
-            maxStates = states;
         }
     }
 
@@ -2362,6 +2364,7 @@ public class HPWindow extends JFrame implements Runnable {
             // Synthesis : Policyによって導出された監視モデルと，対応する環境モデルを用いて部分合成する
             startTime = System.currentTimeMillis();
                 
+                // 環境モデルの合成
                 Vector<CompactState> this_step_machines = new Vector<>();
                 for (CompactState env : unsynthesized_env_list) {
                     if (this_step_req_list.get(0).tmp_actual_monitoredModels.contains(env.name)) {
@@ -2373,6 +2376,20 @@ public class HPWindow extends JFrame implements Runnable {
                     }
                 }
                 unsynthesized_env_list.removeAll(this_step_machines);
+                
+                current.machines = new Vector<>(this_step_machines);
+                current.name = "PartEnvironment_" + step_num;
+                current.env = null;
+
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+
+
+                // 監視モデルの合成（制御器合成） 
+                this_step_machines = new Vector<>();
+                this_step_machines.add(current.composition);
                 this_step_machines.addAll(this_step_req_list);
                 unsynthesized_req_list.removeAll(this_step_req_list);
 
