@@ -2341,10 +2341,9 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("                     STEP "+ step_num);
             ltsOutput.outln("---------------------------------------------------");
 
-            /* ToDo : 監視対象モデルが一番少ないもののうち，影響量が最大のものを優先的に合成 */
             // Policy : 部分合成を行う監視モデルを導出
             startTime = System.currentTimeMillis();
-
+            
                 // 入力のモデルの実際の監視対象モデルとコストを更新 
                 analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
                 calculationCost(unsynthesized_req_list, unsynthesized_env_list);
@@ -2373,6 +2372,22 @@ public class HPWindow extends JFrame implements Runnable {
                     }
                 }
                 unsynthesized_env_list.removeAll(this_step_machines);
+
+                // 環境モデルを新たに合成する必要がある場合(合成して環境モデルをひとつに)
+                if(this_step_machines.size()>1){
+                    current.machines = new Vector<>(this_step_machines);
+                    current.name = "PartEnvironment_" + step_num; //入力時の名前に変えるべき
+                    current.env = null;
+
+                    checkMemoryUsage();
+                    TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                    if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                    checkMemoryUsage();
+
+                    this_step_machines = new Vector<>();
+                    this_step_machines.add(current.composition);
+                }
+
                 this_step_machines.addAll(this_step_req_list);
                 unsynthesized_req_list.removeAll(this_step_req_list);
 
@@ -3144,7 +3159,7 @@ public class HPWindow extends JFrame implements Runnable {
 
                 if (!(new HashSet<String>(Arrays.asList(refines.getAlphabet())).equals(new HashSet<String>(Arrays.asList(refined.getAlphabet()))))) {
                     ltsOutput.outln("Models " + refines.getName() + " and " + refined.getName() + " have different alphabet. Cannot proceed with bisimulation check.");
-               } else {
+                } else {
                    ltsOutput.outln(" ");
                    BinaryRelation<?, ?> refRel = TransitionSystemDispatcher.getRefinement(refines, refined,
                            refinementOptions.getRefinementSemantic(), ltsOutput);
