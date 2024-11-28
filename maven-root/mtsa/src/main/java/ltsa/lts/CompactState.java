@@ -27,6 +27,7 @@ public class CompactState implements Automata {
     public int cost;
     public int influence_quantity;
     public int num_of_PartController;
+    public String env_name;
 
 
     /* AMES: Promoted visibility to public. */

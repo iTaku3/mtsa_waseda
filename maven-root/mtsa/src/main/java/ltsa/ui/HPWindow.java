@@ -2258,7 +2258,7 @@ public class HPWindow extends JFrame implements Runnable {
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        long startTime_all = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
             compile();
             // ltsOutput.clearOutput();
@@ -2267,8 +2267,9 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("");
             ltsOutput.outln("");
             ltsOutput.outln("===================================================");
-            ltsOutput.outln("      Problem-Splitting Controller Synthesis       ");
+            ltsOutput.outln("          Stepwise Controller Synthesis            ");
             ltsOutput.outln("===================================================");
+            ltsOutput.outln("");
             // ltsOutput.outln("[info] current.name     : " + current.name);
             // ltsOutput.outln("[info] current.machines : " + current.machines);
             // ltsOutput.outln("");
@@ -2290,42 +2291,42 @@ public class HPWindow extends JFrame implements Runnable {
             List<CompactState> all_req_models = new ArrayList<>(unsynthesized_req_list);
 
             // 事前分析１：影響量を考えた合成の段階化
-            long startTime_step1 = System.currentTimeMillis();
-                ltsOutput.outln("[info] STEP1 : Analyzing the synthesis process...");
+            long startTime_sequence_base = System.currentTimeMillis();
+                ltsOutput.outln("[info] Analyzing the synthetic sequence...");
                 analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
-                ltsOutput.outln("[info] STEP1 : Completed!");
+                ltsOutput.outln("[info] Analysis of the synthetic sequence is complete!");
                 ltsOutput.outln("");
                 ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("          Non-Optimized Synthesis Process          ");
+                ltsOutput.outln("         Non-Optimized Synthesis Sequence          ");
                 ltsOutput.outln("---------------------------------------------------");
                 printSynthesisProcess(synthesisProcess);
                 ltsOutput.outln("");
                 ltsOutput.outln("");
-            long endTime_step1 = System.currentTimeMillis();
+            long endTime_sequence_base = System.currentTimeMillis();
 
             // 事前分析２：合成の効率化（部分制御器を一つしか含まない合成の集約）
-            long startTime_step2 = System.currentTimeMillis();
-                ltsOutput.outln("[info] STEP2 : Optimizing the synthesis process...");
-                optimizeSynthesisProcess(synthesisProcess, final_model_name);
-                ltsOutput.outln("[info] STEP2 : Completed!");
-                ltsOutput.outln("");
-                ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("            Optimized Synthesis Process            ");
-                ltsOutput.outln("---------------------------------------------------");
-                printSynthesisProcess(synthesisProcess);
-                ltsOutput.outln("");
-                ltsOutput.outln("");
-            long endTime_step2 = System.currentTimeMillis();
+            // long startTime_sequence_optimize = System.currentTimeMillis();
+            //     ltsOutput.outln("[info] Optimizing the Synthetic Sequence...");
+            //     optimizeSynthesisProcess(synthesisProcess, final_model_name);
+            //     ltsOutput.outln("[info] Optimization of Synthetic Sequence is Complete!");
+            //     ltsOutput.outln("");
+            //     ltsOutput.outln("---------------------------------------------------");
+            //     ltsOutput.outln("           Optimized Synthesis Sequence            ");
+            //     ltsOutput.outln("---------------------------------------------------");
+            //     printSynthesisProcess(synthesisProcess);
+            //     ltsOutput.outln("");
+            //     ltsOutput.outln("");
+            // long endTime_sequence_optimize = System.currentTimeMillis();
 
             // 合成
-            long startTime_step3 = System.currentTimeMillis();
-                ltsOutput.outln("[info] STEP3 : Synthesizing from synthesis process...");
+            long startTime_synthesis = System.currentTimeMillis();
+                ltsOutput.outln("[info] Controller Synthesis according to Synthesis Sequence...");
                 synthesisFromSynthesisProcess(synthesisProcess, all_models, do_minimise);
-                ltsOutput.outln("[info] STEP3 : Completed!");
+                ltsOutput.outln("[info] Controller Synthesis is Complete!");
                 ltsOutput.outln("");
-            long endTime_step3 = System.currentTimeMillis();
+            long endTime_synthesis = System.currentTimeMillis();
 
-        long endTime_all = System.currentTimeMillis();
+        long endTime = System.currentTimeMillis();
 
         //データを整理して出力に格納
         // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
@@ -2333,20 +2334,21 @@ public class HPWindow extends JFrame implements Runnable {
         postState(current);
 
         //今回の制御器合成の詳細の出力
-        long executionTime_all = endTime_all - startTime_all; //ms
-        long executionTime_step1 = endTime_step1 - startTime_step1; //ms
-        long executionTime_step2 = endTime_step2 - startTime_step2; //ms
-        long executionTime_step3 = endTime_step3 - startTime_step3; //ms
+        long executionTime         = endTime - startTime; //ms
+        long sequence_baseTime     = endTime_sequence_base - startTime_sequence_base; //ms
+        // long sequence_optimizeTime = endTime_sequence_optimize - startTime_sequence_optimize; //ms
+        long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Problem-Splitting Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime_all   + "(all process)");
-        ltsOutput.outln("                           : " + executionTime_step1 + "(step1)");
-        ltsOutput.outln("                           : " + executionTime_step2 + "(step2)");
-        ltsOutput.outln("                           : " + executionTime_step3 + "(step3)");
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * sequence - base     : " + sequence_baseTime);
+        ltsOutput.outln("     * sequence - optimize : none");
+        ltsOutput.outln("     * synthesis           : " + synthesisTime);
+        ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2403,8 +2405,13 @@ public class HPWindow extends JFrame implements Runnable {
             this_step_partController.actions = new Vector<>(new HashSet<>(this_step_partController.actions)); //重複回避
             this_step_partController.analyzedModels = new ArrayList<>(new HashSet<>(this_step_partController.analyzedModels)); //重複回避
             //モデル名の決定
-            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0) this_step_partController.name = new String(final_model_name);
-            else this_step_partController.name = new String("PartController_" + synthesisProcess.size());
+            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0){
+                this_step_partController.name = new String(final_model_name);
+                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
+            }else{
+                this_step_partController.name = new String("PartController_" + synthesisProcess.size());
+                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
+            }
 
             //全て部分制御機の要素を埋め終わったらsynthesisProcessとunsynthesized_env_listに格納
             synthesisProcess.add(this_step_partController);
@@ -2489,24 +2496,51 @@ public class HPWindow extends JFrame implements Runnable {
     // Comment    : 合成プロセスを表示する．
     private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, boolean do_minimise){
         for (CompactState partController : synthesisProcess){
-            Vector<CompactState> this_step_machines = new Vector<>();
+            ArrayList<String> env_name_list = new ArrayList<>();
+            ArrayList<String> req_name_list = new ArrayList<>();
+            Vector<CompactState> this_step_env_machines = new Vector<>();
+            Vector<CompactState> this_step_req_machines = new Vector<>();
             for (String model_name : partController.inputModels) {
-                this_step_machines.add(findModel(all_models, model_name));
+                if(model_name.startsWith("P_")){
+                    req_name_list.add(model_name);
+                    this_step_req_machines.add(findModel(all_models, model_name));
+                }else{
+                    env_name_list.add(model_name);
+                    this_step_env_machines.add(findModel(all_models, model_name));
+                }
             }
-
-            current.name = partController.name; //入力時の名前に変えるべき
-            current.machines = new Vector<>(this_step_machines);
-            current.env = null;
-
-            // メモリ解放
-            all_models.removeAll(current.machines);
-            this_step_machines = new Vector<>();
 
             ltsOutput.outln("");
             ltsOutput.outln("-- Synthesis --------------------------------------");
-            ltsOutput.outln("[info] Output Model : " + current.name);
+            ltsOutput.outln("[info] Controller   : " + partController.name);
+            ltsOutput.outln("[info] Environment  : " + partController.env_name);
             ltsOutput.outln("[info] Input Models : " + partController.inputModels.toString());
+            ltsOutput.outln("[info] Input Environment Models : " + env_name_list.toString());
+            ltsOutput.outln("[info] Input Requirement Models : " + req_name_list.toString());
             ltsOutput.outln("---------------------------------------------------");
+
+            /* Generate Environment Model */
+            current.name = partController.env_name;
+            current.machines = new Vector<>(this_step_env_machines);
+            current.env = null;
+
+            // メモリ解放
+            all_models.removeAll(current.machines);  //メモリ解放
+            this_step_env_machines = new Vector<>(); //メモリ解放
+
+            checkMemoryUsage();
+            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+            checkMemoryUsage();
+
+            /* Generate Controller Model */
+            current.name = partController.name; //入力時の名前に変えるべき
+            current.machines = new Vector<>(this_step_req_machines);
+            current.machines.add(current.composition); //環境モデルを追加 
+            current.env = null;
+
+            all_models.removeAll(current.machines);  //メモリ解放
+            this_step_req_machines = new Vector<>(); //メモリ解放
             
             checkMemoryUsage();
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
