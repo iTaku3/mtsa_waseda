@@ -27,7 +27,8 @@ public class CompactState implements Automata {
     public int cost;
     public int influence_quantity;
     public int num_of_PartController;
-
+    public String env_name;
+    
 
     /* AMES: Promoted visibility to public. */
     public int endseq = -9999; //number of end of sequence state if any
