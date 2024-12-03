@@ -2638,9 +2638,22 @@ public class HPWindow extends JFrame implements Runnable {
                 partControllers.add(env.componentModels);
         }
 
+        // unsynthesized_req_listのうち，監視対象モデル数が最小の値をmin_costに代入する
+        int min_cost = Integer.MAX_VALUE;
+        boolean first_req = true;
+        for (CompactState req : unsynthesized_req_list) {
+            if (first_req){
+                min_cost = req.cost;
+                first_req = false;
+            }
+            else if (req.cost < min_cost){
+                min_cost = req.cost;
+            }
+        }
+
         // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
         CompactState candidate_req = new CompactState();
-        boolean first_req = true;
+        first_req = true;
         for (CompactState req : unsynthesized_req_list) {
             // reqを合成した時の環境モデルの変化をtmp_partControllersで再現
             List<List<String>> tmp_partControllers = new ArrayList<>(partControllers);
@@ -2684,19 +2697,21 @@ public class HPWindow extends JFrame implements Runnable {
                 req.influence_quantity = req.influence_quantity + (cost-another_req.cost);
             }
 
-            // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
-            if (first_req) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-                first_req = false;
-            }
-            else if (req.influence_quantity < candidate_req.influence_quantity) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-            }
-            else if (req.influence_quantity == candidate_req.influence_quantity){
-                if (req.name.compareTo(candidate_req.name) < 0){
+            // 監視対象モデル数最小の要求のうち，影響量（influence_quantity）が最大の要求をcandidate_reqに格納
+            if (req.cost == min_cost){
+                if (first_req) {
                     candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                    first_req = false;
+                }
+                else if (req.influence_quantity > candidate_req.influence_quantity) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                }
+                else if (req.influence_quantity == candidate_req.influence_quantity){
+                    if (req.name.compareTo(candidate_req.name) < 0){
+                        candidate_req.name = new String(req.name);
+                    }
                 }
             }
         }
