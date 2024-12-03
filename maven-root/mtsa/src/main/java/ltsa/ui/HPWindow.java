@@ -2694,6 +2694,11 @@ public class HPWindow extends JFrame implements Runnable {
                 candidate_req.name = new String(req.name);
                 candidate_req.influence_quantity = new Integer(req.influence_quantity);
             }
+            else if (req.influence_quantity == candidate_req.influence_quantity){
+                if (req.name.compareTo(candidate_req.name) < 0){
+                    candidate_req.name = new String(req.name);
+                }
+            }
         }
         // 一番影響量が小さいモデルをthis_step_req_listに追加
         for (CompactState req : unsynthesized_req_list) {
