@@ -2606,8 +2606,22 @@ public class HPWindow extends JFrame implements Runnable {
     // Comment    : ある要求reqがこのあと合成された際の，他の要求の合成コストの増加量（影響量）を計算し，最も影響量の小さい要求ひとつをremove_req_listに追加
     private void calculationInfluenceQuantity(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, List<CompactState> this_step_req_list) {
         
-        List<List<String>> partControllers = new ArrayList<>();
+        // unsynthesized_req_listのうち，監視対象モデル数が最小の値をmin_costに代入する
+        int min_cost = Integer.MAX_VALUE;
+        boolean first_req = true;
+        for (CompactState req : unsynthesized_req_list) {
+            if (first_req){
+                min_cost = req.cost;
+                first_req = false;
+            }
+            else if (req.cost < min_cost){
+                min_cost = req.cost;
+            }
+        }
+
+        //部分制御器の構成要素数（環境モデル数）を考慮するため，partControllersに部分制御器ごとに構成要素モデルのリストを入れる
         List<String> unsynthesized_envs = new ArrayList<>();
+        List<List<String>> partControllers = new ArrayList<>();
         for (CompactState env : unsynthesized_env_list) {
             if (env.componentModels == null)
                 unsynthesized_envs.add(env.name);
@@ -2617,8 +2631,9 @@ public class HPWindow extends JFrame implements Runnable {
 
         // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
         CompactState candidate_req = new CompactState();
-        boolean first_req = true;
+        first_req = true;
         for (CompactState req : unsynthesized_req_list) {
+            
             // reqを合成した時の環境モデルの変化をtmp_partControllersで再現
             List<List<String>> tmp_partControllers = new ArrayList<>(partControllers);
             List<List<String>> tmp_monitoredModels = new ArrayList<>();
@@ -2662,18 +2677,20 @@ public class HPWindow extends JFrame implements Runnable {
             }
 
             // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
-            if (first_req) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-                first_req = false;
-            }
-            else if (req.influence_quantity < candidate_req.influence_quantity) {
-                candidate_req.name = new String(req.name);
-                candidate_req.influence_quantity = new Integer(req.influence_quantity);
-            }
-            else if (req.influence_quantity == candidate_req.influence_quantity){
-                if (req.name.compareTo(candidate_req.name) < 0){
+            if (req.cost == min_cost){
+                if (first_req) {
                     candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                    first_req = false;
+                }
+                else if (req.influence_quantity < candidate_req.influence_quantity) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                }
+                else if (req.influence_quantity == candidate_req.influence_quantity){
+                    if (req.name.compareTo(candidate_req.name) < 0){
+                        candidate_req.name = new String(req.name);
+                    }
                 }
             }
         }
