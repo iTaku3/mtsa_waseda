@@ -2491,6 +2491,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Comment    : 合成プロセスを表示する．
     private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, boolean do_minimise){
         int step_num = 1;
+        int step_end = synthesisProcess.size();
         for (CompactState partController : synthesisProcess){
             ArrayList<String> env_name_list = new ArrayList<>();
             ArrayList<String> req_name_list = new ArrayList<>();
@@ -2524,10 +2525,14 @@ public class HPWindow extends JFrame implements Runnable {
             checkMemoryUsage();
 
             current.machines.clear();
-            current.machines.add(current.composition);
             current.composition.initActions();
-            all_models.add(current.composition);
-            step_num = step_num + 1;
+            if (step_num < step_end){
+                all_models.add(current.composition);
+                step_num = step_num + 1;
+            }
+            else{
+                current.machines.add(current.composition);
+            }
         }
     }
 
