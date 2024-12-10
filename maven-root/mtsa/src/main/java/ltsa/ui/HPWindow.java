@@ -2519,38 +2519,56 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("[info] Input Requirement Models : " + req_name_list.toString());
             ltsOutput.outln("---------------------------------------------------");
 
-            /* Generate Environment Model */
-            current.name = partController.env_name;
-            current.machines = new Vector<>(this_step_env_machines);
-            current.env = null;
+            if (this_step_req_machines.size() != 0){
+                /* Generate Environment Model */
+                current.name = partController.env_name;
+                current.machines = new Vector<>(this_step_env_machines);
+                current.env = null;
 
-            // メモリ解放
-            all_models.removeAll(current.machines);  //メモリ解放
-            this_step_env_machines = new Vector<>(); //メモリ解放
+                all_models.removeAll(current.machines);  //メモリ解放
+                this_step_env_machines = new Vector<>(); //メモリ解放
 
-            checkMemoryUsage();
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-            checkMemoryUsage();
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
 
-            /* Generate Controller Model */
-            current.name = partController.name; //入力時の名前に変えるべき
-            current.machines = new Vector<>(this_step_req_machines);
-            current.machines.add(current.composition); //環境モデルを追加 
-            current.env = null;
+                /* Generate Controller Model */
+                current.name = partController.name; //入力時の名前に変えるべき
+                current.machines = new Vector<>(this_step_req_machines);
+                current.machines.add(current.composition); //環境モデルを追加 
+                current.env = null;
 
-            all_models.removeAll(current.machines);  //メモリ解放
-            this_step_req_machines = new Vector<>(); //メモリ解放
-            
-            checkMemoryUsage();
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-            checkMemoryUsage();
+                all_models.removeAll(current.machines);  //メモリ解放
+                this_step_req_machines = new Vector<>(); //メモリ解放
+                
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
 
-            current.machines.clear();
-            current.machines.add(current.composition);
-            current.composition.initActions();
-            all_models.add(current.composition);
+                current.machines.clear();
+                current.machines.add(current.composition);
+                current.composition.initActions();
+                all_models.add(current.composition);
+            }
+            else {
+                current.name = partController.name; //入力時の名前に変えるべき
+                current.machines.add(current.composition); //環境モデルを追加 
+                current.env = null;
+
+                all_models.removeAll(current.machines);  //メモリ解放
+                
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+
+                current.machines.clear();
+                current.machines.add(current.composition);
+                current.composition.initActions();
+                all_models.add(current.composition);
+            }
         }
     }
 
