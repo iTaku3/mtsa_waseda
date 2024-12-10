@@ -2519,6 +2519,7 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("[info] Input Requirement Models : " + req_name_list.toString());
             ltsOutput.outln("---------------------------------------------------");
 
+            // 要求がある時の部分合成
             if (this_step_req_machines.size() != 0){
                 /* Generate Environment Model */
                 current.name = partController.env_name;
@@ -2548,13 +2549,15 @@ public class HPWindow extends JFrame implements Runnable {
                 checkMemoryUsage();
 
                 current.machines.clear();
+                current.machines = new Vector<>(this_step_req_machines);
                 current.machines.add(current.composition);
                 current.composition.initActions();
                 all_models.add(current.composition);
             }
+            // 要求がない時の部分合成
             else {
                 current.name = partController.name; //入力時の名前に変えるべき
-                current.machines.add(current.composition); //環境モデルを追加 
+                current.machines = new Vector<>(this_step_env_machines);
                 current.env = null;
 
                 all_models.removeAll(current.machines);  //メモリ解放
