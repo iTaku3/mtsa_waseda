@@ -50,6 +50,11 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class HPWindow extends JFrame implements Runnable {
     private static final String VERSION = "j1.2 v14-10-99, amimation support";
     private static final String DEFAULT = "DEFAULT";
@@ -1955,8 +1960,40 @@ public class HPWindow extends JFrame implements Runnable {
 
     // ------------------------------------------------------------------------
 
+    // コンパイルと同時に外部ファイルのコマンドを実行する
+    public static String executeFileName = "/execute.txt";
+    private void git_logging() {
+        String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
+        String init_command = "cd " + current_directory;
+
+        Path executeFilePath = Paths.get(current_directory + executeFileName);
+
+        try {
+            List<String> executeCommands = Files.readAllLines(executeFilePath);
+            Iterator command = executeCommands.iterator();
+            try {
+                Runtime runtime = Runtime.getRuntime();
+                Process p = runtime.exec(init_command);
+                p.waitFor();
+                while (command.hasNext()) {
+                    String this_command = command.next().toString();
+                    ltsOutput.outln("[info] command: " + this_command);
+                    p = runtime.exec(this_command);
+                    p.waitFor();
+                }
+            }
+            catch (Exception e) {
+                    ltsOutput.outln("[info] Command could not be executed.");
+            }
+        }
+        catch (Exception e) {
+            ltsOutput.outln("[info] There is no execute.txt.");
+        }
+    }
+
     private boolean compile() {
         ltsOutput.clearOutput();
+        git_logging();
         current = docompile();
         if (current == null) {
             return false;
