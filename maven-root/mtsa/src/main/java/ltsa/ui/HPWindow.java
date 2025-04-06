@@ -2039,7 +2039,7 @@ public class HPWindow extends JFrame implements Runnable {
         ProcessBuilder builder_push = new ProcessBuilder("git","push");
         try {
             Process process = builder_push.start();
-            ltsOutput.outln("[info] git commit complete!");
+            ltsOutput.outln("[info] git push complete!");
             try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 while((str = br.readLine()) != null) {
                     ltsOutput.outln(str);
