@@ -55,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class HPWindow extends JFrame implements Runnable {
     private static final String VERSION = "j1.2 v14-10-99, amimation support";
@@ -1994,6 +1995,8 @@ public class HPWindow extends JFrame implements Runnable {
 
     private void git_logging() {
         String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
+        ltsOutput.outln("current_directory : " + current_directory);
+
         List<String> cmd = new ArrayList<>();
         cmd.add("git add " + current_directory);
         cmd.add("git commit -m \"automatic logging\"");
@@ -2002,10 +2005,17 @@ public class HPWindow extends JFrame implements Runnable {
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
 
+        String str;
         try {
             Process process = builder.start();
-            int exitStatus = process.waitFor();
             ltsOutput.outln("[info] Upload to git complete.");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                while((str = br.readLine()) != null) {
+                    ltsOutput.outln(str);
+                }
+            }
+            int exitStatus = process.waitFor();
+            ltsOutput.outln("exit status = " + exitStatus);
         }
         catch (Exception e) {
             ltsOutput.outln("[info] cmd could not be executed.");
