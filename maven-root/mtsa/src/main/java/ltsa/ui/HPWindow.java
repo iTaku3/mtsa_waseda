@@ -1997,29 +1997,61 @@ public class HPWindow extends JFrame implements Runnable {
         String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
         ltsOutput.outln("current_directory : " + current_directory);
 
-        List<String> cmd = new ArrayList<>();
-        cmd.add("git add " + current_directory);
-        cmd.add("git commit -m \"automatic logging\"");
-        cmd.add("git push");
+        // List<String> command = new ArrayList<>();
+        // command.add("mkdir test");
+        // command.add("git add " + current_directory);
+        // command.add("git commit -m \"automatic logging\"");
+        // command.add("git push");
 
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        builder.redirectErrorStream(true);
-
+        ProcessBuilder builder_add = new ProcessBuilder("git","add", current_directory);
         String str;
         try {
-            Process process = builder.start();
-            ltsOutput.outln("[info] Upload to git complete.");
+            Process process = builder_add.start();
+            ltsOutput.outln("[info] git add complete!");
             try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 while((str = br.readLine()) != null) {
                     ltsOutput.outln(str);
                 }
             }
             int exitStatus = process.waitFor();
-            ltsOutput.outln("exit status = " + exitStatus);
+            // ltsOutput.outln("exit status = " + exitStatus);
         }
         catch (Exception e) {
-            ltsOutput.outln("[info] cmd could not be executed.");
+            ltsOutput.outln("[info] cmd could NOT be executed (git add)");
         }
+
+        ProcessBuilder builder_commit = new ProcessBuilder("git","commit","-m","\"automatic logging\"");
+        try {
+            Process process = builder_commit.start();
+            ltsOutput.outln("[info] git commit complete!");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                while((str = br.readLine()) != null) {
+                    ltsOutput.outln(str);
+                }
+            }
+            int exitStatus = process.waitFor();
+            // ltsOutput.outln("exit status = " + exitStatus);
+        }
+        catch (Exception e) {
+            ltsOutput.outln("[info] cmd could NOT be executed (git commit)");
+        }
+
+        ProcessBuilder builder_push = new ProcessBuilder("git","push");
+        try {
+            Process process = builder_push.start();
+            ltsOutput.outln("[info] git commit complete!");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                while((str = br.readLine()) != null) {
+                    ltsOutput.outln(str);
+                }
+            }
+            int exitStatus = process.waitFor();
+            // ltsOutput.outln("exit status = " + exitStatus);
+        }
+        catch (Exception e) {
+            ltsOutput.outln("[info] cmd could NOT be executed (git push)");
+        }
+
     }
 
     private boolean compile() {
