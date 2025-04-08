@@ -50,12 +50,15 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.util.Objects;
 
 public class HPWindow extends JFrame implements Runnable {
     private static final String VERSION = "j1.2 v14-10-99, amimation support";
@@ -1993,70 +1996,169 @@ public class HPWindow extends JFrame implements Runnable {
     //     }
     // }
 
-    private void git_logging() {
+    // private void git_logging() {
+    //     String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
+    //     String workspace_directory = current_directory + "/workspace";
+    //     String str;
+    //     ltsOutput.outln("current_directory : " + current_directory);
+
+    //     // ProcessBuilder builder_cd = new ProcessBuilder("cd", current_directory);
+    //     // try {
+    //     //     Process process = builder_cd.start();
+    //     //     try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    //     //         while((str = br.readLine()) != null) {
+    //     //             ltsOutput.outln(str);
+    //     //         }
+    //     //     }
+    //     //     int exitStatus = process.waitFor();
+    //     //     ltsOutput.outln("[info] cd current_directory complete!");
+    //     // }
+    //     // catch (Exception e) {
+    //     //     ltsOutput.outln("[info] cmd could NOT be executed (cd current_directory)");
+    //     // }
+
+
+    //     ProcessBuilder builder_add = new ProcessBuilder("git","add", workspace_directory);
+    //     try {
+    //         Process process = builder_add.start();
+    //         try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    //             while((str = br.readLine()) != null) {
+    //                 ltsOutput.outln(str);
+    //             }
+    //         }
+    //         int exitStatus = process.waitFor();
+    //         ltsOutput.outln("[info] git add complete!");
+    //     }
+    //     catch (Exception e) {
+    //         ltsOutput.outln("[info] cmd could NOT be executed (git add)");
+    //     }
+
+    //     ProcessBuilder builder_commit = new ProcessBuilder("git","commit","-m","\"automatic logging\"");
+    //     try {
+    //         Process process = builder_commit.start();
+    //         try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    //             while((str = br.readLine()) != null) {
+    //                 ltsOutput.outln(str);
+    //             }
+    //         }
+    //         int exitStatus = process.waitFor();
+    //         ltsOutput.outln("[info] git commit complete!");
+    //     }
+    //     catch (Exception e) {
+    //         ltsOutput.outln("[info] cmd could NOT be executed (git commit)");
+    //     }
+
+    //     ProcessBuilder builder_push = new ProcessBuilder("git","push");
+    //     try {
+    //         Process process = builder_push.start();
+    //         try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    //             while((str = br.readLine()) != null) {
+    //                 ltsOutput.outln(str);
+    //             }
+    //         }
+    //         int exitStatus = process.waitFor();
+    //         ltsOutput.outln("[info] git push complete!");
+    //     }
+    //     catch (Exception e) {
+    //         ltsOutput.outln("[info] cmd could NOT be executed (git push)");
+    //     }
+    // }
+
+    private void git_logging() throws IOException, InterruptedException {
         String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
         ltsOutput.outln("current_directory : " + current_directory);
 
-        // List<String> command = new ArrayList<>();
-        // command.add("mkdir test");
-        // command.add("git add " + current_directory);
-        // command.add("git commit -m \"automatic logging\"");
-        // command.add("git push");
+        Path current_directoryPath = Paths.get(current_directory);
 
-        ProcessBuilder builder_add = new ProcessBuilder("git","add", current_directory);
-        String str;
-        try {
-            Process process = builder_add.start();
-            ltsOutput.outln("[info] git add complete!");
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                while((str = br.readLine()) != null) {
-                    ltsOutput.outln(str);
-                }
-            }
-            int exitStatus = process.waitFor();
-            // ltsOutput.outln("exit status = " + exitStatus);
-        }
-        catch (Exception e) {
-            ltsOutput.outln("[info] cmd could NOT be executed (git add)");
-        }
+        gitAdd(current_directoryPath);
+        ltsOutput.outln("[info] git add complete!");
+        gitCommit(current_directoryPath, "\"automatic logging\"");
+        ltsOutput.outln("[info] git commit complete!");
+        gitPush(current_directoryPath);
+        ltsOutput.outln("[info] git push complete!");
+    }    
 
-        ProcessBuilder builder_commit = new ProcessBuilder("git","commit","-m","\"automatic logging\"");
-        try {
-            Process process = builder_commit.start();
-            ltsOutput.outln("[info] git commit complete!");
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                while((str = br.readLine()) != null) {
-                    ltsOutput.outln(str);
-                }
-            }
-            int exitStatus = process.waitFor();
-            // ltsOutput.outln("exit status = " + exitStatus);
-        }
-        catch (Exception e) {
-            ltsOutput.outln("[info] cmd could NOT be executed (git commit)");
-        }
+    // ----------------------------
 
-        ProcessBuilder builder_push = new ProcessBuilder("git","push");
-        try {
-            Process process = builder_push.start();
-            ltsOutput.outln("[info] git push complete!");
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                while((str = br.readLine()) != null) {
-                    ltsOutput.outln(str);
-                }
-            }
-            int exitStatus = process.waitFor();
-            // ltsOutput.outln("exit status = " + exitStatus);
-        }
-        catch (Exception e) {
-            ltsOutput.outln("[info] cmd could NOT be executed (git push)");
-        }
-
+    public static void gitInit(Path directory) throws IOException, InterruptedException {
+        runCommand(directory, "git", "init");
     }
+
+    public static void gitAdd(Path directory) throws IOException, InterruptedException {
+        runCommand(directory, "git", "add", "-A");
+    }
+
+    public static void gitCommit(Path directory, String message) throws IOException, InterruptedException {
+        runCommand(directory, "git", "commit", "-m", message);
+    }
+
+    public static void gitPush(Path directory) throws IOException, InterruptedException {
+        runCommand(directory, "git", "push");
+    }
+
+    public static void gitClone(Path directory, String originUrl) throws IOException, InterruptedException {
+        runCommand(directory.getParent(), "git", "clone", originUrl, directory.getFileName().toString());
+    }
+
+    public static void runCommand(Path directory, String... command) throws IOException, InterruptedException {
+        Objects.requireNonNull(directory, "directory");
+        if (!Files.exists(directory)) {
+            throw new RuntimeException("can't run command in non-existing directory '" + directory + "'");
+        }
+        ProcessBuilder pb = new ProcessBuilder()
+                .command(command)
+                .directory(directory.toFile());
+        Process p = pb.start();
+        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), "ERROR");
+        StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), "OUTPUT");
+        outputGobbler.start();
+        errorGobbler.start();
+        int exit = p.waitFor();
+        errorGobbler.join();
+        outputGobbler.join();
+        if (exit != 0) {
+            throw new AssertionError(String.format("runCommand returned %d", exit));
+        }
+    }
+
+    private static class StreamGobbler extends Thread {
+
+        private final InputStream is;
+        private final String type;
+
+        private StreamGobbler(InputStream is, String type) {
+            this.is = is;
+            this.type = type;
+        }
+
+        @Override
+        public void run() {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(is));) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    System.out.println(type + "> " + line);
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+    }
+
+    // ----------------------------
 
     private boolean compile() {
         ltsOutput.clearOutput();
-        git_logging();
+
+        try {
+            git_logging();
+        }
+        catch (IOException e) {
+            ltsOutput.outln("ERROR : IOException");
+        }
+        catch (InterruptedException e) {
+            ltsOutput.outln("ERROR : InterruptedException");
+        }
+
         current = docompile();
         if (current == null) {
             return false;
@@ -2070,7 +2172,6 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     /* AMES: promoted visibility from private to implement lts.LTSOutput */
-
 
     private CompositeState docompile() {
         resetInput();
