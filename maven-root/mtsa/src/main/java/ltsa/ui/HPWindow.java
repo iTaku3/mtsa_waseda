@@ -1233,9 +1233,10 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     private void saveFile() {
-        if (openFile != null && openFile.equals("*.lts"))
+        if (openFile != null && openFile.equals("*.lts")){
             saveAsFile();
-        else if (openFile != null)
+        }
+        else if (openFile != null){
             try {
                 int i = openFile.indexOf('.', 0);
                 if (i > 0)
@@ -1255,6 +1256,17 @@ public class HPWindow extends JFrame implements Runnable {
             } catch (IOException e) {
                 ltsOutput.outln("Error saving file: " + e);
             }
+        }
+        try {
+            git_logging();
+        }
+        catch (IOException e) {
+            ltsOutput.outln("ERROR : IOException");
+        }
+        catch (InterruptedException e) {
+            ltsOutput.outln("ERROR : InterruptedException");
+        }
+
     }
 
     // -------------------------------------------------------------------------
@@ -2069,6 +2081,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("current_directory : " + current_directory);
 
         Path current_directoryPath = Paths.get(current_directory);
+        // Path current_directoryPath = Paths.get(current_directory+"/workspace");
 
         gitAdd(current_directoryPath);
         ltsOutput.outln("[info] git add complete!");
@@ -2148,17 +2161,6 @@ public class HPWindow extends JFrame implements Runnable {
 
     private boolean compile() {
         ltsOutput.clearOutput();
-
-        try {
-            git_logging();
-        }
-        catch (IOException e) {
-            ltsOutput.outln("ERROR : IOException");
-        }
-        catch (InterruptedException e) {
-            ltsOutput.outln("ERROR : InterruptedException");
-        }
-
         current = docompile();
         if (current == null) {
             return false;
