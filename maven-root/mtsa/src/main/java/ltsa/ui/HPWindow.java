@@ -2110,7 +2110,6 @@ public class HPWindow extends JFrame implements Runnable {
             postState(current);
         }
         ltsOutput.outln("Model check took " + (System.currentTimeMillis() - initialTime) + "ms.");
-
     }
 
 
@@ -2271,7 +2270,7 @@ public class HPWindow extends JFrame implements Runnable {
             // ltsOutput.outln("[info] current.machines : " + current.machines);
             // ltsOutput.outln("");
 
-            boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+            boolean do_minimise = true; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
             String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
             List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
             List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
@@ -2336,7 +2335,7 @@ public class HPWindow extends JFrame implements Runnable {
         long executionTime_step2 = endTime_step2 - startTime_step2; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete! (minimise)");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
