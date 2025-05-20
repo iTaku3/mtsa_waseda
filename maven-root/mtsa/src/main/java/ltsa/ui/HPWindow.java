@@ -2340,7 +2340,7 @@ public class HPWindow extends JFrame implements Runnable {
         long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Stepwise Controller Synthesis with InfluenceQuantity is Complete!");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis with InfluenceQuantity (each req.) is Complete!");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
@@ -2372,7 +2372,7 @@ public class HPWindow extends JFrame implements Runnable {
             calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
             // Step 3 : 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
-            findSameStepReq(unsynthesized_req_list, this_step_req_list);
+            // findSameStepReq(unsynthesized_req_list, this_step_req_list);
 
             // Step 4 : Step3の要求と対応する環境モデルから部分制御機"this_step_partController"の情報を構築
             CompactState this_step_partController = new CompactState(); //本ステップで合成される部分制御器（空）
