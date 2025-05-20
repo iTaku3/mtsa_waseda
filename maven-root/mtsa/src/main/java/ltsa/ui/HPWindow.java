@@ -2342,7 +2342,7 @@ public class HPWindow extends JFrame implements Runnable {
         long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Consolidated Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
         ltsOutput.outln("[info] File Name           : " + openFile);
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
