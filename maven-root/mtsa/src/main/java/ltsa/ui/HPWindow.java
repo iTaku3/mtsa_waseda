@@ -192,7 +192,7 @@ public class HPWindow extends JFrame implements Runnable {
             safetyTool, progressTool, cutTool, pasteTool,
             newFileTool,
             openFileTool, saveFileTool, compileTool, composeTool,
-            minimizeTool,
+            minimiseTool,
             stepwiseTool,
             undoTool, redoTool;
 
@@ -392,7 +392,7 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(parseTool = createTool("icon/parse.gif", "Parse", new DoAction(DO_parse)));
         tools.add(compileTool = createTool("icon/compile.gif", "Compile", new DoAction(DO_compile)));
         tools.add(composeTool = createTool("icon/compose.gif", "Compose", new DoAction(DO_doComposition)));
-        tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
+        tools.add(minimiseTool = createTool("icon/minimise.gif", "Minimise", new DoAction(DO_minimiseComposition)));
         tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_stepwiseControllerSynthesis)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
@@ -847,7 +847,7 @@ public class HPWindow extends JFrame implements Runnable {
         progressTool.setEnabled(flag);
         compileTool.setEnabled(flag);
         composeTool.setEnabled(flag);
-        minimizeTool.setEnabled(flag);
+        minimiseTool.setEnabled(flag);
         stepwiseTool.setEnabled(flag);
 
         file_save.setEnabled(application);
@@ -2208,7 +2208,7 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
 
-    /* Composition + Minimize */
+    /* Composition + Minimise */
     private void minimiseComposition() {
         maxMemoryUsage = 0;
         maxStates = 0;
@@ -2276,7 +2276,7 @@ public class HPWindow extends JFrame implements Runnable {
             // ltsOutput.outln("");
 
             boolean do_minimise = do_minimise_flag;
-            // boolean do_minimise; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+            // boolean do_minimise; // Option : trueの場合モデル最適化（minimise）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
             // boolean do_minimise = false;
             String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
             List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
