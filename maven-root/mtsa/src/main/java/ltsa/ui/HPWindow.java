@@ -2340,7 +2340,7 @@ public class HPWindow extends JFrame implements Runnable {
         long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Consolidated Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Stepwise Controller Synthesis with InfluenceQuantity is Complete!");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
@@ -2555,7 +2555,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : -
     // Comment    : 監視対象モデルの分析，req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        // ltsOutput.outln("[info] Monitored Models");
+        ltsOutput.outln("[info] Monitored Models");
         for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
@@ -2565,9 +2565,9 @@ public class HPWindow extends JFrame implements Runnable {
                     else
                         req.ideal_monitoredModels.add(env.name);
             }
-            // ltsOutput.outln(" > " + req.name + " : " + req.ideal_monitoredModels.toString());
+            ltsOutput.outln(" > " + req.name + " : " + req.ideal_monitoredModels.toString());
         }
-        // ltsOutput.outln("");
+        ltsOutput.outln("");
     }
 
     /* calculationCost() */
@@ -2575,13 +2575,13 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : -
     // Comment    : コストの計算，eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        // ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
+        ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
         List<List<String>> partControllers = new ArrayList<>();
         for (CompactState env : unsynthesized_env_list) {
             if (env.componentModels!=null)
                 partControllers.add(env.componentModels);
         }
-        // ltsOutput.outln("partControllers : " + partControllers.toString());
+        ltsOutput.outln("partControllers : " + partControllers.toString());
         for (CompactState req : unsynthesized_req_list) {
             req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
             if (partControllers != null) {
@@ -2595,9 +2595,9 @@ public class HPWindow extends JFrame implements Runnable {
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
             req.cost = req.actual_monitoredModels.size();
-            // ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
+            ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
         }
-        // ltsOutput.outln("");
+        ltsOutput.outln("");
     }
     
     /* calculationInfluenceQuantity() */
