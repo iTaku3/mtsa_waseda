@@ -2267,7 +2267,7 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("");
             ltsOutput.outln("");
             ltsOutput.outln("===================================================");
-            ltsOutput.outln("    Consolidated Stepwise Controller Synthesis     ");
+            ltsOutput.outln("          Stepwise Controller Synthesis            ");
             ltsOutput.outln("===================================================");
             ltsOutput.outln("");
             // ltsOutput.outln("[info] current.name     : " + current.name);
@@ -2297,7 +2297,7 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("[info] Analysis of the synthetic sequence is complete!");
                 ltsOutput.outln("");
                 ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("         Non-Optimized Synthesis Sequence          ");
+                ltsOutput.outln("         Generate Synthesis Sequence          ");
                 ltsOutput.outln("---------------------------------------------------");
                 printSynthesisProcess(synthesisProcess);
                 ltsOutput.outln("");
@@ -2305,18 +2305,18 @@ public class HPWindow extends JFrame implements Runnable {
             long endTime_sequence_base = System.currentTimeMillis();
 
             // 事前分析２：合成の効率化（部分制御器を一つしか含まない合成の集約）
-            long startTime_sequence_optimize = System.currentTimeMillis();
-                ltsOutput.outln("[info] Optimizing the Synthetic Sequence...");
-                optimizeSynthesisProcess(synthesisProcess, final_model_name);
-                ltsOutput.outln("[info] Optimization of Synthetic Sequence is Complete!");
-                ltsOutput.outln("");
-                ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("           Optimized Synthesis Sequence            ");
-                ltsOutput.outln("---------------------------------------------------");
-                printSynthesisProcess(synthesisProcess);
-                ltsOutput.outln("");
-                ltsOutput.outln("");
-            long endTime_sequence_optimize = System.currentTimeMillis();
+            // long startTime_sequence_optimize = System.currentTimeMillis();
+            //     ltsOutput.outln("[info] Optimizing the Synthetic Sequence...");
+            //     optimizeSynthesisProcess(synthesisProcess, final_model_name);
+            //     ltsOutput.outln("[info] Optimization of Synthetic Sequence is Complete!");
+            //     ltsOutput.outln("");
+            //     ltsOutput.outln("---------------------------------------------------");
+            //     ltsOutput.outln("           Optimized Synthesis Sequence            ");
+            //     ltsOutput.outln("---------------------------------------------------");
+            //     printSynthesisProcess(synthesisProcess);
+            //     ltsOutput.outln("");
+            //     ltsOutput.outln("");
+            // long endTime_sequence_optimize = System.currentTimeMillis();
 
             // 合成
             long startTime_synthesis = System.currentTimeMillis();
@@ -2336,7 +2336,7 @@ public class HPWindow extends JFrame implements Runnable {
         //今回の制御器合成の詳細の出力
         long executionTime         = endTime - startTime; //ms
         long sequence_baseTime     = endTime_sequence_base - startTime_sequence_base; //ms
-        long sequence_optimizeTime = endTime_sequence_optimize - startTime_sequence_optimize; //ms
+        // long sequence_optimizeTime = endTime_sequence_optimize - startTime_sequence_optimize; //ms
         long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
@@ -2345,8 +2345,8 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
         ltsOutput.outln("[info] Execution Time (ms)");
-        ltsOutput.outln("     * sequence - base     : " + sequence_baseTime);
-        ltsOutput.outln("     * sequence - optimize : " + sequence_optimizeTime);
+        ltsOutput.outln("     * generate sequence   : " + sequence_baseTime);
+        // ltsOutput.outln("     * sequence - optimize : " + sequence_optimizeTime);
         ltsOutput.outln("     * synthesis           : " + synthesisTime);
         ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
