@@ -2407,9 +2407,15 @@ public class HPWindow extends JFrame implements Runnable {
             for (String model_name : this_step_partController.inputModels) unsynthesized_env_list.removeIf(env -> env.name.equals(model_name));
             this_step_partController.actions = new Vector<>(new HashSet<>(this_step_partController.actions)); //重複回避
             this_step_partController.analyzedModels = new ArrayList<>(new HashSet<>(this_step_partController.analyzedModels)); //重複回避
+            
             //モデル名の決定
-            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0) this_step_partController.name = new String(final_model_name);
-            else this_step_partController.name = new String("PartController_" + (synthesisProcess.size()+1));
+            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0){
+                this_step_partController.name = new String(final_model_name);
+                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
+            }else{
+                this_step_partController.name = new String("PartController_" + synthesisProcess.size());
+                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
+            }
 
             //全て部分制御機の要素を埋め終わったらsynthesisProcessとunsynthesized_env_listに格納
             synthesisProcess.add(this_step_partController);
@@ -2493,44 +2499,83 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : do_minimise
     // Comment    : 合成プロセスを表示する．
     private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, boolean do_minimise){
-        int step_num = 1;
         for (CompactState partController : synthesisProcess){
             ArrayList<String> env_name_list = new ArrayList<>();
             ArrayList<String> req_name_list = new ArrayList<>();
-            Vector<CompactState> this_step_machines = new Vector<>();
+            Vector<CompactState> this_step_env_machines = new Vector<>();
+            Vector<CompactState> this_step_req_machines = new Vector<>();
             for (String model_name : partController.inputModels) {
-                this_step_machines.add(findModel(all_models, model_name));
-                if(model_name.startsWith("P_")) req_name_list.add(model_name);
-                else env_name_list.add(model_name);
+                if(model_name.startsWith("P_")){
+                    req_name_list.add(model_name);
+                    this_step_req_machines.add(findModel(all_models, model_name));
+                }else{
+                    env_name_list.add(model_name);
+                    this_step_env_machines.add(findModel(all_models, model_name));
+                }
             }
 
-            current.name = partController.name; //入力時の名前に変えるべき
-            current.machines = new Vector<>(this_step_machines);
-            current.env = null;
-
-            // メモリ解放
-            all_models.removeAll(current.machines);
-            this_step_machines = new Vector<>();
-
             ltsOutput.outln("");
+            ltsOutput.outln("-- Synthesis --------------------------------------");
+            ltsOutput.outln("[info] Controller   : " + partController.name);
+            ltsOutput.outln("[info] Environment  : " + partController.env_name);
+            ltsOutput.outln("[info] Input Models : " + partController.inputModels.toString());
+            ltsOutput.outln("[info] Input Environment Models : " + env_name_list.toString());
+            ltsOutput.outln("[info] Input Requirement Models : " + req_name_list.toString());
             ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("                     STEP "+ step_num);
-            ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[info] Contorller  (output) : " + current.name);
-            ltsOutput.outln("[info] Environment (input)  : " + env_name_list.toString());
-            ltsOutput.outln("[info] Requirement (input)  : " + req_name_list.toString());
-            ltsOutput.outln("");
-            
-            checkMemoryUsage();
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-            checkMemoryUsage();
 
-            current.machines.clear();
-            current.machines.add(current.composition);
-            current.composition.initActions();
-            all_models.add(current.composition);
-            step_num = step_num + 1;
+            // 要求がある時の部分合成
+            if (this_step_req_machines.size() != 0){
+                /* Generate Environment Model */
+                current.name = partController.env_name;
+                current.machines = new Vector<>(this_step_env_machines);
+                current.env = null;
+
+                all_models.removeAll(current.machines);  //メモリ解放
+                this_step_env_machines = new Vector<>(); //メモリ解放
+
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+
+                /* Generate Controller Model */
+                current.name = partController.name; //入力時の名前に変えるべき
+                current.machines = new Vector<>(this_step_req_machines);
+                current.machines.add(current.composition); //環境モデルを追加 
+                current.env = null;
+
+                all_models.removeAll(current.machines);  //メモリ解放
+                this_step_req_machines = new Vector<>(); //メモリ解放
+                
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+
+                current.machines.clear();
+                current.machines = new Vector<>(this_step_req_machines);
+                current.machines.add(current.composition);
+                current.composition.initActions();
+                all_models.add(current.composition);
+            }
+            // 要求がない時の部分合成
+            else {
+                current.name = partController.name; //入力時の名前に変えるべき
+                current.machines = new Vector<>(this_step_env_machines);
+                current.env = null;
+
+                all_models.removeAll(current.machines);  //メモリ解放
+                
+                checkMemoryUsage();
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+                checkMemoryUsage();
+
+                current.machines.clear();
+                current.machines.add(current.composition);
+                current.composition.initActions();
+                all_models.add(current.composition);
+            }
         }
     }
 
