@@ -456,9 +456,9 @@ public class HPWindow extends JFrame implements Runnable {
         JMenuItem resume = new JMenuItem("Resume");
         resume.addActionListener(new DoAction(DO_EXPLORATION_RESUME));
         exploration.add(resume);
-	}
+    }
 
-	private void helpMenu(JMenuBar mb) {
+    private void helpMenu(JMenuBar mb) {
         help = new JMenu("Help");
         mb.add(help);
         help_about = new JMenuItem("About");
@@ -1253,45 +1253,45 @@ public class HPWindow extends JFrame implements Runnable {
         String message = "Export as Aldebaran format (.aut) to:";
         FileDialog fd = new FileDialog(this, message, FileDialog.SAVE);
         if (current == null || (!current.isHeuristic && current.composition == null)) {
-			JOptionPane.showMessageDialog(this,
-					"No target composition to export");
-			return;
-		}
+            JOptionPane.showMessageDialog(this,
+                    "No target composition to export");
+            return;
+        }
         String fname = current.composition == null ? current.name : current.composition.name;
-		String extension = current.isHeuristic ? ".xml" : ".aut";
-		fd.setFile(fname + extension);
-		fd.setDirectory(currentDirectory);
-		fd.setVisible(true);
-		String sn;
-		if ((sn = fd.getFile()) != null)
-			try {
-				int i = sn.indexOf('.', 0);
-				if (i == -1)
-					sn += extension;
-				else
-					extension = sn.substring(i,sn.length());
-				File file = new File(fd.getDirectory(), sn);
-				FileOutputStream fout = new FileOutputStream(file);
-				// now convert the FileOutputStream into a PrintStream
-				PrintStream myOutput = new PrintStream(fout);
-				AbstractTranslator translator = null;
-				switch (extension) {
-					case ".xml":   translator = new XMLTranslator(); break;
-					case ".smv":   translator = new SMVTranslator(); break;
-					case ".slugs": translator = new SlugsTranslator(); break;
-					case ".py":    translator = new CTLPYTranslator(); break;
-					case ".pddl":  translator = new PDDLTranslator(); break;
-				}
-				if (translator != null)
-					translator.translate(current, myOutput);
-				else
-					current.composition.printAUT(myOutput);
-				myOutput.close();
-				fout.close();
-				ltsOutput.outln("Exported to: " + fd.getDirectory() + file);
-			} catch (IOException e) {
-				ltsOutput.outln("Error exporting file: " + e);
-		}
+        String extension = current.isHeuristic ? ".xml" : ".aut";
+        fd.setFile(fname + extension);
+        fd.setDirectory(currentDirectory);
+        fd.setVisible(true);
+        String sn;
+        if ((sn = fd.getFile()) != null)
+            try {
+                int i = sn.indexOf('.', 0);
+                if (i == -1)
+                    sn += extension;
+                else
+                    extension = sn.substring(i,sn.length());
+                File file = new File(fd.getDirectory(), sn);
+                FileOutputStream fout = new FileOutputStream(file);
+                // now convert the FileOutputStream into a PrintStream
+                PrintStream myOutput = new PrintStream(fout);
+                AbstractTranslator translator = null;
+                switch (extension) {
+                    case ".xml":   translator = new XMLTranslator(); break;
+                    case ".smv":   translator = new SMVTranslator(); break;
+                    case ".slugs": translator = new SlugsTranslator(); break;
+                    case ".py":    translator = new CTLPYTranslator(); break;
+                    case ".pddl":  translator = new PDDLTranslator(); break;
+                }
+                if (translator != null)
+                    translator.translate(current, myOutput);
+                else
+                    current.composition.printAUT(myOutput);
+                myOutput.close();
+                fout.close();
+                ltsOutput.outln("Exported to: " + fd.getDirectory() + file);
+            } catch (IOException e) {
+                ltsOutput.outln("Error exporting file: " + e);
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -1518,9 +1518,9 @@ public class HPWindow extends JFrame implements Runnable {
             kkpanel.add(KK_length_factor_spinner);
 
 // Not useful for connected graphs
-//		  kkpanel.add(new JLabel("Distance"));
-//		  final JSpinner KK_distance_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.KK_distance,0.1,10.0,0.1));
-//		  kkpanel.add(KK_distance_spinner);
+//        kkpanel.add(new JLabel("Distance"));
+//        final JSpinner KK_distance_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.KK_distance,0.1,10.0,0.1));
+//        kkpanel.add(KK_distance_spinner);
 
             kkpanel.add(new JLabel("Max iterations"));
             final JSpinner kk_it_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.KK_max_iterations, 1, 10000, 1));
@@ -1547,35 +1547,35 @@ public class HPWindow extends JFrame implements Runnable {
             container.add(frpanel);
 
 // No useful parameters for TreeLikeLTS, RadialLTS
-//		  JPanel treepanel = new JPanel();
-//		  treepanel.setBorder(BorderFactory.createTitledBorder(EnumLayout.TreeLikeLTS.toString()));
-//		  treepanel.setLayout(new GridLayout(0,2));
+//        JPanel treepanel = new JPanel();
+//        treepanel.setBorder(BorderFactory.createTitledBorder(EnumLayout.TreeLikeLTS.toString()));
+//        treepanel.setLayout(new GridLayout(0,2));
 //
-//		  treepanel.add(new JLabel("Horizontal distance"));
-//		  final JSpinner tree_distx_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Tree_distX,0,1000,1));
-//		  treepanel.add(tree_distx_spinner);
+//        treepanel.add(new JLabel("Horizontal distance"));
+//        final JSpinner tree_distx_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Tree_distX,0,1000,1));
+//        treepanel.add(tree_distx_spinner);
 //
-//		  treepanel.add(new JLabel("Vertical distance"));
-//		  final JSpinner tree_disty_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Tree_distY,0,1000,1));
-//		  treepanel.add(tree_disty_spinner);
+//        treepanel.add(new JLabel("Vertical distance"));
+//        final JSpinner tree_disty_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Tree_distY,0,1000,1));
+//        treepanel.add(tree_disty_spinner);
 //
-//		  content.add(treepanel);
+//        content.add(treepanel);
 //
-//		  JPanel radialpanel = new JPanel();
-//		  radialpanel.setBorder(BorderFactory.createTitledBorder(EnumLayout.RadialLTS.toString()));
-//		  radialpanel.setLayout(new GridLayout(0,2));
+//        JPanel radialpanel = new JPanel();
+//        radialpanel.setBorder(BorderFactory.createTitledBorder(EnumLayout.RadialLTS.toString()));
+//        radialpanel.setLayout(new GridLayout(0,2));
 //
-//		  radialpanel.add(new JLabel("Horizontal distance"));
-//		  final JSpinner radial_distx_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Radial_distX,0,1000,1));
-//		  radialpanel.add(radial_distx_spinner);
+//        radialpanel.add(new JLabel("Horizontal distance"));
+//        final JSpinner radial_distx_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Radial_distX,0,1000,1));
+//        radialpanel.add(radial_distx_spinner);
 //
-//		  radialpanel.add(new JLabel("Vertical distance"));
-//		  final JSpinner radial_disty_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Radial_distY,0,1000,1));
-//		  radialpanel.add(radial_disty_spinner);
+//        radialpanel.add(new JLabel("Vertical distance"));
+//        final JSpinner radial_disty_spinner = new JSpinner(new SpinnerNumberModel(LTSJUNGCanvas.Radial_distY,0,1000,1));
+//        radialpanel.add(radial_disty_spinner);
 //
-//		  content.add(radialpanel);
+//        content.add(radialpanel);
 
-//		  container.add(content);
+//        container.add(content);
 
             final JButton okbutton = new JButton("Ok");
             final JButton cancelbutton = new JButton("Cancel");
@@ -1604,12 +1604,12 @@ public class HPWindow extends JFrame implements Runnable {
                         //if (layouts!=null) layouts.getCanvas().setOptions(LTSJUNGCanvas.LayoutOptions.KK_length_factor,LTSJUNGCanvas.KK_length_factor);
                     } catch (NumberFormatException ignored) {
                     }
-//		    	  try {
-//		  	    	  Object o = KK_distance_spinner.getValue();
-//		  	    	  if (o==null) return;
-//		  	    	  LTSJUNGCanvas.KK_distance = Double.parseDouble(o.toString()) < 0 ? 0 : (Double.parseDouble(o.toString()) > 10 ? 10 : Double.parseDouble(o.toString()));
-//		  	    	  //if (layouts!=null) layouts.setKK_distance(LTSLayoutWindow.KK_distance);
-//		    	  } catch(NumberFormatException nfe) {}
+//                try {
+//                    Object o = KK_distance_spinner.getValue();
+//                    if (o==null) return;
+//                    LTSJUNGCanvas.KK_distance = Double.parseDouble(o.toString()) < 0 ? 0 : (Double.parseDouble(o.toString()) > 10 ? 10 : Double.parseDouble(o.toString()));
+//                    //if (layouts!=null) layouts.setKK_distance(LTSLayoutWindow.KK_distance);
+//                } catch(NumberFormatException nfe) {}
                     try {
                         Object o = kk_it_spinner.getValue();
                         if (o == null) return;
@@ -1638,30 +1638,30 @@ public class HPWindow extends JFrame implements Runnable {
                         //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
                     } catch (NumberFormatException ignored) {
                     }
-//		    	  try {
-//		  	    	  Object o = tree_distx_spinner.getValue();
-//		  	    	  if (o==null) return;
-//		  	    	  LTSJUNGCanvas.Tree_distX = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
-//		  	    	  //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
-//		    	  } catch(NumberFormatException nfe) {}
-//		    	  try {
-//		  	    	  Object o = tree_disty_spinner.getValue();
-//		  	    	  if (o==null) return;
-//		  	    	  LTSJUNGCanvas.Tree_distY = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
-//		  	    	  //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
-//		    	  } catch(NumberFormatException nfe) {}
-//		    	  try {
-//		  	    	  Object o = radial_distx_spinner.getValue();
-//		  	    	  if (o==null) return;
-//		  	    	  LTSJUNGCanvas.Radial_distX = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
-//		  	    	  //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
-//		    	  } catch(NumberFormatException nfe) {}
-//		    	  try {
-//		  	    	  Object o = radial_disty_spinner.getValue();
-//		  	    	  if (o==null) return;
-//		  	    	  LTSJUNGCanvas.Radial_distY = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
-//		  	    	  //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
-//		    	  } catch(NumberFormatException nfe) {}
+//                try {
+//                    Object o = tree_distx_spinner.getValue();
+//                    if (o==null) return;
+//                    LTSJUNGCanvas.Tree_distX = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
+//                    //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
+//                } catch(NumberFormatException nfe) {}
+//                try {
+//                    Object o = tree_disty_spinner.getValue();
+//                    if (o==null) return;
+//                    LTSJUNGCanvas.Tree_distY = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
+//                    //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
+//                } catch(NumberFormatException nfe) {}
+//                try {
+//                    Object o = radial_distx_spinner.getValue();
+//                    if (o==null) return;
+//                    LTSJUNGCanvas.Radial_distX = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
+//                    //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
+//                } catch(NumberFormatException nfe) {}
+//                try {
+//                    Object o = radial_disty_spinner.getValue();
+//                    if (o==null) return;
+//                    LTSJUNGCanvas.Radial_distY = Integer.parseInt(o.toString()) < 0 ? 0 : (Integer.parseInt(o.toString()) > 1000 ? 1000 : Integer.parseInt(o.toString()));
+//                    //if (layouts!=null) layouts.setFR_max_iterations(LTSLayoutWindow.FR_max_iterations);
+//                } catch(NumberFormatException nfe) {}
                 }
             }
 
@@ -2297,7 +2297,7 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("[info] Analysis of the synthetic sequence is complete!");
                 ltsOutput.outln("");
                 ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("         Non-Optimized Synthesis Sequence          ");
+                ltsOutput.outln("         Generate Synthesis Sequence          ");
                 ltsOutput.outln("---------------------------------------------------");
                 printSynthesisProcess(synthesisProcess);
                 ltsOutput.outln("");
@@ -2340,13 +2340,13 @@ public class HPWindow extends JFrame implements Runnable {
         long synthesisTime         = endTime_synthesis - startTime_synthesis; //ms
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Consolidated Stepwise Controller Synthesis is Complete!");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
         ltsOutput.outln("[info] Execution Time (ms)");
-        ltsOutput.outln("     * sequence - base     : " + sequence_baseTime);
-        ltsOutput.outln("     * sequence - optimize : none");
+        ltsOutput.outln("     * generate sequence   : " + sequence_baseTime);
+        // ltsOutput.outln("     * sequence - optimize : " + sequence_optimizeTime);
         ltsOutput.outln("     * synthesis           : " + synthesisTime);
         ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
@@ -2372,7 +2372,7 @@ public class HPWindow extends JFrame implements Runnable {
             calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
             // Step 3 : 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
-            // findSameStepReq(unsynthesized_req_list, this_step_req_list);
+            findSameStepReq(unsynthesized_req_list, this_step_req_list);
 
             // Step 4 : Step3の要求と対応する環境モデルから部分制御機"this_step_partController"の情報を構築
             CompactState this_step_partController = new CompactState(); //本ステップで合成される部分制御器（空）
@@ -2405,13 +2405,8 @@ public class HPWindow extends JFrame implements Runnable {
             this_step_partController.actions = new Vector<>(new HashSet<>(this_step_partController.actions)); //重複回避
             this_step_partController.analyzedModels = new ArrayList<>(new HashSet<>(this_step_partController.analyzedModels)); //重複回避
             //モデル名の決定
-            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0){
-                this_step_partController.name = new String(final_model_name);
-                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
-            }else{
-                this_step_partController.name = new String("PartController_" + synthesisProcess.size());
-                this_step_partController.env_name = new String("PartEnvironment_" + synthesisProcess.size());
-            }
+            if (unsynthesized_req_list.size() + unsynthesized_env_list.size() == 0) this_step_partController.name = new String(final_model_name);
+            else this_step_partController.name = new String("PartController_" + (synthesisProcess.size()+1));
 
             //全て部分制御機の要素を埋め終わったらsynthesisProcessとunsynthesized_env_listに格納
             synthesisProcess.add(this_step_partController);
@@ -2495,52 +2490,33 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : do_minimise
     // Comment    : 合成プロセスを表示する．
     private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, boolean do_minimise){
+        int step_num = 1;
         for (CompactState partController : synthesisProcess){
             ArrayList<String> env_name_list = new ArrayList<>();
             ArrayList<String> req_name_list = new ArrayList<>();
-            Vector<CompactState> this_step_env_machines = new Vector<>();
-            Vector<CompactState> this_step_req_machines = new Vector<>();
+            Vector<CompactState> this_step_machines = new Vector<>();
             for (String model_name : partController.inputModels) {
-                if(model_name.startsWith("P_")){
-                    req_name_list.add(model_name);
-                    this_step_req_machines.add(findModel(all_models, model_name));
-                }else{
-                    env_name_list.add(model_name);
-                    this_step_env_machines.add(findModel(all_models, model_name));
-                }
+                this_step_machines.add(findModel(all_models, model_name));
+                if(model_name.startsWith("P_")) req_name_list.add(model_name);
+                else env_name_list.add(model_name);
             }
 
-            ltsOutput.outln("");
-            ltsOutput.outln("-- Synthesis --------------------------------------");
-            ltsOutput.outln("[info] Controller   : " + partController.name);
-            ltsOutput.outln("[info] Environment  : " + partController.env_name);
-            ltsOutput.outln("[info] Input Models : " + partController.inputModels.toString());
-            ltsOutput.outln("[info] Input Environment Models : " + env_name_list.toString());
-            ltsOutput.outln("[info] Input Requirement Models : " + req_name_list.toString());
-            ltsOutput.outln("---------------------------------------------------");
-
-            /* Generate Environment Model */
-            current.name = partController.env_name;
-            current.machines = new Vector<>(this_step_env_machines);
+            current.name = partController.name; //入力時の名前に変えるべき
+            current.machines = new Vector<>(this_step_machines);
             current.env = null;
 
             // メモリ解放
-            all_models.removeAll(current.machines);  //メモリ解放
-            this_step_env_machines = new Vector<>(); //メモリ解放
+            all_models.removeAll(current.machines);
+            this_step_machines = new Vector<>();
 
-            checkMemoryUsage();
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-            checkMemoryUsage();
-
-            /* Generate Controller Model */
-            current.name = partController.name; //入力時の名前に変えるべき
-            current.machines = new Vector<>(this_step_req_machines);
-            current.machines.add(current.composition); //環境モデルを追加 
-            current.env = null;
-
-            all_models.removeAll(current.machines);  //メモリ解放
-            this_step_req_machines = new Vector<>(); //メモリ解放
+            ltsOutput.outln("");
+            ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("                     STEP "+ step_num);
+            ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("[info] Contorller  (output) : " + current.name);
+            ltsOutput.outln("[info] Environment (input)  : " + env_name_list.toString());
+            ltsOutput.outln("[info] Requirement (input)  : " + req_name_list.toString());
+            ltsOutput.outln("");
             
             checkMemoryUsage();
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
@@ -2551,6 +2527,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.machines.add(current.composition);
             current.composition.initActions();
             all_models.add(current.composition);
+            step_num = step_num + 1;
         }
     }
 
@@ -2559,7 +2536,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : -
     // Comment    : 合成プロセスを表示する．
     private void printSynthesisProcess(List<CompactState> synthesisProcess){
-        int step_num = 0;
+        int step_num = 1;
         for (CompactState partController : synthesisProcess){
             ltsOutput.outln("[STEP" + step_num + "] " + partController.name);
             ltsOutput.outln(" > Component Models : " + partController.componentModels.toString());
@@ -2578,7 +2555,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : -
     // Comment    : 監視対象モデルの分析，req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        ltsOutput.outln("[info] Monitored Models");
+        // ltsOutput.outln("[info] Monitored Models");
         for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
@@ -2588,9 +2565,9 @@ public class HPWindow extends JFrame implements Runnable {
                     else
                         req.ideal_monitoredModels.add(env.name);
             }
-            ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
+            // ltsOutput.outln(" > " + req.name + " : " + req.ideal_monitoredModels.toString());
         }
-        ltsOutput.outln("");
+        // ltsOutput.outln("");
     }
 
     /* calculationCost() */
@@ -2598,13 +2575,13 @@ public class HPWindow extends JFrame implements Runnable {
     // Parameters : -
     // Comment    : コストの計算，eq.actual_monitoredModelsとreq.costを計算して格納（PartControllerにはenv.componentModelsに必ず構成要素を格納しておく必要あり）
     private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
+        // ltsOutput.outln("[info] Synthetic Cost (number of monitored models)");
         List<List<String>> partControllers = new ArrayList<>();
         for (CompactState env : unsynthesized_env_list) {
             if (env.componentModels!=null)
                 partControllers.add(env.componentModels);
         }
-        ltsOutput.outln("partControllers : " + partControllers.toString());
+        // ltsOutput.outln("partControllers : " + partControllers.toString());
         for (CompactState req : unsynthesized_req_list) {
             req.actual_monitoredModels = new ArrayList<>(req.ideal_monitoredModels);
             if (partControllers != null) {
@@ -2618,9 +2595,9 @@ public class HPWindow extends JFrame implements Runnable {
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
             req.cost = req.actual_monitoredModels.size();
-            ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
+            // ltsOutput.outln("> " + req.name + "'s cost : " + req.cost);
         }
-        ltsOutput.outln("");
+        // ltsOutput.outln("");
     }
     
     /* calculationInfluenceQuantity() */
@@ -3319,7 +3296,7 @@ public class HPWindow extends JFrame implements Runnable {
             legalityWindow.pack();
             legalityWindow.setVisible(true);
             if (legalityOptions.isValid()) {
-            	LabelSet actionSet = labelSetConstants.get(legalityOptions.actionSet);
+                LabelSet actionSet = labelSetConstants.get(legalityOptions.actionSet);
 
                 showOutput();
                 ltsOutput.outln("==== Legality check ====");
@@ -3330,15 +3307,15 @@ public class HPWindow extends JFrame implements Runnable {
 
                 String resultMessage;
                 if (a.isLegal()) 
-                	resultMessage = String.format("Result: Yes, %s is legal w.r.t %s with controlled actions %s",
-                		current.machines.get(legalityOptions.source).name,
-                    	current.machines.get(legalityOptions.target).name,
-                    	legalityOptions.actionSet);
+                    resultMessage = String.format("Result: Yes, %s is legal w.r.t %s with controlled actions %s",
+                        current.machines.get(legalityOptions.source).name,
+                        current.machines.get(legalityOptions.target).name,
+                        legalityOptions.actionSet);
                 else 
-                	resultMessage = String.format("Result: No, %s is not legal w.r.t %s with controlled actions %s",
-                			current.machines.get(legalityOptions.source).name,
-                        	current.machines.get(legalityOptions.target).name,
-                        	legalityOptions.actionSet);
+                    resultMessage = String.format("Result: No, %s is not legal w.r.t %s with controlled actions %s",
+                            current.machines.get(legalityOptions.source).name,
+                            current.machines.get(legalityOptions.target).name,
+                            legalityOptions.actionSet);
 
                 ltsOutput.outln(resultMessage);
                 ltsOutput.outln("==== Legality check finished ====");
@@ -3592,9 +3569,9 @@ public class HPWindow extends JFrame implements Runnable {
                     java.net.URL u = e.getURL();
                     // outln("URL: "+u);
                     if (u.toString().startsWith("http")) {
-                    	Desktop.getDesktop().browse(u.toURI());
+                        Desktop.getDesktop().browse(u.toURI());
                     } else
-                    	pane.setPage(u);
+                        pane.setPage(u);
                 } catch (Throwable t) {
                     ltsOutput.outln("" + e);
                 }
