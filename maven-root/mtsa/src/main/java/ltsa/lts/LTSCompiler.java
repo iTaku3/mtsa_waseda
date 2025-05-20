@@ -37,6 +37,7 @@ public class LTSCompiler {
     private LTSOutput output;
     private String currentDirectory;
     private Symbol current;
+    public  boolean do_minimise = false;
 
     static Hashtable<String, ProcessSpec> processes;
     static Hashtable<String, CompactState> compiled;
@@ -2248,6 +2249,9 @@ public class LTSCompiler {
                 //this.parseControllableActionSet(goal);
             } else if (current.kind == Symbol.BUCHI) {
         	    goal.setBuchiDefinitions(this.controllerSubGoal());
+            } else if (current.kind == Symbol.MINIMIZE) {
+                this.do_minimise = true;
+                next_symbol();
             } else
                 error("Controller symbol expected");
 

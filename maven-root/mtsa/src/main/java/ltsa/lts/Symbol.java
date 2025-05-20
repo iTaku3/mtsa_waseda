@@ -282,6 +282,8 @@ public class Symbol {
 			return "string";
 		case UNKNOWN_TYPE:
 			return "unknown";
+		case MINIMIZE:
+			return "minimize";
 
 			// _______________________________________________________________________________________
 
@@ -536,6 +538,7 @@ public class Symbol {
 	public static final int ACTIVITY_FLUENTS = 3020;
 	public static final int BUCHI = 3021;
 	public static final int RTC_ANALYSIS_CONTROLLER = 3022;
+	public static final int MINIMIZE = 3023;
 
 	public static final int CONTROL_STACK = 3101;
 	public static final int CONTROL_TIER = 3102;
@@ -710,6 +713,7 @@ public class Symbol {
 		blueSymbols.add(DISTURBANCE);
 		blueSymbols.add(ENACTMENT);
 		blueSymbols.add(STEPWISE_CONTROLLER);
+		blueSymbols.add(MINIMIZE);
 	}
 
 	@Override

@@ -1971,13 +1971,16 @@ public class HPWindow extends JFrame implements Runnable {
 
     /* AMES: promoted visibility from private to implement lts.LTSOutput */
 
-
+    public boolean do_minimise_flag = false;
     private CompositeState docompile() {
         resetInput();
         CompositeState cs = null;
         LTSCompiler comp = new LTSCompiler(ltsInputString, ltsOutput, currentDirectory);
         try {
             comp.compile();
+            // ltsOutput.outln("**** do_minimise: " + do_minimise_flag);
+            do_minimise_flag = comp.do_minimise;
+            // ltsOutput.outln("**** do_minimise: " + do_minimise_flag);
             if (!parse(comp.getComposites(), comp.getProcesses(), comp.getExplorers())) {
                 return null;
             }
@@ -2149,6 +2152,7 @@ public class HPWindow extends JFrame implements Runnable {
         long startTime = System.currentTimeMillis();
 
             compile();
+            boolean do_minimise = do_minimise_flag;
             ltsOutput.outln("Compile is Complete!");
             ltsOutput.outln("");
             ltsOutput.outln("");
@@ -2157,6 +2161,7 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("                    Composition                    ");
             ltsOutput.outln("===================================================");
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
             postState(current);
 
             int[] current_states = new int[current.machines.size() + 1];
@@ -2270,12 +2275,15 @@ public class HPWindow extends JFrame implements Runnable {
             // ltsOutput.outln("[info] current.machines : " + current.machines);
             // ltsOutput.outln("");
 
-            boolean do_minimise = true; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+            boolean do_minimise = do_minimise_flag;
+            // boolean do_minimise; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+            // boolean do_minimise = false;
             String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
             List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
             List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
             List<CompactState> unsynthesized_env_list = new ArrayList<>();
             List<CompactState> unsynthesized_req_list = new ArrayList<>();
+            List<CompactState> all_output_models = new ArrayList<>(current.machines); //出力用のモデル
 
             /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
             /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
@@ -2317,7 +2325,7 @@ public class HPWindow extends JFrame implements Runnable {
             // 合成
             long startTime_step2 = System.currentTimeMillis();
                 ltsOutput.outln("[info] STEP2 : Synthesizing from synthesis process...");
-                synthesisFromSynthesisProcess(synthesisProcess, all_models, do_minimise);
+                synthesisFromSynthesisProcess(synthesisProcess, all_models, all_output_models, do_minimise);
                 ltsOutput.outln("[info] STEP2 : Completed!");
                 ltsOutput.outln("");
             long endTime_step2 = System.currentTimeMillis();
@@ -2326,7 +2334,8 @@ public class HPWindow extends JFrame implements Runnable {
 
         //データを整理して出力に格納
         // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
-        current.machines.addAll(all_req_models);
+        current.machines.addAll(all_output_models);
+        // current.machines.addAll(all_req_models);
         postState(current);
 
         //今回の制御器合成の詳細の出力
@@ -2439,7 +2448,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Where used : 
     // Parameters : do_minimise
     // Comment    : 合成プロセスを表示する．
-    private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, boolean do_minimise){
+    private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, List<CompactState> all_output_models, boolean do_minimise){
         for (CompactState partController : synthesisProcess){
             Vector<CompactState> this_step_machines = new Vector<>();
             for (String model_name : partController.inputModels) {
@@ -2462,6 +2471,7 @@ public class HPWindow extends JFrame implements Runnable {
             
             checkMemoryUsage();
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+            ltsOutput.outln("do_minimise : " + do_minimise);
             if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
             checkMemoryUsage();
 
@@ -2469,6 +2479,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.machines.add(current.composition);
             current.composition.initActions();
             all_models.add(current.composition);
+            all_output_models.add(current.composition);
         }
     }
 
