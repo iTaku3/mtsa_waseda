@@ -1888,7 +1888,7 @@ public class TransitionSystemDispatcher {
                     /* 環境モデルを全て削除して，出力と要求のセット（compositeState.machines）を作成 */
                     List<CompactState> removeMachineList = new ArrayList<>();
                     for (CompactState machine : compositeState.machines) {
-                        if (!machine.name.startsWith("P_"))
+                        if (!machine.hasERROR())
                             removeMachineList.add(machine);
                     }
                     for(CompactState removeMachine : removeMachineList) {
