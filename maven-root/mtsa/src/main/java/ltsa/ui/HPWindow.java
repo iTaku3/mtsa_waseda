@@ -2280,7 +2280,6 @@ public class HPWindow extends JFrame implements Runnable {
             /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
             for (CompactState machine : all_models) {
                 machine.initActions();
-                // if (machine.name.startsWith("P_"))
                 if (machine.hasERROR()) unsynthesized_req_list.add(machine);
                 else unsynthesized_env_list.add(machine);
             }
