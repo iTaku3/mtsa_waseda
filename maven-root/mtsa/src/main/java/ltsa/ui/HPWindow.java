@@ -2123,9 +2123,29 @@ public class HPWindow extends JFrame implements Runnable {
     public static int maxStates;
     public static int maxTransitions;
 
+    public static long startTime;
+    public static long endTime;
+    public static long executionTime;
+
+    public static long startTime_compile;
+    public static long endTime_compile;
+    public static long executionTime_compile;
+
+    public static long startTime_policy;
+    public static long endTime_policy;
+    public static long executionTime_policy;
+
+    public static long startTime_synthesis;
+    public static long endTime_synthesis;
+    public static long executionTime_synthesis;
+
+    public static long startTime_minimise;
+    public static long endTime_minimise;
+    public static long executionTime_minimise;
+
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
-        long free = Runtime.getRuntime().freeMemory() /1000;
+        long free = Runtime.getRuntime().freeMemory() / 1000;
         long used = total - free;
 
         if (used > maxMemoryUsage) {
@@ -2133,9 +2153,11 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
     public static void checkSpace(int states, int transitions) {
+        if (states > maxStates) {
+            maxStates = states;
+        }
         if (transitions > maxTransitions) {
             maxTransitions = transitions;
-            maxStates = states;
         }
     }
 
@@ -2144,27 +2166,41 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+        executionTime = 0;
+        executionTime_compile = 0;
+        executionTime_synthesis = 0;
+
         ltsOutput.clearOutput();
-        long startTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
 
-            compile();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("                    Composition                    ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            postState(current);
+        startTime_compile = System.currentTimeMillis();
+        compile();
+        endTime_compile = System.currentTimeMillis();
+        
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                    Composition                    ");
+        ltsOutput.outln("===================================================");
 
-            int[] current_states = new int[current.machines.size() + 1];
-            for (int i = 0; i < current.machines.size() + 1; i++)
-                current_states[i] = 0;
-            layouts.setCurrentState(current_states);
+        startTime_synthesis = System.currentTimeMillis();
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        endTime_synthesis = System.currentTimeMillis();
 
-        long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms
+        postState(current);
+
+        int[] current_states = new int[current.machines.size() + 1];
+        for (int i = 0; i < current.machines.size() + 1; i++)
+            current_states[i] = 0;
+        layouts.setCurrentState(current_states);
+
+        endTime = System.currentTimeMillis();
+
+        executionTime_compile = endTime_compile - startTime_compile; //ms
+        executionTime_synthesis = endTime_synthesis - startTime_synthesis; //ms
+        executionTime = endTime - startTime; //ms
 
         /* When reusing other results */
         // ltsOutput.clearOutput();
@@ -2197,7 +2233,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * compile             : " + executionTime_compile);
+        ltsOutput.outln("     * synthesis           : " + executionTime_synthesis);
+        ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2207,23 +2246,41 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+        executionTime = 0;
+        executionTime_compile = 0;
+        executionTime_synthesis = 0;
+        executionTime_minimise = 0;
+
         ltsOutput.clearOutput();
-        long startTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
 
-            compile();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("               Composition + Minimise              ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput);
-            postState(current);
+        startTime_compile = System.currentTimeMillis();
+        compile();
+        endTime_compile = System.currentTimeMillis();
 
-        long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("               Composition + Minimise              ");
+        ltsOutput.outln("===================================================");
+
+        startTime_synthesis = System.currentTimeMillis();
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        endTime_synthesis = System.currentTimeMillis();
+
+        startTime_minimise = System.currentTimeMillis();
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        endTime_minimise = System.currentTimeMillis();
+
+        postState(current);
+
+        endTime = System.currentTimeMillis();
+        executionTime_compile = endTime_compile - startTime_compile; //ms
+        executionTime_synthesis = endTime_synthesis - startTime_synthesis; //ms
+        executionTime_minimise = endTime_minimise - startTime_minimise; //ms
+        executionTime = endTime - startTime; //ms
 
         /* When reusing other results */
         // ltsOutput.clearOutput();
@@ -2241,7 +2298,11 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * compile             : " + executionTime_compile);
+        ltsOutput.outln("     * synthesis           : " + executionTime_synthesis);
+        ltsOutput.outln("     * minimise            : " + executionTime_minimise);
+        ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2253,75 +2314,82 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+        executionTime = 0;
+        executionTime_compile = 0;
+        executionTime_policy = 0;
+        executionTime_synthesis = 0;
+        executionTime_minimise = 0;
+
         ltsOutput.clearOutput();
-        long startTime_all = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
 
-            compile();
-            // ltsOutput.clearOutput();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("           Stepwise Controller Synthesis           ");
-            ltsOutput.outln("===================================================");
-            // ltsOutput.outln("[info] current.name     : " + current.name);
-            // ltsOutput.outln("[info] current.machines : " + current.machines);
-            // ltsOutput.outln("");
+        startTime_compile = System.currentTimeMillis();
+        compile();
+        endTime_compile = System.currentTimeMillis();
 
-            String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
-            List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
-            List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
-            List<CompactState> unsynthesized_env_list = new ArrayList<>();
-            List<CompactState> unsynthesized_req_list = new ArrayList<>();
-            List<CompactState> all_output_models = new ArrayList<>(current.machines); //出力用のモデル
+        // ltsOutput.clearOutput();
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("           Stepwise Controller Synthesis           ");
+        ltsOutput.outln("===================================================");
+        // ltsOutput.outln("[info] current.name     : " + current.name);
+        // ltsOutput.outln("[info] current.machines : " + current.machines);
+        // ltsOutput.outln("");
 
-            /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
-            /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
-            for (CompactState machine : all_models) {
-                machine.initActions();
-                if (machine.hasERROR()) unsynthesized_req_list.add(machine);
-                else unsynthesized_env_list.add(machine);
-            }
-            List<CompactState> all_req_models = new ArrayList<>(unsynthesized_req_list);
+        String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
+        List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
+        List<CompactState> synthesisProcess = new ArrayList<>(); //過去も含めた部分制御器のリスト（最初に入ったものから合成）
+        List<CompactState> unsynthesized_env_list = new ArrayList<>();
+        List<CompactState> unsynthesized_req_list = new ArrayList<>();
+        List<CompactState> all_output_models = new ArrayList<>(current.machines); //出力用のモデル
 
-            // 事前分析１：影響量を考えた合成の段階化
-            long startTime_step1 = System.currentTimeMillis();
-                ltsOutput.outln("[info] STEP1 : Analyzing the synthesis process...");
-                analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
-                ltsOutput.outln("[info] STEP1 : Completed!");
-                ltsOutput.outln("");
-                ltsOutput.outln("---------------------------------------------------");
-                ltsOutput.outln("            Generate Synthesis Process             ");
-                ltsOutput.outln("---------------------------------------------------");
-                printSynthesisProcess(synthesisProcess);
-                ltsOutput.outln("");
-                ltsOutput.outln("");
-            long endTime_step1 = System.currentTimeMillis();
+        /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
+        /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
+        for (CompactState machine : all_models) {
+            machine.initActions();
+            if (machine.hasERROR()) unsynthesized_req_list.add(machine);
+            else unsynthesized_env_list.add(machine);
+        }
+        List<CompactState> all_req_models = new ArrayList<>(unsynthesized_req_list);
 
-            // 事前分析２：合成の効率化（部分制御器を一つしか含まない合成の集約）
-            // long startTime_step2 = System.currentTimeMillis();
-            //     ltsOutput.outln("[info] STEP2 : Optimizing the synthesis process...");
-            //     optimizeSynthesisProcess(synthesisProcess, final_model_name);
-            //     ltsOutput.outln("[info] STEP2 : Completed!");
-            //     ltsOutput.outln("");
-            //     ltsOutput.outln("---------------------------------------------------");
-            //     ltsOutput.outln("            Optimized Synthesis Process            ");
-            //     ltsOutput.outln("---------------------------------------------------");
-            //     printSynthesisProcess(synthesisProcess);
-            //     ltsOutput.outln("");
-            //     ltsOutput.outln("");
-            // long endTime_step2 = System.currentTimeMillis();
+        // 事前分析１：影響量を考えた合成の段階化
+        startTime_policy = System.currentTimeMillis();
+        ltsOutput.outln("[info] STEP1 : Analyzing the synthesis process...");
+        analysisSynthesisProcess(synthesisProcess, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
+        ltsOutput.outln("[info] STEP1 : Completed!");
+        ltsOutput.outln("");
+        ltsOutput.outln("---------------------------------------------------");
+        ltsOutput.outln("            Generate Synthesis Process             ");
+        ltsOutput.outln("---------------------------------------------------");
+        printSynthesisProcess(synthesisProcess);
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        endTime_policy = System.currentTimeMillis();
 
-            // 合成
-            long startTime_step2 = System.currentTimeMillis();
-                ltsOutput.outln("[info] STEP2 : Synthesizing from synthesis process...");
-                synthesisFromSynthesisProcess(synthesisProcess, all_models, all_output_models);
-                ltsOutput.outln("[info] STEP2 : Completed!");
-                ltsOutput.outln("");
-            long endTime_step2 = System.currentTimeMillis();
+        // 事前分析２：合成の効率化（部分制御器を一つしか含まない合成の集約）
+        // long startTime_optimise = System.currentTimeMillis();
+        //     ltsOutput.outln("[info] STEP2 : Optimizing the synthesis process...");
+        //     optimizeSynthesisProcess(synthesisProcess, final_model_name);
+        //     ltsOutput.outln("[info] STEP2 : Completed!");
+        //     ltsOutput.outln("");
+        //     ltsOutput.outln("---------------------------------------------------");
+        //     ltsOutput.outln("            Optimized Synthesis Process            ");
+        //     ltsOutput.outln("---------------------------------------------------");
+        //     printSynthesisProcess(synthesisProcess);
+        //     ltsOutput.outln("");
+        //     ltsOutput.outln("");
+        // long endTime_optimise = System.currentTimeMillis();
 
-        long endTime_all = System.currentTimeMillis();
+        // 合成            
+        ltsOutput.outln("[info] STEP2 : Synthesizing from synthesis process...");
+        synthesisFromSynthesisProcess(synthesisProcess, all_models, all_output_models);
+        ltsOutput.outln("[info] STEP2 : Completed!");
+        ltsOutput.outln("");
+
+        endTime = System.currentTimeMillis();
 
         //データを整理して出力に格納
         // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
@@ -2330,18 +2398,22 @@ public class HPWindow extends JFrame implements Runnable {
         postState(current);
 
         //今回の制御器合成の詳細の出力
-        long executionTime_all = endTime_all - startTime_all; //ms
-        long executionTime_step1 = endTime_step1 - startTime_step1; //ms
-        long executionTime_step2 = endTime_step2 - startTime_step2; //ms
+        executionTime_compile = endTime_compile - startTime_compile; //ms
+        executionTime_policy = endTime_policy - startTime_policy; //ms
+        executionTime = endTime - startTime; //ms
+
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Stepwise Controller Synthesis is Complete! (minimise)");
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime_all   + "(all process)");
-        ltsOutput.outln("                           : " + executionTime_step1 + "(step1)");
-        ltsOutput.outln("                           : " + executionTime_step2 + "(step2)");
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * compile             : " + executionTime_compile);
+        ltsOutput.outln("     * policy              : " + executionTime_policy);
+        ltsOutput.outln("     * synthesis           : " + executionTime_synthesis);
+        ltsOutput.outln("     * minimise            : " + executionTime_minimise);
+        ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2462,8 +2534,17 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("---------------------------------------------------");
             
             checkMemoryUsage();
+
+            startTime_synthesis = System.currentTimeMillis();
             TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+            endTime_synthesis = System.currentTimeMillis();
+            executionTime_synthesis = executionTime_synthesis + endTime_synthesis - startTime_synthesis;
+
+            startTime_minimise = System.currentTimeMillis();
             if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
+            endTime_minimise = System.currentTimeMillis();
+            executionTime_minimise = executionTime_minimise + endTime_minimise - startTime_minimise;
+
             checkMemoryUsage();
 
             current.machines.clear();
