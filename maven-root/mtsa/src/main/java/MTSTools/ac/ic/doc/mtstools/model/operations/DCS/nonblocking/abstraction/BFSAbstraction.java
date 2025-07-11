@@ -3,9 +3,11 @@ package MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.abstraction
 import static java.util.Collections.sort;
 
 import java.util.Comparator;
+import java.util.Set;
 
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.Compostate;
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.abstraction.Recommendation;
+import java.util.List;
 
 
 public class BFSAbstraction<State, Action> extends Abstraction<State, Action> {
@@ -19,10 +21,10 @@ public class BFSAbstraction<State, Action> extends Abstraction<State, Action> {
     }
 
     @Override
-    public void eval(Compostate<State, Action> compostate) {
+    public void eval(Compostate<State, Action> compostate, List<Set<State>> knownMarked, List<Set<State>> goals, List<String> comparison) {
         //this needs to set "recommendations", "recommendations", "recommendit" so the compostate can work as usual
         if (!compostate.isEvaluated()) {
-            compostate.setupRecommendations(); //initiliazing recommendations, necesary for compostates
+            compostate.setupRecommendations(comparison); //initiliazing recommendations, necesary for compostates
             for (HAction<State, Action> action : compostate.getTransitions()) {
                 int priorityOfAction = counter;
                 ++counter; //if we passed int MAX_VALUE

@@ -95,7 +95,7 @@ public class MonotonicAbstraction<State, Action> extends Abstraction<State, Acti
 
     /** Performs the heuristic evaluation by building the MA. */
     @Override
-    public void eval(Compostate<State, Action> compostate) {
+    public void eval(Compostate<State, Action> compostate, List<Set<State>> knownMarked, List<Set<State>> goals, List<String> comparison) {
         if (!compostate.isEvaluated()) {
             clear();
             buildMA(compostate);
@@ -225,7 +225,7 @@ public class MonotonicAbstraction<State, Action> extends Abstraction<State, Acti
 
     /** Extracts recommendations for the given state using the computed estimates. */
     private void extractRecommendations(Compostate<State, Action> compostate) {
-        compostate.setupRecommendations();
+        //compostate.setupRecommendations(comparison);
         for (HAction<State, Action> action : compostate.getTransitions()) {
             HEstimate<State, Action> estimate = estimates.get(action);
             estimate.reduceMax();

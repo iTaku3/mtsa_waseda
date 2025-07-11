@@ -14,7 +14,8 @@ public abstract class DirectedControllerSynthesis<State, Action> {
         Set<Action> controllable,
         boolean reachability,
         HashMap<Integer, Integer> guarantees,
-        HashMap<Integer, Integer> assumptions);
+        HashMap<Integer, Integer> assumptions,
+        List<String> comparison);
 
     public abstract Statistics getStatistics();
 }

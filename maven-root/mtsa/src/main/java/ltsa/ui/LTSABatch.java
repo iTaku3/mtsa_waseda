@@ -346,6 +346,7 @@ implements LTSManager, LTSInput, LTSOutput, LTSError {
 			case ".py":    translator = new CTLPYTranslator(); break;
 			//case ".xltl":  translator = new XLTLTranslator(); break;
 			case ".slugs": translator = new SlugsTranslator(); break;
+			case ".fsp":   translator = new FSPTranslator(); break;
 			default:
 				System.out.println("Invalid extension for output file.\n");
 				showUsage();

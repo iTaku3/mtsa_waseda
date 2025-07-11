@@ -22,7 +22,6 @@ public class PrintTransitions {
   }
 
   public void print(LTSOutput output, int MAXPRINT) {
-    int linecount = 0;
     // print name
     output.outln("Process:");
     output.outln("\t" + sm.name);
@@ -31,10 +30,20 @@ public class PrintTransitions {
     output.outln("\t" + sm.maxStates);
 
     output.outln("Transitions:");
-    output.outln("\t" + sm.name + " = Q0,");
+    output.out("\t");
+    String fsp = getFSP(MAXPRINT);
+    output.outln(fsp);
+  }
+
+  public String getFSP(int MAXPRINT) {
+    int linecount = 0;
+    StringBuilder fsp = new StringBuilder();
+
+    fsp.append(sm.name).append(" = Q0,");
+    fsp.append("\n");
 
     for (int i = 0; i < sm.maxStates; i++) {
-      output.out("\tQ" + i + "\t= ");
+      fsp.append("\tQ").append(i).append("\t= ");
       EventState current;
       boolean isProbabilistic = isProbabilisticMachine(sm);
       if (!isProbabilistic) {
@@ -45,18 +54,19 @@ public class PrintTransitions {
         current = sm.states[i];
       }
       if (current == null) {
-        if (i == sm.endseq) output.out("END");
-        else output.out("STOP");
-        if (i < sm.maxStates - 1) output.outln(",");
-        else output.outln(".");
+        if (i == sm.endseq) fsp.append("END");
+        else fsp.append("STOP");
+        if (i < sm.maxStates - 1) fsp.append(",\n");
+        else fsp.append(".\n");
+        fsp.append("\n");
       } else {
-        output.out("(");
+        fsp.append("(");
         EventState nextList = current;
         while (current != null) {
           linecount++;
           if (linecount > MAXPRINT) {
-            output.outln("EXCEEDED MAXPRINT SETTING");
-            return;
+            fsp.append("EXCEEDED MAXPRINT SETTING\n");
+            return fsp.toString();
           }
           if (isProbabilistic) {
             ProbabilisticEventState prob = (ProbabilisticEventState) current;
@@ -66,23 +76,20 @@ public class PrintTransitions {
             String[] events = new String[1];
             events[0] = sm.alphabet[event];
             Alphabet a = new Alphabet(events);
-            output.out(a.toString() + " -> {");
+            fsp.append(a.toString()).append(" -> {");
 
             while (prob != null) {
               BigDecimal probability = prob.getProbability();
-              output.out(
-                  ((probability.equals(BigDecimal.valueOf(1))) ? " 1.0" : probability)
-                      + " : Q"
-                      + prob.next);
+              fsp.append((probability.equals(BigDecimal.valueOf(1))) ? " 1.0" : probability).append(" : Q").append(prob.next);
               prob = prob.probTr;
               if (prob != null) {
                 assert (prob.getBundle() == bundle);
                 assert (prob.getEvent() == event);
-                output.out(" + ");
+                fsp.append(" + ");
               }
             }
 
-            output.out("}");
+            fsp.append("}");
 
             // a -> {0.4 : Q14 + 0.6 : Q1}
             if (current.nondet == null) {
@@ -94,23 +101,23 @@ public class PrintTransitions {
           } else {
             String[] events = EventState.eventsToNext(current, sm.alphabet);
             Alphabet a = new Alphabet(events);
-            output.out(a.toString() + " -> ");
-            if (current.next < 0) output.out("ERROR");
-            else output.out("Q" + current.next);
+            fsp.append(a.toString()).append(" -> ");
+            if (current.next < 0) fsp.append("ERROR");
+            else fsp.append("Q").append(current.next);
 
             current = current.list;
           }
 
           if (current == null) {
-            if (i < sm.maxStates - 1) output.outln("),");
+            if (i < sm.maxStates - 1) fsp.append("),\n");
             else {
-              output.out(")");
+              fsp.append(")");
               Set<String> remainingLabelsSet = new HashSet<>();
               Arrays.stream(sm.getAlphabet())
-                  .filter(label -> !sm.usesLabel(label))
-                  .forEach(remainingLabelsSet::add);
+                      .filter(label -> !sm.usesLabel(label))
+                      .forEach(remainingLabelsSet::add);
               if (remainingLabelsSet.size() != 0) {
-                output.out("+{");
+                fsp.append("+{");
                 Iterator<String> I = remainingLabelsSet.iterator();
                 String[] alphabetArray = new String[remainingLabelsSet.size()];
                 int pos = 0;
@@ -118,16 +125,17 @@ public class PrintTransitions {
                   alphabetArray[pos++] = I.next();
                 }
                 Alphabet remaining = new Alphabet(alphabetArray);
-                remaining.printExpandLabels(output, 0, true);
-                output.out("}.");
+                fsp.append(remaining.toString());
               }
+              fsp.append(".");
             }
           } else {
-            output.out("\n\t\t  |");
+            fsp.append("\n\t\t  |");
           }
         }
       }
     }
+    return fsp.toString();
   }
 
   private String prettyPrintAlphabet(Set<String> alphabet) {

@@ -2,6 +2,7 @@ package MTSSynthesis.controller.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +24,8 @@ public class ControllerGoal<Action> implements Cloneable {
 
 	private Set<Fluent> fluents;
 	private Set<Action> controllableActions;
+
+	private List<String> comparisonactions;////////////////////
 	private Set<Fluent> fluentsInFaults;
 	private boolean isPermissive;
 	private boolean isNonBlocking;
@@ -47,6 +50,7 @@ public class ControllerGoal<Action> implements Cloneable {
 
 		this.fluents = new HashSet<>();
 		this.controllableActions = new HashSet<>();
+		this.comparisonactions = new ArrayList<>();/////////////////
 		this.concurrencyFluents = new HashSet<>();
 		this.activityFluents = new HashSet<>();
 		this.lazyness = 0;
@@ -186,6 +190,16 @@ public class ControllerGoal<Action> implements Cloneable {
 	public List<Formula> getBuchi() {
 		return buchi;
 	}
+	public List<String> getComparisonactions() {////////////
+		//System.out.println("getCOm");
+		//System.out.println(comparisonactions);
+		return comparisonactions;
+	}
+
+	public void setComparisonActions(List<String> comparisonactions)//////////
+	{
+		this.comparisonactions = comparisonactions;
+	}
 
 	public Set<Action> getControllableActions() {
 		return controllableActions;
@@ -198,6 +212,15 @@ public class ControllerGoal<Action> implements Cloneable {
 
 	public void addAllControllableActions(Set<Action> controllableActions) {
 		this.controllableActions.addAll(controllableActions);
+	}
+
+	public void addAllComparisonActions(List<String> comparison) {
+		//System.out.println("before");
+		//System.out.println(comparison);
+
+		this.comparisonactions.addAll(comparison);
+		//System.out.println("after");
+		//System.out.println(comparisonactions);
 	}
 
 	public void addFault(Formula faultFormula) {

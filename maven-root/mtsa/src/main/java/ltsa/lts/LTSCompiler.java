@@ -156,7 +156,7 @@ public class LTSCompiler {
                 ce.output = fce.output;
                 ce.priorityIsLow = true;
                 ce.compositionType = 45;
-                ce.makeController = true; //default:true
+                ce.makeController = true;
                 ce.goal = explorerDefinition.getGoal();
                 ce.compiledProcesses = new Hashtable<String, CompactState>(0);
 
@@ -195,7 +195,7 @@ public class LTSCompiler {
                 ce.output = output;
                 ce.priorityIsLow = true;
                 ce.compositionType = 45;
-                ce.makeController = true; //default:true
+                ce.makeController = true;
                 ce.goal = explorerDefinition.getGoal();
                 ce.compiledProcesses = new Hashtable<String, CompactState>(0);
 
@@ -416,10 +416,6 @@ public class LTSCompiler {
 
                     output.outln("Explorer: " + explorerDefinition.getName());
 
-                } else if (current.kind == Symbol.STEPWISE_CONTROLLER) {
-                    next_symbol();
-                    output.outln("Stepwise Controller Synthesis");
-                    
                 } else if (current.kind == Symbol.UPDATING_CONTROLLER) {
                     next_symbol();
 
@@ -519,6 +515,7 @@ public class LTSCompiler {
                         || current.kind == Symbol.RTC_ANALYSIS_CONTROLLER
                         || current.kind == Symbol.HEURISTIC
                         || current.kind == Symbol.MONOLITHIC_DIRECTOR
+                        || current.kind == Symbol.PARTIAL_ORDER_REDUCTION
                         ) {
                     // TODO: refactor needed. Some of the operations can be combined, however
                     // the parser does not allow some valid combinations. Also the order of the operations
@@ -545,6 +542,7 @@ public class LTSCompiler {
                     boolean makeControlledDet = false;
                     boolean isHeuristic = false;
                     boolean isMonolithicDirector = false;
+                    boolean isPartialOrderReduction = false;
                     Symbol controlledActions = null;
                     LabelSet actionsToErrorSet = null;
 
@@ -628,6 +626,10 @@ public class LTSCompiler {
                         isMonolithicDirector = true;
                         next_symbol();
                     }
+                    if (current.kind == Symbol.PARTIAL_ORDER_REDUCTION) {
+                        isPartialOrderReduction = true;
+                        next_symbol();
+                    }
                     if (current.kind == Symbol.ENACTMENT) {
                         isEnactment = true;
                         next_symbol();
@@ -700,6 +702,7 @@ public class LTSCompiler {
                         c.isControlledDet = makeControlledDet;
                         c.isHeuristic = isHeuristic;
                         c.isMonolithicDirector = isMonolithicDirector;
+                        c.isPartialOrderReduction = isPartialOrderReduction;
                         c.setMakeComponent(makeComponent);
                         c.compositionType = compositionType;
 
@@ -2244,10 +2247,16 @@ public class LTSCompiler {
                 goal.setMaxSchedulers(value.getFirst());
                 goal.setMaxControllers(value.getSecond());
             } else if (current.kind == Symbol.CONTROLLABLE) {
+                //System.out.println("aaaaaaa");
                 goal.setControllableActionSet(this.parseActionSet());
                 //this.parseControllableActionSet(goal);
             } else if (current.kind == Symbol.BUCHI) {
         	    goal.setBuchiDefinitions(this.controllerSubGoal());
+            } else if (current.kind == Symbol.COMPARISON){
+                //System.out.println("yatteruyoLTScompiler");
+                goal.comparisonActionSet(this.parseActionSet2());
+                
+                //System.out.println(goal.getComparisonActionSet());
             } else
                 error("Controller symbol expected");
 
@@ -2473,6 +2482,15 @@ public class LTSCompiler {
 		Vector<String> actions = labelSet().getActions(null);
 		return actions;
 	}
+
+    private Vector<String> parseActionSet2() {//おそらくここでアクションをとってきているアクションをとってきている
+        expectBecomes();//=
+        next_symbol();//次のシンボル探索
+        Vector<String> actions = labelSet().getActions2(null);//ここでおそらく撮っている
+        //System.out.println("ACTIONS");
+        //System.out.println(actions);
+        return actions;
+    }
 
     private List<Symbol> controllerSubGoal() {
         expectBecomes();

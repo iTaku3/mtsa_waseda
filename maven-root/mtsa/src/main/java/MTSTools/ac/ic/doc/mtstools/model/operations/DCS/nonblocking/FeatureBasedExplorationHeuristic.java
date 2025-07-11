@@ -125,7 +125,7 @@ public class FeatureBasedExplorationHeuristic<State, Action> implements Explorat
         if(debugging) printFeatures();
     }
 
-    public Pair<Compostate<State, Action>, HAction<State, Action>> getNextAction() {
+    public Pair<Compostate<State, Action>, HAction<State, Action>> getNextAction(List<String> comparison) {
         assert explorationFrontier.size() > 0;
         // printFrontier();
         computeFeatures();
@@ -161,10 +161,10 @@ public class FeatureBasedExplorationHeuristic<State, Action> implements Explorat
         }
     }
 
-    public void setInitialState(Compostate<State, Action> state) {
+    public void setInitialState(Compostate<State, Action> state, List<String> comparison) {
     }
 
-    public void newState(Compostate<State, Action> state, Compostate<State, Action> parent) {
+    public void newState(Compostate<State, Action> state, Compostate<State, Action> parent, List<String> comparison) {
         if (parent != null)
             state.setTargets(parent.getTargets());
 

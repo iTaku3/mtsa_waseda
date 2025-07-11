@@ -71,6 +71,7 @@ public class SymbolTable {
         addSymbols("starenv", Symbol.STARENV);
         addSymbols("plant", Symbol.PLANT);
         addSymbols("controllerSpec", Symbol.GOAL);
+        addSymbols("comparison", Symbol.COMPARISON);//
         addSymbols("safety", Symbol.SAFETY);
         addSymbols("buchi", Symbol.BUCHI);
         addSymbols("assumption", Symbol.ASSUME);
@@ -110,9 +111,7 @@ public class SymbolTable {
         addSymbols("monolithicDirector", Symbol.MONOLITHIC_DIRECTOR);
         addSymbols("marking", Symbol.MARKING);
         addSymbols("disturbances", Symbol.DISTURBANCE);
-
-        //Stepwise controller synthesis
-        addSymbols("stepwiseController", Symbol.STEPWISE_CONTROLLER);
+        addSymbols("partialOrderReduction", Symbol.PARTIAL_ORDER_REDUCTION);
     }
 
     private static void addSymbols(String key, Integer elem) {

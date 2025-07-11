@@ -13,6 +13,7 @@ import org.apache.commons.lang.Validate;
 public class ControllerGoalDefinition {
 	private Symbol name;
 	private Vector<String> controllableActionSet;
+	private Vector<String> comparisonActionSet;
 	private List<Symbol> safetyDefinitions;
 	private List<Symbol> assumeDefinitions;
 	private List<Symbol> guaranteeDefinitions;
@@ -247,9 +248,17 @@ public class ControllerGoalDefinition {
 	public Vector<String> getControllableActionSet() {
 		return controllableActionSet;
 	}
+	public Vector<String> getComparisonActionSet() {
+		return comparisonActionSet;
+	}
 
 	public void setControllableActionSet(Vector<String> controllable) {
 		this.controllableActionSet = controllable;
+	}
+	public void comparisonActionSet(Vector<String> comparison) {//ここ通っている
+		this.comparisonActionSet = comparison;
+		//System.out.println("syhajhfa");
+		//System.out.println(comparison);
 	}
 
 	public void setFaultsDefinitions(List<Symbol> faultsDefinitions) {

@@ -11,6 +11,10 @@ import ltsa.lts.ltl.FormulaFactory;
 import ltsa.lts.ltl.PredicateDefinition;
 
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -38,13 +42,18 @@ public class GoalDefToControllerGoal {
 	private void buildControllableActionSet(ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {
 
 		Vector<String> actions = goalDef.getControllableActionSet();
+		Vector<String> comparison = goalDef.getComparisonActionSet();
 		if (actions == null) {
 			if (goalDef.getMarkingDefinitions().isEmpty())
 				Diagnostics.fatal("Controllable actions set not defined.");
 			else
-				actions = new Vector<>();
+			{actions = new Vector<>();
+				comparison = new Vector<>();}
 		}
 		goal.addAllControllableActions(new HashSet<>(actions));
+		List<String> comparisonList = new ArrayList<>(comparison);
+		//System.out.println(comparisonList);
+		goal.addAllComparisonActions(new ArrayList<>(comparisonList));
 	}
 	
 	private void buildHeuristicActionSets(ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {

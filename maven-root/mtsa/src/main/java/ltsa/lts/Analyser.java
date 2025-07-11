@@ -2,7 +2,6 @@ package ltsa.lts;
 
 import ltsa.lts.ltl.FluentTrace;
 import ltsa.lts.util.LTSUtils;
-import ltsa.ui.HPWindow;
 
 import java.util.*;
 
@@ -531,9 +530,7 @@ public class Analyser implements Animator, Automata {
         Runtime r = Runtime.getRuntime();
         output.outln("-- States: " + states + " Transitions: " + transitions
                 + " Memory used: " + (r.totalMemory() - r.freeMemory()) / 1000
-                + "KB");
-        HPWindow.checkMemoryUsage();
-        HPWindow.checkSpace(states,transitions);
+                + "K");
     }
 
     private int endSequence = LTSConstants.NO_SEQUENCE_FOUND;

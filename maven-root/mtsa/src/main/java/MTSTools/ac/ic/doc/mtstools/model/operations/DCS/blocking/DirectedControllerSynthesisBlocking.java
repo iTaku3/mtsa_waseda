@@ -122,7 +122,8 @@ public class DirectedControllerSynthesisBlocking<State, Action> extends Directed
         Set<Action> controllable,
         boolean reachability,
         HashMap<Integer, Integer> guarantees,
-        HashMap<Integer, Integer> assumptions)
+        HashMap<Integer, Integer> assumptions,
+        List<String> comparison)
     {
 
         //LOGGER

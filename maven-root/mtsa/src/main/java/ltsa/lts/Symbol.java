@@ -248,6 +248,8 @@ public class Symbol {
 			return "permissive";
 		case CONTROLLABLE:
 			return "controllable";
+		case COMPARISON:
+			return "comparison";
 		case CONTROLLED_DET:
 			return "controllable determinisation";
 		case CONTROLLER_NB:
@@ -401,8 +403,8 @@ public class Symbol {
 		case WEAKUNTIL:
 			return "W";
 
-		// _______________________________________________________________________________________
-		// Others
+			// _______________________________________________________________________________________
+			// Others
 
 		case LCURLY:
 			return "{";
@@ -426,12 +428,8 @@ public class Symbol {
 			return "->";
 		case BACKSLASH:
 			return "\\";
-		
-		// _______________________________________________________________________________________
-		// Stepwise Controller Synthesis
-
-		case STEPWISE_CONTROLLER:
-			return "stepwiseController";
+			// _______________________________________________________________________________________
+			// Special
 
 		// _______________________________________________________________________________________
 		// Probabilistic
@@ -537,13 +535,15 @@ public class Symbol {
 	public static final int BUCHI = 3021;
 	public static final int RTC_ANALYSIS_CONTROLLER = 3022;
 
+	public static final int COMPARISON = 3023;//
+
 	public static final int CONTROL_STACK = 3101;
 	public static final int CONTROL_TIER = 3102;
 	
 	public static final int ENACTMENT = 3103; 
 	// _______________________________________________________________________________________
 	// Updating controller symbols
-
+	
 	public static final int UPDATING_CONTROLLER = 3200; // 3200 series are for updating controller problem
 	public static final int OLD_CONTROLLER = 3201;
 	public static final int MAPPING = 3202;
@@ -568,6 +568,7 @@ public class Symbol {
 	public static final int MARKING = 3401;
 	public static final int MONOLITHIC_DIRECTOR = 3402;
 	public static final int DISTURBANCE = 3403;
+	public static final int PARTIAL_ORDER_REDUCTION = 3404;
 	
 	// _______________________________________________________________________________________
 	// Expression symbols
@@ -632,10 +633,6 @@ public class Symbol {
 	public static final int COMMENT = 100;
 
 	// _______________________________________________________________________________________
-	// StepwiseControllerSynthesis
-
-	public static final int STEPWISE_CONTROLLER = 10000;
-
 	// _______________________________________________________________________________________
 
 	public static final int INT_VALUE = 125;
@@ -650,6 +647,7 @@ public class Symbol {
 	
 	static {
 		blueSymbols.add(OPTIMISTIC);
+		blueSymbols.add(COMPARISON);//
 		blueSymbols.add(PESSIMISTIC);
 		blueSymbols.add(CLOSURE);
 		blueSymbols.add(ABSTRACT);
@@ -706,10 +704,10 @@ public class Symbol {
 		blueSymbols.add(FOREACH);
 		blueSymbols.add(HEURISTIC);
 		blueSymbols.add(MONOLITHIC_DIRECTOR);
+		blueSymbols.add(PARTIAL_ORDER_REDUCTION);
 		blueSymbols.add(MARKING);
 		blueSymbols.add(DISTURBANCE);
 		blueSymbols.add(ENACTMENT);
-		blueSymbols.add(STEPWISE_CONTROLLER);
 	}
 
 	@Override

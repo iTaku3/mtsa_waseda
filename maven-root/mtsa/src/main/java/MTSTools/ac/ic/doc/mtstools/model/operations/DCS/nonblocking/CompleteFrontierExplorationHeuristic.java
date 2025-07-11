@@ -14,21 +14,40 @@ import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
 
-public class OpenSetExplorationHeuristic<State, Action> implements ExplorationHeuristic<State, Action> {
+import static java.util.Collections.emptyList;
 
-    /** Queue of open states, the most promising state should be expanded first. */
-    Queue<Compostate<State, Action>> open;
+/**
+ * This class implements ExplorationHeuristic by completely relying on the underlying heuristic
+ * to rank the states/transitions of the entire frontier. In contrast to OpenSetExplorationHeuristic,
+ * it does not restrict the states of the frontier in any way.
+ */
+public class CompleteFrontierExplorationHeuristic<State, Action> implements ExplorationHeuristic<State, Action> {
+
+    /** All the states of the frontier (only NONE, of course), ranked by the heursitic abstraction. */
+    Queue<Compostate<State, Action>> frontier;
 
     /** Abstraction used to rank the transitions from a state. */
     Abstraction<State,Action> abstraction;
 
     DirectedControllerSynthesisNonBlocking<State,Action> dcs;
+
     private final Comparator<Compostate<State, Action>> compostateRanker;
 
     private List<Set<State>> knownMarked;
     private List<Set<State>> goals;
 
-    public OpenSetExplorationHeuristic(
+    /** If true, the estimates for a state are recomputed every time they may change: when a new marked state or goal is found. */
+    // Ver Tesis de Nico Pazos para más detalles, capítulo "Mejoras propuestas"
+    private final static Boolean RECOMPUTE_ESTIMATES_ON_CHANGE = true;
+
+    /** seq (as in 'sequence') is a number that is incremented every time a marked state or a goal is reached.
+     * When the estimates for a state are computed, the seq is stored in the state; if at some point a state's
+     * seq is lower than the current seq, it means that the state's estimates are outdated and need to be recomputed.
+     */
+    public Integer seq = 0;
+    
+
+    public CompleteFrontierExplorationHeuristic(
             DirectedControllerSynthesisNonBlocking<State,Action> dcs,
             DirectedControllerSynthesisNonBlocking.HeuristicMode mode) {
 
@@ -41,80 +60,95 @@ public class OpenSetExplorationHeuristic<State, Action> implements ExplorationHe
             this.goals.add(new HashSet<>());
         }
 
-        //FIXME, this is only done here until it can be chosen from the FSP instead of hardcoded
         switch (mode){
             case Monotonic:
                 abstraction = new MonotonicAbstraction<>(dcs);
-                // System.err.println("Heuristic mode: MA");
                 break;
             case Ready:
                 abstraction = new ReadyAbstraction<>(dcs.ltss, dcs.defaultTargets, dcs.alphabet);
                 compostateRanker = new ReadyAbstraction.CompostateRanker<>();
-                // System.err.println("Heuristic mode: RA");
                 break;
             case BFS:
                 abstraction = new BFSAbstraction<>();
-                // System.err.println("Heuristic mode: BFS");
                 break;
             case Debugging:
                 abstraction = new DebuggingAbstraction<>();
-                // System.err.println("Heuristic mode: Debugging");
                 break;
         }
         this.compostateRanker = compostateRanker;
-        open = new PriorityQueue<>(this.compostateRanker);
+        frontier = new PriorityQueue<>(compostateRanker);
     }
 
     public Pair<Compostate<State,Action>, HAction<State,Action>> getNextAction(List<String> comparison) {
-        Compostate<State,Action> state = getNextState();
-        while(fullyExplored(state) || !state.isLive()/* || state.getStates() == null*/){
-            state = getNextState();
-        }
+        Compostate<State,Action> state = getNextState(comparison);
         Recommendation<State, Action> recommendation = state.nextRecommendation();
-        // System.out.println(recommendation.getEstimate());
         return new Pair<>(state, recommendation.getAction());
     }
 
-    public Compostate<State,Action> getNextState() {
-        Compostate<State,Action> state = open.remove();
+    public Compostate<State,Action> getNextState(List<String> comparison) {
+        recomputeEstimates(comparison);
+        removeNotLive();
+        Compostate<State,Action> state = frontier.remove();
         state.inOpen = false;
         return state;
     }
 
-    public boolean somethingLeftToExplore() {
-        return !open.isEmpty();
-    }
-
-    /** Adds this state to the open queue (reopening it if was previously closed). */
-    public boolean open(Compostate<State,Action> state) {
-        // System.err.println("opening" + state);
-        boolean result = false;
-        state.live = true;
-        if (!state.inOpen) {
-            if (!state.hasStatusChild(Status.NONE)) {
-                result = addToOpen(state);
-            } else { // we are reopening a state, thus we reestablish it's exploredChildren instead
-                for (Pair<HAction<State, Action>,Compostate<State, Action>> transition : state.getExploredChildren()) {
-                    Compostate<State, Action> child = transition.getSecond();
-                    if (!child.isLive() && child.isStatus(Status.NONE) && !fullyExplored(child)) // !isGoal(child)
-                        result |= open(child);
-                }
-                if (!result || state.isControlled()){
-                    result = addToOpen(state);
-                }
+    private void recomputeEstimates(List<String> comparison) {
+        if (!RECOMPUTE_ESTIMATES_ON_CHANGE) return;
+        // TODO: creo que se puede optimizar esto, y no usar el .seq para nada.
+        // Tener un field bool "dirty" que se setea en "true" al encontrar un marked/goal,
+        // y se setean en "false" al final de este método.
+        boolean update = false;
+        for (Compostate<State,Action> state : this.frontier) {
+            if (state.seq < this.seq) {
+                update = true;
+                break;
             }
         }
-        return result;
+
+        if (update) {
+            Queue<Compostate<State, Action>> newFrontier = new PriorityQueue<>(this.compostateRanker);
+            for (Compostate<State,Action> state : this.frontier) {
+                if (fullyExplored(state) || !state.isLive()) {
+                    continue;
+                }
+                if (state.seq < this.seq) {
+                    state.clearRecommendations();
+                    state.recommendations = null;
+                    abstraction.eval(state, this.knownMarked, this.goals, comparison);
+                    state.seq = this.seq;
+                }
+                newFrontier.add(state);
+            }
+            this.frontier = newFrontier;
+        }
     }
 
-    public boolean addToOpen(Compostate<State, Action> state) {
-        state.inOpen = true;
-        return open.add(state);
+    private void removeNotLive() {
+        while (!frontier.isEmpty() && (
+            !frontier.peek().isStatus(Status.NONE) ||
+            fullyExplored(frontier.peek()) ||
+            !frontier.peek().isLive()
+        )) {
+            frontier.remove();
+        }
+    }
+    private void maybeAddToFrontier(Compostate<State, Action> state) {
+        if (state.isStatus(Status.NONE) && !fullyExplored(state) && !state.inOpen) {
+            state.inOpen = true;
+            state.live = true;
+            this.frontier.add(state);
+        }
+    }
+
+    public boolean somethingLeftToExplore() {
+        removeNotLive();
+        return !frontier.isEmpty();
     }
 
     public void setInitialState(Compostate<State, Action> state, List<String> comparison) {
-        open(state);
         newState(state, null, comparison);
+        maybeAddToFrontier(state);
     }
 
     public void newState(Compostate<State, Action> state, Compostate<State, Action> parent, List<String> comparison) {
@@ -122,11 +156,13 @@ public class OpenSetExplorationHeuristic<State, Action> implements ExplorationHe
             state.setTargets(parent.getTargets());
         }
         if (state.marked) {
+            this.seq++;
             state.addTargets(state);
             for (int lts = 0; lts < dcs.ltssSize; ++lts)
                 this.knownMarked.get(lts).add(state.getStates().get(lts));
         }
         abstraction.eval(state, this.knownMarked, this.goals, comparison);
+        state.seq = this.seq;
     }
 
     public void notifyExpandingState(Compostate<State, Action> parent, HAction<State, Action> action, Compostate<State, Action> state) {
@@ -137,30 +173,23 @@ public class OpenSetExplorationHeuristic<State, Action> implements ExplorationHe
         }
     }
 
-    public void notifyStateIsNone(Compostate<State, Action> state) {
-        if(!fullyExplored(state))
-            open(state);
-    }
-
     public void notifyStateSetErrorOrGoal(Compostate<State, Action> state) {
         state.live = false;
         state.clearRecommendations();
         if (state.isStatus(Status.GOAL)) {
+            this.seq++;
             for (int lts = 0; lts < dcs.ltssSize; ++lts)
                 this.goals.get(lts).add(state.getStates().get(lts));
         }
     }
 
     public void expansionDone(Compostate<State, Action> state, HAction<State, Action> action, Compostate<State, Action> child) {
-        if (state.isControlled() && state.isStatus(Status.NONE) && !fullyExplored(state)) {
-            open(state);
-        }
+        maybeAddToFrontier(state);
+        maybeAddToFrontier(child);
     }
-
     public void notifyExpansionDidntFindAnything(Compostate<State, Action> parent, HAction<State, Action> action, Compostate<State, Action> child) {
-        if (!child.isLive() && !fullyExplored(child)) {
-            open(child);
-        }
+    }
+    public void notifyStateIsNone(Compostate<State, Action> state) {
     }
 
     public boolean fullyExplored(Compostate<State, Action> state) {

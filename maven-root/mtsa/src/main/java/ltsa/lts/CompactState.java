@@ -12,22 +12,8 @@ public class CompactState implements Automata {
     public String name;
     public int maxStates;
     public String[] alphabet;
-    public Vector<String> actions;
     public EventState[] states; // each state is to a vector of <event, nextstate>
     private String mtsControlProblemAnswer;
-
-    /* Stepwise Controller Synthesis */
-    public List<String> inputModels;
-    public List<String> inputPartControllers;
-    public List<String> analyzedModels; //安全性が保証される要求
-    public List<String> componentModels; //部分合成の出力の場合のみ使われる（自身に含まれるモデルの構成）
-    public List<String> ideal_monitoredModels; //想定時のmonitoredModels（監視に必要な最小のモデル構成）
-    public List<String> actual_monitoredModels; //合成時のmonitoredModels
-    public List<String> tmp_actual_monitoredModels; //合成時のmonitoredModels
-    public int cost;
-    public int influence_quantity;
-    public int num_of_PartController;
-
 
     /* AMES: Promoted visibility to public. */
     public int endseq = -9999; //number of end of sequence state if any
@@ -107,17 +93,6 @@ public class CompactState implements Automata {
         }
         this.alphabet = newAlphabet.toArray(new String[newAlphabet.size()]);
 
-    }
-
-    public void initActions(){
-        this.actions = new Vector();
-        for( String alphabet : this.alphabet ) {
-            if (!alphabet.equals("tau")) {
-                if (!alphabet.contains("?")) {
-                    this.actions.add(alphabet);
-                }
-            }
-        }
     }
 
     public void initStates(MyList transitions) {

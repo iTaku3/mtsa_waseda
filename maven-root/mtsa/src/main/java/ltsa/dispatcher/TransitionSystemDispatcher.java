@@ -30,6 +30,7 @@ import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.blocking.DirectedControl
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.blocking.Statistics;
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.monolithicDirector.DirectedControllerSynthesisMonolithicDirector;
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.DirectedControllerSynthesisNonBlocking;
+import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.partialOrderReduction.DirectedControllerSynthesisPartialOrderReduction;
 import MTSTools.ac.ic.doc.mtstools.model.operations.impl.MTSPropertyToBuchiConverter;
 import MTSTools.ac.ic.doc.mtstools.model.operations.impl.WeakAlphabetMergeBuilder;
 import MTSTools.ac.ic.doc.mtstools.model.predicates.IsDeterministicMTSPredicate;
@@ -351,7 +352,7 @@ public class TransitionSystemDispatcher {
             mdpComposeAbstraction(compositeState, ltsOutput);
         } else if (compositeState.makeEnactment) {
             mdpComposeEnactment(compositeState, compositeState.enactmentControlled, ltsOutput);
-        } else if (!compositeState.isHeuristic) {
+        } else if (!compositeState.isHeuristic && !compositeState.isPartialOrderReduction) {
             compositeState.compose(ltsOutput);
         }
     }
@@ -681,6 +682,101 @@ public class TransitionSystemDispatcher {
         }
     }
 
+    public static void partialOrderReductionSynthesis(CompositeState compositeState, final LTSOutput output,
+                                                      Statistics... stats){
+        ControllerGoal<String> goal = compositeState.goal;
+
+        if (!goal.getGuarantees().isEmpty() || !goal.getAssumptions().isEmpty()) {
+            output.outln("partial order reduction director implements a nonblocking director for marked states, not goals and" +
+                    "assumptions as in GR1");
+            return;
+        }
+
+        // ltss
+        List<MarkedWithIllegalLTSImpl<Long, String>> ltss = new ArrayList<>();
+        Set<String> actions = new HashSet<>();
+        for (CompactState automata : compositeState.getMachines()) {
+            LTS<Long, String> lts = new LTSAdapter<>(
+                    AutomataToMTSConverter.getInstance().convert(automata), TransitionType.REQUIRED);
+            actions.addAll(lts.getActions());
+            MarkedWithIllegalLTSImpl<Long, String> markedWithIllegalLTS = new MarkedWithIllegalLTSImpl<>(lts.getInitialState());
+            markedWithIllegalLTS.addActions(lts.getActions());
+            markedWithIllegalLTS.addStates(lts.getStates());
+            for (Long s : lts.getStates()){
+                for (Pair<String, Long> trans : lts.getTransitions(s)){
+                    markedWithIllegalLTS.addTransition(s, trans.getFirst(), trans.getSecond());
+                }
+            }
+            for(Long s : markedWithIllegalLTS.getStates()) markedWithIllegalLTS.mark(s);
+            if(markedWithIllegalLTS.getStates().contains(-1L)) markedWithIllegalLTS.makeIllegal(-1L);
+            ltss.add(markedWithIllegalLTS);
+        }
+
+        //goal
+        FormulaToMarkedLTS ftm = new FormulaToMarkedLTS();
+        LTS<Long,String> formulaLTS;
+        Set<MTSSynthesis.ar.dc.uba.model.language.Symbol> initiating = new HashSet<>(), terminating = new HashSet<>();
+        for (String action : actions)
+            (goal.getMarking().contains(action) ? initiating : terminating).add(new SingleSymbol(action));
+        formulaLTS = ftm.translate(new FluentPropositionalVariable(new FluentImpl("Goal", initiating, terminating, false)));
+        MarkedWithIllegalLTSImpl<Long, String> markedWithIllegalLTS = new MarkedWithIllegalLTSImpl<>(formulaLTS.getInitialState());
+        markedWithIllegalLTS.addActions(formulaLTS.getActions());
+        markedWithIllegalLTS.addStates(formulaLTS.getStates());
+        for (Long s : formulaLTS.getStates()){
+            for (Pair<String, Long> trans : formulaLTS.getTransitions(s)){
+                markedWithIllegalLTS.addTransition(s, trans.getFirst(), trans.getSecond());
+            }
+        }
+        markedWithIllegalLTS.mark(1L);
+        ltss.add(0,markedWithIllegalLTS);
+
+        Set<String> controllables = new HashSet<>(goal.getControllableActions());
+
+        DirectedControllerSynthesisPartialOrderReduction<Long,String> dcs = new DirectedControllerSynthesisPartialOrderReduction<Long,String>();
+
+        output.outln("***********************************************************************************");
+        output.outln("Synthesizing controller by DCS...");
+        @SuppressWarnings("rawtypes")
+        final Statistics statistics = dcs.getStatistics();
+        new Thread() {
+            public void run() {
+                try {
+                    int expanded = 0;
+                    Thread.sleep(5000);
+                    while (statistics.isRunning()) {
+                        if (expanded < statistics.getExpandedStates()) {
+                            output.outln(statistics.toLive());
+                            expanded = statistics.getExpandedStates();
+                        }
+                        Thread.sleep(5000);
+                    }
+                } catch (InterruptedException e) {}
+            }
+        }.start();
+
+        LTS<Long,String> controller = dcs.synthesize(ltss, controllables);
+        if (stats.length > 0){ //if the optional parameter was used, save statistics values there
+            stats[0].copyValues(statistics);
+        }
+        if (controller != null) {
+            CompactState compState = MTSToAutomataConverter.getInstance().convert(
+                    new MTSAdapter<Long, String>(controller), compositeState.getName());
+
+            Vector<CompactState> result = new Vector<>(); //replace environment with controller.
+            result.add(compState);
+            compositeState.setMachines(result);
+            compositeState.compose(output);
+
+            output.outln("Controller [" + controller.getStates().size() + "] generated successfully.");
+            output.outln(statistics.toString());
+        } else {
+            compositeState.composition = null;
+            output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
+            output.outln(statistics.toString());
+        }
+
+    }
+
     /*stats is meant to be modified with relevant data to output*/
     public static void hcs(CompositeState compositeState, final LTSOutput output, Statistics... stats) {
         ControllerGoal<String> goal = compositeState.goal;
@@ -816,7 +912,7 @@ public class TransitionSystemDispatcher {
 		}.start();
 
 		LTS<Long,String> controller = dcs.synthesize(
-			ltss, goal.getControllableActions(), goal.isReachability(), guarantees, assumptions);
+			ltss, goal.getControllableActions(), goal.isReachability(), guarantees, assumptions, goal.getComparisonactions());
 
         if (stats.length > 0){ //if the optional parameter was used, save statistics values there
             stats[0].copyValues(statistics);
@@ -962,7 +1058,7 @@ public class TransitionSystemDispatcher {
         output.outln("Synthesizing controller by DCS...");
 
         dcs.setupSynthesis(
-                ltss, goal.getControllableActions(), goal.isReachability(), guarantees, assumptions);
+                ltss, goal.getControllableActions(), goal.isReachability(), guarantees, assumptions, goal.getComparisonactions());
 
         return dcs;
     }
@@ -1884,23 +1980,15 @@ public class TransitionSystemDispatcher {
                 CompactState synthesiseController = synthesise(compositeState, compositeState.goal, output);
                 if (synthesiseController != null) {
                     synthesiseController = applyLatencyHeuristic(compositeState, synthesiseController);
-                    // compositeState.setComposition(synthesiseController);
-                    /* 環境モデルを全て削除して，出力と要求のセット（compositeState.machines）を作成 */
-                    List<CompactState> removeMachineList = new ArrayList<>();
-                    for (CompactState machine : compositeState.machines) {
-                        if (!machine.hasERROR())
-                            removeMachineList.add(machine);
-                    }
-                    for(CompactState removeMachine : removeMachineList) {
-                        compositeState.machines.remove(compositeState.machines.indexOf(removeMachine));
-                    }
-                    compositeState.machines.add(0,synthesiseController); //replace environment with controller
+                    //compositeState.setComposition(synthesiseController);
+                    compositeState.machines.set(0,synthesiseController); //replace environment with controller
                     compositeState.compose(output);
 
                 } else if (!composition.name.contains(ControlConstants.NO_CONTROLLER)) {
                     // Issue #71
                     throw new LTSCompositionException("No controller");
                     //composition.name = composition.name + ControlConstants.NO_CONTROLLER;
+
                 }
             } else {
                 Diagnostics.fatal("The controller must have a goal.");

@@ -54,6 +54,34 @@ public class LabelSet {
       return v;
     }
 
+    public Vector<String> getActions2(Hashtable params) {
+        Vector<String> actions2 = getActions2(null,params);
+        return actions2;
+    }
+
+    public Vector<String> getActions2(Hashtable locals, Hashtable params) {
+        //System.out.println("aaaaa");
+        if (isConstant) return actions;
+        if (labels ==null) return null;
+        Vector<String> v = new Vector<String>();
+        //Hashtable dd = new Hashtable(); // detect and discard duplicates
+        Hashtable mylocals = locals!=null?(Hashtable)locals.clone():null;
+        Enumeration<ActionLabels> e = labels.elements();
+        while (e.hasMoreElements()) {
+            ActionLabels l = e.nextElement();
+            l.initContext(mylocals,params);
+            while(l.hasMoreNames()) {
+                String s = l.nextName();
+                //if (!dd.containsKey(s)) {
+                v.addElement(s);
+                //dd.put(s,s);
+                //}
+            }
+            l.clearContext();
+        }
+        return v;
+    }
+
     // >>> AMES: Enhanced Modularity
     public static Hashtable getConstants() {
     	return constants;

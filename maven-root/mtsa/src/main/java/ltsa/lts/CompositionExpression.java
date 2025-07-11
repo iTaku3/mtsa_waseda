@@ -184,6 +184,7 @@ public class CompositionExpression {
     boolean makeControlStack = false;
     boolean isHeuristic = false;
     boolean isMonolithicDirector = false;
+    boolean isPartialOrderReduction = false;
     public Symbol goal;
     public Vector<Symbol> controlStackEnvironments;
     public Symbol enactmentControlled;
@@ -242,7 +243,7 @@ public class CompositionExpression {
                 flatmachines.addElement((CompactState) o);
             else {
                 CompositeState cs = (CompositeState) o;
-                if (isHeuristic) { // avoid computing the parallel composition in heuristic analysis
+                if (isHeuristic || isPartialOrderReduction) { // avoid computing the parallel composition in heuristic analysis or when using partial order reduction
 					flatmachines.addAll(cs.getMachines());
 				} else {
 	                // if (MTSUtils.isMTSRepresentation(cs)) {
@@ -334,6 +335,7 @@ public class CompositionExpression {
         c.makeControlStack = makeControlStack;
         c.isHeuristic = isHeuristic;
         c.isMonolithicDirector = isMonolithicDirector;
+        c.isPartialOrderReduction = isPartialOrderReduction;
         c.setCompositionType(compositionType);
         c.setMakeComponent(makeComponent);
         if (makeProperty) {
@@ -343,7 +345,7 @@ public class CompositionExpression {
         }
         if (c.makeController || c.checkCompatible || c.isPlant
                 || c.isControlledDet || c.makeRTCController || c.makeRTCAnalysisController
-                || c.isHeuristic || c.isMonolithicDirector) {
+                || c.isHeuristic || c.isMonolithicDirector || c.isPartialOrderReduction) {
             this.buildAndSetGoal(c);
         }
         c.setComponentAlphabet(computeAlphabet(this.getComponentAlphabet()));

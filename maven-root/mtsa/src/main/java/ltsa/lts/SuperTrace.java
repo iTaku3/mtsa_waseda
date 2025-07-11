@@ -144,7 +144,7 @@ public class SuperTrace {
  private void outStatistics(int depth, int states, int transitions) { 	   
  	   output.out("-- Depth: "+depth+" States: "+states+" Transitions: "+transitions);
  	   Runtime r = Runtime.getRuntime(); 	   
-     output.outln(" Memory used: "+(r.totalMemory()-r.freeMemory())/1000+"KB");
+     output.outln(" Memory used: "+(r.totalMemory()-r.freeMemory())/1000+"K");
  }
  
  private void printPath(LinkedList v) {

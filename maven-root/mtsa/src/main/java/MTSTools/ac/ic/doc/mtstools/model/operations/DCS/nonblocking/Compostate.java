@@ -38,6 +38,16 @@ public class Compostate<State, Action> {
 
     /** Depth at which this state has been expanded. */
     private int depth;
+   
+    /** An identifier used by CompleteFrontierExplorationHeuristic to know how old the values of the estimates are, and whether they need to be recomputed */
+    public Integer seq = -1;
+
+    // These 3 fields are used by the Ready Abstraction as a cache, to avoid recomputing the graph every time
+    /** Set of vertices in the RA graph. */
+    public Set<HAction<State, Action>> vertices;
+    /** Edges in the RA graph. */
+    public BidirectionalMap<HAction<State, Action>, HAction<State, Action>> edges;
+    public Map<HAction<State, Action>, Set<Integer>> readyInLTS;
 
     /** Indicates whether the state is marked, that is, every contained state is marked. */
     final boolean marked;
@@ -113,6 +123,17 @@ public class Compostate<State, Action> {
 
     /** Estimates of transitions, only used when using ra feature **/
     HashMap<HAction<State, Action>, HEstimate<State, Action>> estimates;
+    public final Integer uncontrollablesCount;
+
+    Action actionnoname;//actionの名前を入れる
+    Action actionnoname2;
+    Action actionnoname3;
+    Action actionnoname4;
+    Action actionnoname5;
+    Action actionnoname6;
+    List<String> complist;
+    int coun=0;
+
 
     /** Constructor for a Composed State. */
     public Compostate(DirectedControllerSynthesisNonBlocking<State, Action> directedControllerSynthesisNonBlocking, List<State> states) {
@@ -132,6 +153,7 @@ public class Compostate<State, Action> {
         this.marked = marked;
         this.transitions = buildTransitions();
         dcs.heuristic.initialize(this);
+        this.uncontrollablesCount = countUncontrollables();
     }
 
     /** Returns the states that conform this composed state. */
@@ -371,13 +393,68 @@ public class Compostate<State, Action> {
             recommendations.sort(new Ranker<>());
             result = recommendations.get(0);
         }
+
+        if(!recommendations.isEmpty()){
+            //System.out.println(complist);
+            for(int j=0; j<complist.size(); j=j+2){
+                for(int i=0; i<recommendations.size(); i++){
+                    String a = complist.get(j);
+                    String b = recommendations.get(i).getAction().toString();
+                    //System.out.println("a");
+                    //System.out.println(a);
+                    //System.out.print("b");
+                    //System.out.println(b);
+                    if(a.equals(b)){
+                        //System.out.println("maru");
+                        for(int k=i+1; k<recommendations.size(); k++){
+                            String c = complist.get(j+1);
+                            String d = recommendations.get(k).getAction().toString();
+                            //System.out.println("c");
+                            //System.out.println(c);
+                            //System.out.print("d");
+                            //System.out.println(d);
+                            if(c.equals(d)){
+                                //System.out.println("maru2");
+                                //System.out.println(recommendations);
+
+                                //Collections.swap(recommendations, i, k);
+                                recommendations.add(i, recommendations.get(k));
+                                recommendations.remove(k+1);
+                                //coun = coun+1;
+                                //System.out.println(coun);
+
+
+                                //System.out.println("afterrecomendationlist");
+                                //System.out.println(recommendations);
+                            }
+
+                        }
+                    }
+                }
+                //System.out.println("789");
+            }
+
+        }
+
         return result;
     }
 
     /** Sets up the recommendation list. */
-    public void setupRecommendations() {
+    public void setupRecommendations(List<String> a) {//リストの箱を作るだけ、中身はなし
+        //System.out.println("setup");
+
+
+        //actionnoname=a.get(0);
+        //actionnoname2=a.get(1);
+        complist = a;
+
+        //System.out.println("complistcompo");
+        //System.out.println(complist);
+        //System.out.println(actionnoname2);
+
         if (recommendations == null)
             recommendations = new ArrayList<>();
+
     }
 
     /** Adds a new recommendation to this state and returns whether an
@@ -444,4 +521,17 @@ public class Compostate<State, Action> {
     public boolean isControlled() {
         return controlled;
     }
+
+    private Integer countUncontrollables() {
+        Integer result = 0;
+        for (HAction<State, Action> a : this.transitions) {
+            if (!a.isControllable()) result++;
+        }
+        return result;
+    }
+
+    public Integer getControllablesExpandedCount() {
+        return childrenExploredThroughControllable.size();
+    }
+        
 }

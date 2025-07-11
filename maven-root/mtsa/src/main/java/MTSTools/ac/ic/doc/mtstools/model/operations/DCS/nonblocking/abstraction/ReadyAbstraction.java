@@ -45,10 +45,10 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     private Map<HState<State, Action>, Map<HState<State, Action>, Map<HAction<State, Action>, Integer>>> manyStepsReachableStates;
 
     /** Subset of the manyStepsReachableState map, containing only which
-     *  marked states can be reached from a given source. This map keeps
+     *  marked or "goal" states can be reached from a given source. This map keeps
      *  aliasing/sharing with the other and it is used only to speed up
      *  iteration while looking for marked states to reach. */
-    private Map<HState<State, Action>, Map<HState<State, Action>, Map<HAction<State, Action>, Integer>>> markedReachableStates;
+    private Map<HState<State, Action>, Map<HState<State, Action>, Map<HAction<State, Action>, Integer>>> markedOrGoalReachableStates;
 
     /** Maps for each state which actions can be reached.
      *  It also stores which actions lead from source to desired action and in how many local steps. */
@@ -72,11 +72,25 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     private final List<LTS<State, Action>> ltss;
     private final Alphabet<State, Action> alphabet;
     private final List<Set<State>> defaultTargets;
+    private List<Set<State>> knownMarked;
+    private List<Set<State>> goals;
 
     /** Whether the debug log is activated or not. */
     private final static Boolean DEBUG_LOG = false;
 
+    /** Whether to consider "goal" states apart from marked states when estimating shortest paths. */
+    private final static Boolean CONSIDER_GOALS = true;
+    /** Whether to attempt to consider the plant's "structure" when comparing Compostates. */
+    private final static Boolean CONSIDER_STRUCTURE = true;
+    // Ver Tesis de Nico Pazos para más detalles de esto de arriba, capítulo "Mejoras propuestas"
+
     /** Used to log internal RA calculations for debugging purposes. */
+
+    private List<HAction<State, Action>> actionnonamae;
+    public Action actionnonamae2;
+    public Action actionnonamae3;
+    private List<String> complist;
+    private int listcount=0;
     private static void debugLog(Object log, Object... strFmtArgs) {
         if (DEBUG_LOG) {
             if (String.class.isInstance(log)) {
@@ -106,9 +120,26 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
             int controllable2 = r2.getAction().isControllable() ? 1 : 0;
             int result = controllable1 - controllable2;
 
-            // If equal controllability, compare their first recommendation
-            if (result == 0)
-                result = controllable1 == 1 ? r1.compareTo(r2) : r2.compareTo(r1);
+
+            if (result == 0 && controllable1 == 0) { // If both uncontrollable
+                result = r2.compareTo(r1);
+            } else if (result == 0 && controllable1 == 1) { //  If both controllable
+                if (CONSIDER_STRUCTURE) {
+                    if (c1.uncontrollablesCount == 0 && c2.uncontrollablesCount > 0) {
+                        result = -1;
+                    } else if (c2.uncontrollablesCount == 0 && c1.uncontrollablesCount > 0) {
+                        result = 1;
+                    } else if (c1.getControllablesExpandedCount() == 0 && c2.getControllablesExpandedCount() > 0) {
+                            result = -1;
+                    } else if (c2.getControllablesExpandedCount() == 0 && c1.getControllablesExpandedCount() > 0) {
+                            result = 1;
+                    } else {
+                        result = r1.compareTo(r2);
+                    }
+                } else {
+                    result = r1.compareTo(r2);
+                }
+            }
 
             // Depth is the tiebreaker
             if (result == 0)
@@ -128,10 +159,15 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
         this.ltss = ltss;
         this.alphabet = alphabet;
         this.defaultTargets = defaultTargets;
+        this.goals = new ArrayList<>(this.ltss.size());
+        for (int i = 0; i < this.ltss.size(); ++i) {
+            this.goals.add(new HashSet<>());
+        }
         stash = new ArrayList<>(this.ltss.size());
         cache = new HashMap<>();
 
         vertices = new HashSet<>();
+        readyInLTS = new InitMap<>(HashSet.class);
         edges = new BidirectionalMap<>();
         estimates = new InitMap<>(new Factory<HEstimate<State, Action>>() {
             @Override
@@ -144,9 +180,8 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
         shortest = new InitMap<>(HDist.chasmFactory);
         fresh = new QueueSet<>();
         actionsToLTS = new InitMap<>(HashSet.class);
-        readyInLTS = new InitMap<>(HashSet.class);
         manyStepsReachableStates = new InitMap<>(HashMap.class);
-        markedReachableStates = new InitMap<>(HashMap.class);
+        markedOrGoalReachableStates = new InitMap<>(HashMap.class);
         manyStepsReachableActions = new InitMap<>(HashMap.class);
         m0Cache = new HashMap<>();
         m1Cache = new HashMap<>();
@@ -159,30 +194,42 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     private void init() {
         computeActionsToLTS();
         computeReachableStates();
-        computeMarkedReachableStates();
+        computeMarkedOrGoalReachableStates();
         computeReachableActions();
     }
 
 
     /** Clears the RA internal state. */
     private void clear() {
-        vertices.clear();
-        edges.clear();
+        vertices = new HashSet<>();
+        readyInLTS = new InitMap<>(HashSet.class);
+        edges = new BidirectionalMap<>();
         estimates.clear();
         shortest.clear();
         fresh.clear();
-        readyInLTS.clear();
         gapCache.clear();
     }
 
 
     /** Evaluates the abstraction by building and exploring the RA. */
     @Override
-    public void eval(Compostate<State, Action> compostate) {
+    public void eval(Compostate<State, Action> compostate, List<Set<State>> knownMarked, List<Set<State>> goals, List<String> comparison) {
         if (!compostate.isEvaluated()) {
+            this.knownMarked = knownMarked;
+            if (CONSIDER_GOALS) {
+                this.goals = goals;
+                computeMarkedOrGoalReachableStates();
+            }
             clear();
             buildRA(compostate);
             evaluateRA(compostate);
+            if(listcount==0){
+
+                for (String action : comparison) {
+                    complist.add(action);
+                }
+                listcount=listcount+1;
+            }
             extractRecommendations(compostate);
         }
     }
@@ -197,6 +244,13 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
 
     /** Builds the RA by connecting ready events through edges indicating their causal relationship. */
     private void buildRA(Compostate<State, Action> compostate) {
+        if (compostate.vertices != null) {
+            // TODO: consider freeing this once the state is goal/error
+            this.vertices = compostate.vertices;
+            this.readyInLTS = compostate.readyInLTS;
+            this.edges = compostate.edges;
+            return;
+        }
         for (int lts = 0; lts < this.ltss.size(); ++lts) {
             HState<State, Action> s = buildHState(lts, compostate.getStates().get(lts));
             for (Pair<Action,State> transition : s.getTransitions()) {
@@ -220,6 +274,9 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
                 }
             }
         }
+        compostate.vertices = this.vertices;
+        compostate.readyInLTS = this.readyInLTS;
+        compostate.edges = this.edges;
         // debugLog("Built RA: %s", edges);
     }
 
@@ -227,26 +284,42 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     /** Evaluates the RA by exploring the graph and populating the estimates table. */
     private void evaluateRA(Compostate<State, Action> compostate) {
         for (int lts = 0; lts < this.ltss.size(); ++lts) {
+            if (complist == null)
+                complist = new ArrayList<>();
             HState<State, Action> s = buildHState(lts, compostate.getStates().get(lts));
             Set<State> markedStates = this.defaultTargets.get(lts);
-            Set<State> targetStates = compostate.getTargets(lts);
-            Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedReachableStatesFromSource = markedReachableStates.get(s);
+            Set<State> knownMarked  = this.knownMarked.get(lts);
+            Set<State> goals  = this.goals.get(lts);
+            Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedOrGoalReachableStatesFromSource = markedOrGoalReachableStates.get(s);
             for (Pair<Action,State> transitions : s.getTransitions()) {
                 HAction<State, Action> l = this.alphabet.getHAction(transitions.getFirst());
                 State t = transitions.getSecond();
                 if (t.equals(-1L)) // CASE 1: action leads to illegal state
                     continue;
                 Integer mt = 2, dt = DirectedControllerSynthesisNonBlocking.INF;
-                if (markedStates.contains(t)) {
-                    mt = targetStates.contains(t) ? 0 : 1;
+                if (markedStates.contains(t) || goals.contains(t)) {
+                    if (goals.contains(t)) {
+                        mt = -1;
+                    } else if (knownMarked.contains(t)) {
+                        mt = 0;
+                    } else {
+                        mt = 1;
+                    }
                     dt = 1;
                 }
-                if (!(mt == 0 || (mt == 1 && targetStates.isEmpty()))) { // already best, skip search
+                if (!(mt == -1 || (mt == 1 && goals.isEmpty() && knownMarked.isEmpty()))) { // already best, skip search
                     if (s.state.equals(t)) // a self-loop
                         continue;
-                    for (HState<State, Action> g : markedReachableStatesFromSource.keySet()) { // search for best
-                        Integer mg = targetStates.contains(g.state) ? 0 : 1;
-                        Integer dg = markedReachableStatesFromSource.get(g).get(l);
+                    for (HState<State, Action> g : markedOrGoalReachableStatesFromSource.keySet()) { // search for best
+                        Integer mg;
+                        if (goals.contains(g.state)) {
+                            mg = -1;
+                        } else if (knownMarked.contains(g.state)) {
+                            mg = 0;
+                        } else {
+                            mg = 1;
+                        }
+                        Integer dg = markedOrGoalReachableStatesFromSource.get(g).get(l);
                         if (dg == null)
                             continue;
                         if (mg < mt || (mg == mt && dg < dt)) {
@@ -354,10 +427,17 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
             HDist shortLts = shortest.get(lts);
             if (shortLts == HDist.chasm) {
                 HState<State, Action> s = buildHState(lts, compostate.getStates().get(lts));
-                Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedStatesReachableFroms = markedReachableStates.get(s);
+                Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedStatesReachableFroms = markedOrGoalReachableStates.get(s);
                 for (Entry<HState<State, Action>, Map<HAction<State, Action>, Integer>> entry : markedStatesReachableFroms.entrySet()) {
                     HState<State, Action> t = entry.getKey();
-                    Integer m = compostate.getTargets(lts).contains(t.state) ? 0 : 1;
+                    Integer m;
+                    if (this.goals.get(lts).contains(t.state)) {
+                        m = -1;
+                    } else if (this.knownMarked.get(lts).contains(t.state)) {
+                        m = 0;
+                    } else {
+                        m = 1;
+                    }
                     if (m < shortLts.getFirst()) {
                         for (HAction<State, Action> a : entry.getValue().keySet()) {
                             Integer d = entry.getValue().get(a);
@@ -383,7 +463,14 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
                         // CASES 4/5
                         // Current state is marked and 'l' is either not in the component's alphabet or a self-loop,
                         // so taking 'l' means staying at a marked state.
-                        Integer m = compostate.getTargets(lts).contains(s.state) ? 0 : 1;
+                        Integer m;
+                        if (goals.contains(s.state)) {
+                            m = -1;
+                        } else if (knownMarked.contains(s.state)) {
+                            m = 0;
+                        } else {
+                            m = 1;
+                        }
                         el.set(lts, getHDist(m, 1));
                         // debugLog("Current is marked for lts=%s and l=%s is either not in alphabet or a self-loop: (%d, 1)", lts, l, m);
                     } else {
@@ -400,8 +487,18 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     /** Extracts recommendations for a state from the estimates table. */
     @SuppressWarnings("unchecked")
     private void extractRecommendations(Compostate<State, Action> compostate) {
-        compostate.setupRecommendations();
+        compostate.setupRecommendations(complist);
+        // TODO: maybe move this 'explored' to a method in compostate
+        // TODO: optimizable, tener las exploradas precomputadas en el compostate
+        HashSet<HAction<State, Action>> explored = new HashSet<>();
+        for (Pair<HAction<State, Action>,Compostate<State, Action>> transition : compostate.getExploredChildren()) {
+            HAction<State, Action> action = transition.getFirst();
+            explored.add(action);
+        }
         for (HAction<State, Action> action : compostate.getTransitions()) {
+            if (explored.contains(action)) {
+                continue;
+            }
             HEstimate<State, Action> estimate = estimates.get(action);
             estimate.sortDescending();
             if (compostate.addRecommendation(action, estimate))
@@ -493,14 +590,18 @@ public class ReadyAbstraction<State, Action> extends Abstraction<State, Action> 
     }
 
 
-    /** Computes for each state in each LTS which other *marked* states can reach and in how many steps. */
-    private void computeMarkedReachableStates() {
+    /** Computes for each state in each LTS which other *marked* or *goal* states can reach and in how many steps. */
+    private void computeMarkedOrGoalReachableStates() {
+        markedOrGoalReachableStates = new InitMap<>(HashMap.class);
         for (HState<State, Action> source : manyStepsReachableStates.keySet()) {
-            Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedStatesFromSource = markedReachableStates.get(source);
+            Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> markedOrGoalStatesFromSource = markedOrGoalReachableStates.get(source);
             Map<HState<State, Action>, Map<HAction<State, Action>, Integer>> reachableStatesFromSource = manyStepsReachableStates.get(source);
             for (HState<State, Action> destination : reachableStatesFromSource.keySet()) {
-                if (destination.marked/*isMarked()*/)
-                    markedStatesFromSource.put(destination, reachableStatesFromSource.get(destination));
+                if (
+                    destination.marked ||
+                    (!destination.state.equals(-1L) && this.goals.get(destination.lts).contains(destination.state))
+                )
+                    markedOrGoalStatesFromSource.put(destination, reachableStatesFromSource.get(destination));
             }
         }
     }

@@ -12,7 +12,6 @@ import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.blocking.Statistics;
 import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.abstraction.HAction;
 
 import java.util.*;
-import java.util.Set;
 
 import static java.util.Collections.*;
 import static org.junit.Assert.*;
@@ -39,6 +38,8 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
 
     /** Set of controllable actions. */
     public Set<Action> controllable;
+
+    public List<String> comparison;
 
     /** Indicates whether the procedure tries to reach a goal state (by default we look for live controllers). */
     private boolean reachability = false;
@@ -94,6 +95,7 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
     /** This method starts the directed synthesis of a controller.
      *  @param ltss, a list of MarkedLTSs that compose the environment.
      *  @param controllable, the set of controllable actions.
+     *  @param comparison,
      *  @param reachability, a boolean indicating whether to pursue reachability or liveness.
      *  @param guarantees not used in nonblocking
      *  @param assumptions not used in nonblocking
@@ -107,18 +109,20 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
         Set<Action> controllable,
         boolean reachability,
         HashMap<Integer, Integer> guarantees,
-        HashMap<Integer, Integer> assumptions)
+        HashMap<Integer, Integer> assumptions,
+        List<String> comparison)
     {
         if (mode == HeuristicMode.Dummy)
             return (LTS<Long,Action>)ltss.get(0);
 
-        setupSynthesis(ltss, controllable, reachability, guarantees, assumptions);
+        setupSynthesis(ltss, controllable, reachability, guarantees, assumptions, comparison);
+        //System.out.println(comparison);
         setupHeuristic();
         setupInitialState();
 
         while (heuristic.somethingLeftToExplore() && !isFinished()) {
             statistics.startHeuristicTime();
-            Pair<Compostate<State, Action>, HAction<State, Action>> action = heuristic.getNextAction();
+            Pair<Compostate<State, Action>, HAction<State, Action>> action = heuristic.getNextAction(comparison);
             statistics.endHeuristicTime();
 
             expand(action.getFirst(), action.getSecond());
@@ -144,13 +148,15 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
             Set<Action> controllable,
             boolean reachability,
             HashMap<Integer, Integer> guarantees,
-            HashMap<Integer, Integer> assumptions)
+            HashMap<Integer, Integer> assumptions,
+            List<String> comparison)
     {
 
         this.ltss = ltss;
         this.ltssSize = ltss.size();
         this.controllable = controllable;
         this.reachability = reachability;
+        this.comparison = comparison;
 
         statistics.clear();
         statistics.start();
@@ -174,13 +180,15 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
         if(mode == HeuristicMode.TrainedAgent){
             heuristic = new FeatureBasedExplorationHeuristic<>(this);
         } else {
-            heuristic = new OpenSetExplorationHeuristic<>(this, mode);
+            // heuristic = new OpenSetExplorationHeuristic<>(this, mode);
+            // 'CompleteFrontierExplorationHeuristic' no usa la Open Queue, le deja a la heuristica manejar la cola
+            heuristic = new CompleteFrontierExplorationHeuristic<>(this, mode);
         }
     }
 
     void setupInitialState(){
         initial = buildInitialState();
-        heuristic.setInitialState(initial);
+        heuristic.setInitialState(initial, comparison);
         initial.setExpanded();
     }
 
@@ -223,7 +231,7 @@ public class DirectedControllerSynthesisNonBlocking<State, Action> extends Direc
             statistics.incExpandedStates();
             result = new Compostate<>(this, states);
             compostates.put(states, result);
-            heuristic.newState(result, parent);
+            heuristic.newState(result, parent, comparison);
             if (result.getStates().contains(-1L) || heuristic.fullyExplored(result)) {
                 setError(result);
             }

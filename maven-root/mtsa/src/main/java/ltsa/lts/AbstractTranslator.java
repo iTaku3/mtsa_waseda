@@ -60,8 +60,11 @@ public abstract class AbstractTranslator {
 	
 	/** Internal indentation string for pretty printing. */
 	protected String indent = "";
-	
-	
+
+	/** The base composite state to be translated. */
+	protected CompositeState base_composite = null;
+
+
 	/** Template method that populates internal data structures shared by
 	  * Translators and then invokes the actual translation through the
 	  * <code>doTranslate</code> method.
@@ -71,6 +74,7 @@ public abstract class AbstractTranslator {
 		if (!checkGoal())
 			throw new UnsupportedOperationException(
 				"The combination of translation and goal type selected is not supported.");
+		base_composite = composite;
 		name = composite.getName();
 		CompositionExpression ce = LTSCompiler.getComposite(name);
 		List<CompactState> machines = new ArrayList<>(ce.compiledProcesses.values());

@@ -44,6 +44,7 @@ public class CompositeState{
 	public boolean makeControlStack = false;
 	public boolean isHeuristic = false;
 	public boolean isMonolithicDirector = false;
+	public boolean isPartialOrderReduction = false;
 	public Vector<String> actionsToErrorSet;
 	
 	public Hashtable<String,Object> controlStackEnvironments;
@@ -219,6 +220,11 @@ public class CompositeState{
         }
 		if (isMonolithicDirector) {
 			TransitionSystemDispatcher.monolithicDirectorSynthesis(this, output, stats);
+			applyHiding();
+		}
+		if (isPartialOrderReduction) {
+			TransitionSystemDispatcher.partialOrderReductionSynthesis(this, output, stats);
+			//invocar a mi funcion de sintesis que usa POR
 			applyHiding();
 		}
         /*if (isProperty) //removed in merge ***
@@ -589,6 +595,7 @@ public class CompositeState{
     c.isProbabilistic= isProbabilistic;
     c.isHeuristic = isHeuristic;
     c.isMonolithicDirector = isMonolithicDirector;
+	c.isPartialOrderReduction = isPartialOrderReduction;
 	  return c;
 	}
 	
