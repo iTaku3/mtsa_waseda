@@ -336,7 +336,7 @@ public class CompositionExpression {
         c.isControlledDet = isControlledDet;
         c.makeControlStack = makeControlStack;
         c.isHeuristic = isHeuristic;
-        c.isStrategy = isStrategy;
+        c.isStrategy = isStrategy; //added
         c.isStrategyOld = isStrategyOld; //added
         c.isMonolithicDirector = isMonolithicDirector;
         c.isPartialOrderReduction = isPartialOrderReduction;

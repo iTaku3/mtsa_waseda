@@ -352,7 +352,8 @@ public class TransitionSystemDispatcher {
             mdpComposeAbstraction(compositeState, ltsOutput);
         } else if (compositeState.makeEnactment) {
             mdpComposeEnactment(compositeState, compositeState.enactmentControlled, ltsOutput);
-        } else if (!compositeState.isHeuristic && !compositeState.isPartialOrderReduction) {
+        //ToDo: ここ変えれば，Traditional Strategy手法が作れるかもしれん
+        } else if (!compositeState.isHeuristic && !compositeState.isStrategy && !compositeState.isStrategyOld && !compositeState.isPartialOrderReduction) {
             compositeState.compose(ltsOutput);
         }
     }

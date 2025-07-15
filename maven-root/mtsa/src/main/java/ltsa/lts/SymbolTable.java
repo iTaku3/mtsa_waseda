@@ -108,13 +108,12 @@ public class SymbolTable {
         addSymbols("transitions", Symbol.GRAPH_TRANSITIONS);
         
         addSymbols("heuristic", Symbol.HEURISTIC);
+        addSymbols("strategy", Symbol.STRATEGY); //added
+        addSymbols("strategy_old", Symbol.STRATEGY_OLD); //added
         addSymbols("monolithicDirector", Symbol.MONOLITHIC_DIRECTOR);
         addSymbols("marking", Symbol.MARKING);
         addSymbols("disturbances", Symbol.DISTURBANCE);
         addSymbols("partialOrderReduction", Symbol.PARTIAL_ORDER_REDUCTION);
-
-        addSymbols("strategy", Symbol.STRATEGY);
-        addSymbols("strategy_old", Symbol.STRATEGY_OLD);
     }
 
     private static void addSymbols(String key, Integer elem) {
