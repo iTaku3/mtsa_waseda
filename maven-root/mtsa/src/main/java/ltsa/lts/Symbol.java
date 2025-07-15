@@ -272,6 +272,10 @@ public class Symbol {
 			return "foreach";
 		case HEURISTIC:
 			return "heuristic";
+		case STRATEGY:
+			return "strategy";
+		case STRATEGY_OLD:
+			return "strategy_old";
 		case MARKING:
 			return "marking";
 		case BOOLEAN_TYPE:
@@ -569,6 +573,9 @@ public class Symbol {
 	public static final int MONOLITHIC_DIRECTOR = 3402;
 	public static final int DISTURBANCE = 3403;
 	public static final int PARTIAL_ORDER_REDUCTION = 3404;
+
+	public static final int STRATEGY = 3500; //added
+	public static final int STRATEGY_OLD = 3501; //added
 	
 	// _______________________________________________________________________________________
 	// Expression symbols
@@ -703,6 +710,8 @@ public class Symbol {
 		blueSymbols.add(GRAPH_TRANSITIONS);
 		blueSymbols.add(FOREACH);
 		blueSymbols.add(HEURISTIC);
+		blueSymbols.add(STRATEGY); //added
+		blueSymbols.add(STRATEGY_OLD); //added
 		blueSymbols.add(MONOLITHIC_DIRECTOR);
 		blueSymbols.add(PARTIAL_ORDER_REDUCTION);
 		blueSymbols.add(MARKING);

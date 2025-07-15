@@ -514,6 +514,8 @@ public class LTSCompiler {
                         || current.kind == Symbol.RTC_CONTROLLER
                         || current.kind == Symbol.RTC_ANALYSIS_CONTROLLER
                         || current.kind == Symbol.HEURISTIC
+                        || current.kind == Symbol.STRATEGY //added
+                        || current.kind == Symbol.STRATEGY_OLD //added
                         || current.kind == Symbol.MONOLITHIC_DIRECTOR
                         || current.kind == Symbol.PARTIAL_ORDER_REDUCTION
                         ) {
@@ -541,6 +543,8 @@ public class LTSCompiler {
                     boolean makePlant = false;
                     boolean makeControlledDet = false;
                     boolean isHeuristic = false;
+                    boolean isStrategy = false; //added
+                    boolean isStrategyOld = false; //added
                     boolean isMonolithicDirector = false;
                     boolean isPartialOrderReduction = false;
                     Symbol controlledActions = null;
@@ -622,6 +626,16 @@ public class LTSCompiler {
     					isHeuristic = true;
     					next_symbol();
     				}
+                    //added
+                    if (current.kind == Symbol.STRATEGY) {
+                        isStrategy = true;
+                        next_symbol();
+                    }
+                    //added
+                    if (current.kind == Symbol.STRATEGY_OLD) {
+                        isStrategyOld = true;
+                        next_symbol();
+                    }
                     if (current.kind == Symbol.MONOLITHIC_DIRECTOR) {
                         isMonolithicDirector = true;
                         next_symbol();
@@ -641,7 +655,6 @@ public class LTSCompiler {
                             next_symbol();
                         }
                     }
-
                     if (current.kind != Symbol.OR && current.kind != Symbol.PLUS_CA
                             && current.kind != Symbol.PLUS_CR && current.kind != Symbol.MERGE) {
                         ProcessSpec p = stateDefns();
@@ -701,6 +714,8 @@ public class LTSCompiler {
                         c.isPlant = makePlant;
                         c.isControlledDet = makeControlledDet;
                         c.isHeuristic = isHeuristic;
+                        c.isStrategy = isStrategy; //added
+                        c.isStrategyOld = isStrategyOld; //added
                         c.isMonolithicDirector = isMonolithicDirector;
                         c.isPartialOrderReduction = isPartialOrderReduction;
                         c.setMakeComponent(makeComponent);

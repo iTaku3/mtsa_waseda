@@ -2124,6 +2124,15 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
+    // ------------------------------------------------------------------------
+
+    // ToDo
+    // 1. 普通に合成した後，Directedする
+    // private void synthesizeControlStrategies(){
+    //     ltsOutput.clearOutput();
+
+    // }
+
 
     // ------------------------------------------------------------------------
     private boolean checkReplay(Animator a) {

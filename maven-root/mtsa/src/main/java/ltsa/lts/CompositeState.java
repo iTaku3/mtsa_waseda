@@ -43,6 +43,8 @@ public class CompositeState{
 	public boolean makeEnactment = false;
 	public boolean makeControlStack = false;
 	public boolean isHeuristic = false;
+	public boolean isStrategy = false; //added
+	public boolean isStrategyOld = false; //added
 	public boolean isMonolithicDirector = false;
 	public boolean isPartialOrderReduction = false;
 	public Vector<String> actionsToErrorSet;
@@ -215,6 +217,14 @@ public class CompositeState{
         	applyHiding();
         }
         if (isHeuristic) {
+        	TransitionSystemDispatcher.hcs(this, output, stats);
+        	applyHiding();
+        }
+        if (isStrategy) {
+        	TransitionSystemDispatcher.hcs(this, output, stats);
+        	applyHiding();
+        }
+        if (isStrategyOld) {
         	TransitionSystemDispatcher.hcs(this, output, stats);
         	applyHiding();
         }
@@ -594,6 +604,8 @@ public class CompositeState{
     c.controlStackSpecificTier = controlStackSpecificTier;
     c.isProbabilistic= isProbabilistic;
     c.isHeuristic = isHeuristic;
+    c.isStrategy = isStrategy; //added
+    c.isStrategyOld = isStrategyOld; //added
     c.isMonolithicDirector = isMonolithicDirector;
 	c.isPartialOrderReduction = isPartialOrderReduction;
 	  return c;

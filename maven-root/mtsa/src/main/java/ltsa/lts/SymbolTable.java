@@ -112,6 +112,9 @@ public class SymbolTable {
         addSymbols("marking", Symbol.MARKING);
         addSymbols("disturbances", Symbol.DISTURBANCE);
         addSymbols("partialOrderReduction", Symbol.PARTIAL_ORDER_REDUCTION);
+
+        addSymbols("strategy", Symbol.STRATEGY);
+        addSymbols("strategy_old", Symbol.STRATEGY_OLD);
     }
 
     private static void addSymbols(String key, Integer elem) {

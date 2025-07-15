@@ -183,6 +183,8 @@ public class CompositionExpression {
     boolean isControlledDet = false;
     boolean makeControlStack = false;
     boolean isHeuristic = false;
+    boolean isStrategy = false; //added
+    boolean isStrategyOld = false; //added
     boolean isMonolithicDirector = false;
     boolean isPartialOrderReduction = false;
     public Symbol goal;
@@ -243,7 +245,7 @@ public class CompositionExpression {
                 flatmachines.addElement((CompactState) o);
             else {
                 CompositeState cs = (CompositeState) o;
-                if (isHeuristic || isPartialOrderReduction) { // avoid computing the parallel composition in heuristic analysis or when using partial order reduction
+                if (isHeuristic || isPartialOrderReduction || isStrategy || isStrategyOld) { // avoid computing the parallel composition in heuristic analysis or when using partial order reduction //added
 					flatmachines.addAll(cs.getMachines());
 				} else {
 	                // if (MTSUtils.isMTSRepresentation(cs)) {
@@ -334,6 +336,8 @@ public class CompositionExpression {
         c.isControlledDet = isControlledDet;
         c.makeControlStack = makeControlStack;
         c.isHeuristic = isHeuristic;
+        c.isStrategy = isStrategy;
+        c.isStrategyOld = isStrategyOld; //added
         c.isMonolithicDirector = isMonolithicDirector;
         c.isPartialOrderReduction = isPartialOrderReduction;
         c.setCompositionType(compositionType);
@@ -345,7 +349,7 @@ public class CompositionExpression {
         }
         if (c.makeController || c.checkCompatible || c.isPlant
                 || c.isControlledDet || c.makeRTCController || c.makeRTCAnalysisController
-                || c.isHeuristic || c.isMonolithicDirector || c.isPartialOrderReduction) {
+                || c.isHeuristic || c.isMonolithicDirector || c.isPartialOrderReduction || c.isStrategy || c.isStrategyOld) { //added
             this.buildAndSetGoal(c);
         }
         c.setComponentAlphabet(computeAlphabet(this.getComponentAlphabet()));
