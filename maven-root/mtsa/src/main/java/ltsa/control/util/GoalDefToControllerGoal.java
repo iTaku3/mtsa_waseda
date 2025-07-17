@@ -44,16 +44,18 @@ public class GoalDefToControllerGoal {
 		Vector<String> actions = goalDef.getControllableActionSet();
 		Vector<String> comparison = goalDef.getComparisonActionSet();
 		if (actions == null) {
-			if (goalDef.getMarkingDefinitions().isEmpty())
+			if (goalDef.getMarkingDefinitions().isEmpty()){
 				Diagnostics.fatal("Controllable actions set not defined.");
-			else
-			{actions = new Vector<>();
-				comparison = new Vector<>();}
+			}else{
+				actions = new Vector<>();
+				comparison = new Vector<>();
+			}
 		}
 		goal.addAllControllableActions(new HashSet<>(actions));
-		List<String> comparisonList = new ArrayList<>(comparison);
-		//System.out.println(comparisonList);
-		goal.addAllComparisonActions(new ArrayList<>(comparisonList));
+		if (comparison != null){
+			List<String> comparisonList = new ArrayList<>(comparison);
+			goal.addAllComparisonActions(new ArrayList<>(comparisonList));
+		}
 	}
 	
 	private void buildHeuristicActionSets(ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {

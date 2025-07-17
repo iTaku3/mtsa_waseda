@@ -2262,16 +2262,11 @@ public class LTSCompiler {
                 goal.setMaxSchedulers(value.getFirst());
                 goal.setMaxControllers(value.getSecond());
             } else if (current.kind == Symbol.CONTROLLABLE) {
-                //System.out.println("aaaaaaa");
                 goal.setControllableActionSet(this.parseActionSet());
-                //this.parseControllableActionSet(goal);
             } else if (current.kind == Symbol.BUCHI) {
         	    goal.setBuchiDefinitions(this.controllerSubGoal());
             } else if (current.kind == Symbol.COMPARISON){
-                //System.out.println("yatteruyoLTScompiler");
                 goal.comparisonActionSet(this.parseActionSet2());
-                
-                //System.out.println(goal.getComparisonActionSet());
             } else
                 error("Controller symbol expected");
 

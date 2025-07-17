@@ -641,8 +641,7 @@ public class TransitionSystemDispatcher {
 
         DirectedControllerSynthesisMonolithicDirector<Long,String> dcs = new DirectedControllerSynthesisMonolithicDirector<Long,String>();
 
-        output.outln("***********************************************************************************");
-        output.outln("Synthesizing controller by DCS...");
+        output.outln("Synthesizing controller by Directed DCS...");
         @SuppressWarnings("rawtypes")
         final Statistics statistics = dcs.getStatistics();
         new Thread() {
@@ -735,8 +734,8 @@ public class TransitionSystemDispatcher {
 
         DirectedControllerSynthesisPartialOrderReduction<Long,String> dcs = new DirectedControllerSynthesisPartialOrderReduction<Long,String>();
 
-        output.outln("***********************************************************************************");
-        output.outln("Synthesizing controller by DCS...");
+        
+        output.outln("Synthesizing controller by Directed DCS...");
         @SuppressWarnings("rawtypes")
         final Statistics statistics = dcs.getStatistics();
         new Thread() {
@@ -892,8 +891,7 @@ public class TransitionSystemDispatcher {
             dcs = new DirectedControllerSynthesisBlocking<>();
         }
 
-		output.outln("***********************************************************************************");
-		output.outln("Synthesizing controller by DCS...");
+		output.outln("Synthesizing controller by Directed DCS...");
 		@SuppressWarnings("rawtypes")
         final Statistics statistics = dcs.getStatistics();
 		new Thread() {
@@ -1055,8 +1053,7 @@ public class TransitionSystemDispatcher {
         Assert.assertTrue("Interactive synthesis not implemented for Blocking", goal.isNonBlocking());
         DirectedControllerSynthesisNonBlocking<Long,String> dcs = new DirectedControllerSynthesisNonBlocking<>();
 
-        output.outln("***********************************************************************************");
-        output.outln("Synthesizing controller by DCS...");
+        output.outln("Synthesizing controller by Directed DCS...");
 
         dcs.setupSynthesis(
                 ltss, goal.getControllableActions(), goal.isReachability(), guarantees, assumptions, goal.getComparisonactions());

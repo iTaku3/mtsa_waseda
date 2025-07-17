@@ -255,10 +255,8 @@ public class ControllerGoalDefinition {
 	public void setControllableActionSet(Vector<String> controllable) {
 		this.controllableActionSet = controllable;
 	}
-	public void comparisonActionSet(Vector<String> comparison) {//ここ通っている
+	public void comparisonActionSet(Vector<String> comparison) {
 		this.comparisonActionSet = comparison;
-		//System.out.println("syhajhfa");
-		//System.out.println(comparison);
 	}
 
 	public void setFaultsDefinitions(List<Symbol> faultsDefinitions) {

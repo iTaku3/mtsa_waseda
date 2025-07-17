@@ -1,5 +1,7 @@
 package MTSTools.ac.ic.doc.mtstools.model.operations.DCS.blocking;
 
+import ltsa.ui.HPWindow;
+
 /** This class holds statistic information about the heuristic procedure. */
 public class Statistics {
 
@@ -167,6 +169,7 @@ public class Statistics {
     /** Returns a string with the statistic data. */
     @Override
     public String toString() {
+        HPWindow.checkSpace(expandedStates, expandedTransitions);
         return  "ExpandedStates: " + expandedStates + "\n" +
                 "UsedStates: " + controllerUsedStates + "\n" +
                 "ExpandedTransitions: " + expandedTransitions + "\n" +
@@ -182,6 +185,7 @@ public class Statistics {
     /** Returns a string with live statistics. */
     public String toLive() {
         long mem = getUsedMemory();
+        HPWindow.checkMemoryUsage();
         if (mem > maxMemoryUsed) maxMemoryUsed = mem;
         return  "  " + expandedStates + " states expanded " +
                 " (" + formatTime(getElapsed()) + ", " + formatMemory(mem) + ")";

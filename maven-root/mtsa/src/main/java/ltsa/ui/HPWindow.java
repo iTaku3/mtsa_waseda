@@ -950,6 +950,7 @@ public class HPWindow extends JFrame implements Runnable {
                     break;
                 case DO_compile:
                     showOutput();
+                    ltsOutput.clearOutput();
                     compile();
                     break;
                 case DO_doComposition:
@@ -1926,7 +1927,7 @@ public class HPWindow extends JFrame implements Runnable {
     // ------------------------------------------------------------------------
 
     private boolean compile() {
-        ltsOutput.clearOutput();
+        // ltsOutput.clearOutput();
         current = docompile();
         if (current == null) {
             return false;
@@ -2119,22 +2120,33 @@ public class HPWindow extends JFrame implements Runnable {
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        long startTime = System.currentTimeMillis();
+        long startTime_total = System.currentTimeMillis();
 
-        compile();
-        ltsOutput.outln("Compile is Complete!");
-        ltsOutput.outln("");
-        ltsOutput.outln("");
-        ltsOutput.outln("");
+        long startTime_compile = System.currentTimeMillis();
         ltsOutput.outln("===================================================");
-        ltsOutput.outln("               Composition + Minimise              ");
+        ltsOutput.outln("                      Compile                      ");
+        ltsOutput.outln("===================================================");
+        compile();
+        ltsOutput.outln("Compile Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        long endTime_compile = System.currentTimeMillis();
+        long executionTime_compile = endTime_compile - startTime_compile; //ms
+
+        long startTime_compose = System.currentTimeMillis();
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                 Compose + Minimise                ");
         ltsOutput.outln("===================================================");
         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        long endTime_compose = System.currentTimeMillis();
+        long executionTime_compose = endTime_compose - startTime_compose; //ms
+
+        long startTime_minimise = System.currentTimeMillis();
         TransitionSystemDispatcher.minimise(current, ltsOutput);
         postState(current);
-
-        long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms
+        long endTime_minimise = System.currentTimeMillis();
+        long executionTime_minimise = endTime_minimise - startTime_minimise; //ms
 
         /* When reusing other results */
         // ltsOutput.clearOutput();
@@ -2146,6 +2158,9 @@ public class HPWindow extends JFrame implements Runnable {
         //     postState(current);
         // }
 
+        long endTime_total = System.currentTimeMillis();
+        long executionTime_total = endTime_total - startTime_total; //ms     
+
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Minimise Composition is Complete!");
@@ -2153,7 +2168,11 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * compile             : " + executionTime_compile);
+        ltsOutput.outln("     * compose             : " + executionTime_compose);
+        ltsOutput.outln("     * minimise            : " + executionTime_minimise);
+        ltsOutput.outln("     * total               : " + executionTime_total);
         ltsOutput.outln("");
     }
 
@@ -2164,18 +2183,28 @@ public class HPWindow extends JFrame implements Runnable {
         maxStates = 0;
         maxTransitions = 0;
         ltsOutput.clearOutput();
-        long startTime = System.currentTimeMillis();
+        long startTime_total = System.currentTimeMillis();
 
-        compile();
-        ltsOutput.outln("Compile is Complete!");
-        ltsOutput.outln("");
-        ltsOutput.outln("");
-        ltsOutput.outln("");
+        long startTime_compile = System.currentTimeMillis();
         ltsOutput.outln("===================================================");
-        ltsOutput.outln("                    Composition                    ");
+        ltsOutput.outln("                      Compile                      ");
+        ltsOutput.outln("===================================================");
+        compile();
+        ltsOutput.outln("Compile Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        long endTime_compile = System.currentTimeMillis();
+        long executionTime_compile = endTime_compile - startTime_compile; //ms
+
+        long startTime_compose = System.currentTimeMillis();
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                      Compose                      ");
         ltsOutput.outln("===================================================");
         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
         postState(current);
+        long endTime_compose = System.currentTimeMillis();
+        long executionTime_compose = endTime_compose - startTime_compose; //ms
 
         /* When reusing other results */
         // ltsOutput.clearOutput();
@@ -2202,17 +2231,20 @@ public class HPWindow extends JFrame implements Runnable {
         //     layouts.setCurrentState(current_states);
         // }
 
-        long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms        
+        long endTime_total = System.currentTimeMillis();
+        long executionTime_total = endTime_total - startTime_total; //ms        
 
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Composition is Complete!");
+        ltsOutput.outln("[info] Compose Complete!");
         ltsOutput.outln("[info] File Name           : " + openFile);
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("[info] Execution Time (ms)");
+        ltsOutput.outln("     * compile             : " + executionTime_compile);
+        ltsOutput.outln("     * compose             : " + executionTime_compose);
+        ltsOutput.outln("     * total               : " + executionTime_total);
         ltsOutput.outln("");
     }
 
@@ -2224,7 +2256,6 @@ public class HPWindow extends JFrame implements Runnable {
     //     ltsOutput.clearOutput();
 
     // }
-
 
     // ------------------------------------------------------------------------
     private boolean checkReplay(Animator a) {
