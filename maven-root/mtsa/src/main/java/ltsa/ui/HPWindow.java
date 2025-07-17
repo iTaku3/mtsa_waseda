@@ -2083,45 +2083,137 @@ public class HPWindow extends JFrame implements Runnable {
 
     }
 
-    // ------------------------------------------------------------------------
 
-    private void minimiseComposition() {
-        ltsOutput.clearOutput();
-        compileIfChange();
-        if (compileIfChange() && current != null) {
-            if (current.composition == null)
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput);
-            postState(current);
+    /**************************************************************************/
+    /*                             Synthesis                                  */
+    /**************************************************************************/
+
+    /* Check Data for Synthesis */
+    public static long maxMemoryUsage;
+    public static int maxStates;
+    public static int maxTransitions;
+
+    public static void checkMemoryUsage() {
+        long total = Runtime.getRuntime().totalMemory() / 1000;
+        long free = Runtime.getRuntime().freeMemory() /1000;
+        long used = total - free;
+
+        if (used > maxMemoryUsage) {
+            maxMemoryUsage = used;
+        }
+    }
+
+    public static void checkSpace(int states, int transitions) {
+        if (states > maxStates) {
+            maxStates = states;
+        }
+        if (transitions > maxTransitions) {
+            maxTransitions = transitions;
         }
     }
 
     // ------------------------------------------------------------------------
 
-    private void doComposition() {
+    private void minimiseComposition() {
+        maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
         ltsOutput.clearOutput();
-        compileIfChange();
-        if (current != null) {
-            try {
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        long startTime = System.currentTimeMillis();
+
+        compile();
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("               Composition + Minimise              ");
+        ltsOutput.outln("===================================================");
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        postState(current);
+
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime; //ms
+
+        /* When reusing other results */
+        // ltsOutput.clearOutput();
+        // compileIfChange();
+        // if (compileIfChange() && current != null) {
+        //     if (current.composition == null)
+        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        //     TransitionSystemDispatcher.minimise(current, ltsOutput);
+        //     postState(current);
+        // }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Minimise Composition is Complete!");
+        ltsOutput.outln("[info] File Name           : " + openFile);
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("");
+    }
+
+    // ------------------------------------------------------------------------
+
+    private void doComposition() {
+        maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
+        ltsOutput.clearOutput();
+        long startTime = System.currentTimeMillis();
+
+        compile();
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                    Composition                    ");
+        ltsOutput.outln("===================================================");
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        postState(current);
+
+        /* When reusing other results */
+        // ltsOutput.clearOutput();
+        // compileIfChange();
+        // if (current != null) {
+        //     try {
+        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
                 
-            } catch (LTSCompositionException e) {
-                return;
-            }
+        //     } catch (LTSCompositionException e) {
+        //         return;
+        //     }
             
-            boolean isControllable = current.composition != null;
-            if (!isControllable) {
-                return;
-                //throw new LTSException("Composition not controllable.");
+        //     boolean isControllable = current.composition != null;
+        //     if (!isControllable) {
+        //         return;
+        //         //throw new LTSException("Composition not controllable.");
                 
-            }
+        //     }
             
-            postState(current);
-            int[] current_states = new int[current.machines.size() + 1];
-            for (int i = 0; i < current.machines.size() + 1; i++)
-                current_states[i] = 0;
-            layouts.setCurrentState(current_states);
-        }
+        //     postState(current);
+        //     int[] current_states = new int[current.machines.size() + 1];
+        //     for (int i = 0; i < current.machines.size() + 1; i++)
+        //         current_states[i] = 0;
+        //     layouts.setCurrentState(current_states);
+        // }
+
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime; //ms        
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Composition is Complete!");
+        ltsOutput.outln("[info] File Name           : " + openFile);
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("");
     }
 
     // ------------------------------------------------------------------------
