@@ -2385,7 +2385,7 @@ public class HPWindow extends JFrame implements Runnable {
 
         // 合成            
         ltsOutput.outln("[info] STEP2 : Synthesizing from synthesis process...");
-        synthesisFromSynthesisProcess(synthesisProcess, all_models, all_output_models);
+        synthesisFromSynthesisProcess(synthesisProcess, all_models, all_output_models, final_model_name);
         ltsOutput.outln("[info] STEP2 : Completed!");
         ltsOutput.outln("");
 
@@ -2510,7 +2510,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Where used : 
     // Parameters : -
     // Comment    : 合成プロセスを表示する．
-    private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, List<CompactState> all_output_models){
+    private void synthesisFromSynthesisProcess(List<CompactState> synthesisProcess, List<CompactState> all_models, List<CompactState> all_output_models, String final_model_name){
         for (CompactState partController : synthesisProcess){
             Vector<CompactState> this_step_machines = new Vector<>();
             for (String model_name : partController.inputModels) {
@@ -2520,7 +2520,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.name = partController.name; //入力時の名前に変えるべき
             current.machines = new Vector<>(this_step_machines);
             current.env = null;
-            boolean do_minimise = checkMinimise(current.machines);
+            boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
 
             // メモリ解放
             all_models.removeAll(current.machines);
@@ -2560,7 +2560,10 @@ public class HPWindow extends JFrame implements Runnable {
     // Where used : 
     // Parameters : -
     // Comment    : minimiseを実施するCompactStateが含まれる場合，trueを返す
-    private boolean checkMinimise(Vector<CompactState> machines) {
+    private boolean checkMinimise(Vector<CompactState> machines, String name, String final_model_name) {
+        if(name.compareTo(final_model_name)==0){
+            return false;
+        }
         for (CompactState machine : machines) {
             if (machine.name.startsWith("MINIMISE_")) {
                 return true;
@@ -2650,6 +2653,9 @@ public class HPWindow extends JFrame implements Runnable {
                 first_req = false;
             }
             else if (req.cost < this_step_req.cost) {
+                this_step_req.name = new String(req.name);
+                this_step_req.cost = new Integer(req.cost);
+            }else if (req.cost == this_step_req.cost && this_step_req.name.compareTo(req.name) > 0) {
                 this_step_req.name = new String(req.name);
                 this_step_req.cost = new Integer(req.cost);
             }
