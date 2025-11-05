@@ -2523,7 +2523,7 @@ public class HPWindow extends JFrame implements Runnable {
             boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
 
             // メモリ解放
-            all_models.removeAll(current.machines);
+            // all_models.removeAll(current.machines);
             this_step_machines = new Vector<>();
 
             ltsOutput.outln("");

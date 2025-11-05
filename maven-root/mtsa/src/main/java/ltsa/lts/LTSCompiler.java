@@ -38,6 +38,7 @@ public class LTSCompiler {
     private String currentDirectory;
     private Symbol current;
     public  boolean do_minimise = false;
+    public  boolean do_monitoring = false;
 
     static Hashtable<String, ProcessSpec> processes;
     static Hashtable<String, CompactState> compiled;
@@ -2251,6 +2252,9 @@ public class LTSCompiler {
         	    goal.setBuchiDefinitions(this.controllerSubGoal());
             } else if (current.kind == Symbol.MINIMIZE) {
                 this.do_minimise = true;
+                next_symbol();
+            } else if (current.kind == Symbol.MONITORING) {
+                this.do_monitoring = true;
                 next_symbol();
             } else
                 error("Controller symbol expected");
