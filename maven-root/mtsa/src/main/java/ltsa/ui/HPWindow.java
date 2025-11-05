@@ -2397,6 +2397,8 @@ public class HPWindow extends JFrame implements Runnable {
         // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
         if (do_monitoring) {
             current.machines.addAll(all_output_models);
+        } else {
+            current.machines.add(current.composition);
         }
         postState(current);
 
@@ -2556,6 +2558,7 @@ public class HPWindow extends JFrame implements Runnable {
             checkMemoryUsage();
 
             current.machines.clear();
+            // current.machines.add(current.composition);
             current.composition.initActions();
             all_models.add(current.composition);
             if (do_monitoring) all_output_models.add(current.composition);
