@@ -2395,8 +2395,9 @@ public class HPWindow extends JFrame implements Runnable {
 
         //データを整理して出力に格納
         // TransitionSystemDispatcher.minimise(current, ltsOutput); //合成後minimiseしない場合コメントアウト
-        current.machines.addAll(all_output_models);
-        // current.machines.addAll(all_req_models);
+        if (do_monitoring) {
+            current.machines.addAll(all_output_models);
+        }
         postState(current);
 
         //今回の制御器合成の詳細の出力
@@ -2530,7 +2531,7 @@ public class HPWindow extends JFrame implements Runnable {
             boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
 
             // メモリ解放
-            if (do_monitoring) all_models.removeAll(current.machines);
+            all_models.removeAll(current.machines);
             this_step_machines = new Vector<>();
 
             ltsOutput.outln("");
@@ -2558,7 +2559,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.machines.add(current.composition);
             current.composition.initActions();
             all_models.add(current.composition);
-            all_output_models.add(current.composition);
+            if (do_monitoring) all_output_models.add(current.composition);
         }
     }
 
