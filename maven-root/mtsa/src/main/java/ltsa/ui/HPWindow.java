@@ -1970,13 +1970,15 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     /* AMES: promoted visibility from private to implement lts.LTSOutput */
-
+    public boolean do_monitoring;
     private CompositeState docompile() {
         resetInput();
         CompositeState cs = null;
         LTSCompiler comp = new LTSCompiler(ltsInputString, ltsOutput, currentDirectory);
         try {
+            do_monitoring = false;
             comp.compile();
+            do_monitoring = comp.do_monitoring; //合成過程のモデルを表示する（controllerSpecに"monitoring"を記載）
             if (!parse(comp.getComposites(), comp.getProcesses(), comp.getExplorers())) {
                 return null;
             }
@@ -2142,9 +2144,6 @@ public class HPWindow extends JFrame implements Runnable {
     public static long startTime_minimise;
     public static long endTime_minimise;
     public static long executionTime_minimise;
-
-    /* Synthesis Options */
-    public boolean do_monitoring = false;
 
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
@@ -2329,8 +2328,6 @@ public class HPWindow extends JFrame implements Runnable {
         startTime_compile = System.currentTimeMillis();
         compile();
         endTime_compile = System.currentTimeMillis();
-
-        do_monitoring = comp.do_monitoring; //合成過程のモデルを表示する（Specに"monitoring"を記載）
 
         // ltsOutput.clearOutput();
         ltsOutput.outln("Compile is Complete!");
