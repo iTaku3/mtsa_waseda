@@ -2143,6 +2143,9 @@ public class HPWindow extends JFrame implements Runnable {
     public static long endTime_minimise;
     public static long executionTime_minimise;
 
+    /* Synthesis Options */
+    public boolean do_monitoring = false;
+
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
         long free = Runtime.getRuntime().freeMemory() / 1000;
@@ -2327,6 +2330,8 @@ public class HPWindow extends JFrame implements Runnable {
         compile();
         endTime_compile = System.currentTimeMillis();
 
+        do_monitoring = comp.do_monitoring; //合成過程のモデルを表示する（Specに"monitoring"を記載）
+
         // ltsOutput.clearOutput();
         ltsOutput.outln("Compile is Complete!");
         ltsOutput.outln("");
@@ -2415,6 +2420,11 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("     * minimise            : " + executionTime_minimise);
         ltsOutput.outln("     * total               : " + executionTime);
         ltsOutput.outln("");
+        ltsOutput.outln("");
+        if (do_monitoring) {
+            ltsOutput.outln("*** Caution ***");
+            ltsOutput.outln("All intermediate models generated during the synthesis process are recorded. As a result, the Maximum Memory value can become extremely large. For evaluation experiments, please remove the \"monitoring\" option from the \"controllerSpec\".");
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -2523,7 +2533,7 @@ public class HPWindow extends JFrame implements Runnable {
             boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
 
             // メモリ解放
-            // all_models.removeAll(current.machines);
+            if (do_monitoring) all_models.removeAll(current.machines);
             this_step_machines = new Vector<>();
 
             ltsOutput.outln("");
