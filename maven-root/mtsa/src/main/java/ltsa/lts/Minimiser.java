@@ -3,6 +3,7 @@ package ltsa.lts;
 import java.util.BitSet;
 import java.util.Hashtable;
 import java.util.Map;
+import ltsa.ui.HPWindow;
 
 public class Minimiser {
 
@@ -24,6 +25,21 @@ public class Minimiser {
         T = new EventState[machine.states.length];
         for (int i = 0; i<T.length; i++) {
             T[i] = EventState.reachableTau(machine.states,i);
+        }
+    }
+
+    /* checkMinimise() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : minimiseを実施するCompactStateが含まれる場合，trueを返す
+    public static long maxMemoryUsage;
+    private static void checkMemoryUsage() {
+        long total = Runtime.getRuntime().totalMemory() / 1000;
+        long free = Runtime.getRuntime().freeMemory() / 1000;
+        long used = total - free;
+
+        if (used > maxMemoryUsage) {
+            maxMemoryUsage = used;
         }
     }
 
@@ -93,7 +109,6 @@ public class Minimiser {
 
     
     
-    
     public CompactState minimiseTauClousure() {
     	CompactState minimise = this.minimise();
     	this.removeTau(minimise);
@@ -132,8 +147,15 @@ public class Minimiser {
         CompactState c = makeNewMachine();
         machine = saved;
         long finish =System.currentTimeMillis();
+        checkMemoryUsage();
+        HPWindow.checkMemoryUsage();
+
         output.outln("");
-        output.outln("Minimised States: "+c.maxStates+" in "+(finish-start)+"ms");
+        output.outln("[info] Minimise is Complete!");
+        output.outln("     * Output States      : "+c.maxStates);
+        output.outln("     * Output Transitions : "+c.ntransitions());
+        output.outln("     * Time (ms)          : "+(finish-start)+"ms");
+        output.outln("     * Memory (KB)        : "+maxMemoryUsage); //TBD
         return  c;
     }
 

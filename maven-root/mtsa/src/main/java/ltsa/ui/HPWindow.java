@@ -2154,6 +2154,7 @@ public class HPWindow extends JFrame implements Runnable {
             maxMemoryUsage = used;
         }
     }
+
     public static void checkSpace(int states, int transitions) {
         if (states > maxStates) {
             maxStates = states;
@@ -2275,6 +2276,7 @@ public class HPWindow extends JFrame implements Runnable {
         startTime_minimise = System.currentTimeMillis();
         TransitionSystemDispatcher.minimise(current, ltsOutput);
         endTime_minimise = System.currentTimeMillis();
+        checkMemoryUsage();
 
         postState(current);
 
