@@ -9,9 +9,8 @@ import tau.smlab.syntech.Spectra.ui.internal.SpectraActivator;
 
 public class SpectraUiInjectorProvider implements IInjectorProvider {
 
-	@Override
-	public Injector getInjector() {
-		return SpectraActivator.getInstance().getInjector("tau.smlab.syntech.Spectra");
-	}
-
+  @Override
+  public Injector getInjector() {
+    return SpectraActivator.getInstance().getInjector("tau.smlab.syntech.Spectra");
+  }
 }

@@ -17,91 +17,86 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.spec;
 
 public class PrimitiveValue implements Spec {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8011682341776162911L;
-	
-	private String value;
+  /** */
+  private static final long serialVersionUID = 8011682341776162911L;
 
-	public PrimitiveValue(int value)
-	{
-		this.value = Integer.toString(value);
-	}
+  private String value;
 
-	public PrimitiveValue(String value)
-	{
-		this.value = value;
-	}
+  public PrimitiveValue(int value) {
+    this.value = Integer.toString(value);
+  }
 
-	public String toString()
-	{
-		return "<PrimitiveValue: " + this.value +">";
-	}
+  public PrimitiveValue(String value) {
+    this.value = value;
+  }
 
-	@Override
-	public boolean isPastLTLSpec() {
-		return false;
-	}
+  public String toString() {
+    return "<PrimitiveValue: " + this.value + ">";
+  }
 
-	@Override
-	public boolean isPropSpec() {
-		switch (value) {
-		case "true":
-			return true;
-		case "false":
-			return true;
-		case "TRUE":
-			return true;
-		case "FALSE":
-			return true;
-		default:
-			break;
-		}
+  @Override
+  public boolean isPastLTLSpec() {
+    return false;
+  }
 
-		return false;
-	}
+  @Override
+  public boolean isPropSpec() {
+    switch (value) {
+      case "true":
+        return true;
+      case "false":
+        return true;
+      case "TRUE":
+        return true;
+      case "FALSE":
+        return true;
+      default:
+        break;
+    }
 
-	@Override
-	public boolean hasTemporalOperators() {
-		return false;
-	}
+    return false;
+  }
 
-	public String getValue() {
-		return value;
-	}
+  @Override
+  public boolean hasTemporalOperators() {
+    return false;
+  }
 
-	public void setValue(String value) {
-		this.value = value;
-	}
+  public String getValue() {
+    return value;
+  }
 
-	@Override
-	public PrimitiveValue clone() throws CloneNotSupportedException {
-		return new PrimitiveValue(this.value);
-	}
-	
-	@Override
-	public int hashCode() {
-	  return toString().hashCode();
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-	  if (obj instanceof PrimitiveValue) {
-	    return this.value.equals(((PrimitiveValue) obj).getValue());
-	  }
-	  return false;
-	}
+  public void setValue(String value) {
+    this.value = value;
+  }
+
+  @Override
+  public PrimitiveValue clone() throws CloneNotSupportedException {
+    return new PrimitiveValue(this.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof PrimitiveValue) {
+      return this.value.equals(((PrimitiveValue) obj).getValue());
+    }
+    return false;
+  }
 }

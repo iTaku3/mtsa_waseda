@@ -17,42 +17,38 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
-
 import tau.smlab.syntech.ui.Activator;
 
-/**
- * Class used to initialize default preference values.
- */
+/** Class used to initialize default preference values. */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#
-	 * initializeDefaultPreferences()
-	 */
-	public void initializeDefaultPreferences() {
-		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		store.setDefault(PreferenceConstants.REORDER_CHOICE, "reorder");
-		store.setDefault(PreferenceConstants.OPT_CHOICE, "all");
-		store.setDefault(PreferenceConstants.DETERMINIZE, false);
-		store.setDefault(PreferenceConstants.REORDER_BEFORE_SAVE, false);
-		store.setDefault(PreferenceConstants.BDD_ENGINE_CHOICE, "CUDD");
-		store.setDefault(PreferenceConstants.WELL_SEP_SYS, "NONE");
-		store.setDefault(PreferenceConstants.CONC_CONT_FORMAT, "CMP");		
-	}
-
+  /*
+   * (non-Javadoc)
+   *
+   * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#
+   * initializeDefaultPreferences()
+   */
+  public void initializeDefaultPreferences() {
+    IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+    store.setDefault(PreferenceConstants.REORDER_CHOICE, "reorder");
+    store.setDefault(PreferenceConstants.OPT_CHOICE, "all");
+    store.setDefault(PreferenceConstants.DETERMINIZE, false);
+    store.setDefault(PreferenceConstants.REORDER_BEFORE_SAVE, false);
+    store.setDefault(PreferenceConstants.BDD_ENGINE_CHOICE, "CUDD");
+    store.setDefault(PreferenceConstants.WELL_SEP_SYS, "NONE");
+    store.setDefault(PreferenceConstants.CONC_CONT_FORMAT, "CMP");
+  }
 }

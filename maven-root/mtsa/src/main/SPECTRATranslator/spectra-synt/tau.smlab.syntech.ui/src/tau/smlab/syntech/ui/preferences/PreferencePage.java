@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.preferences;
@@ -33,7 +33,6 @@ import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
-
 import tau.smlab.syntech.gamemodel.PlayerModule.TransFuncType;
 import tau.smlab.syntech.games.gr1.GR1GameExperiments;
 import tau.smlab.syntech.games.rabin.RabinGame;
@@ -42,176 +41,219 @@ import tau.smlab.syntech.jtlv.BDDPackage.BBDPackageVersion;
 import tau.smlab.syntech.ui.Activator;
 
 /**
- * This class represents a preference page that is contributed to the
- * Preferences dialog. By subclassing <samp>FieldEditorPreferencePage</samp>, we
- * can use the field support built into JFace that allows us to create a page
- * that is small and knows how to save, restore and apply itself.
- * <p>
- * This page is used to modify preferences only. They are stored in the
- * preference store that belongs to the main plug-in class. That way,
- * preferences can be accessed directly via the preference store.
+ * This class represents a preference page that is contributed to the Preferences dialog. By
+ * subclassing <samp>FieldEditorPreferencePage</samp>, we can use the field support built into JFace
+ * that allows us to create a page that is small and knows how to save, restore and apply itself.
+ *
+ * <p>This page is used to modify preferences only. They are stored in the preference store that
+ * belongs to the main plug-in class. That way, preferences can be accessed directly via the
+ * preference store.
  */
-
 public class PreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
-	public PreferencePage() {
-		super(GRID);
-		setPreferenceStore(Activator.getDefault().getPreferenceStore());
-		setDescription("General SYNTECH preferences:");
-	}
+  public PreferencePage() {
+    super(GRID);
+    setPreferenceStore(Activator.getDefault().getPreferenceStore());
+    setDescription("General SYNTECH preferences:");
+  }
 
-	/**
-	 * Creates the field editors. Field editors are abstractions of the common GUI
-	 * blocks needed to manipulate various types of preferences. Each field editor
-	 * knows how to save and restore itself.
-	 */
+  /**
+   * Creates the field editors. Field editors are abstractions of the common GUI blocks needed to
+   * manipulate various types of preferences. Each field editor knows how to save and restore
+   * itself.
+   */
+  private RadioGroupFieldEditor engine;
 
-	private RadioGroupFieldEditor engine;
-	private RadioGroupFieldEditor concCont;
-	private RadioGroupFieldEditor opts;
-	private RadioGroupFieldEditor reorder;
-	private BooleanFieldEditor determinize;
-	private BooleanFieldEditor reorderBeforeSave;
+  private RadioGroupFieldEditor concCont;
+  private RadioGroupFieldEditor opts;
+  private RadioGroupFieldEditor reorder;
+  private BooleanFieldEditor determinize;
+  private BooleanFieldEditor reorderBeforeSave;
 
-	public void createFieldEditors() {
-		engine = new RadioGroupFieldEditor(PreferenceConstants.BDD_ENGINE_CHOICE, "BDD engine", 1,
-				new String[][] { { "&JTLV package -- pure Java implementation", "JTLV" },
-						{ "&CUDD package -- JNI access to C implementation", "CUDD" },
-						{ "CUDD package using &ADDs -- JNI access to C implementation", "CUDD_ADD" } },
-				getFieldEditorParent(), true);
+  public void createFieldEditors() {
+    engine =
+        new RadioGroupFieldEditor(
+            PreferenceConstants.BDD_ENGINE_CHOICE,
+            "BDD engine",
+            1,
+            new String[][] {
+              {"&JTLV package -- pure Java implementation", "JTLV"},
+              {"&CUDD package -- JNI access to C implementation", "CUDD"},
+              {"CUDD package using &ADDs -- JNI access to C implementation", "CUDD_ADD"}
+            },
+            getFieldEditorParent(),
+            true);
 
-		opts = new RadioGroupFieldEditor(PreferenceConstants.OPT_CHOICE, "Optimization options", 1,
-				new String[][] { { "Disable optimizations", "none" }, { "All optimizations", "all" },
-						{ "Algorithms optimizations", "fp_opts" },
-						{ "Controlled predecessors optimizations", "cp_opts" } },
-				getFieldEditorParent(), true);
+    opts =
+        new RadioGroupFieldEditor(
+            PreferenceConstants.OPT_CHOICE,
+            "Optimization options",
+            1,
+            new String[][] {
+              {"Disable optimizations", "none"},
+              {"All optimizations", "all"},
+              {"Algorithms optimizations", "fp_opts"},
+              {"Controlled predecessors optimizations", "cp_opts"}
+            },
+            getFieldEditorParent(),
+            true);
 
-		reorder = new RadioGroupFieldEditor(PreferenceConstants.REORDER_CHOICE, "Reorder Strategy", 1,
-				new String[][] { { "Disable reorder (not recommended)", "none" }, { "Enable reorder", "reorder" },
-						{ "Enable reorder with grouping (variables and their next state copies)", "group" },
-				// { "Special reorder strategy", "special"}
-				}, getFieldEditorParent(), true);
+    reorder =
+        new RadioGroupFieldEditor(
+            PreferenceConstants.REORDER_CHOICE,
+            "Reorder Strategy",
+            1,
+            new String[][] {
+              {"Disable reorder (not recommended)", "none"},
+              {"Enable reorder", "reorder"},
+              {"Enable reorder with grouping (variables and their next state copies)", "group"},
+              // { "Special reorder strategy", "special"}
+            },
+            getFieldEditorParent(),
+            true);
 
-		determinize = new BooleanFieldEditor(PreferenceConstants.DETERMINIZE,
-				"Determinize static symbolic controllers (can be slow)", getFieldEditorParent());
-		
-		reorderBeforeSave = new BooleanFieldEditor(PreferenceConstants.REORDER_BEFORE_SAVE,
-				"Reorder BDD before save to reduce size", getFieldEditorParent());
+    determinize =
+        new BooleanFieldEditor(
+            PreferenceConstants.DETERMINIZE,
+            "Determinize static symbolic controllers (can be slow)",
+            getFieldEditorParent());
 
-		concCont = new RadioGroupFieldEditor(PreferenceConstants.CONC_CONT_FORMAT, "Concrete Controller Format", 1,
-				new String[][] { { "CMP automaton (Mealy)", "CMP" }, { "JTLV text format", "JTLV" } },
-				getFieldEditorParent(), true);
+    reorderBeforeSave =
+        new BooleanFieldEditor(
+            PreferenceConstants.REORDER_BEFORE_SAVE,
+            "Reorder BDD before save to reduce size",
+            getFieldEditorParent());
 
-		addField(engine);
-		addField(opts);
-		addField(reorder);
-		addField(determinize);
-		addField(reorderBeforeSave);
-		addField(concCont);
+    concCont =
+        new RadioGroupFieldEditor(
+            PreferenceConstants.CONC_CONT_FORMAT,
+            "Concrete Controller Format",
+            1,
+            new String[][] {{"CMP automaton (Mealy)", "CMP"}, {"JTLV text format", "JTLV"}},
+            getFieldEditorParent(),
+            true);
 
-		// String engineChoice =
-		// this.getPreferenceStore().getString(PreferenceConstants.BDD_ENGINE_CHOICE);
-	}
+    addField(engine);
+    addField(opts);
+    addField(reorder);
+    addField(determinize);
+    addField(reorderBeforeSave);
+    addField(concCont);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-	 */
-	public void init(IWorkbench workbench) {
-	}
+    // String engineChoice =
+    // this.getPreferenceStore().getString(PreferenceConstants.BDD_ENGINE_CHOICE);
+  }
 
-	public static boolean isReorderEnabled() {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.REORDER_CHOICE);
-		return val.equals("reorder");
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
+   */
+  public void init(IWorkbench workbench) {}
 
-	// public static boolean isSpecialReorderStrategy() {
-	// String val = Activator.getDefault().getPreferenceStore()
-	// .getString(PreferenceConstants.REORDER_CHOICE);
-	// return val.equals("special");
-	// }
+  public static boolean isReorderEnabled() {
+    String val =
+        Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.REORDER_CHOICE);
+    return val.equals("reorder");
+  }
 
-	public static boolean isGroupVarSelection() {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.REORDER_CHOICE);
-		return val.equals("group");
-	}
+  // public static boolean isSpecialReorderStrategy() {
+  // String val = Activator.getDefault().getPreferenceStore()
+  // .getString(PreferenceConstants.REORDER_CHOICE);
+  // return val.equals("special");
+  // }
 
-	public static boolean isDeterminize() {
-		return Activator.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.DETERMINIZE);
-	}
-	
-	public static boolean isReorderBeforeSave() {
-		return Activator.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.REORDER_BEFORE_SAVE);
-	}
+  public static boolean isGroupVarSelection() {
+    String val =
+        Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.REORDER_CHOICE);
+    return val.equals("group");
+  }
 
-	public static BDDPackage getBDDPackageSelection() {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.BDD_ENGINE_CHOICE);
-		if (val.equals("JTLV")) {
-			return BDDPackage.JTLV;
-		} else if (val.equals("CUDD")) {
-			return BDDPackage.CUDD;
-		} else if (val.equals("CUDD_ADD")) {
-			return BDDPackage.CUDD_ADD;
-		}
+  public static boolean isDeterminize() {
+    return Activator.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.DETERMINIZE);
+  }
 
-		return null;
-	}
+  public static boolean isReorderBeforeSave() {
+    return Activator.getDefault()
+        .getPreferenceStore()
+        .getBoolean(PreferenceConstants.REORDER_BEFORE_SAVE);
+  }
 
-	public static BBDPackageVersion getBDDPackageVersionSelection() {
-		BDDPackage engineSelection = getBDDPackageSelection();
-		if (engineSelection.equals(BDDPackage.JTLV)) {
-			return BBDPackageVersion.DEFAULT;
-		}
+  public static BDDPackage getBDDPackageSelection() {
+    String val =
+        Activator.getDefault()
+            .getPreferenceStore()
+            .getString(PreferenceConstants.BDD_ENGINE_CHOICE);
+    if (val.equals("JTLV")) {
+      return BDDPackage.JTLV;
+    } else if (val.equals("CUDD")) {
+      return BDDPackage.CUDD;
+    } else if (val.equals("CUDD_ADD")) {
+      return BDDPackage.CUDD_ADD;
+    }
 
-		// CUDD BDD package has been selected
-		return BBDPackageVersion.CUDD_3_0;
-	}
+    return null;
+  }
 
-	public static boolean hasOptSelection() {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
-		return !val.equals("none");
-	}
+  public static BBDPackageVersion getBDDPackageVersionSelection() {
+    BDDPackage engineSelection = getBDDPackageSelection();
+    if (engineSelection.equals(BDDPackage.JTLV)) {
+      return BBDPackageVersion.DEFAULT;
+    }
 
-	public static void setOptSelection() {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
+    // CUDD BDD package has been selected
+    return BBDPackageVersion.CUDD_3_0;
+  }
 
-		boolean fp_opts = val.equals("all") || val.equals("fp_opts");
-		boolean cp_opts = val.equals("all") || val.equals("cp_opts");
+  public static boolean hasOptSelection() {
+    String val =
+        Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
+    return !val.equals("none");
+  }
 
-		GR1GameExperiments.DETECT_FIX_POINT_EARLY = fp_opts;
-		GR1GameExperiments.USE_FIXPOINT_RECYCLE = fp_opts;
-		GR1GameExperiments.STOP_WHEN_INITIALS_LOST = fp_opts;
-		GR1GameExperiments.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = cp_opts;
+  public static void setOptSelection() {
+    String val =
+        Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
 
-		RabinGame.DETECT_FIX_POINT_EARLY = fp_opts;
-		RabinGame.USE_FIXPOINT_RECYCLE = fp_opts;
-		RabinGame.STOP_WHEN_WIN_FROM_SOME_INITIALS = fp_opts;
-		RabinGame.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = cp_opts;
+    boolean fp_opts = val.equals("all") || val.equals("fp_opts");
+    boolean cp_opts = val.equals("all") || val.equals("cp_opts");
 
-		// TMP - NOTE: the function relprod needed for this optimization is not
-		// implemented for ADDs
-		if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD)) {
-			GR1GameExperiments.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = false;
-			RabinGame.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = false;
-		}
-	}
+    GR1GameExperiments.DETECT_FIX_POINT_EARLY = fp_opts;
+    GR1GameExperiments.USE_FIXPOINT_RECYCLE = fp_opts;
+    GR1GameExperiments.STOP_WHEN_INITIALS_LOST = fp_opts;
+    GR1GameExperiments.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = cp_opts;
 
-	public static TransFuncType getTransFuncSelection(boolean isDDMin) {
-		String val = Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
-		if (val.equals("all") || val.equals("cp_opts")) {
-			return isDDMin ? TransFuncType.PARTIAL_DECOMPOSED_FUNC : TransFuncType.DECOMPOSED_FUNC;
-		}
+    RabinGame.DETECT_FIX_POINT_EARLY = fp_opts;
+    RabinGame.USE_FIXPOINT_RECYCLE = fp_opts;
+    RabinGame.STOP_WHEN_WIN_FROM_SOME_INITIALS = fp_opts;
+    RabinGame.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = cp_opts;
 
-		return TransFuncType.SINGLE_FUNC;
-	}
+    // TMP - NOTE: the function relprod needed for this optimization is not
+    // implemented for ADDs
+    if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD)) {
+      GR1GameExperiments.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = false;
+      RabinGame.SIMULTANEOUS_CONJUNCTION_ABSTRACTION = false;
+    }
+  }
 
-	// public static boolean getWellSepIncludeSys() {
-	// return
-	// "SYS".equals(Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.WELL_SEP_SYS));
-	// }
+  public static TransFuncType getTransFuncSelection(boolean isDDMin) {
+    String val =
+        Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.OPT_CHOICE);
+    if (val.equals("all") || val.equals("cp_opts")) {
+      return isDDMin ? TransFuncType.PARTIAL_DECOMPOSED_FUNC : TransFuncType.DECOMPOSED_FUNC;
+    }
 
-	public static String getConcreteControllerFormat() {
-		return Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.CONC_CONT_FORMAT);
-	}
+    return TransFuncType.SINGLE_FUNC;
+  }
+
+  // public static boolean getWellSepIncludeSys() {
+  // return
+  // "SYS".equals(Activator.getDefault().getPreferenceStore().getString(PreferenceConstants.WELL_SEP_SYS));
+  // }
+
+  public static String getConcreteControllerFormat() {
+    return Activator.getDefault()
+        .getPreferenceStore()
+        .getString(PreferenceConstants.CONC_CONT_FORMAT);
+  }
 }

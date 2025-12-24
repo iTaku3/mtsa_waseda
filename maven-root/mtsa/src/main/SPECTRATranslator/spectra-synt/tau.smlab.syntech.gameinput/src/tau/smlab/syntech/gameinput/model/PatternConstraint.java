@@ -17,58 +17,55 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.model;
 
 import java.util.List;
-
 import tau.smlab.syntech.gameinput.spec.Spec;
 
 public class PatternConstraint extends Constraint {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -9107457598931230133L;
+  /** */
+  private static final long serialVersionUID = -9107457598931230133L;
 
-	public PatternConstraint(String name, Pattern pattern, List<Spec> parameters, int traceId) {
-		super(Kind.PATTERN, null, name, traceId);
-		this.pattern = pattern;
-		this.parameters = parameters;
-	}
+  public PatternConstraint(String name, Pattern pattern, List<Spec> parameters, int traceId) {
+    super(Kind.PATTERN, null, name, traceId);
+    this.pattern = pattern;
+    this.parameters = parameters;
+  }
 
-	private Pattern pattern;
-	private List<Spec> parameters;
+  private Pattern pattern;
+  private List<Spec> parameters;
 
-	public String toString()
-	{
-		return "PatternConstraint_pattern: " + pattern + " PatternConstraint_parameters: " + parameters;
-	}
-	public Pattern getPattern() {
-		return pattern;
-	}
+  public String toString() {
+    return "PatternConstraint_pattern: " + pattern + " PatternConstraint_parameters: " + parameters;
+  }
 
-	public void setPattern(Pattern pattern) {
-		this.pattern = pattern;
-	}
+  public Pattern getPattern() {
+    return pattern;
+  }
 
-	public List<Spec> getParameters() {
-		return parameters;
-	}
+  public void setPattern(Pattern pattern) {
+    this.pattern = pattern;
+  }
 
-	public void setParameters(List<Spec> parameters) {
-		this.parameters = parameters;
-	}
+  public List<Spec> getParameters() {
+    return parameters;
+  }
 
-	@Override
-	public Kind getKind() {
-		return Kind.PATTERN;
-	}
+  public void setParameters(List<Spec> parameters) {
+    this.parameters = parameters;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.PATTERN;
+  }
 }

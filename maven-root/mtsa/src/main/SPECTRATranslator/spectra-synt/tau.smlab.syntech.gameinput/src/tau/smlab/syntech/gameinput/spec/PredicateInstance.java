@@ -17,79 +17,74 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.spec;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import tau.smlab.syntech.gameinput.model.Predicate;
 
 public class PredicateInstance implements Spec {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2518428787086751295L;
-	
-	private Predicate predicate;
-	private List<Spec> parameters;
+  /** */
+  private static final long serialVersionUID = -2518428787086751295L;
 
-	public PredicateInstance(Predicate predicate, List<Spec> parameters)
-	{
-		this.predicate = predicate;
-		this.parameters = parameters;
-	}
+  private Predicate predicate;
+  private List<Spec> parameters;
 
-	public String toString()
-	{
-		return "<PredicateInstance: " + this.predicate.getPredicateName() + ">";
-	}
+  public PredicateInstance(Predicate predicate, List<Spec> parameters) {
+    this.predicate = predicate;
+    this.parameters = parameters;
+  }
 
-	public Predicate getPredicate() {
-		return predicate;
-	}
+  public String toString() {
+    return "<PredicateInstance: " + this.predicate.getPredicateName() + ">";
+  }
 
-	public void setPredicate(Predicate predicate) {
-		this.predicate = predicate;
-	}
+  public Predicate getPredicate() {
+    return predicate;
+  }
 
-	public List<Spec> getParameters() {
-		return parameters;
-	}
+  public void setPredicate(Predicate predicate) {
+    this.predicate = predicate;
+  }
 
-	public void setParameters(List<Spec> parameters) {
-		this.parameters = parameters;
-	}
+  public List<Spec> getParameters() {
+    return parameters;
+  }
 
-	@Override
-	public boolean isPastLTLSpec() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+  public void setParameters(List<Spec> parameters) {
+    this.parameters = parameters;
+  }
 
-	@Override
-	public boolean isPropSpec() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+  @Override
+  public boolean isPastLTLSpec() {
+    // TODO Auto-generated method stub
+    return false;
+  }
 
-	@Override
-	public boolean hasTemporalOperators() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+  @Override
+  public boolean isPropSpec() {
+    // TODO Auto-generated method stub
+    return false;
+  }
 
-	@Override
-	public PredicateInstance clone() throws CloneNotSupportedException {
-		List<Spec> newParameters = new ArrayList<>(this.parameters);
-		return new PredicateInstance(this.predicate, newParameters);
-	}
+  @Override
+  public boolean hasTemporalOperators() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public PredicateInstance clone() throws CloneNotSupportedException {
+    List<Spec> newParameters = new ArrayList<>(this.parameters);
+    return new PredicateInstance(this.predicate, newParameters);
+  }
 }

@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.model;
@@ -33,106 +33,103 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Variable implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -1555452952492538184L;
-	
-	private String name;
-	private TypeDef type;
-	private int traceId;
-	private boolean isDomainVar; // a boolean field that is true iff the variable is a domain var.
+  /** */
+  private static final long serialVersionUID = -1555452952492538184L;
 
-	public Variable(String name, TypeDef type) {
-		this(name, type, 0, false);
-	}
+  private String name;
+  private TypeDef type;
+  private int traceId;
+  private boolean isDomainVar; // a boolean field that is true iff the variable is a domain var.
 
-	@Override
-	public boolean equals(Object obj) {
-		return name.equals(((Variable)obj).name);
-	}
+  public Variable(String name, TypeDef type) {
+    this(name, type, 0, false);
+  }
 
-	public Variable(String name, TypeDef type, int traceId) {
-		this(name, type, traceId, false);
-	}
+  @Override
+  public boolean equals(Object obj) {
+    return name.equals(((Variable) obj).name);
+  }
 
-	public Variable(String name, TypeDef type, boolean isDomainVar) {
-		this(name, type, 0, isDomainVar);
-	}
+  public Variable(String name, TypeDef type, int traceId) {
+    this(name, type, traceId, false);
+  }
 
-	public Variable(String name, TypeDef type, int traceId, boolean isDomainVar) {
-		this.name = name;
-		this.type = type;
-		this.traceId = traceId;
-		this.isDomainVar = isDomainVar;
-	}
+  public Variable(String name, TypeDef type, boolean isDomainVar) {
+    this(name, type, 0, isDomainVar);
+  }
 
-	public String toString() {
-		return "VariableName: " + name + " VariableType: " + type + " IsDomainVar? " + isDomainVar;
-	}
+  public Variable(String name, TypeDef type, int traceId, boolean isDomainVar) {
+    this.name = name;
+    this.type = type;
+    this.traceId = traceId;
+    this.isDomainVar = isDomainVar;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String toString() {
+    return "VariableName: " + name + " VariableType: " + type + " IsDomainVar? " + isDomainVar;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public TypeDef getType() {
-		return type;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public void setType(TypeDef type) {
-		this.type = type;
-	}
+  public TypeDef getType() {
+    return type;
+  }
 
-	public int getTraceId() {
-		return traceId;
-	}
+  public void setType(TypeDef type) {
+    this.type = type;
+  }
 
-	public void setTraceId(int traceId) {
-		this.traceId = traceId;
-	}
+  public int getTraceId() {
+    return traceId;
+  }
 
-	public boolean isDomainVar() {
-		return isDomainVar;
-	}
+  public void setTraceId(int traceId) {
+    this.traceId = traceId;
+  }
 
-	public List<String> getActions(){
-		List<String> answer = new ArrayList<String>();
-		String name = this.getName().toLowerCase();
-		if(this.getType().isBoolean()) {
-			answer.add(name);
-			answer.add("not_"+name);
-		} else if(this.getType().isInteger()) {
-			for (Integer i = this.getType().getLower(); i<=this.getType().getUpper(); i++) {
-				answer.add(name+"["+Integer.toString(i)+"]");
-			}
-		} else {
-			// We assume for now that the var is an enum if not bool or int.
-			for (String action : this.getType().getValues()) {
-				answer.add(name+"."+action.toLowerCase());
-			}
-		}
-		return answer;
-	}
-	
-	public List<String> getNoNameActions(){
-		List<String> answer = new ArrayList<String>();
-		if(this.getType().isBoolean()) {
-			throw new Error("for boolean variables, use regular getActions");
-		} else if(this.getType().isInteger()) {
-			for (Integer i = this.getType().getLower(); i<=this.getType().getUpper(); i++) {
-				answer.add("["+Integer.toString(i)+"]");
-			}
-		} else {
-			// We assume for now that the var is an enum if not bool or int.
-			for (String action : this.getType().getValues()) {
-				answer.add(action.toLowerCase());
-			}
-		}
-		return answer;
-	}
-	
+  public boolean isDomainVar() {
+    return isDomainVar;
+  }
+
+  public List<String> getActions() {
+    List<String> answer = new ArrayList<String>();
+    String name = this.getName().toLowerCase();
+    if (this.getType().isBoolean()) {
+      answer.add(name);
+      answer.add("not_" + name);
+    } else if (this.getType().isInteger()) {
+      for (Integer i = this.getType().getLower(); i <= this.getType().getUpper(); i++) {
+        answer.add(name + "[" + Integer.toString(i) + "]");
+      }
+    } else {
+      // We assume for now that the var is an enum if not bool or int.
+      for (String action : this.getType().getValues()) {
+        answer.add(name + "." + action.toLowerCase());
+      }
+    }
+    return answer;
+  }
+
+  public List<String> getNoNameActions() {
+    List<String> answer = new ArrayList<String>();
+    if (this.getType().isBoolean()) {
+      throw new Error("for boolean variables, use regular getActions");
+    } else if (this.getType().isInteger()) {
+      for (Integer i = this.getType().getLower(); i <= this.getType().getUpper(); i++) {
+        answer.add("[" + Integer.toString(i) + "]");
+      }
+    } else {
+      // We assume for now that the var is an enum if not bool or int.
+      for (String action : this.getType().getValues()) {
+        answer.add(action.toLowerCase());
+      }
+    }
+    return answer;
+  }
 }

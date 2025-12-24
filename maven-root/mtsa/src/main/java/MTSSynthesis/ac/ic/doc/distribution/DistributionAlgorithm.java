@@ -6,11 +6,11 @@ import MTSTools.ac.ic.doc.mtstools.model.MTS;
 
 /**
  * TODO add comment
- * @author gsibay
  *
+ * @author gsibay
  */
 public interface DistributionAlgorithm<S, A> {
 
-	public abstract DistributionResult<S, A> tryDistribute(MTS<S, A> monolithicModel, AlphabetDistribution<A> alphabetDistribution, A tauAction);
-
+  public abstract DistributionResult<S, A> tryDistribute(
+      MTS<S, A> monolithicModel, AlphabetDistribution<A> alphabetDistribution, A tauAction);
 }

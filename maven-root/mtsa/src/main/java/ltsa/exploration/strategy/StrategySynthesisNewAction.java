@@ -2,34 +2,32 @@ package ltsa.exploration.strategy;
 
 import java.util.HashSet;
 
-public class StrategySynthesisNewAction extends Strategy
-{
-    private StrategySynthesis strategySynthesis;
-    private StrategyNewAction strategyNewAction;
+public class StrategySynthesisNewAction extends Strategy {
+  private StrategySynthesis strategySynthesis;
+  private StrategyNewAction strategyNewAction;
 
-    //region Constructor
-    public StrategySynthesisNewAction(StrategySynthesis strategySynthesis, StrategyNewAction strategyNewAction)
-    {
-        this.strategySynthesis = strategySynthesis;
-        this.strategyNewAction = strategyNewAction;
-    }
-    //endregion
+  // region Constructor
+  public StrategySynthesisNewAction(
+      StrategySynthesis strategySynthesis, StrategyNewAction strategyNewAction) {
+    this.strategySynthesis = strategySynthesis;
+    this.strategyNewAction = strategyNewAction;
+  }
 
-    //region Overrides
-    @Override
-    public String chooseNextAction(HashSet<String> availableActions)
-    {
-        HashSet<String> controllerAvailableActions = this.strategySynthesis.getControllerAvailableActions();
+  // endregion
 
-        HashSet<String> controllableAviableActions = new HashSet<>();
-        for (String anAction : controllerAvailableActions)
-            if (availableActions.contains(anAction))
-                controllableAviableActions.add(anAction);
+  // region Overrides
+  @Override
+  public String chooseNextAction(HashSet<String> availableActions) {
+    HashSet<String> controllerAvailableActions =
+        this.strategySynthesis.getControllerAvailableActions();
 
-        if (controllableAviableActions.size() == 0)
-        	controllableAviableActions = availableActions;
-        
-        return this.strategyNewAction.chooseNextAction(controllableAviableActions);
-    }
-    //endregion
+    HashSet<String> controllableAviableActions = new HashSet<>();
+    for (String anAction : controllerAvailableActions)
+      if (availableActions.contains(anAction)) controllableAviableActions.add(anAction);
+
+    if (controllableAviableActions.size() == 0) controllableAviableActions = availableActions;
+
+    return this.strategyNewAction.chooseNextAction(controllableAviableActions);
+  }
+  // endregion
 }

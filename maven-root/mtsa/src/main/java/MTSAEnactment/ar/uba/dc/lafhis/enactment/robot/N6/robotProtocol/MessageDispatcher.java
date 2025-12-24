@@ -5,25 +5,23 @@ import java.util.List;
 
 public class MessageDispatcher {
 
-    private List<IMessageListener> listeners;
-    
-    public MessageDispatcher(){
-		listeners		= new ArrayList<IMessageListener>();    	
-    }
-    
-    public synchronized void addMessageListener(IMessageListener listener){
-		listeners.add(listener);
-	}
-	
-	public synchronized void removeMessageListener(IMessageListener listener){
-		listeners.remove(listener);
-	}
+  private List<IMessageListener> listeners;
 
-    protected synchronized void fireEvent(MessageEvent messageEvent) 
-    {
-    	for (IMessageListener listener : listeners)
-    	{
-    		listener.eventHandler(messageEvent);
-    	}
-    }		
+  public MessageDispatcher() {
+    listeners = new ArrayList<IMessageListener>();
+  }
+
+  public synchronized void addMessageListener(IMessageListener listener) {
+    listeners.add(listener);
+  }
+
+  public synchronized void removeMessageListener(IMessageListener listener) {
+    listeners.remove(listener);
+  }
+
+  protected synchronized void fireEvent(MessageEvent messageEvent) {
+    for (IMessageListener listener : listeners) {
+      listener.eventHandler(messageEvent);
+    }
+  }
 }

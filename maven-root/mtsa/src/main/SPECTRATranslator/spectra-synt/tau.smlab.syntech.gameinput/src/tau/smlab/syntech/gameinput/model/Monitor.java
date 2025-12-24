@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.model;
@@ -32,48 +32,43 @@ import java.io.Serializable;
 import java.util.List;
 
 public class Monitor implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 6681607472181997841L;
-	
-	private int traceId;
-	private String name;
-	private TypeDef type;
-	private List<Constraint> expressions;
+  /** */
+  private static final long serialVersionUID = 6681607472181997841L;
 
-	/**
-	 * 
-	 * @param name
-	 * @param expressions
-	 * @param traceId
-	 */
-	public Monitor(String name, TypeDef type, List<Constraint> expressions, int traceId)
-	{
-		this.name = name;
-		this.expressions = expressions;
-		this.traceId = traceId;
-		this.type = type;
-	}
+  private int traceId;
+  private String name;
+  private TypeDef type;
+  private List<Constraint> expressions;
 
-	public int getTraceId() {
-		return traceId;
-	}
+  /**
+   * @param name
+   * @param expressions
+   * @param traceId
+   */
+  public Monitor(String name, TypeDef type, List<Constraint> expressions, int traceId) {
+    this.name = name;
+    this.expressions = expressions;
+    this.traceId = traceId;
+    this.type = type;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public int getTraceId() {
+    return traceId;
+  }
 
-	public TypeDef getType() {
-		return type;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public List<Constraint> getExpressions() {
-		return expressions;
-	}
+  public TypeDef getType() {
+    return type;
+  }
 
-	public void addExpressions(List<Constraint> exps) {
-		this.expressions.addAll(exps);
-	}
+  public List<Constraint> getExpressions() {
+    return expressions;
+  }
 
+  public void addExpressions(List<Constraint> exps) {
+    this.expressions.addAll(exps);
+  }
 }

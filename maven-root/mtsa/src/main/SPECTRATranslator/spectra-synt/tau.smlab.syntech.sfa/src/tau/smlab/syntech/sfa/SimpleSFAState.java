@@ -17,57 +17,57 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.sfa;
 
 /**
- * 
- * A class that represents a state of an SFA. Note that this type of states cannot have outgoing epsilon transitions.
- * 
- * @author Or Pistiner
+ * A class that represents a state of an SFA. Note that this type of states cannot have outgoing
+ * epsilon transitions.
  *
+ * @author Or Pistiner
  */
 public class SimpleSFAState extends BaseSFAState<SimpleSFAState> {
 
-	protected SimpleSFAState(boolean isAccepting) {
-		super(isAccepting);
-	}
-	
-	@Override
-	public boolean enablesEpsTrans() {
-		return false;
-	}
-	
-	@Override
-	public boolean hasEpsSuccessors() {
-		return false;
-	}
-	
-	@Override
-	public void addEpsTrans(SFAState tgt) {
-		throw new SFAStateException("SimpleSFAState does not allow adding outgoing epsilon transitions");
-	}
-	
-	@Override
-	public boolean isEpsSuccessor(SFAState succ) {
-		return false;
-	}
+  protected SimpleSFAState(boolean isAccepting) {
+    super(isAccepting);
+  }
 
-	@Override
-	public SimpleSFAState cloneWithoutSucc() {
-		return new SimpleSFAState(this.isAccepting);
-	}
+  @Override
+  public boolean enablesEpsTrans() {
+    return false;
+  }
 
-	@Override
-	protected Class<SimpleSFAState> getSuccessorsType() {
-		return SimpleSFAState.class;
-	}
+  @Override
+  public boolean hasEpsSuccessors() {
+    return false;
+  }
+
+  @Override
+  public void addEpsTrans(SFAState tgt) {
+    throw new SFAStateException(
+        "SimpleSFAState does not allow adding outgoing epsilon transitions");
+  }
+
+  @Override
+  public boolean isEpsSuccessor(SFAState succ) {
+    return false;
+  }
+
+  @Override
+  public SimpleSFAState cloneWithoutSucc() {
+    return new SimpleSFAState(this.isAccepting);
+  }
+
+  @Override
+  protected Class<SimpleSFAState> getSuccessorsType() {
+    return SimpleSFAState.class;
+  }
 }

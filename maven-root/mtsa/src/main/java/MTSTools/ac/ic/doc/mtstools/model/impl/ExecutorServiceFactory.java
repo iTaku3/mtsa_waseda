@@ -6,33 +6,32 @@ import java.util.concurrent.ThreadFactory;
 
 public class ExecutorServiceFactory {
 
-	final private static ExecutorService EXECUTOR_SERVICE;
-	
-	static {
-		
-		int processors = 2;
-		try {
-			processors = Integer.parseInt(System.getProperty("ac.ic.doc.mtstools.workers", "2"));
-		} catch (NumberFormatException e) {
-			processors = 2;
-		}
-		EXECUTOR_SERVICE = Executors.newFixedThreadPool(processors,
-			new ThreadFactory(){
-				int id=0;
-				@Override
-				public Thread newThread(Runnable r) {
-					Thread result = new Thread(r);
-					result.setDaemon(true);
-					result.setName("Simulation worker (" + (++id) + ")");
-					return result;
-				}
-		});
-	}
+  private static final ExecutorService EXECUTOR_SERVICE;
 
-	public static ExecutorService getExecutorService() {
-		return EXECUTOR_SERVICE;
-	}
+  static {
+    int processors = 2;
+    try {
+      processors = Integer.parseInt(System.getProperty("ac.ic.doc.mtstools.workers", "2"));
+    } catch (NumberFormatException e) {
+      processors = 2;
+    }
+    EXECUTOR_SERVICE =
+        Executors.newFixedThreadPool(
+            processors,
+            new ThreadFactory() {
+              int id = 0;
 
-	
-	
+              @Override
+              public Thread newThread(Runnable r) {
+                Thread result = new Thread(r);
+                result.setDaemon(true);
+                result.setName("Simulation worker (" + (++id) + ")");
+                return result;
+              }
+            });
+  }
+
+  public static ExecutorService getExecutorService() {
+    return EXECUTOR_SERVICE;
+  }
 }

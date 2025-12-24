@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.spectragameinput.translator;
@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import tau.smlab.syntech.gameinput.model.Pattern;
 import tau.smlab.syntech.spectragameinput.SpectraTranslationException;
 
@@ -46,25 +45,29 @@ public class PatternNameToPatternMapping {
   public List<Pattern> getAllPatterns() {
     return new ArrayList<>(patternNameToPatternObjectMapping.values());
   }
-  
+
   /**
-   * Computes GameInput Pattern on demand: If computed before, returns immediately. Otherwise computes the pattern, stores it and returns.
+   * Computes GameInput Pattern on demand: If computed before, returns immediately. Otherwise
+   * computes the pattern, stores it and returns.
+   *
    * @param spectraPattern Spectra Pattern
    * @param entitiesMapper
    * @param tracer
    * @return GameInput pattern
-   * @throws SpectraTranslationException 
+   * @throws SpectraTranslationException
    */
-  public Pattern get(tau.smlab.syntech.spectra.Pattern spectraPattern, EntitiesMapper entitiesMapper, Tracer tracer) throws SpectraTranslationException {
+  public Pattern get(
+      tau.smlab.syntech.spectra.Pattern spectraPattern,
+      EntitiesMapper entitiesMapper,
+      Tracer tracer)
+      throws SpectraTranslationException {
     String patternName = spectraPattern.getName();
-    if (patternNameToPatternObjectMapping.containsKey(patternName))
-    {
+    if (patternNameToPatternObjectMapping.containsKey(patternName)) {
       return patternNameToPatternObjectMapping.get(patternName);
-    }
-    else
-    {
+    } else {
       // Compute the pattern
-      tau.smlab.syntech.gameinput.model.Pattern giPattern = Spectra2GameInputTranslator.computePattern(entitiesMapper, tracer, spectraPattern);
+      tau.smlab.syntech.gameinput.model.Pattern giPattern =
+          Spectra2GameInputTranslator.computePattern(entitiesMapper, tracer, spectraPattern);
       // Store it for future look ups
       patternNameToPatternObjectMapping.put(patternName, giPattern);
       return giPattern;

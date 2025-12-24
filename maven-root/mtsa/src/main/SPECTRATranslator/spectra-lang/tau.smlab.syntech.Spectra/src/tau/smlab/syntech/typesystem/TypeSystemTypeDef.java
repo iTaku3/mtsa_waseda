@@ -17,45 +17,42 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.typesystem;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import tau.smlab.syntech.spectra.SpectraPackage;
 import tau.smlab.syntech.spectra.TypeDef;
 
 public class TypeSystemTypeDef {
 
   public static TypeCheckIssue typeCheck(TypeDef typeDef) {
-    
-    if (isContainsCycles(typeDef, new ArrayList<String>()))
-    {
-      return new TypeCheckError(SpectraPackage.Literals.TYPE_DEF.getEIDAttribute(), IssueMessages.TYPEDEF_CONTAINS_CYCLES);
+
+    if (isContainsCycles(typeDef, new ArrayList<String>())) {
+      return new TypeCheckError(
+          SpectraPackage.Literals.TYPE_DEF.getEIDAttribute(),
+          IssueMessages.TYPEDEF_CONTAINS_CYCLES);
     }
     return null;
   }
 
   private static boolean isContainsCycles(TypeDef typeDef, List<String> alreadySeenTypeDefs) {
-    if (alreadySeenTypeDefs.contains(typeDef.getName()))
-    {
+    if (alreadySeenTypeDefs.contains(typeDef.getName())) {
       return true;
     }
-    if (typeDef.getType()!=null && typeDef.getType().getType() != null)
-    {
+    if (typeDef.getType() != null && typeDef.getType().getType() != null) {
       alreadySeenTypeDefs.add(typeDef.getName());
       return isContainsCycles(typeDef.getType().getType(), alreadySeenTypeDefs);
     }
     return false;
   }
-
 }

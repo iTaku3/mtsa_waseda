@@ -1,0 +1,270 @@
+//******************************************************************************
+//*  ArtGallery.mtsa (for MTSA)
+//*  Create Date      : 2019/06/19
+//*  Creator Name     : Takuto Yamauchi
+//*  Example          : Physical Security(ArtGallery)
+//*  MTSA run command : [java -jar -Xmx100G mtsa.jar]
+//*****************************************************************************/
+
+//*****************************************************************************
+// Environment
+//*****************************************************************************
+
+const N = 4
+//const HALL_N  = 3
+//const RoomA_N = 3
+//const RoomB_N = 3
+//const RoomC_N = 3
+//const RoomD_N = 3
+
+set VisitorAction = {reqEnter_Hall,reqEnter_A,reqEnter_B,reqOut}
+set LockAction    = {lock_Hall,lock_A,lock_B,unLock_Hall,unLock_A,unLock_B}
+set AllowAction   = {allow_Hall,allow_A,allow_B,allow_Out,deny_Hall,deny_A,deny_B,deny_Out}
+set DoorAction    = {LockAction,AllowAction,resRoomStatus}
+set MonitorAction = {notEnter,arrive_Hall[1..N],arrive_A[1..N],arrive_B[1..N],leave}
+set AllAction     = {VisitorAction,DoorAction,MonitorAction}
+set ControllableActions = {DoorAction}
+
+VISITOR = VISIT,
+VISIT =
+(
+	reqEnter_Hall  -> resRoomStatus -> CHECK_HALL
+    |reqEnter_A    -> resRoomStatus -> CHECK_A
+    |reqEnter_B    -> resRoomStatus -> CHECK_B
+    |reqOut        -> resRoomStatus -> CHECK_OUT
+),
+CHECK_HALL = (allow_Hall -> arrive_Hall[1..N] -> VISIT | deny_Hall -> notEnter -> VISIT),
+CHECK_A    = (allow_A    -> arrive_A[1..N]    -> VISIT | deny_A    -> arrive_Hall[1..N] -> VISIT),
+CHECK_B    = (allow_B    -> arrive_B[1..N]    -> VISIT | deny_B    -> arrive_A[1..N] -> VISIT),
+CHECK_OUT  = (allow_Out  -> leave             -> VISIT | deny_Out  -> arrive_B[1..N] -> VISIT).
+
+
+HALL = HALL[0],
+HALL[n:0..N]   = (when(n!=N) allow_Hall -> arrive_Hall[n+1] -> HALL[n+1]   |when(n!=N) deny_A -> arrive_Hall[n+1] -> HALL[n+1]  |when(n!=0) reqEnter_A -> HALL[n-1]).
+ROOM_A = ROOM_A[0],
+ROOM_A[n:0..N] = (when(n!=N) allow_A    -> arrive_A[n+1]    -> ROOM_A[n+1] |when(n!=N) deny_B -> arrive_A[n+1] -> ROOM_A[n+1]   |when(n!=0) reqEnter_B -> ROOM_A[n-1]).
+ROOM_B = ROOM_B[0],
+ROOM_B[n:0..N] = (when(n!=N) allow_B    -> arrive_B[n+1]    -> ROOM_B[n+1] |when(n!=N) deny_Out -> arrive_B[n+1] -> ROOM_B[n+1]   |when(n!=0) reqOut -> ROOM_B[n-1]).
+
+
+DOOR_LOCK_HALL = LOCK_HALL,
+LOCK_HALL = (lock_Hall -> unLock_Hall -> LOCK_HALL).
+
+DOOR_LOCK_A = LOCK_A,
+LOCK_A = (lock_A -> unLock_A -> LOCK_A).
+
+DOOR_LOCK_B = LOCK_B,
+LOCK_B = (lock_B -> unLock_B -> LOCK_B).
+
+
+||Environment= (VISITOR||HALL||ROOM_A||ROOM_B||DOOR_LOCK_HALL||DOOR_LOCK_A||DOOR_LOCK_B).
+
+
+//*****************************************************************************
+// Requirement
+//*****************************************************************************
+
+/*Threshold*/
+const TH_HALL = 2
+const TH_A    = 2
+const TH_B    = 2
+
+
+/*Fluent*/
+fluent HALL_LOCKED     = <lock_Hall,unLock_Hall>
+fluent HALL_NOT_LOCKED = <unLock_Hall,lock_Hall>
+fluent HALL_TH_LOCKED1 = <arrive_Hall[TH_HALL],allow_A>
+fluent HALL_TH_LOCKED2 = <lock_Hall,allow_A>
+fluent HALL_LOCK_TIME  = <arrive_Hall[TH_HALL],resRoomStatus>
+
+fluent A_LOCKED     = <lock_A,unLock_A>
+fluent A_NOT_LOCKED = <unLock_A,lock_A>
+fluent A_TH_LOCKED1 = <arrive_A[TH_A],allow_B>
+fluent A_TH_LOCKED2 = <lock_A,allow_B>
+fluent A_LOCK_TIME  = <arrive_A[TH_A],resRoomStatus>
+
+fluent B_LOCKED     = <lock_B,unLock_B>
+fluent B_NOT_LOCKED = <unLock_B,lock_B>
+fluent B_TH_LOCKED1 = <arrive_B[TH_B],allow_Out>
+fluent B_TH_LOCKED2 = <lock_B,allow_Out>
+fluent B_LOCK_TIME  = <arrive_B[TH_B],resRoomStatus>
+
+fluent UNLOCK_TIME = <MonitorAction,resRoomStatus>
+
+/*FLTL*/
+assert VISITOR_RULE_HALL = (HALL_LOCKED -> !allow_Hall)
+assert LOCK_RULE_HALL1   = (((!HALL_LOCKED)&& arrive_Hall[TH_HALL]) -> X(!(resRoomStatus) W lock_Hall))
+assert LOCK_RULE_HALL2   = ((HALL_TH_LOCKED1 && HALL_TH_LOCKED2) -> !(unLock_Hall))
+assert UNLOCK_RULE_HALL1 = ((HALL_LOCKED && allow_A) -> X(!(resRoomStatus) W unLock_Hall))
+assert HALL_LOCK_TIMING  = (!HALL_LOCK_TIME -> !lock_Hall)
+assert HALL_UNLOCK_TIMING  = (!UNLOCK_TIME -> !unLock_Hall)
+
+assert VISITOR_RULE_A = (A_LOCKED -> !allow_A)
+assert LOCK_RULE_A1   = (((!A_LOCKED)&& arrive_A[TH_A]) -> X(!(resRoomStatus) W lock_A))
+assert LOCK_RULE_A2   = ((A_TH_LOCKED1 && A_TH_LOCKED2) -> !(unLock_A))
+assert UNLOCK_RULE_A1 = ((A_LOCKED && allow_B) -> X(!(resRoomStatus) W unLock_A))
+assert A_LOCK_TIMING  = (!A_LOCK_TIME -> !lock_A)
+assert A_UNLOCK_TIMING  = (!UNLOCK_TIME -> !unLock_A)
+
+assert VISITOR_RULE_B = (B_LOCKED -> !allow_B)
+assert LOCK_RULE_B1   = (((!B_LOCKED)&& arrive_B[TH_B]) -> X(!(resRoomStatus) W lock_B))
+assert LOCK_RULE_B2   = ((B_TH_LOCKED1 && B_TH_LOCKED2) -> !(unLock_B))
+assert UNLOCK_RULE_B1 = ((B_LOCKED && allow_Out) -> X(!(resRoomStatus) W unLock_B))
+assert B_LOCK_TIMING  = (!B_LOCK_TIME -> !lock_B)
+assert B_UNLOCK_TIMING  = (!UNLOCK_TIME -> !unLock_B)
+
+
+ltl_property P_VISITOR_RULE_HALL = []VISITOR_RULE_HALL
+ltl_property P_LOCK_RULE_HALL1   = []LOCK_RULE_HALL1
+ltl_property P_LOCK_RULE_HALL2   = []LOCK_RULE_HALL2
+ltl_property P_UNLOCK_RULE_HALL1 = []UNLOCK_RULE_HALL1
+ltl_property P_HALL_LOCK_TIMING  = []HALL_LOCK_TIMING
+ltl_property P_HALL_UNLOCK_TIMING = []HALL_UNLOCK_TIMING
+
+ltl_property P_VISITOR_RULE_A = []VISITOR_RULE_A
+ltl_property P_LOCK_RULE_A1   = []LOCK_RULE_A1
+ltl_property P_LOCK_RULE_A2   = []LOCK_RULE_A2
+ltl_property P_UNLOCK_RULE_A1 = []UNLOCK_RULE_A1
+ltl_property P_A_LOCK_TIMING  = []A_LOCK_TIMING
+ltl_property P_A_UNLOCK_TIMING = []A_UNLOCK_TIMING
+
+ltl_property P_VISITOR_RULE_B = []VISITOR_RULE_B
+ltl_property P_LOCK_RULE_B1   = []LOCK_RULE_B1
+ltl_property P_LOCK_RULE_B2   = []LOCK_RULE_B2
+ltl_property P_UNLOCK_RULE_B1 = []UNLOCK_RULE_B1
+ltl_property P_B_LOCK_TIMING  = []B_LOCK_TIMING
+ltl_property P_B_UNLOCK_TIMING = []B_UNLOCK_TIMING
+
+
+
+controllerSpec Specification =
+{
+	safety       = {
+					P_VISITOR_RULE_HALL,
+					P_LOCK_RULE_HALL1,
+					P_LOCK_RULE_HALL2,
+					P_UNLOCK_RULE_HALL1,
+					P_HALL_LOCK_TIMING,
+					P_HALL_UNLOCK_TIMING,
+					
+					P_VISITOR_RULE_A,
+					P_LOCK_RULE_A1,
+					P_LOCK_RULE_A2,
+					P_UNLOCK_RULE_A1,
+					P_A_LOCK_TIMING,
+					P_A_UNLOCK_TIMING,
+					
+					P_VISITOR_RULE_B,
+					P_LOCK_RULE_B1,
+					P_LOCK_RULE_B2,
+					P_UNLOCK_RULE_B1,
+					P_B_LOCK_TIMING,
+					P_B_UNLOCK_TIMING,
+				   }
+	//liveness     = {GOAL}
+	controllable = {ControllableActions}
+}
+
+
+controllerSpec PartSpec1 =
+{
+	safety       = {
+					P_VISITOR_RULE_HALL,
+					P_LOCK_RULE_HALL1,
+					P_LOCK_RULE_HALL2,
+					P_UNLOCK_RULE_HALL1,
+					P_HALL_LOCK_TIMING,
+					P_HALL_UNLOCK_TIMING,
+				   }
+	//liveness     = {GOAL}
+	controllable = {ControllableActions}
+}
+
+
+controllerSpec PartSpec2 =
+{
+	safety       = {
+					P_VISITOR_RULE_A,
+					P_LOCK_RULE_A1,
+					P_LOCK_RULE_A2,
+					P_UNLOCK_RULE_A1,
+					P_A_LOCK_TIMING,
+					P_A_UNLOCK_TIMING,
+				   }
+	//liveness     = {GOAL}
+	controllable = {ControllableActions}
+}
+
+
+controllerSpec PartSpec3 =
+{
+	safety       = {
+					P_VISITOR_RULE_B,
+					P_LOCK_RULE_B1,
+					P_LOCK_RULE_B2,
+					P_UNLOCK_RULE_B1,
+					P_B_LOCK_TIMING,
+					P_B_UNLOCK_TIMING,
+				   }
+	//liveness     = {GOAL}
+	controllable = {ControllableActions}
+}
+
+
+//for Directed Synthesis
+controllerSpec DirectedSpec = {
+  	safety       = {
+					P_VISITOR_RULE_HALL,
+					P_LOCK_RULE_HALL1,
+					P_LOCK_RULE_HALL2,
+					P_UNLOCK_RULE_HALL1,
+					P_HALL_LOCK_TIMING,
+					P_HALL_UNLOCK_TIMING,
+					
+					P_VISITOR_RULE_A,
+					P_LOCK_RULE_A1,
+					P_LOCK_RULE_A2,
+					P_UNLOCK_RULE_A1,
+					P_A_LOCK_TIMING,
+					P_A_UNLOCK_TIMING,
+					
+					P_VISITOR_RULE_B,
+					P_LOCK_RULE_B1,
+					P_LOCK_RULE_B2,
+					P_UNLOCK_RULE_B1,
+					P_B_LOCK_TIMING,
+					P_B_UNLOCK_TIMING,
+				   }
+	//liveness     = {GOAL}
+	controllable = {ControllableActions}
+	marking = {leave}
+	nonblocking
+}
+
+
+//*****************************************************************************
+//Controller
+//*****************************************************************************
+
+//Parallel Synthesis (Proposal)
+controller ||Controller = (VISITOR||HALL||ROOM_A||ROOM_B||DOOR_LOCK_HALL||DOOR_LOCK_A||DOOR_LOCK_B)~{Specification}.
+
+//Traditional Synthesis
+controller ||TraditionalController = (Environment)~{Specification}.
+
+//Directed Synthesis
+heuristic ||DirectedController = (VISITOR||HALL||ROOM_A||ROOM_B||DOOR_LOCK_HALL||DOOR_LOCK_A||DOOR_LOCK_B)~{DirectedSpec}.
+ 
+//Stepwise Synthesis (manual)
+||PartEnv1 = (VISITOR||HALL||ROOM_A||ROOM_B||ROOM_C||ROOM_D||DOOR_LOCK_HALL).
+controller ||C1 = (PartEnv1)~{PartSpec1}.
+||PartEnv2 = (C1||DOOR_LOCK_A).
+controller ||C2 = (PartEnv2)~{PartSpec2}.
+||PartEnv3 = (C2||DOOR_LOCK_B).
+controller ||C3 = (PartEnv3)~{PartSpec3}.
+||StepwiseController = (C3).
+
+//controller ||PartCont_1 = (VISITOR||HALL||ROOM_A||ROOM_B||ROOM_C||ROOM_D||DOOR_LOCK_HALL)~{PartSpec1}.
+//controller ||PartCont_2 = (PartCont_1||DOOR_LOCK_A)~{PartSpec2}.
+//controller ||StepwiseController = (PartCont_2||DOOR_LOCK_B)~{PartSpec3}.
+

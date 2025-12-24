@@ -1,29 +1,26 @@
 /**
  * Copyright (c) since 2015, Tel Aviv University and Software Modeling Lab
- * 
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * Neither the name of Tel Aviv University and Software Modeling Lab nor the
- * names of its contributors may be used to endorse or promote products
- * derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * <p>All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the
+ * above copyright notice, this list of conditions and the following disclaimer. Redistributions in
+ * binary form must reproduce the above copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided with the distribution. Neither
+ * the name of Tel Aviv University and Software Modeling Lab nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without specific prior written
+ * permission.
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and
+ * Software Modeling Lab BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  */
 package tau.smlab.syntech.validation;
 
@@ -58,13 +55,13 @@ import tau.smlab.syntech.typesystem.TypeSystemManager;
 
 /**
  * This class contains custom validation rules.
- * 
- * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
+ *
+ * <p>See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 @SuppressWarnings("all")
 public class SpectraValidator extends AbstractSpectraValidator {
   public static final String INVALID_NAME = "invalidName";
-  
+
   @Check
   public void checkIfReferenceableNamesAreUnique(final Model m) {
     final HashSet<String> seenNames = new HashSet<String>();
@@ -76,7 +73,8 @@ public class SpectraValidator extends AbstractSpectraValidator {
       if (_tripleNotEquals) {
         boolean _contains = seenNames.contains(e.getName());
         if (_contains) {
-          this.error("Predicate names have to be unique", e, SpectraPackage.Literals.PREDICATE__NAME);
+          this.error(
+              "Predicate names have to be unique", e, SpectraPackage.Literals.PREDICATE__NAME);
         }
         seenNames.add(e.getName());
       }
@@ -90,13 +88,17 @@ public class SpectraValidator extends AbstractSpectraValidator {
         if (_tripleNotEquals_1) {
           boolean _contains_1 = seenNames.contains(e_1.getName());
           if (_contains_1) {
-            this.error("Variable names have to be unique", e_1, SpectraPackage.Literals.VAR_DECL.getEIDAttribute());
+            this.error(
+                "Variable names have to be unique",
+                e_1,
+                SpectraPackage.Literals.VAR_DECL.getEIDAttribute());
           }
           seenNames.add(e_1.getName());
         }
       }
     }
-    Iterable<DefineRegExp> _filter_2 = Iterables.<DefineRegExp>filter(m.getElements(), DefineRegExp.class);
+    Iterable<DefineRegExp> _filter_2 =
+        Iterables.<DefineRegExp>filter(m.getElements(), DefineRegExp.class);
     for (final DefineRegExp defineRegExp : _filter_2) {
       EList<DefineRegExpDecl> _defineRegsList = defineRegExp.getDefineRegsList();
       for (final DefineRegExpDecl regExpDecl : _defineRegsList) {
@@ -105,7 +107,10 @@ public class SpectraValidator extends AbstractSpectraValidator {
         if (_tripleNotEquals_1) {
           boolean _contains_1 = seenNames.contains(regExpDecl.getName());
           if (_contains_1) {
-            this.error("Regular expressions\' names have to be unique", regExpDecl, SpectraPackage.Literals.DEFINE_REG_EXP_DECL.getEIDAttribute());
+            this.error(
+                "Regular expressions\' names have to be unique",
+                regExpDecl,
+                SpectraPackage.Literals.DEFINE_REG_EXP_DECL.getEIDAttribute());
           }
           seenNames.add(regExpDecl.getName());
         }
@@ -120,8 +125,10 @@ public class SpectraValidator extends AbstractSpectraValidator {
         if (_tripleNotEquals_2) {
           boolean _contains_2 = seenNames.contains(defineDecl.getName());
           if (_contains_2) {
-            this.error("Define names have to be unique", defineDecl, 
-              SpectraPackage.Literals.DEFINE_DECL.getEIDAttribute());
+            this.error(
+                "Define names have to be unique",
+                defineDecl,
+                SpectraPackage.Literals.DEFINE_DECL.getEIDAttribute());
           }
           seenNames.add(defineDecl.getName());
         }
@@ -146,7 +153,10 @@ public class SpectraValidator extends AbstractSpectraValidator {
       if (_tripleNotEquals_4) {
         boolean _contains_4 = seenNames.contains(e_2.getName());
         if (_contains_4) {
-          this.error("Existential guarantee names have to be unique", e_2, SpectraPackage.Literals.EX_GAR__NAME);
+          this.error(
+              "Existential guarantee names have to be unique",
+              e_2,
+              SpectraPackage.Literals.EX_GAR__NAME);
         }
         seenNames.add(e_2.getName());
       }
@@ -159,19 +169,24 @@ public class SpectraValidator extends AbstractSpectraValidator {
         if (_tripleNotEquals_5) {
           boolean _contains_5 = seenNames.contains(e_3.getName());
           if (_contains_5) {
-            this.error("Guarantee names have to be unique", e_3, SpectraPackage.Literals.LTL_GAR__NAME);
+            this.error(
+                "Guarantee names have to be unique", e_3, SpectraPackage.Literals.LTL_GAR__NAME);
           }
           seenNames.add(e_3.getName());
         }
         TemporalExpression tmpExpr = e_3.getTemporalExpr();
         while ((tmpExpr instanceof QuantifierExpr)) {
           {
-            boolean _contains_6 = domainVarsNames.contains(((QuantifierExpr)tmpExpr).getDomainVar().getName());
+            boolean _contains_6 =
+                domainVarsNames.contains(((QuantifierExpr) tmpExpr).getDomainVar().getName());
             if (_contains_6) {
-              this.error("Domain variables names have to be unique in scope", e_3, SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR);
+              this.error(
+                  "Domain variables names have to be unique in scope",
+                  e_3,
+                  SpectraPackage.Literals.LTL_GAR__TEMPORAL_EXPR);
             }
-            domainVarsNames.add(((QuantifierExpr)tmpExpr).getDomainVar().getName());
-            tmpExpr = ((QuantifierExpr)tmpExpr).getTemporalExpr();
+            domainVarsNames.add(((QuantifierExpr) tmpExpr).getDomainVar().getName());
+            tmpExpr = ((QuantifierExpr) tmpExpr).getTemporalExpr();
           }
         }
         domainVarsNames.clear();
@@ -185,19 +200,24 @@ public class SpectraValidator extends AbstractSpectraValidator {
         if (_tripleNotEquals_5) {
           boolean _contains_5 = seenNames.contains(e_4.getName());
           if (_contains_5) {
-            this.error("Assumption names have to be unique", e_4, SpectraPackage.Literals.LTL_ASM__NAME);
+            this.error(
+                "Assumption names have to be unique", e_4, SpectraPackage.Literals.LTL_ASM__NAME);
           }
           seenNames.add(e_4.getName());
         }
         TemporalExpression tmpExpr = e_4.getTemporalExpr();
         while ((tmpExpr instanceof QuantifierExpr)) {
           {
-            boolean _contains_6 = domainVarsNames.contains(((QuantifierExpr)tmpExpr).getDomainVar().getName());
+            boolean _contains_6 =
+                domainVarsNames.contains(((QuantifierExpr) tmpExpr).getDomainVar().getName());
             if (_contains_6) {
-              this.error("DomainVar Name must be unique in scope", e_4, SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR);
+              this.error(
+                  "DomainVar Name must be unique in scope",
+                  e_4,
+                  SpectraPackage.Literals.LTL_ASM__TEMPORAL_EXPR);
             }
-            domainVarsNames.add(((QuantifierExpr)tmpExpr).getDomainVar().getName());
-            tmpExpr = ((QuantifierExpr)tmpExpr).getTemporalExpr();
+            domainVarsNames.add(((QuantifierExpr) tmpExpr).getDomainVar().getName());
+            tmpExpr = ((QuantifierExpr) tmpExpr).getTemporalExpr();
           }
         }
         domainVarsNames.clear();
@@ -208,7 +228,10 @@ public class SpectraValidator extends AbstractSpectraValidator {
       {
         boolean _contains_5 = seenNames.contains(monitor.getName());
         if (_contains_5) {
-          this.error("Monitor names have to be unique", monitor, SpectraPackage.Literals.MONITOR.getEIDAttribute());
+          this.error(
+              "Monitor names have to be unique",
+              monitor,
+              SpectraPackage.Literals.MONITOR.getEIDAttribute());
         }
         seenNames.add(monitor.getName());
       }
@@ -220,13 +243,14 @@ public class SpectraValidator extends AbstractSpectraValidator {
       if (_tripleNotEquals_5) {
         boolean _contains_5 = seenNames.contains(weight.getName());
         if (_contains_5) {
-          this.error("Weight names have to be unique", weight, SpectraPackage.Literals.WEIGHT_DEF__NAME);
+          this.error(
+              "Weight names have to be unique", weight, SpectraPackage.Literals.WEIGHT_DEF__NAME);
         }
         seenNames.add(weight.getName());
       }
     }
   }
-  
+
   @Check
   public void checkIfPredicateParamNamesAreUnique(final Predicate p) {
     final HashSet<String> seenNames = new HashSet<String>();
@@ -238,39 +262,55 @@ public class SpectraValidator extends AbstractSpectraValidator {
         {
           boolean _contains = seenNames.contains(e.getName());
           if (_contains) {
-            this.error("Parameter names have to be unique", p, SpectraPackage.Literals.PREDICATE__PARAMS);
+            this.error(
+                "Parameter names have to be unique", p, SpectraPackage.Literals.PREDICATE__PARAMS);
           }
           seenNames.add(e.getName());
         }
       }
     }
   }
-  
+
   @Check
   public void checkCounterPartsUnique(final Counter c) {
     if (((c.getInitial() != null) && (c.getInitial().size() > 1))) {
-      this.error("Cannot define multiple initial constraints in a counter", c, SpectraPackage.Literals.COUNTER__INITIAL);
+      this.error(
+          "Cannot define multiple initial constraints in a counter",
+          c,
+          SpectraPackage.Literals.COUNTER__INITIAL);
     }
     if (((c.getDecPred() != null) && (c.getDecPred().size() > 1))) {
-      this.error("Cannot define multiple decrement constraints in a counter", c, SpectraPackage.Literals.COUNTER__DEC_PRED);
+      this.error(
+          "Cannot define multiple decrement constraints in a counter",
+          c,
+          SpectraPackage.Literals.COUNTER__DEC_PRED);
     }
     if (((c.getIncPred() != null) && (c.getIncPred().size() > 1))) {
-      this.error("Cannot define multiple increment constraints in a counter", c, SpectraPackage.Literals.COUNTER__INC_PRED);
+      this.error(
+          "Cannot define multiple increment constraints in a counter",
+          c,
+          SpectraPackage.Literals.COUNTER__INC_PRED);
     }
     if (((c.getOverflowMethod() != null) && (c.getOverflowMethod().size() > 1))) {
-      this.error("Cannot define multiple overflow methods for a counter", c, SpectraPackage.Literals.COUNTER__OVERFLOW_METHOD);
+      this.error(
+          "Cannot define multiple overflow methods for a counter",
+          c,
+          SpectraPackage.Literals.COUNTER__OVERFLOW_METHOD);
     }
   }
-  
+
   @Check
   public void checkModuleNameStartsWithCapital(final Model m) {
     boolean _isUpperCase = Character.isUpperCase(m.getName().charAt(0));
     boolean _not = (!_isUpperCase);
     if (_not) {
-      this.warning("Module name should start with a capital", SpectraPackage.Literals.MODEL__NAME, SpectraValidator.INVALID_NAME);
+      this.warning(
+          "Module name should start with a capital",
+          SpectraPackage.Literals.MODEL__NAME,
+          SpectraValidator.INVALID_NAME);
     }
   }
-  
+
   @Check(CheckType.NORMAL)
   public void typeCheck(final EObject eobject) {
     TypeCheckIssue _typeCheck = TypeSystemManager.typeCheck(eobject);

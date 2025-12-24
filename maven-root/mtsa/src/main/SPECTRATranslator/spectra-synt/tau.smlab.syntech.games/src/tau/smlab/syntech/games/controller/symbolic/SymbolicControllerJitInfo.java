@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.controller.symbolic;
@@ -33,54 +33,53 @@ import tau.smlab.syntech.jtlv.Env;
 
 /**
  * BDDs needed to store information to run the Just-in-time symbolic controller
- * 
- * @author Ilia Shevrin
  *
+ * @author Ilia Shevrin
  */
 public class SymbolicControllerJitInfo {
 
-	private BDD fixpoints = Env.FALSE();
-	private BDD safeties = Env.FALSE();
-	private BDD justices = Env.FALSE();
-	private int[] ranks;
+  private BDD fixpoints = Env.FALSE();
+  private BDD safeties = Env.FALSE();
+  private BDD justices = Env.FALSE();
+  private int[] ranks;
 
-	public SymbolicControllerJitInfo(BDD fixpoints, BDD safeties, BDD justices, int[] ranks) {
-		this.fixpoints = fixpoints;
-		this.safeties = safeties;
-		this.justices = justices;
-		this.ranks = ranks;
-	}
+  public SymbolicControllerJitInfo(BDD fixpoints, BDD safeties, BDD justices, int[] ranks) {
+    this.fixpoints = fixpoints;
+    this.safeties = safeties;
+    this.justices = justices;
+    this.ranks = ranks;
+  }
 
-	public BDD fixpoints() {
-		return fixpoints;
-	}
-	
-	public BDD safeties() {
-		return safeties;
-	}
+  public BDD fixpoints() {
+    return fixpoints;
+  }
 
-	public BDD justices() {
-		return justices;
-	}
-	
-	public int ranks(int j) {
-		return ranks[j];
-	}
+  public BDD safeties() {
+    return safeties;
+  }
 
-	@Override
-	public String toString() {
-		String ret = "Fixpoints:\n";
-		ret += Env.toNiceString(fixpoints);
-		ret += "\nSafeties:\n";
-		ret += Env.toNiceString(safeties);
-		ret += "\nJustices:\n";
-		ret += Env.toNiceString(justices);
-		return ret;
-	}
+  public BDD justices() {
+    return justices;
+  }
 
-	public void free() {
-		fixpoints.free();
-		safeties.free();
-		justices.free();
-	}
+  public int ranks(int j) {
+    return ranks[j];
+  }
+
+  @Override
+  public String toString() {
+    String ret = "Fixpoints:\n";
+    ret += Env.toNiceString(fixpoints);
+    ret += "\nSafeties:\n";
+    ret += Env.toNiceString(safeties);
+    ret += "\nJustices:\n";
+    ret += Env.toNiceString(justices);
+    return ret;
+  }
+
+  public void free() {
+    fixpoints.free();
+    safeties.free();
+    justices.free();
+  }
 }

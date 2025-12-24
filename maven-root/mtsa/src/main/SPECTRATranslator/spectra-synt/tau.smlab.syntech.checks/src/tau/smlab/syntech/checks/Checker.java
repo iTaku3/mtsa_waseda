@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.checks;
@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDVarSet;
 import tau.smlab.syntech.bddgenerator.BDDGenerator;
@@ -58,9 +57,8 @@ import tau.smlab.syntech.jtlv.env.module.ModuleBDDField;
 
 /**
  * some non-trivial checks on the BDD level
- * 
+ *
  * @author ringert
- * 
  */
 public class Checker {
 
@@ -70,9 +68,9 @@ public class Checker {
   private String[] counterCheckMessages;
 
   /**
-   * Computes a subset of initial and safety system constraints that allow the environment to deadlock the system on its initial
-   * move. <br>
-   * 
+   * Computes a subset of initial and safety system constraints that allow the environment to
+   * deadlock the system on its initial move. <br>
+   *
    * @param m
    * @return null if no deadlock can occur
    */
@@ -121,16 +119,18 @@ public class Checker {
         envKillSys.free();
         return win;
       }
-
     }.minimize(
-        model.getSysBehaviorInfo().stream().filter(p -> p.isInitial() || p.isSafety()).collect(Collectors.toList()));
+        model.getSysBehaviorInfo().stream()
+            .filter(p -> p.isInitial() || p.isSafety())
+            .collect(Collectors.toList()));
   }
 
   /**
-   * Computes reachable states (most permissive environment and system) and checks if justices can be reached. <br>
-   * This is a heuristics because it assumes environment and system to be only restricted by their safeties and not by
-   * any strategy.
-   * 
+   * Computes reachable states (most permissive environment and system) and checks if justices can
+   * be reached. <br>
+   * This is a heuristics because it assumes environment and system to be only restricted by their
+   * safeties and not by any strategy.
+   *
    * @param model
    * @return
    */
@@ -173,7 +173,7 @@ public class Checker {
 
   /**
    * computes a minimal unsatisfiable subset of constraints INI or SAFETY
-   * 
+   *
    * @param model
    * @return
    */
@@ -225,7 +225,7 @@ public class Checker {
 
   /**
    * checks constraints whether they are trivially TRUE or FALSE
-   * 
+   *
    * @param model
    * @return
    */
@@ -250,9 +250,9 @@ public class Checker {
   }
 
   /**
-   * Checks whether there are illegal assumptions: initial assumptions with system variables or any primes, or safety
-   * assumptions with any system primes.
-   * 
+   * Checks whether there are illegal assumptions: initial assumptions with system variables or any
+   * primes, or safety assumptions with any system primes.
+   *
    * @param model
    * @return
    */
@@ -266,7 +266,7 @@ public class Checker {
 
   /**
    * Checks whether there are illegal assumptions: initial assumptions with system variables.
-   * 
+   *
    * @param model
    * @return
    */
@@ -296,7 +296,7 @@ public class Checker {
 
   /**
    * Checks whether there are illegal assumptions: initial assumptions with any primes.
-   * 
+   *
    * @param model
    * @return
    */
@@ -326,7 +326,7 @@ public class Checker {
 
   /**
    * Checks whether there are illegal assumptions: safety assumptions with any system primes.
-   * 
+   *
    * @param model
    * @return
    */
@@ -369,7 +369,7 @@ public class Checker {
         }
       }
     }
-    
+
     primes.free();
     return infos;
   }
@@ -390,13 +390,14 @@ public class Checker {
   }
 
   /**
-   * Fills in for the specified monitor monName the following info:
-   * (1) Behavior info of initial and safety constraints (in initialConstraints and safetyConstraints).
-   * (2) Behavior info of PAST initial and safety constraints, i.e, which were created during the PAST translation,
-   *     (in pastInitialConstraints and pastSafetyConstraints).
-   * (3) A list of the PAST variable references (in monNameToVarRefs).
+   * Fills in for the specified monitor monName the following info: (1) Behavior info of initial and
+   * safety constraints (in initialConstraints and safetyConstraints). (2) Behavior info of PAST
+   * initial and safety constraints, i.e, which were created during the PAST translation, (in
+   * pastInitialConstraints and pastSafetyConstraints). (3) A list of the PAST variable references
+   * (in monNameToVarRefs).
    */
-  public void fillMonitorConstraints(GameModel gm,
+  public void fillMonitorConstraints(
+      GameModel gm,
       String monName,
       MonitorTranslator monTranslator,
       PastLTLTranslator pastTranslator,
@@ -441,7 +442,10 @@ public class Checker {
     }
   }
 
-  private Set<Constraint> getPastConstraints(String monName, Set<Constraint> cons, PastLTLTranslator pastTranslator,
+  private Set<Constraint> getPastConstraints(
+      String monName,
+      Set<Constraint> cons,
+      PastLTLTranslator pastTranslator,
       Map<String, Set<VariableReference>> monNameToVarRefs) {
     Set<Constraint> all = new HashSet<>(cons);
     for (Constraint c : cons) {
@@ -450,13 +454,15 @@ public class Checker {
     return all;
   }
 
-  private Set<Constraint> getPastConstraints(String monName, Spec spec,
+  private Set<Constraint> getPastConstraints(
+      String monName,
+      Spec spec,
       PastLTLTranslator pastTranslator,
       Map<String, Set<VariableReference>> monNameToVarRefs) {
 
     if (spec instanceof VariableReference) {
       VariableReference varRef = (VariableReference) spec;
-      //we need to maintain a mapping of a monitor name to variables of a monitor
+      // we need to maintain a mapping of a monitor name to variables of a monitor
       if (pastTranslator.getConstraintsOfVarRef(varRef) != null) {
         Set<VariableReference> monVarRefs;
         if (monNameToVarRefs.containsKey(monName)) {
@@ -466,8 +472,11 @@ public class Checker {
           monNameToVarRefs.put(monName, monVarRefs);
         }
         monVarRefs.add(varRef);
-        return getPastConstraints(monName, new HashSet<Constraint>(pastTranslator.getConstraintsOfVarRef(varRef)),
-            pastTranslator, monNameToVarRefs);
+        return getPastConstraints(
+            monName,
+            new HashSet<Constraint>(pastTranslator.getConstraintsOfVarRef(varRef)),
+            pastTranslator,
+            monNameToVarRefs);
       }
     }
 
@@ -475,8 +484,8 @@ public class Checker {
       SpecExp se = (SpecExp) spec;
       Set<Constraint> childrenConstraints = new HashSet<>();
       for (int i = 0; i < se.getChildren().length; i++) {
-        childrenConstraints.addAll(getPastConstraints(monName,
-            se.getChildren()[i], pastTranslator, monNameToVarRefs));
+        childrenConstraints.addAll(
+            getPastConstraints(monName, se.getChildren()[i], pastTranslator, monNameToVarRefs));
       }
       return childrenConstraints;
     }
@@ -486,13 +495,14 @@ public class Checker {
 
   /**
    * Returns the behavior info list of the specified monitor monName.
-   * 
+   *
    * @param monName
    * @param safetyConstraints
    * @param initialConstraints
    * @return
    */
-  private List<BehaviorInfo> getMonitorSpecList(String monName,
+  private List<BehaviorInfo> getMonitorSpecList(
+      String monName,
       Map<String, Set<BehaviorInfo>> safetyConstraints,
       Map<String, Set<BehaviorInfo>> initialConstraints) {
 
@@ -506,14 +516,14 @@ public class Checker {
     }
 
     return monitorSpecs;
-
   }
 
-  public List<BehaviorInfo> checkMonitorsForCompleteness(GameModel gm, MonitorTranslator monitorTranslator,
-      PastLTLTranslator pastLTLTranslator) {
+  public List<BehaviorInfo> checkMonitorsForCompleteness(
+      GameModel gm, MonitorTranslator monitorTranslator, PastLTLTranslator pastLTLTranslator) {
 
     List<BehaviorInfo> result;
-    Map<Integer, Set<BehaviorInfo>> traceIdtoBI = computeTraceIdtoBIMap(gm); //Note that the same traceId may have multiple Behavior infos
+    Map<Integer, Set<BehaviorInfo>> traceIdtoBI =
+        computeTraceIdtoBIMap(gm); // Note that the same traceId may have multiple Behavior infos
     Map<String, Set<BehaviorInfo>> safetyConstraints = new HashMap<>();
     Map<String, Set<BehaviorInfo>> pastSafetyConstraints = new HashMap<>();
     Map<String, Set<BehaviorInfo>> pastInitialConstraints = new HashMap<>();
@@ -521,10 +531,19 @@ public class Checker {
     Map<String, Set<VariableReference>> monNameToVarRefs = new HashMap<>();
 
     for (String monName : monitorTranslator.getMonitorsNames()) {
-      fillMonitorConstraints(gm, monName, monitorTranslator, pastLTLTranslator, traceIdtoBI,
-          safetyConstraints, initialConstraints, pastSafetyConstraints, pastInitialConstraints, monNameToVarRefs);
+      fillMonitorConstraints(
+          gm,
+          monName,
+          monitorTranslator,
+          pastLTLTranslator,
+          traceIdtoBI,
+          safetyConstraints,
+          initialConstraints,
+          pastSafetyConstraints,
+          pastInitialConstraints,
+          monNameToVarRefs);
 
-      //check for completeness
+      // check for completeness
       // build a symbolic controller from the monitor's definition
 
       SymbolicController symCtrl = new SymbolicController();
@@ -557,18 +576,24 @@ public class Checker {
       }
       symCtrl.setInit(initials);
 
-      result = performMonitorCompletenessCheck(gm, monName, monNameToVarRefs.get(monName), symCtrl, safetyConstraints,
-          initialConstraints);
+      result =
+          performMonitorCompletenessCheck(
+              gm,
+              monName,
+              monNameToVarRefs.get(monName),
+              symCtrl,
+              safetyConstraints,
+              initialConstraints);
       if (!result.isEmpty()) {
         return result;
       }
     }
-    // if we have reached here, the monitor has passed the check 
+    // if we have reached here, the monitor has passed the check
     return new ArrayList<>();
   }
 
-  private void addConstraintToMonitor(Map<String, Set<BehaviorInfo>> constraints,
-      String parentMonitor, BehaviorInfo bi) {
+  private void addConstraintToMonitor(
+      Map<String, Set<BehaviorInfo>> constraints, String parentMonitor, BehaviorInfo bi) {
     Set<BehaviorInfo> constraintSet;
     if (constraints.containsKey(parentMonitor)) {
       constraintSet = constraints.get(parentMonitor);
@@ -579,8 +604,11 @@ public class Checker {
     constraintSet.add(bi);
   }
 
-  private List<BehaviorInfo> performMonitorCompletenessCheck(GameModel m, String monitorName,
-      Set<VariableReference> pastVarlist, SymbolicController ctrl,
+  private List<BehaviorInfo> performMonitorCompletenessCheck(
+      GameModel m,
+      String monitorName,
+      Set<VariableReference> pastVarlist,
+      SymbolicController ctrl,
       Map<String, Set<BehaviorInfo>> safetyConstraints,
       Map<String, Set<BehaviorInfo>> initialConstraints) {
 
@@ -590,12 +618,13 @@ public class Checker {
     ctrl.initial().andWith(domsIni.id());
     ctrl.conjunctTrans(doms);
 
-    // 1) check that all initial assignments to all unprimed variables minus 
-    // the monitor's (aux) variable(s) have a corresponding initial state in the monitor's controller
+    // 1) check that all initial assignments to all unprimed variables minus
+    // the monitor's (aux) variable(s) have a corresponding initial state in the monitor's
+    // controller
     ModuleBDDField monVar = Env.getVar(monitorName);
 
-    //VarSets of unprimed and primed past aux variables. These may exists if there
-    //are past expressions in the monitor definition.
+    // VarSets of unprimed and primed past aux variables. These may exists if there
+    // are past expressions in the monitor definition.
     BDDVarSet monAuxSet = Env.getEmptySet(), primeMonAuxSet = Env.getEmptySet();
     if (pastVarlist != null) {
       ModuleBDDField monAuxVar;
@@ -621,8 +650,10 @@ public class Checker {
       unprimedMonSet.free();
       String[] errorMsg = new String[2];
       errorMsg[0] = monitorName;
-      BDDVarSet nonAuxVars = Env.union(m.getSys().getNonAuxFields()).union(Env.union(m.getEnv().getNonAuxFields()));
-      errorMsg[1] = CoreUtil.satOne(domsIni.and(ctrlIni.not()), nonAuxVars).toStringWithDomains(Env.stringer);
+      BDDVarSet nonAuxVars =
+          Env.union(m.getSys().getNonAuxFields()).union(Env.union(m.getEnv().getNonAuxFields()));
+      errorMsg[1] =
+          CoreUtil.satOne(domsIni.and(ctrlIni.not()), nonAuxVars).toStringWithDomains(Env.stringer);
       ctrlIni.free();
       this.setMonitorCheckMessages(errorMsg);
       nonAuxVars.free();
@@ -631,18 +662,24 @@ public class Checker {
     result.free();
 
     // 2) check that for all reachable states in the monitor controller it is enabled
-    // for all next assignments to all to all primed variables minus 
-    // the monitor's (aux) variable 
+    // for all next assignments to all to all primed variables minus
+    // the monitor's (aux) variable
     BDD reachable = Env.allSucc(ctrl.initial().id(), ctrl.trans());
 
     BDD ctrlTrans = ctrl.trans().exist(primedMonSet);
-    result = reachable.and(doms).imp(ctrlTrans).forAll(Env.globalUnprimeVars().union(Env.globalPrimeVars()));
+    result =
+        reachable
+            .and(doms)
+            .imp(ctrlTrans)
+            .forAll(Env.globalUnprimeVars().union(Env.globalPrimeVars()));
     if (!result.isOne()) {
       String[] errorMsg = new String[2];
-      BDDVarSet nonAuxVars = Env.union(m.getSys().getNonAuxFields()).union(Env.union(m.getEnv().getNonAuxFields()));
+      BDDVarSet nonAuxVars =
+          Env.union(m.getSys().getNonAuxFields()).union(Env.union(m.getEnv().getNonAuxFields()));
       errorMsg[0] = monitorName;
-      errorMsg[1] = CoreUtil.satOne(reachable.and(doms).and(ctrlTrans.not()), nonAuxVars)
-          .toStringWithDomains(Env.stringer);
+      errorMsg[1] =
+          CoreUtil.satOne(reachable.and(doms).and(ctrlTrans.not()), nonAuxVars)
+              .toStringWithDomains(Env.stringer);
       this.setMonitorCheckMessages(errorMsg);
       ctrlTrans.free();
       nonAuxVars.free();
@@ -671,11 +708,13 @@ public class Checker {
   // --- Counters checks ---
   //////////////////////////
 
-  public List<BehaviorInfo> checkCountersConsistency(GameModel gm, CounterTranslator counterTranslator) {
+  public List<BehaviorInfo> checkCountersConsistency(
+      GameModel gm, CounterTranslator counterTranslator) {
     Map<Integer, Set<BehaviorInfo>> traceIdtoBI = computeTraceIdtoBIMap(gm);
 
     for (String counterName : counterTranslator.getCountersNames()) {
-      List<SpecTraceable> inconstentPredicates = getInconstentCounterPredicates(gm, counterName, counterTranslator);
+      List<SpecTraceable> inconstentPredicates =
+          getInconstentCounterPredicates(gm, counterName, counterTranslator);
       if (inconstentPredicates.size() > 0) {
         List<BehaviorInfo> result = new ArrayList<BehaviorInfo>();
         for (SpecTraceable pred : inconstentPredicates) {
@@ -684,19 +723,19 @@ public class Checker {
         }
         return result;
       }
-
     }
 
     return new ArrayList<BehaviorInfo>();
   }
 
-  private List<SpecTraceable> getInconstentCounterPredicates(GameModel gm, String counterName,
-      CounterTranslator counterTranslator) {
+  private List<SpecTraceable> getInconstentCounterPredicates(
+      GameModel gm, String counterName, CounterTranslator counterTranslator) {
     List<SpecTraceable> predicates = counterTranslator.getCounterPredicates(counterName);
 
     PlayerModule env = gm.getEnv();
     PlayerModule sys = gm.getSys();
-    BDD reachableStates = Env.allSucc(env.initial().and(sys.initial()), env.trans().and(sys.trans()));
+    BDD reachableStates =
+        Env.allSucc(env.initial().and(sys.initial()), env.trans().and(sys.trans()));
 
     List<BDD> predicatesBdds = new ArrayList<BDD>();
     for (SpecTraceable pred : predicates) {
@@ -720,11 +759,13 @@ public class Checker {
           reachableAndP2.free();
 
           if (!intersection.isZero()) {
-            BDDVarSet nonAuxVars = Env.union(sys.getNonAuxFields()).union(Env.union(env.getNonAuxFields()));
+            BDDVarSet nonAuxVars =
+                Env.union(sys.getNonAuxFields()).union(Env.union(env.getNonAuxFields()));
 
             String[] errorMsg = new String[2];
             errorMsg[0] = counterName;
-            errorMsg[1] = CoreUtil.satOne(intersection, nonAuxVars).toStringWithDomains(Env.stringer);
+            errorMsg[1] =
+                CoreUtil.satOne(intersection, nonAuxVars).toStringWithDomains(Env.stringer);
             this.setCounterCheckMessages(errorMsg);
 
             List<SpecTraceable> intersectingPredicates = new ArrayList<SpecTraceable>();

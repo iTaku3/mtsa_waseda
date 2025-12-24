@@ -1,14 +1,14 @@
-//package MTSSynthesis.controller.model;
+// package MTSSynthesis.controller.model;
 //
-//import java.util.Set;
+// import java.util.Set;
 //
-//import MTSSynthesis.ar.dc.uba.model.condition.Fluent;
+// import MTSSynthesis.ar.dc.uba.model.condition.Fluent;
 //
 //
-//public class Controller {
+// public class Controller {
 //	private Set<Fluent> fluents;
 //	private Set<String> controllableActions;
-//	
-//	
-//	
-//}
+//
+//
+//
+// }

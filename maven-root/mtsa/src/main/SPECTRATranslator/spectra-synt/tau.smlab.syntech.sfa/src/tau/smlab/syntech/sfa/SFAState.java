@@ -17,145 +17,142 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.sfa;
 
 import java.util.Map;
 import java.util.Set;
-
 import net.sf.javabdd.BDD;
 
 /**
- * 
  * An interface that represents a state of an SFA.
- * 
+ *
  * @author Maxim Finkel
  * @author Or Pistiner
  * @author Gal Amram
- * 
  */
 public interface SFAState {
-	
-	/**
-	 * 
-	 * An exception thrown due to an invalid SFAState operation.
-	 *
-	 */
-	public static class SFAStateException extends RuntimeException {
 
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -3538711506175144666L;
+  /** An exception thrown due to an invalid SFAState operation. */
+  public static class SFAStateException extends RuntimeException {
 
-		public SFAStateException() {super();}
-		public SFAStateException(String msg) {super(msg);}
-	}
-	
-	/**
-	 * Checks whether there are any epsilon transitions (moves) that go out from this state.
-	 * @return
-	 */
-	boolean hasEpsSuccessors();
+    /** */
+    private static final long serialVersionUID = -3538711506175144666L;
 
-	/**
-	 * Returns the set of (direct) successors reachable by epsilon moves.
-	 *  
-	 * @return
-	 */
-	Set<? extends SFAState> getEpsSucc();
+    public SFAStateException() {
+      super();
+    }
 
-	/**
-	 * Checks whether this SFAState allows adding outgoing epsilon transitions (moves).
-	 * @return
-	 */
-	boolean enablesEpsTrans();
+    public SFAStateException(String msg) {
+      super(msg);
+    }
+  }
 
-	/**
-	 * If this SFAState allows adding outgoing epsilon transitions, adds an epsilon transition (move) to the specified successor state, {@code tgt}.
-	 * 
-	 * @param tgt
-	 * @throws SFAStateException if {@link #enablesEpsTrans()} returns false
-	 * @see {@link #enablesEpsTrans()}
-	 */
-	void addEpsTrans(SFAState tgt);
+  /**
+   * Checks whether there are any epsilon transitions (moves) that go out from this state.
+   *
+   * @return
+   */
+  boolean hasEpsSuccessors();
 
-	/**
-	 * Checks whether {@code succ} is a (direct) successor reachable from this state by an epsilon transition (move).
-	 * @param succ
-	 * @return
-	 */
-	boolean isEpsSuccessor(SFAState succ);
+  /**
+   * Returns the set of (direct) successors reachable by epsilon moves.
+   *
+   * @return
+   */
+  Set<? extends SFAState> getEpsSucc();
 
-	/**
-	 * Checks if this state is an accepting one.
-	 */
-	boolean isAccepting();
+  /**
+   * Checks whether this SFAState allows adding outgoing epsilon transitions (moves).
+   *
+   * @return
+   */
+  boolean enablesEpsTrans();
 
-	/**
-	 * Sets whether this state is an accepting (final) state.
-	 * 
-	 * @param isAccepting whether this state should be an accepting one
-	 */
-	void setAcceptance(boolean isAccepting);
-	
-	/**
-	 * Changes (flips) the acceptance of this state.
-	 */
-	void flipAcceptance();
+  /**
+   * If this SFAState allows adding outgoing epsilon transitions, adds an epsilon transition (move)
+   * to the specified successor state, {@code tgt}.
+   *
+   * @param tgt
+   * @throws SFAStateException if {@link #enablesEpsTrans()} returns false
+   * @see {@link #enablesEpsTrans()}
+   */
+  void addEpsTrans(SFAState tgt);
 
-	/**
-	 * Returns a copy of this SFAState. The returned copy is an accepting state iff this SFAState is accepting.
-	 * The returned copy allows adding epsilon transitions iff this SFAState allows that.
-	 * The successor map of this SFAState is not copied, i.e., the successor map of the returned copy is empty.
-	 * @return
-	 */
-	SFAState cloneWithoutSucc();
+  /**
+   * Checks whether {@code succ} is a (direct) successor reachable from this state by an epsilon
+   * transition (move).
+   *
+   * @param succ
+   * @return
+   */
+  boolean isEpsSuccessor(SFAState succ);
 
-	/**
-	 * Returns the successor(s) map of this state.
-	 * Each map entry represents a transition (move) where its key is a successor state and its value is the guard (condition).
-	 * 
-	 * @return
-	 */
-	Map<? extends SFAState, BDD> getSucc();
+  /** Checks if this state is an accepting one. */
+  boolean isAccepting();
 
-	/**
-	 * Adds a (non-epsilon) transition with the specified guard to the successor state {@code tgt}, which must have the same type as this state has.
-	 * To keep the automaton 'clean', if the specified guard is the FALSE BDD, then no transition is added while the FALSE guard is consumed.
-	 * 
-	 * @param guard
-	 *            is consumed (freed) and cannot be used afterwards
-	 * @param tgt
-	 */
-	void addTrans(BDD guard, SFAState tgt);
+  /**
+   * Sets whether this state is an accepting (final) state.
+   *
+   * @param isAccepting whether this state should be an accepting one
+   */
+  void setAcceptance(boolean isAccepting);
 
-	/**
-	 * Removes the transition to the specified successor state {@code tgt}, if such a transition exists. 
-	 * If the transition is not an epsilon transition, its guard (BDD) is consumed (freed).
-	 * 
-	 * @param tgt
-	 */
-	void removeTrans(SFAState tgt);
+  /** Changes (flips) the acceptance of this state. */
+  void flipAcceptance();
 
-	/**
-	 * Returns all direct successor states of this state.
-	 * 
-	 * @return
-	 */
-	Set<? extends SFAState> getSuccessors();
-	
-	/**
-	 * Frees the guards (BDDs) of all outgoing (non-epsilon) transitions of this state.
-	 * 
-	 */
-	void free();
+  /**
+   * Returns a copy of this SFAState. The returned copy is an accepting state iff this SFAState is
+   * accepting. The returned copy allows adding epsilon transitions iff this SFAState allows that.
+   * The successor map of this SFAState is not copied, i.e., the successor map of the returned copy
+   * is empty.
+   *
+   * @return
+   */
+  SFAState cloneWithoutSucc();
+
+  /**
+   * Returns the successor(s) map of this state. Each map entry represents a transition (move) where
+   * its key is a successor state and its value is the guard (condition).
+   *
+   * @return
+   */
+  Map<? extends SFAState, BDD> getSucc();
+
+  /**
+   * Adds a (non-epsilon) transition with the specified guard to the successor state {@code tgt},
+   * which must have the same type as this state has. To keep the automaton 'clean', if the
+   * specified guard is the FALSE BDD, then no transition is added while the FALSE guard is
+   * consumed.
+   *
+   * @param guard is consumed (freed) and cannot be used afterwards
+   * @param tgt
+   */
+  void addTrans(BDD guard, SFAState tgt);
+
+  /**
+   * Removes the transition to the specified successor state {@code tgt}, if such a transition
+   * exists. If the transition is not an epsilon transition, its guard (BDD) is consumed (freed).
+   *
+   * @param tgt
+   */
+  void removeTrans(SFAState tgt);
+
+  /**
+   * Returns all direct successor states of this state.
+   *
+   * @return
+   */
+  Set<? extends SFAState> getSuccessors();
+
+  /** Frees the guards (BDDs) of all outgoing (non-epsilon) transitions of this state. */
+  void free();
 }

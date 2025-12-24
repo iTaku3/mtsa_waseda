@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.typesystem;
@@ -39,17 +39,15 @@ public abstract class TypeCheckIssue {
   private EReference eReference;
   private String issueMessage;
   private boolean isWarning;
-  
 
-  public TypeCheckIssue(EAttribute eAttribute, String issueMessage, boolean isWarning)
-  {
+  public TypeCheckIssue(EAttribute eAttribute, String issueMessage, boolean isWarning) {
     this.eAttribute = eAttribute;
     this.issueMessage = issueMessage;
     this.hasEAttribute = true;
     this.hasEReference = false;
     this.isWarning = isWarning;
   }
-  
+
   public TypeCheckIssue(EReference ereference, String issueMessage, boolean isWarning) {
     this.eReference = ereference;
     this.issueMessage = issueMessage;
@@ -58,38 +56,31 @@ public abstract class TypeCheckIssue {
     this.isWarning = isWarning;
   }
 
-  public boolean isWarning()
-  {
+  public boolean isWarning() {
     return this.isWarning;
   }
-  
-  public boolean isError()
-  {
-    return ! (this.isWarning);
+
+  public boolean isError() {
+    return !(this.isWarning);
   }
-  
-  public EAttribute getEAttribute()
-  {
+
+  public EAttribute getEAttribute() {
     return eAttribute;
   }
-  
-  public EReference getEReference()
-  {
+
+  public EReference getEReference() {
     return eReference;
   }
-  
-  public String getIssueMessage()
-  {
-    return issueMessage; 
+
+  public String getIssueMessage() {
+    return issueMessage;
   }
-  
-  public boolean hasEAttribute()
-  {
+
+  public boolean hasEAttribute() {
     return this.hasEAttribute;
   }
-  
-  public boolean hasEReference()
-  {
+
+  public boolean hasEReference() {
     return this.hasEReference;
   }
 }

@@ -17,51 +17,51 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.rabin;
 
 import java.util.Vector;
-
 import net.sf.javabdd.BDD;
 import tau.smlab.syntech.games.GameIncrementalMemory;
 import tau.smlab.syntech.jtlv.Env;
 
 public class RabinGameIncrementalMemory extends GameIncrementalMemory {
 
-	RabinMemory prevMem;
+  RabinMemory prevMem;
 
-	public RabinGameIncrementalMemory() {
-		startZ = Env.FALSE();
-		prevMem = null;
-	}
+  public RabinGameIncrementalMemory() {
+    startZ = Env.FALSE();
+    prevMem = null;
+  }
 
-	public void addToStartZ(BDD z, int idx) {
-		System.out.println("Add to startZ: startZ.isZero = " + startZ.isZero() + ", segMem.zMem[" + idx + "] (last) = "
-				+ z.isZero());
-		BDD tmp = startZ;
-		startZ = tmp.or(z);
-		tmp.free();
-	}
+  public void addToStartZ(BDD z, int idx) {
+    System.out.println(
+        "Add to startZ: startZ.isZero = "
+            + startZ.isZero()
+            + ", segMem.zMem["
+            + idx
+            + "] (last) = "
+            + z.isZero());
+    BDD tmp = startZ;
+    startZ = tmp.or(z);
+    tmp.free();
+  }
 
-	public void setPrevFirstZIterMem(BDD[] prevFirstZIterMem) {
-	}
+  public void setPrevFirstZIterMem(BDD[] prevFirstZIterMem) {}
 
-	public void setPrevZMemory(BDD[] prevMem) {
-	}
+  public void setPrevZMemory(BDD[] prevMem) {}
 
-	public void setPrevXMem(BDD[][][] xMem) {
-	}
+  public void setPrevXMem(BDD[][][] xMem) {}
 
-	public void setPrevMem(Vector<BDD> zMem, Vector<Vector<Vector<BDD>>> xMem) {
-		prevMem = new RabinMemory(zMem, xMem);
-	}
-
+  public void setPrevMem(Vector<BDD> zMem, Vector<Vector<Vector<BDD>>> xMem) {
+    prevMem = new RabinMemory(zMem, xMem);
+  }
 }

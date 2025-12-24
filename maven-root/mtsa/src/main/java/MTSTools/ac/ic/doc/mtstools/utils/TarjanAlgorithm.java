@@ -14,7 +14,7 @@
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package MTSTools.ac.ic.doc.mtstools.utils;
@@ -34,103 +34,103 @@ import MTSTools.ac.ic.doc.commons.relations.Pair;
 import MTSTools.ac.ic.doc.mtstools.model.MTS;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
-import org.apache.commons.collections15.Predicate;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import org.apache.commons.collections15.Predicate;
 
 /**
- * Implementation of Tarjan's algorithm.
- * Complexity is O(|V|+|E|).
- * Tarjan, R. E. (1972), "Depth-first search and linear graph algorithms", SIAM Journal on Computing 1 (2):
- * 146ďż˝160, doi:10.1137/0201010.
- * {@link http://algowiki.net/wiki/index.php?title=Tarjan's_algorithm}
- * <p>
- * Adapted to work with MTS interface (Victor Wjugow)
+ * Implementation of Tarjan's algorithm. Complexity is O(|V|+|E|). Tarjan, R. E. (1972),
+ * "Depth-first search and linear graph algorithms", SIAM Journal on Computing 1 (2): 146ďż˝160,
+ * doi:10.1137/0201010. {@link http://algowiki.net/wiki/index.php?title=Tarjan's_algorithm}
+ *
+ * <p>Adapted to work with MTS interface (Victor Wjugow)
  *
  * @param <V>
  * @param <E>
  * @author jens dietrich
  */
 public class TarjanAlgorithm<V, E> {
-	static final Predicate NULL_FILTER = new Predicate() {
-		@Override
-		public boolean evaluate(Object e) {
-			return true;
-		}
-	};
+  static final Predicate NULL_FILTER =
+      new Predicate() {
+        @Override
+        public boolean evaluate(Object e) {
+          return true;
+        }
+      };
 
-	private int index = 0;
-	private Stack<V> stack = new Stack<V>();
-	private Map<V, Integer> indices = new HashMap<V, Integer>();
-	private Map<V, Integer> lowLinks = new HashMap<V, Integer>();
-	private Map<V, Set<V>> componentMembership = new HashMap<V, Set<V>>();
-	// by default, use null filter
-	private Predicate<E> edgeFilter = NULL_FILTER;
-	private DirectedGraph<Set<V>, Integer> componentGraph = null;
+  private int index = 0;
+  private Stack<V> stack = new Stack<V>();
+  private Map<V, Integer> indices = new HashMap<V, Integer>();
+  private Map<V, Integer> lowLinks = new HashMap<V, Integer>();
+  private Map<V, Set<V>> componentMembership = new HashMap<V, Set<V>>();
+  // by default, use null filter
+  private Predicate<E> edgeFilter = NULL_FILTER;
+  private DirectedGraph<Set<V>, Integer> componentGraph = null;
 
-	public void buildComponentGraph(MTS<V, E> graph, Predicate<E> edgeFilter) {
-		this.componentGraph = new DirectedSparseGraph<Set<V>, Integer>();
-		if (edgeFilter != null) {
-			this.edgeFilter = edgeFilter;
-		}
-		for (V v : graph.getStates()) {
-			if (!indices.containsKey(v)) {
-				buildComponent(graph, v);
-			}
-		}
-		int id = 0;
-		// add edges
-		for (V state : graph.getStates()) {
-			for (Pair<E, V> transition : graph.getTransitions(state, MTS.TransitionType.REQUIRED)) {
-				if (this.edgeFilter.evaluate(transition.getFirst())) {
-					// note that the graph implementation class used will check for and reject parallel edges
-					// as a consequence, their may be gaps in the range of assigned ids
-					componentGraph.addEdge(id++, componentMembership.get(state), componentMembership.get(transition
-							.getSecond()));
-				}
-			}
-		}
-	}
+  public void buildComponentGraph(MTS<V, E> graph, Predicate<E> edgeFilter) {
+    this.componentGraph = new DirectedSparseGraph<Set<V>, Integer>();
+    if (edgeFilter != null) {
+      this.edgeFilter = edgeFilter;
+    }
+    for (V v : graph.getStates()) {
+      if (!indices.containsKey(v)) {
+        buildComponent(graph, v);
+      }
+    }
+    int id = 0;
+    // add edges
+    for (V state : graph.getStates()) {
+      for (Pair<E, V> transition : graph.getTransitions(state, MTS.TransitionType.REQUIRED)) {
+        if (this.edgeFilter.evaluate(transition.getFirst())) {
+          // note that the graph implementation class used will check for and reject parallel edges
+          // as a consequence, their may be gaps in the range of assigned ids
+          componentGraph.addEdge(
+              id++,
+              componentMembership.get(state),
+              componentMembership.get(transition.getSecond()));
+        }
+      }
+    }
+  }
 
-	public DirectedGraph<Set<V>, Integer> getComponentGraph() {
-		return this.componentGraph;
-	}
+  public DirectedGraph<Set<V>, Integer> getComponentGraph() {
+    return this.componentGraph;
+  }
 
-	public Map<V, Set<V>> getComponentMembership() {
-		return this.componentMembership;
-	}
+  public Map<V, Set<V>> getComponentMembership() {
+    return this.componentMembership;
+  }
 
-	private void buildComponent(MTS<V, E> graph, V v) {
-		indices.put(v, index);
-		lowLinks.put(v, index);
-		index = index + 1;
-		stack.push(v);
-		for (Pair<E, V> transition : graph.getTransitions(v, MTS.TransitionType.REQUIRED)) {
-			if (edgeFilter.evaluate(transition.getFirst())) {
-				V next = transition.getSecond();
-				if (!indices.containsKey(next)) {
-					buildComponent(graph, next);
-					lowLinks.put(v, Math.min(lowLinks.get(v), lowLinks.get(next)));
-				} else if (stack.contains(next)) {
-					lowLinks.put(v, Math.min(lowLinks.get(v), indices.get(next)));
-				}
-			}
-		}
+  private void buildComponent(MTS<V, E> graph, V v) {
+    indices.put(v, index);
+    lowLinks.put(v, index);
+    index = index + 1;
+    stack.push(v);
+    for (Pair<E, V> transition : graph.getTransitions(v, MTS.TransitionType.REQUIRED)) {
+      if (edgeFilter.evaluate(transition.getFirst())) {
+        V next = transition.getSecond();
+        if (!indices.containsKey(next)) {
+          buildComponent(graph, next);
+          lowLinks.put(v, Math.min(lowLinks.get(v), lowLinks.get(next)));
+        } else if (stack.contains(next)) {
+          lowLinks.put(v, Math.min(lowLinks.get(v), indices.get(next)));
+        }
+      }
+    }
 
-		// build new component
-		if (lowLinks.get(v).equals(indices.get(v))) {
-			Set<V> component = new HashSet<V>();
-			V v2;
-			do {
-				v2 = stack.pop();
-				component.add(v2);
-				componentMembership.put(v2, component); // look up faster later than searching components!
-			} while (v2 != v);
-			componentGraph.addVertex(component);
-		}
-	}
+    // build new component
+    if (lowLinks.get(v).equals(indices.get(v))) {
+      Set<V> component = new HashSet<V>();
+      V v2;
+      do {
+        v2 = stack.pop();
+        component.add(v2);
+        componentMembership.put(v2, component); // look up faster later than searching components!
+      } while (v2 != v);
+      componentGraph.addVertex(component);
+    }
+  }
 }

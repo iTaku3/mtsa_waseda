@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.logs;
@@ -31,7 +31,6 @@ package tau.smlab.syntech.logs;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDVarSet;
 import tau.smlab.syntech.jtlv.CoreUtil;
@@ -44,7 +43,7 @@ public class BDDLogWriter {
 
   /**
    * by default logging all unprimed vars
-   * 
+   *
    * @param fileName
    * @throws IOException
    */
@@ -60,7 +59,7 @@ public class BDDLogWriter {
 
   /**
    * create new buffered writer
-   * 
+   *
    * @param fileName
    * @return
    * @throws IOException
@@ -71,9 +70,10 @@ public class BDDLogWriter {
 
   /**
    * write the BDD to the log
-   * 
-   * if the BDD has more than one assignment, writes one of them, if the BDD has no assignments writes FALSE
-   * 
+   *
+   * <p>if the BDD has more than one assignment, writes one of them, if the BDD has no assignments
+   * writes FALSE
+   *
    * @param entry
    * @throws IOException
    */
@@ -95,11 +95,10 @@ public class BDDLogWriter {
 
   /**
    * closes the file
-   * 
+   *
    * @throws IOException
    */
   public void close() throws IOException {
     writer.close();
   }
-
 }

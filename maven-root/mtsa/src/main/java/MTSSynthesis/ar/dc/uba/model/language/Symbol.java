@@ -2,9 +2,7 @@ package MTSSynthesis.ar.dc.uba.model.language;
 
 /**
  * A Symbol
- * @author gsibay
  *
+ * @author gsibay
  */
-public interface Symbol {
-
-}
+public interface Symbol {}

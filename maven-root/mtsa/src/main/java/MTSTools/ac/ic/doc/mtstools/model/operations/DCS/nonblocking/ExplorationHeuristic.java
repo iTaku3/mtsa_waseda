@@ -5,27 +5,36 @@ import MTSTools.ac.ic.doc.mtstools.model.operations.DCS.nonblocking.abstraction.
 
 public interface ExplorationHeuristic<State, Action> {
 
-    void setInitialState(Compostate<State, Action> initial);
+  void setInitialState(Compostate<State, Action> initial);
 
-    boolean somethingLeftToExplore();
+  boolean somethingLeftToExplore();
 
-    void expansionDone(Compostate<State, Action> first, HAction<State, Action> second, Compostate<State, Action> child);
+  void expansionDone(
+      Compostate<State, Action> first,
+      HAction<State, Action> second,
+      Compostate<State, Action> child);
 
-    Pair<Compostate<State,Action>, HAction<State,Action>> getNextAction();
+  Pair<Compostate<State, Action>, HAction<State, Action>> getNextAction();
 
-    void notifyExpandingState(Compostate<State, Action> state, HAction<State, Action> action, Compostate<State, Action> child);
+  void notifyExpandingState(
+      Compostate<State, Action> state,
+      HAction<State, Action> action,
+      Compostate<State, Action> child);
 
-    void notifyStateIsNone(Compostate<State, Action> state);
+  void notifyStateIsNone(Compostate<State, Action> state);
 
-    void notifyStateSetErrorOrGoal(Compostate<State, Action> state);
+  void notifyStateSetErrorOrGoal(Compostate<State, Action> state);
 
-    void newState(Compostate<State, Action> state, Compostate<State, Action> parent);
+  void newState(Compostate<State, Action> state, Compostate<State, Action> parent);
 
-    void notifyExpansionDidntFindAnything(Compostate<State, Action> parent, HAction<State, Action> action, Compostate<State, Action> child);
+  void notifyExpansionDidntFindAnything(
+      Compostate<State, Action> parent,
+      HAction<State, Action> action,
+      Compostate<State, Action> child);
 
-    boolean fullyExplored(Compostate<State, Action> state);
+  boolean fullyExplored(Compostate<State, Action> state);
 
-    boolean hasUncontrollableUnexplored(Compostate<State, Action> state);
+  boolean hasUncontrollableUnexplored(Compostate<State, Action> state);
 
-    void initialize(Compostate<State, Action> state);
+  void initialize(Compostate<State, Action> state);
 }

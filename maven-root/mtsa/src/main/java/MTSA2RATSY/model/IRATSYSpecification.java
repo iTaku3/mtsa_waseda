@@ -1,6 +1,7 @@
 package MTSA2RATSY.model;
 
 public interface IRATSYSpecification {
-	public String getDescription();
-	public String getXMLDescription();
+  public String getDescription();
+
+  public String getXMLDescription();
 }

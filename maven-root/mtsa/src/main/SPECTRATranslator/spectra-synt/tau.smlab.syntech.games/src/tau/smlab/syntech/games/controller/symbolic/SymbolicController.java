@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.controller.symbolic;
@@ -33,116 +33,110 @@ import tau.smlab.syntech.jtlv.Env;
 
 /**
  * characterization of a set of possible controllers
- * 
- * default: initial = FALSE and trans = FALSE
- * 
+ *
+ * <p>default: initial = FALSE and trans = FALSE
+ *
  * @author ringert
- * 
  */
 public class SymbolicController {
 
-	private BDD initial = Env.FALSE();
-	private BDD trans = Env.FALSE();
+  private BDD initial = Env.FALSE();
+  private BDD trans = Env.FALSE();
 
-	public SymbolicController() {
-	}
+  public SymbolicController() {}
 
-	/**
-	 * creates a new controller from given BDDs (consumed)
-	 * 
-	 * @param ini   (consumed)
-	 * @param trans (consumed)
-	 */
-	public SymbolicController(BDD ini, BDD trans) {
-		this.initial = ini;
-		this.trans = trans;
-	}
+  /**
+   * creates a new controller from given BDDs (consumed)
+   *
+   * @param ini (consumed)
+   * @param trans (consumed)
+   */
+  public SymbolicController(BDD ini, BDD trans) {
+    this.initial = ini;
+    this.trans = trans;
+  }
 
-	/**
-	 * 
-	 * @return direct reference to BDD that describes inital states
-	 */
-	public BDD initial() {
-		return initial;
-	}
+  /**
+   * @return direct reference to BDD that describes inital states
+   */
+  public BDD initial() {
+    return initial;
+  }
 
-	/**
-	 * sets the inital states
-	 * 
-	 * @param init is used (don't modify or free)
-	 */
-	public void setInit(BDD init) {
-		this.initial = init;
-	}
+  /**
+   * sets the inital states
+   *
+   * @param init is used (don't modify or free)
+   */
+  public void setInit(BDD init) {
+    this.initial = init;
+  }
 
-	/**
-	 * 
-	 * @return direct reference to BDD that describes transitions
-	 */
-	public BDD trans() {
-		return trans;
-	}
+  /**
+   * @return direct reference to BDD that describes transitions
+   */
+  public BDD trans() {
+    return trans;
+  }
 
-	/**
-	 * sets the transitions
-	 * 
-	 * @param trans is used (don't modify or free)
-	 */
-	public void setTrans(BDD trans) {
-		this.trans = trans;
-	}
+  /**
+   * sets the transitions
+   *
+   * @param trans is used (don't modify or free)
+   */
+  public void setTrans(BDD trans) {
+    this.trans = trans;
+  }
 
-	/**
-	 * adds moreTrans as a disjunction to current transitions
-	 * 
-	 * @param moreTrans (BDD not freed)
-	 */
-	public void disjunctTrans(BDD moreTrans) {
-		trans.orWith(moreTrans.id());
-	}
+  /**
+   * adds moreTrans as a disjunction to current transitions
+   *
+   * @param moreTrans (BDD not freed)
+   */
+  public void disjunctTrans(BDD moreTrans) {
+    trans.orWith(moreTrans.id());
+  }
 
-	public void disjunctTransWith(BDD moreTrans) {
-		trans.orWith(moreTrans);
-	}
+  public void disjunctTransWith(BDD moreTrans) {
+    trans.orWith(moreTrans);
+  }
 
-	/**
-	 * restricts trans of controller to trans2
-	 * 
-	 * @param moreTrans (BDD not freed)
-	 */
-	public void conjunctTrans(BDD trans2) {
-		trans.andWith(trans2.id());
-	}
+  /**
+   * restricts trans of controller to trans2
+   *
+   * @param moreTrans (BDD not freed)
+   */
+  public void conjunctTrans(BDD trans2) {
+    trans.andWith(trans2.id());
+  }
 
-	public void conjunctTransWith(BDD trans2) {
-		trans.andWith(trans2);
-	}
+  public void conjunctTransWith(BDD trans2) {
+    trans.andWith(trans2);
+  }
 
-	/**
-	 * <p>
-	 * This procedure return all states which the controller can reach in a single
-	 * step from given a set of state.
-	 * </p>
-	 * 
-	 * @param from The set of state to start from.
-	 * @return The set of states which the controller can reach in a single step
-	 *         from the given states.
-	 */
-	public BDD succ(BDD from) {
-		return Env.succ(from, trans);
-	}
+  /**
+   * This procedure return all states which the controller can reach in a single step from given a
+   * set of state.
+   *
+   * @param from The set of state to start from.
+   * @return The set of states which the controller can reach in a single step from the given
+   *     states.
+   */
+  public BDD succ(BDD from) {
+    return Env.succ(from, trans);
+  }
 
-	@Override
-	public String toString() {
-		String ret = "Initial states:\n";
-		ret += Env.toNiceString(initial);
-		ret += "\n\nTransitions:\n";
-		ret += Env.toNiceString(trans);
-		return ret;
-	}
+  @Override
+  public String toString() {
+    String ret = "Initial states:\n";
+    ret += Env.toNiceString(initial);
+    ret += "\n\nTransitions:\n";
+    ret += Env.toNiceString(trans);
+    return ret;
+  }
 
-	public void free() {
-		initial.free();
-		trans.free();
-	}
+  public void free() {
+    initial.free();
+    trans.free();
+  }
 }

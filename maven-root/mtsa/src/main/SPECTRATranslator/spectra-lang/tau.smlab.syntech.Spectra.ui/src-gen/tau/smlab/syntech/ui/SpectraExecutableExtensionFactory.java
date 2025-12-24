@@ -9,21 +9,20 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import tau.smlab.syntech.Spectra.ui.internal.SpectraActivator;
 
-/**
- * This class was generated. Customizations should only happen in a newly
- * introduced subclass. 
- */
-public class SpectraExecutableExtensionFactory extends AbstractGuiceAwareExecutableExtensionFactory {
+/** This class was generated. Customizations should only happen in a newly introduced subclass. */
+public class SpectraExecutableExtensionFactory
+    extends AbstractGuiceAwareExecutableExtensionFactory {
 
-	@Override
-	protected Bundle getBundle() {
-		return FrameworkUtil.getBundle(SpectraActivator.class);
-	}
-	
-	@Override
-	protected Injector getInjector() {
-		SpectraActivator activator = SpectraActivator.getInstance();
-		return activator != null ? activator.getInjector(SpectraActivator.TAU_SMLAB_SYNTECH_SPECTRA) : null;
-	}
+  @Override
+  protected Bundle getBundle() {
+    return FrameworkUtil.getBundle(SpectraActivator.class);
+  }
 
+  @Override
+  protected Injector getInjector() {
+    SpectraActivator activator = SpectraActivator.getInstance();
+    return activator != null
+        ? activator.getInjector(SpectraActivator.TAU_SMLAB_SYNTECH_SPECTRA)
+        : null;
+  }
 }

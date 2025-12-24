@@ -1,0 +1,27 @@
+Ejemplo = A1,
+A1 = (c12 -> A2),
+A2 = (c24 -> A4 | d25 -> A5),
+A3 = ERROR,
+A4 = (d45 -> A5 | c410 -> A10),
+A5 = (c53 -> A3 | c54 -> A4),
+A6 = (c63 -> A3 | u65 -> A5),
+A7 = (c710 -> A10 | c79 -> A9),
+A8 = (c87 -> A7 | d89 -> A9),
+A9 = (d98 -> A8 | c98 -> A8 | d911 -> A11),
+A10 = (c107 -> A7 | c1011 -> A11),
+A11 = (c1110 -> A10 | c119 -> A9 | c1113 -> A13),
+A12 = ERROR,
+A13 = (c1311 -> A11 | d1312 -> A12 | d1314 -> A14),
+A14 = (c1413 -> A13).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {c12, c24, c52, c53, c36, c63, c54, c410, c107, c710, c1011, c79, c87, c1110, c98, c119, c1113, c1311,
+                    c1413, c1213}
+marking = {c1011, c1311, d911}
+disturbances = {d25, d45, d89, d98, d911, d1312, d1314}
+nonblocking
+}
+
+partialOrderReduction ||DirectedController = Plant~{Goal}.

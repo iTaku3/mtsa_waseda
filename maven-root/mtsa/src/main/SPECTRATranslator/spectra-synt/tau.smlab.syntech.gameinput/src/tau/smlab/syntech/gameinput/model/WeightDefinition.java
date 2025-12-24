@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.model;
@@ -31,42 +31,40 @@ package tau.smlab.syntech.gameinput.model;
 import java.io.Serializable;
 
 public class WeightDefinition implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 2047667500483501267L;
-	
-	private String name;
-	private int value;  
-	private Constraint definition;
+  /** */
+  private static final long serialVersionUID = 2047667500483501267L;
 
-	public WeightDefinition(String name, int value, Constraint definition)
-	{
-		this.name = name;
-		this.value = value;
-		this.definition = definition;
-	}
-	public int getValue() {
-		return value;
-	}
+  private String name;
+  private int value;
+  private Constraint definition;
 
-	public void setValue(int value) {
-		this.value = value;
-	}
+  public WeightDefinition(String name, int value, Constraint definition) {
+    this.name = name;
+    this.value = value;
+    this.definition = definition;
+  }
 
-	public Constraint getDefinition() {
-		return definition;
-	}
+  public int getValue() {
+    return value;
+  }
 
-	public void setDefinition(Constraint definition) {
-		this.definition = definition;
-	}
+  public void setValue(int value) {
+    this.value = value;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public Constraint getDefinition() {
+    return definition;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setDefinition(Constraint definition) {
+    this.definition = definition;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 }

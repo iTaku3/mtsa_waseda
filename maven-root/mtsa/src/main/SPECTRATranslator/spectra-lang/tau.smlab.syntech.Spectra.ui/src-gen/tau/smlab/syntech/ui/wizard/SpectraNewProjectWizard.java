@@ -3,53 +3,52 @@
  */
 package tau.smlab.syntech.ui.wizard;
 
-import org.eclipse.xtext.ui.wizard.XtextNewProjectWizard;
-
+import com.google.inject.Inject;
 import org.eclipse.xtext.ui.wizard.IExtendedProjectInfo;
 import org.eclipse.xtext.ui.wizard.IProjectCreator;
-import com.google.inject.Inject;
+import org.eclipse.xtext.ui.wizard.XtextNewProjectWizard;
 
 public class SpectraNewProjectWizard extends XtextNewProjectWizard {
 
-	private SpectraWizardNewProjectCreationPage mainPage;
+  private SpectraWizardNewProjectCreationPage mainPage;
 
-	@Inject
-	public SpectraNewProjectWizard(IProjectCreator projectCreator) {
-		super(projectCreator);
-		setWindowTitle("New Spectra Project");
-	}
+  @Inject
+  public SpectraNewProjectWizard(IProjectCreator projectCreator) {
+    super(projectCreator);
+    setWindowTitle("New Spectra Project");
+  }
 
-	protected SpectraWizardNewProjectCreationPage getMainPage() {
-		return mainPage;
-	}
+  protected SpectraWizardNewProjectCreationPage getMainPage() {
+    return mainPage;
+  }
 
-	/**
-	 * Use this method to add pages to the wizard.
-	 * The one-time generated version of this class will add a default new project page to the wizard.
-	 */
-	@Override
-	public void addPages() {
-		mainPage = createMainPage("basicNewProjectPage");
-		mainPage.setTitle("Spectra Project");
-		mainPage.setDescription("Create a new Spectra project.");
-		addPage(mainPage);
-	}
+  /**
+   * Use this method to add pages to the wizard. The one-time generated version of this class will
+   * add a default new project page to the wizard.
+   */
+  @Override
+  public void addPages() {
+    mainPage = createMainPage("basicNewProjectPage");
+    mainPage.setTitle("Spectra Project");
+    mainPage.setDescription("Create a new Spectra project.");
+    addPage(mainPage);
+  }
 
-	protected SpectraWizardNewProjectCreationPage createMainPage(String pageName) {
-		return new SpectraWizardNewProjectCreationPage(pageName);
-	}
+  protected SpectraWizardNewProjectCreationPage createMainPage(String pageName) {
+    return new SpectraWizardNewProjectCreationPage(pageName);
+  }
 
-	/**
-	 * Use this method to read the project settings from the wizard pages and feed them into the project info class.
-	 */
-	@Override
-	protected IExtendedProjectInfo getProjectInfo() {
-		SpectraProjectInfo projectInfo = new SpectraProjectInfo();
-		projectInfo.setProjectName(mainPage.getProjectName());
-		if (!mainPage.useDefaults()) {
-			projectInfo.setLocationPath(mainPage.getLocationPath());
-		}
-		return projectInfo;
-	}
-
+  /**
+   * Use this method to read the project settings from the wizard pages and feed them into the
+   * project info class.
+   */
+  @Override
+  protected IExtendedProjectInfo getProjectInfo() {
+    SpectraProjectInfo projectInfo = new SpectraProjectInfo();
+    projectInfo.setProjectName(mainPage.getProjectName());
+    if (!mainPage.useDefaults()) {
+      projectInfo.setLocationPath(mainPage.getLocationPath());
+    }
+    return projectInfo;
+  }
 }

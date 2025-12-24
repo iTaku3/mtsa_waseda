@@ -17,55 +17,51 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.model;
 
 import java.io.Serializable;
-
 import tau.smlab.syntech.gameinput.spec.Spec;
 
 public class Define implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 6360168530185398381L;
+  /** */
+  private static final long serialVersionUID = 6360168530185398381L;
 
-	private String name;
-	private Spec expression;
-	private DefineArray defineArray;
+  private String name;
+  private Spec expression;
+  private DefineArray defineArray;
 
-	public Define(String name, Spec expression, DefineArray defineArray) {
-		this.name = name;
-		this.expression = expression;
-		this.defineArray = defineArray;
-	}
+  public Define(String name, Spec expression, DefineArray defineArray) {
+    this.name = name;
+    this.expression = expression;
+    this.defineArray = defineArray;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public Spec getExpression() {
-		return expression;
-	}
+  public Spec getExpression() {
+    return expression;
+  }
 
-	public void setExpression(Spec spec) {
-		this.expression = spec;
-	}
+  public void setExpression(Spec spec) {
+    this.expression = spec;
+  }
 
-	public DefineArray getDefineArray() {
-		return defineArray;
-	}
+  public DefineArray getDefineArray() {
+    return defineArray;
+  }
 
-	public void setDefineArray(DefineArray defineArray) {
-		this.defineArray = defineArray;
-	}
-
+  public void setDefineArray(DefineArray defineArray) {
+    this.defineArray = defineArray;
+  }
 }

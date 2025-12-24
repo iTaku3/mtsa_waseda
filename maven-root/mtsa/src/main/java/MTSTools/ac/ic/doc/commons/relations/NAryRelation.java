@@ -5,6 +5,5 @@ import java.util.Set;
 
 public interface NAryRelation<E> extends Set<List<E>> {
 
-	int getDimension();
-	
+  int getDimension();
 }

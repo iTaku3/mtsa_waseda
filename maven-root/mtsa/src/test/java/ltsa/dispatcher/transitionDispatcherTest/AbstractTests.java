@@ -55,7 +55,11 @@ public class AbstractTests {
 
   @Test
   public void compositeProcessTest() {
-    abstractTest("A = (a -> b -> A | a->STOP | b->END). ||COMP = (A).", "COMP", "A = (a? -> A | b? -> A).", "A");
+    abstractTest(
+        "A = (a -> b -> A | a->STOP | b->END). ||COMP = (A).",
+        "COMP",
+        "A = (a? -> A | b? -> A).",
+        "A");
   }
 
   public void abstractTest(

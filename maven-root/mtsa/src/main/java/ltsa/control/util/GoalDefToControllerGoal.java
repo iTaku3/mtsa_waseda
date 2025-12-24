@@ -2,6 +2,9 @@ package ltsa.control.util;
 
 import MTSSynthesis.ar.dc.uba.model.condition.Fluent;
 import MTSSynthesis.controller.model.ControllerGoal;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Vector;
 import ltsa.control.ControllerGoalDefinition;
 import ltsa.lts.Diagnostics;
 import ltsa.lts.Symbol;
@@ -10,142 +13,141 @@ import ltsa.lts.ltl.AssertDefinition;
 import ltsa.lts.ltl.FormulaFactory;
 import ltsa.lts.ltl.PredicateDefinition;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
-
 public class GoalDefToControllerGoal {
-	private static final GoalDefToControllerGoal instance = new GoalDefToControllerGoal();
-	public static GoalDefToControllerGoal getInstance() {return instance;}
-	
-	public ControllerGoal<String> buildControllerGoal(ControllerGoalDefinition goalDef) {
-		ControllerGoal<String> result = new ControllerGoal<String>();
-		result.setPermissive(goalDef.isPermissive());
-		this.buildSubGoals(result, goalDef);
-		result.setNonBlocking(goalDef.isNonBlocking());
-		result.setExceptionHandling(goalDef.isExceptionHandling());
-		this.buildControllableActionSet(result, goalDef);
-		result.setLazyness(goalDef.getLazyness());
-		result.setNonTransient(goalDef.isNonTransient());
-        result.setReachability(goalDef.isReachability());
-        if(goalDef.isTestLatency()){
-            result.setTestLatency(goalDef.getMaxSchedulers(), goalDef.getMaxControllers());
-        }
-        buildHeuristicActionSets(result, goalDef);
-		return result;
-	}
+  private static final GoalDefToControllerGoal instance = new GoalDefToControllerGoal();
 
-	private void buildControllableActionSet(ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {
+  public static GoalDefToControllerGoal getInstance() {
+    return instance;
+  }
 
-		Vector<String> actions = goalDef.getControllableActionSet();
-		if (actions == null) {
-			if (goalDef.getMarkingDefinitions().isEmpty())
-				Diagnostics.fatal("Controllable actions set not defined.");
-			else
-				actions = new Vector<>();
-		}
-		goal.addAllControllableActions(new HashSet<>(actions));
-	}
-	
-	private void buildHeuristicActionSets(ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {
+  public ControllerGoal<String> buildControllerGoal(ControllerGoalDefinition goalDef) {
+    ControllerGoal<String> result = new ControllerGoal<String>();
+    result.setPermissive(goalDef.isPermissive());
+    this.buildSubGoals(result, goalDef);
+    result.setNonBlocking(goalDef.isNonBlocking());
+    result.setExceptionHandling(goalDef.isExceptionHandling());
+    this.buildControllableActionSet(result, goalDef);
+    result.setLazyness(goalDef.getLazyness());
+    result.setNonTransient(goalDef.isNonTransient());
+    result.setReachability(goalDef.isReachability());
+    if (goalDef.isTestLatency()) {
+      result.setTestLatency(goalDef.getMaxSchedulers(), goalDef.getMaxControllers());
+    }
+    buildHeuristicActionSets(result, goalDef);
+    return result;
+  }
 
-		Vector<String> reachDefinitions = goalDef.getMarkingDefinitions();
-		Set<String> reach = new HashSet<String>();
-		goal.setMarking(reach);
-		if (reachDefinitions != null)
-			reach.addAll(reachDefinitions);
+  private void buildControllableActionSet(
+      ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {
 
-		Vector<String> disturbances = goalDef.getDisturbanceActions();
-		if (disturbances != null){
-			goal.setDisturbances(new HashSet<>(disturbances));
-		}else{
-			goal.setDisturbances(new HashSet<>());
-		}
-	}
+    Vector<String> actions = goalDef.getControllableActionSet();
+    if (actions == null) {
+      if (goalDef.getMarkingDefinitions().isEmpty())
+        Diagnostics.fatal("Controllable actions set not defined.");
+      else actions = new Vector<>();
+    }
+    goal.addAllControllableActions(new HashSet<>(actions));
+  }
 
-	private void buildSubGoals(ControllerGoal<String> result, ControllerGoalDefinition goalDef) {
+  private void buildHeuristicActionSets(
+      ControllerGoal<String> goal, ControllerGoalDefinition goalDef) {
 
-		Set<Fluent> fluentsInFaults = new HashSet<>();
-		//Convert faults to Set<Formula> 
-		for (Symbol faultDefinition : goalDef.getFaultsDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(faultDefinition.getName());
-			if (def!=null){
-				result.addFault(FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), fluentsInFaults));
-			} else {
-				Diagnostics.fatal("Assertion not defined [" + faultDefinition.getName() + "].");
-			}
-		}
-		Set<Fluent> involvedFluents = new HashSet<>(fluentsInFaults);
-		result.addAllFluentsInFaults(fluentsInFaults);
+    Vector<String> reachDefinitions = goalDef.getMarkingDefinitions();
+    Set<String> reach = new HashSet<String>();
+    goal.setMarking(reach);
+    if (reachDefinitions != null) reach.addAll(reachDefinitions);
 
-		//Convert assumptions to Set<Formula> 
-		for (ltsa.lts.Symbol assumeDefinition : goalDef.getAssumeDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(assumeDefinition.getName());
-			if (def!=null){
-				result.addAssume(FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
-			} else {
-				Diagnostics.fatal("Assertion not defined [" + assumeDefinition.getName() + "].");
-			}
-		}
+    Vector<String> disturbances = goalDef.getDisturbanceActions();
+    if (disturbances != null) {
+      goal.setDisturbances(new HashSet<>(disturbances));
+    } else {
+      goal.setDisturbances(new HashSet<>());
+    }
+  }
 
-		//Convert buchi to Set<Formula>
-		for (ltsa.lts.Symbol buchiDefinition : goalDef.getBuchiDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(buchiDefinition.getName());
-			if (def!=null){
-				result.addBuchi(FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
-			} else {
-				Diagnostics.fatal("Assertion not defined [" + buchiDefinition.getName() + "].");
-			}
-		}
+  private void buildSubGoals(ControllerGoal<String> result, ControllerGoalDefinition goalDef) {
 
-		//Convert guarantees to Set<Formula> 
-		for (ltsa.lts.Symbol guaranteeDefinition : goalDef.getGuaranteeDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(guaranteeDefinition.getName());
-			if (def!=null){
-				result.addGuarantee(FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
-			} else {
-			  PredicateDefinition fdef = PredicateDefinition.get(guaranteeDefinition.getName());
-			  if (fdef != null)
-			    result.addGuarantee(FormulaUtils.adaptFormulaAndCreateFluents(new FormulaFactory().make
-					    (guaranteeDefinition), involvedFluents));
-			  else
-				  //Diagnostics.fatal("Assertion not defined [" + guaranteeDefinition.getName() + "].");
-			    Diagnostics.fatal("Fluent/assertion not defined [" + guaranteeDefinition.getName() + "].");
-			}
-		}
-		
-		Set<Fluent> concurrencyFluents = new HashSet<Fluent>();
-		//Convert faults to Set<Formula> 
-		for (ltsa.lts.Symbol concurrencyDefinition : goalDef.getConcurrencyDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(concurrencyDefinition.getName());
-			if (def!=null){
-				FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), concurrencyFluents);
-			} else {
-				Diagnostics.fatal("Assertion not defined [" + concurrencyDefinition.getName() + "].");
-			}
-		}
-		result.addAllConcurrencyFluents(concurrencyFluents);
-		involvedFluents.addAll(concurrencyFluents);
-		
+    Set<Fluent> fluentsInFaults = new HashSet<>();
+    // Convert faults to Set<Formula>
+    for (Symbol faultDefinition : goalDef.getFaultsDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(faultDefinition.getName());
+      if (def != null) {
+        result.addFault(
+            FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), fluentsInFaults));
+      } else {
+        Diagnostics.fatal("Assertion not defined [" + faultDefinition.getName() + "].");
+      }
+    }
+    Set<Fluent> involvedFluents = new HashSet<>(fluentsInFaults);
+    result.addAllFluentsInFaults(fluentsInFaults);
 
-		Set<Fluent> activityFluents = new HashSet<Fluent>();
-		//Convert faults to Set<Formula> 
-		for (ltsa.lts.Symbol activityDefinition : goalDef.getActivityDefinitions()) {
-			AssertDefinition def = AssertDefinition.getDefinition(activityDefinition.getName());
-			if (def!=null){
-				FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), activityFluents);
-			} else {
-				Diagnostics.fatal("Assertion not defined [" + activityDefinition.getName() + "].");
-			}
-		}
-		result.addAllActivityFluents(activityFluents);
-		involvedFluents.addAll(activityFluents);
-		
-		
-		
-		result.addAllFluents(involvedFluents);
-		
-		
-		
-	}
+    // Convert assumptions to Set<Formula>
+    for (ltsa.lts.Symbol assumeDefinition : goalDef.getAssumeDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(assumeDefinition.getName());
+      if (def != null) {
+        result.addAssume(
+            FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
+      } else {
+        Diagnostics.fatal("Assertion not defined [" + assumeDefinition.getName() + "].");
+      }
+    }
+
+    // Convert buchi to Set<Formula>
+    for (ltsa.lts.Symbol buchiDefinition : goalDef.getBuchiDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(buchiDefinition.getName());
+      if (def != null) {
+        result.addBuchi(
+            FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
+      } else {
+        Diagnostics.fatal("Assertion not defined [" + buchiDefinition.getName() + "].");
+      }
+    }
+
+    // Convert guarantees to Set<Formula>
+    for (ltsa.lts.Symbol guaranteeDefinition : goalDef.getGuaranteeDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(guaranteeDefinition.getName());
+      if (def != null) {
+        result.addGuarantee(
+            FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), involvedFluents));
+      } else {
+        PredicateDefinition fdef = PredicateDefinition.get(guaranteeDefinition.getName());
+        if (fdef != null)
+          result.addGuarantee(
+              FormulaUtils.adaptFormulaAndCreateFluents(
+                  new FormulaFactory().make(guaranteeDefinition), involvedFluents));
+        else
+          // Diagnostics.fatal("Assertion not defined [" + guaranteeDefinition.getName() + "].");
+          Diagnostics.fatal(
+              "Fluent/assertion not defined [" + guaranteeDefinition.getName() + "].");
+      }
+    }
+
+    Set<Fluent> concurrencyFluents = new HashSet<Fluent>();
+    // Convert faults to Set<Formula>
+    for (ltsa.lts.Symbol concurrencyDefinition : goalDef.getConcurrencyDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(concurrencyDefinition.getName());
+      if (def != null) {
+        FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), concurrencyFluents);
+      } else {
+        Diagnostics.fatal("Assertion not defined [" + concurrencyDefinition.getName() + "].");
+      }
+    }
+    result.addAllConcurrencyFluents(concurrencyFluents);
+    involvedFluents.addAll(concurrencyFluents);
+
+    Set<Fluent> activityFluents = new HashSet<Fluent>();
+    // Convert faults to Set<Formula>
+    for (ltsa.lts.Symbol activityDefinition : goalDef.getActivityDefinitions()) {
+      AssertDefinition def = AssertDefinition.getDefinition(activityDefinition.getName());
+      if (def != null) {
+        FormulaUtils.adaptFormulaAndCreateFluents(def.getFormula(true), activityFluents);
+      } else {
+        Diagnostics.fatal("Assertion not defined [" + activityDefinition.getName() + "].");
+      }
+    }
+    result.addAllActivityFluents(activityFluents);
+    involvedFluents.addAll(activityFluents);
+
+    result.addAllFluents(involvedFluents);
+  }
 }

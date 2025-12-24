@@ -9,11 +9,11 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.xtext.validation.AbstractDeclarativeValidator;
 
 public abstract class AbstractSpectraValidator extends AbstractDeclarativeValidator {
-	
-	@Override
-	protected List<EPackage> getEPackages() {
-		List<EPackage> result = new ArrayList<EPackage>();
-		result.add(tau.smlab.syntech.spectra.SpectraPackage.eINSTANCE);
-		return result;
-	}
+
+  @Override
+  protected List<EPackage> getEPackages() {
+    List<EPackage> result = new ArrayList<EPackage>();
+    result.add(tau.smlab.syntech.spectra.SpectraPackage.eINSTANCE);
+    return result;
+  }
 }

@@ -17,53 +17,57 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.gr1;
 
 public enum GR1StrategyType {
-	ZYX, ZXY, YZX, YXZ, XZY, XYZ;
+  ZYX,
+  ZXY,
+  YZX,
+  YXZ,
+  XZY,
+  XYZ;
 
-	/**
-	 * 3 - Z Y X.<br>
-	 * 7 - Z X Y.<br>
-	 * 11 - Y Z X.<br>
-	 * 15 - Y X Z.<br>
-	 * 19 - X Z Y.<br>
-	 * 23 - X Y Z.<br>
-	 * 
-	 * @param st_kind
-	 * @return
-	 */
-	public int old_value() {
-		switch (this) {
-		case ZYX:
-			return 3;
-		case ZXY:
-			return 7;
-		case YZX:
-			return 11;
-		case YXZ:
-			return 15;
-		case XZY:
-			return 19;
-		case XYZ:
-			return 23;
-		default:
-			break;
-		}
-		return -1;
-	}
+  /**
+   * 3 - Z Y X.<br>
+   * 7 - Z X Y.<br>
+   * 11 - Y Z X.<br>
+   * 15 - Y X Z.<br>
+   * 19 - X Z Y.<br>
+   * 23 - X Y Z.<br>
+   *
+   * @param st_kind
+   * @return
+   */
+  public int old_value() {
+    switch (this) {
+      case ZYX:
+        return 3;
+      case ZXY:
+        return 7;
+      case YZX:
+        return 11;
+      case YXZ:
+        return 15;
+      case XZY:
+        return 19;
+      case XYZ:
+        return 23;
+      default:
+        break;
+    }
+    return -1;
+  }
 
-	public int hashValue() {
-		return old_value();
-	}
-
+  public int hashValue() {
+    return old_value();
+  }
 }

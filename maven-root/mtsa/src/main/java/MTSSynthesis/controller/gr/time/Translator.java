@@ -1,5 +1,5 @@
 package MTSSynthesis.controller.gr.time;
 
 public interface Translator<S, D> {
-	public S translate(D d);
+  public S translate(D d);
 }

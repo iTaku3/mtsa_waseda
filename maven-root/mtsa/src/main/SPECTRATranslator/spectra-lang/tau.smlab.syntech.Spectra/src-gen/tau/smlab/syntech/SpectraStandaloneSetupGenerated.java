@@ -16,27 +16,30 @@ import tau.smlab.syntech.spectra.SpectraPackage;
 @SuppressWarnings("all")
 public class SpectraStandaloneSetupGenerated implements ISetup {
 
-	@Override
-	public Injector createInjectorAndDoEMFRegistration() {
-		TerminalsStandaloneSetup.doSetup();
+  @Override
+  public Injector createInjectorAndDoEMFRegistration() {
+    TerminalsStandaloneSetup.doSetup();
 
-		Injector injector = createInjector();
-		register(injector);
-		return injector;
-	}
-	
-	public Injector createInjector() {
-		return Guice.createInjector(new SpectraRuntimeModule());
-	}
-	
-	public void register(Injector injector) {
-		if (!EPackage.Registry.INSTANCE.containsKey("http://smlab.cs.tau.ac.il/syntech/Spectra")) {
-			EPackage.Registry.INSTANCE.put("http://smlab.cs.tau.ac.il/syntech/Spectra", SpectraPackage.eINSTANCE);
-		}
-		IResourceFactory resourceFactory = injector.getInstance(IResourceFactory.class);
-		IResourceServiceProvider serviceProvider = injector.getInstance(IResourceServiceProvider.class);
-		
-		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("spectra", resourceFactory);
-		IResourceServiceProvider.Registry.INSTANCE.getExtensionToFactoryMap().put("spectra", serviceProvider);
-	}
+    Injector injector = createInjector();
+    register(injector);
+    return injector;
+  }
+
+  public Injector createInjector() {
+    return Guice.createInjector(new SpectraRuntimeModule());
+  }
+
+  public void register(Injector injector) {
+    if (!EPackage.Registry.INSTANCE.containsKey("http://smlab.cs.tau.ac.il/syntech/Spectra")) {
+      EPackage.Registry.INSTANCE.put(
+          "http://smlab.cs.tau.ac.il/syntech/Spectra", SpectraPackage.eINSTANCE);
+    }
+    IResourceFactory resourceFactory = injector.getInstance(IResourceFactory.class);
+    IResourceServiceProvider serviceProvider = injector.getInstance(IResourceServiceProvider.class);
+
+    Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("spectra", resourceFactory);
+    IResourceServiceProvider.Registry.INSTANCE
+        .getExtensionToFactoryMap()
+        .put("spectra", serviceProvider);
+  }
 }

@@ -11,30 +11,28 @@ import tau.smlab.syntech.services.SpectraGrammarAccess;
 
 public class SpectraParser extends AbstractAntlrParser {
 
-	@Inject
-	private SpectraGrammarAccess grammarAccess;
+  @Inject private SpectraGrammarAccess grammarAccess;
 
-	@Override
-	protected void setInitialHiddenTokens(XtextTokenStream tokenStream) {
-		tokenStream.setInitialHiddenTokens("RULE_WS", "RULE_ML_COMMENT", "RULE_SL_COMMENT");
-	}
-	
+  @Override
+  protected void setInitialHiddenTokens(XtextTokenStream tokenStream) {
+    tokenStream.setInitialHiddenTokens("RULE_WS", "RULE_ML_COMMENT", "RULE_SL_COMMENT");
+  }
 
-	@Override
-	protected InternalSpectraParser createParser(XtextTokenStream stream) {
-		return new InternalSpectraParser(stream, getGrammarAccess());
-	}
+  @Override
+  protected InternalSpectraParser createParser(XtextTokenStream stream) {
+    return new InternalSpectraParser(stream, getGrammarAccess());
+  }
 
-	@Override 
-	protected String getDefaultRuleName() {
-		return "Model";
-	}
+  @Override
+  protected String getDefaultRuleName() {
+    return "Model";
+  }
 
-	public SpectraGrammarAccess getGrammarAccess() {
-		return this.grammarAccess;
-	}
+  public SpectraGrammarAccess getGrammarAccess() {
+    return this.grammarAccess;
+  }
 
-	public void setGrammarAccess(SpectraGrammarAccess grammarAccess) {
-		this.grammarAccess = grammarAccess;
-	}
+  public void setGrammarAccess(SpectraGrammarAccess grammarAccess) {
+    this.grammarAccess = grammarAccess;
+  }
 }

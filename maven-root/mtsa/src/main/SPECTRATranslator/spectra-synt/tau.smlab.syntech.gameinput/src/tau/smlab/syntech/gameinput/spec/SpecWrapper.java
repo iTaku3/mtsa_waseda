@@ -17,21 +17,19 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.spec;
 
 import java.util.List;
-
 import tau.smlab.syntech.gameinput.model.Pattern;
-import tau.smlab.syntech.gameinput.spec.Spec;
 
 public class SpecWrapper {
 
@@ -40,32 +38,31 @@ public class SpecWrapper {
   private Pattern pattern;
   private List<Spec> parameters;
 
-  
   /**
    * Use this constructor to create a regular spec (without pattern reference)
+   *
    * @param spec
    */
-  public SpecWrapper(Spec spec)
-  {
+  public SpecWrapper(Spec spec) {
     this.spec = spec;
     this.hasPatternReference = false;
     this.pattern = null;
     this.parameters = null;
   }
-  
+
   /**
    * Use this constructor to create a spec that describes a pattern reference
+   *
    * @param pattern
    * @param parameters the passed parameters to the pattern (must be a boolean expression)
    */
-  public SpecWrapper(Pattern pattern, List<Spec> parameters)
-  {
+  public SpecWrapper(Pattern pattern, List<Spec> parameters) {
     this.spec = null;
     this.hasPatternReference = true;
     this.pattern = pattern;
     this.parameters = parameters;
   }
-  
+
   public Spec getSpec() {
     return spec;
   }

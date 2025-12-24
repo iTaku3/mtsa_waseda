@@ -1,4 +1,5 @@
 package ltsa.custom;
+
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
@@ -7,7 +8,8 @@ public class ImmutableList {
   Object item;
 
   private ImmutableList(ImmutableList next, Object item) {
-    this.next = next; this.item=item;
+    this.next = next;
+    this.item = item;
   }
 
   public static ImmutableList add(ImmutableList list, Object item) {
@@ -23,31 +25,36 @@ public class ImmutableList {
     if (item == target) {
       return next;
     } else {
-      ImmutableList new_next = remove(next,target);
-      if (new_next == next ) return this;
-      return new ImmutableList(new_next,item);
+      ImmutableList new_next = remove(next, target);
+      if (new_next == next) return this;
+      return new ImmutableList(new_next, item);
     }
   }
 
   public static Enumeration elements(ImmutableList list) {
-        return new ImmutableListEnumerator(list);
+    return new ImmutableListEnumerator(list);
   }
 }
 
 final class ImmutableListEnumerator implements Enumeration {
 
-    private ImmutableList current;
+  private ImmutableList current;
 
-    ImmutableListEnumerator(ImmutableList l){current=l;};
+  ImmutableListEnumerator(ImmutableList l) {
+    current = l;
+  }
+  ;
 
-    public boolean hasMoreElements() {return current != null;}
+  public boolean hasMoreElements() {
+    return current != null;
+  }
 
-    public Object nextElement() {
-      if (current!=null) {
-        Object o = current.item;
-        current = current.next;
-        return o;
-      }
-      throw new NoSuchElementException("ImmutableListEnumerator");
+  public Object nextElement() {
+    if (current != null) {
+      Object o = current.item;
+      current = current.next;
+      return o;
     }
+    throw new NoSuchElementException("ImmutableListEnumerator");
+  }
 }

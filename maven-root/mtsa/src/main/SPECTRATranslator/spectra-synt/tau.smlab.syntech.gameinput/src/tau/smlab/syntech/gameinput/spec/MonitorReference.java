@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.spec;
@@ -31,40 +31,39 @@ package tau.smlab.syntech.gameinput.spec;
 import tau.smlab.syntech.gameinput.model.Monitor;
 
 public class MonitorReference implements Spec {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 6665749660100516045L;
-	
-	private Monitor monitor;
+  /** */
+  private static final long serialVersionUID = 6665749660100516045L;
 
-	public MonitorReference(Monitor mon) {
-		this.monitor = mon;
-	}
+  private Monitor monitor;
 
-	public String toString()
-	{
-		return "<MonitorReference: " + monitor.getName() +">";
-	}
-	@Override
-	public boolean isPastLTLSpec() {
-		return false;
-	}
+  public MonitorReference(Monitor mon) {
+    this.monitor = mon;
+  }
 
-	@Override
-	public boolean isPropSpec() {
-		return monitor.getType().isBoolean();
-	}
+  public String toString() {
+    return "<MonitorReference: " + monitor.getName() + ">";
+  }
 
-	@Override
-	public boolean hasTemporalOperators() {
-		return false;
-	}
+  @Override
+  public boolean isPastLTLSpec() {
+    return false;
+  }
 
-	public Monitor getMonitor() {
-		return monitor;
-	}
-	public MonitorReference clone() throws CloneNotSupportedException {
-		return new MonitorReference(this.monitor);
-	}
+  @Override
+  public boolean isPropSpec() {
+    return monitor.getType().isBoolean();
+  }
+
+  @Override
+  public boolean hasTemporalOperators() {
+    return false;
+  }
+
+  public Monitor getMonitor() {
+    return monitor;
+  }
+
+  public MonitorReference clone() throws CloneNotSupportedException {
+    return new MonitorReference(this.monitor);
+  }
 }

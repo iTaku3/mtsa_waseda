@@ -1,0 +1,33 @@
+//******************************************************************************
+//*  ArtGallery.mtsa (for MTSA)
+//*  Create Date      : 2019/06/19
+//*  Creator Name     : Takuto Yamauchi
+//*  Example          : Physical Security(ArtGallery)
+//*  MTSA run command : [java -jar -Xmx100G mtsa.jar]
+//*****************************************************************************/
+
+//*****************************************************************************
+// Environment
+//*****************************************************************************
+
+const N = 2
+const T = 1
+
+
+ROOM = Request[0],
+Request[n:0..N] = (
+	reqEnter -> Judge[n] |
+	when(n!=0) leave -> Request[n-1]),
+Judge[n:0..N] = (
+	when(n!=N) allow -> arrive[n+1] -> Request[n+1] |
+	deny -> Request[n]).
+
+
+
+
+MONITOR = (allow_A[T] -> ERROR).
+
+
+
+||Environment= (ROOM).
+

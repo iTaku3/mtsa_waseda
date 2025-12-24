@@ -17,20 +17,19 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.extension;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -54,7 +53,6 @@ import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.part.FileEditorInput;
-
 import tau.smlab.syntech.ui.console.ConsolePrinter;
 
 public abstract class SyntechAction<T extends Enum<T> & ActionID> extends ContributionItem {
@@ -69,21 +67,21 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
 
   /**
    * name of the plug-in to identify it on the console
-   * 
+   *
    * @return
    */
   public abstract String getPluginName();
 
   /**
    * basically the items in T.getValues()
-   * 
+   *
    * @return
    */
   public abstract T[] getActionItems();
 
   /**
    * method that is executed on a click of the user
-   * 
+   *
    * @param actionID
    * @param specFile
    */
@@ -95,20 +93,20 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
     for (T aid : getActionItems()) {
       MenuItem menuItem = new MenuItem(menu, SWT.CHECK, index);
       menuItem.setText(aid.getMenuText());
-      menuItem.addSelectionListener(new SelectionAdapter() {
-        public void widgetSelected(SelectionEvent e) {
-          //what to do when menu is subsequently selected.
-          prepareAndRun(aid);
-        }
-      });
-
+      menuItem.addSelectionListener(
+          new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent e) {
+              // what to do when menu is subsequently selected.
+              prepareAndRun(aid);
+            }
+          });
     }
   }
 
   /**
    * find the selected specFile and check if it requires saving <br>
    * then run run()
-   * 
+   *
    * @param actionID
    */
   public void prepareAndRun(T actionID) {
@@ -172,7 +170,8 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
         }
       }
       if (selectedFiles == null || selectedFiles.size() == 0 || selectedFiles.size() >= 2) {
-        MessageDialog.openInformation(shell, getPluginName(), "Please select only one .spectra file.");
+        MessageDialog.openInformation(
+            shell, getPluginName(), "Please select only one .spectra file.");
         return false;
       } else {
         specFile = selectedFiles.get(0);
@@ -184,7 +183,7 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
 
   /**
    * If the page is unsaved, ask user if he wants to save it first
-   * 
+   *
    * @return false if the user has chosen to abort
    */
   protected boolean savePage() {
@@ -193,8 +192,11 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
     // check if file is saved
     IEditorPart editorPart = page.getActiveEditor();
     if (editorPart != null && editorPart.isDirty()) {
-      boolean isYes = MessageDialog.openQuestion(shell, getPluginName(),
-          "The file is not saved. Select 'Yes' to save and 'No' to abort.");
+      boolean isYes =
+          MessageDialog.openQuestion(
+              shell,
+              getPluginName(),
+              "The file is not saved. Select 'Yes' to save and 'No' to abort.");
       if (isYes) {
         editorPart.doSave(null);
       } else {
@@ -210,11 +212,10 @@ public abstract class SyntechAction<T extends Enum<T> & ActionID> extends Contri
     IConsoleManager conMan = plugin.getConsoleManager();
     IConsole[] existing = conMan.getConsoles();
     for (int i = 0; i < existing.length; i++)
-      if (name.equals(existing[i].getName()))
-        return (MessageConsole) existing[i];
+      if (name.equals(existing[i].getName())) return (MessageConsole) existing[i];
     // no console found, so create a new one
     MessageConsole myConsole = new MessageConsole(name, null);
-    conMan.addConsoles(new IConsole[] { myConsole });
+    conMan.addConsoles(new IConsole[] {myConsole});
     return myConsole;
   }
 }

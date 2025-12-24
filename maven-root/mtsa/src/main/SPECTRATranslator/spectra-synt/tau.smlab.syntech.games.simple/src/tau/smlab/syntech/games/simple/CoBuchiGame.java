@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.simple;
@@ -38,9 +38,8 @@ import tau.smlab.syntech.jtlv.lib.FixPoint;
 /**
  * This is an implementation of a generalized coBuchi game. <br>
  * The objective of the system is to prevent the justices of the environment.
- * 
- * <li>implements a check whether we reached a fixed point early</li>
- * <li>computes all winning states</li>
+ * <li>implements a check whether we reached a fixed point early
+ * <li>computes all winning states
  */
 public class CoBuchiGame extends GameSolver {
 
@@ -62,7 +61,7 @@ public class CoBuchiGame extends GameSolver {
     while (iterationsWithoutGain < env.justiceNum()) {
       for (int i = 0; i < env.justiceNum(); i++) {
         BDD toPrevWin = env.yieldStates(sys, Z).orWith(env.justiceAt(i).not());
-        BDD X = toPrevWin.id(); // instead of TRUE start here (at most what is winning now) 
+        BDD X = toPrevWin.id(); // instead of TRUE start here (at most what is winning now)
         FixPoint fX = new FixPoint(true);
         while (fX.advance(X)) {
           X = toPrevWin.id().andWith(env.yieldStates(sys, X));
@@ -94,5 +93,4 @@ public class CoBuchiGame extends GameSolver {
   public BDD sysWinningStates() {
     return mem.getWin();
   }
-
 }

@@ -2,48 +2,46 @@ package ltsa.lts;
 
 import java.math.BigDecimal;
 
-
-
 /* -------------------------------------------------------------------------------*/
 
 class Value {
-    private BigDecimal val;
-    private String sval;
-    private boolean sonly;
+  private BigDecimal val;
+  private String sval;
+  private boolean sonly;
 
-    public Value(double i) {
-    	this(new BigDecimal(i));
-    }
-    
-    public Value(BigDecimal i) {
-        val = i;
-        sonly = false;
-        sval = String.valueOf(i);
-    }
-    
-    public Value(String s) {   //convert string to integer of possible
-        sval = s;
-        try {
-            val = new BigDecimal(s);
-            sonly = false;
-        } catch (NumberFormatException e) {
-            sonly = true;
-        }
-    }
+  public Value(double i) {
+    this(new BigDecimal(i));
+  }
 
-    public String toString() {
-        return sval;
-    }
-    
-    public BigDecimal doubleValue() {
-    	return val;
-    }
+  public Value(BigDecimal i) {
+    val = i;
+    sonly = false;
+    sval = String.valueOf(i);
+  }
 
-    public boolean isNumeric() {
-        return !sonly;
+  public Value(String s) { // convert string to integer of possible
+    sval = s;
+    try {
+      val = new BigDecimal(s);
+      sonly = false;
+    } catch (NumberFormatException e) {
+      sonly = true;
     }
+  }
 
-    public boolean isLabel() {
-        return sonly;
-    }
+  public String toString() {
+    return sval;
+  }
+
+  public BigDecimal doubleValue() {
+    return val;
+  }
+
+  public boolean isNumeric() {
+    return !sonly;
+  }
+
+  public boolean isLabel() {
+    return sonly;
+  }
 }

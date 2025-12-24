@@ -17,19 +17,18 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.games.controller.symbolic;
 
 import java.util.Map;
-
 import net.sf.javabdd.ADD;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDD.BDDIterator;
@@ -55,8 +54,11 @@ public class SymbolicControllerChecker {
 
     // 1) check that all inital assignments to environment variables have a
     // corresponding inital state in the controller
-    BDD result = env.initial().id().impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
-        .forAll(env.moduleUnprimeVars());
+    BDD result =
+        env.initial()
+            .id()
+            .impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
+            .forAll(env.moduleUnprimeVars());
 
     if (!result.isOne()) {
       result.free();
@@ -68,7 +70,7 @@ public class SymbolicControllerChecker {
     // for all next assignments to environment variables
     BDD reachable = Env.allSucc(ctrl.initial().id(), ctrl.trans().id());
 
-    for (BDDIterator sit = reachable.iterator(Env.globalUnprimeVars()); sit.hasNext();) {
+    for (BDDIterator sit = reachable.iterator(Env.globalUnprimeVars()); sit.hasNext(); ) {
       BDD s = sit.nextBDD();
       BDD ctrlSucc = s.and(ctrl.trans());
       BDD envSucc = s.and(env.trans());
@@ -80,9 +82,11 @@ public class SymbolicControllerChecker {
       if (!envNotCovered.isZero()) {
         System.out.println("State " + Env.toNiceSignleLineString(s));
         System.out.println(
-            "Successors in Controller: " + Env.toNiceSignleLineString(ctrlEnvChoices.exist(Env.globalUnprimeVars())));
-        System.out.println("EnvSuccessors not in Controller: "
-            + Env.toNiceSignleLineString(envNotCovered.exist(Env.globalUnprimeVars())));
+            "Successors in Controller: "
+                + Env.toNiceSignleLineString(ctrlEnvChoices.exist(Env.globalUnprimeVars())));
+        System.out.println(
+            "EnvSuccessors not in Controller: "
+                + Env.toNiceSignleLineString(envNotCovered.exist(Env.globalUnprimeVars())));
         s.free();
         envNotCovered.free();
         ctrlEnvChoices.free();
@@ -97,9 +101,8 @@ public class SymbolicControllerChecker {
   }
 
   /**
-   * Check whether from every state of the controller the environment can make all
-   * choices
-   * 
+   * Check whether from every state of the controller the environment can make all choices
+   *
    * @param ctrl
    * @param model
    * @return
@@ -111,8 +114,11 @@ public class SymbolicControllerChecker {
 
     // 1) check that all inital assignments to environment variables have a
     // corresponding inital state in the controller
-    BDD result = env.initial().id().impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
-        .forAll(env.moduleUnprimeVars());
+    BDD result =
+        env.initial()
+            .id()
+            .impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
+            .forAll(env.moduleUnprimeVars());
 
     if (!result.isOne()) {
       System.out.println("initial states are not complete");
@@ -125,14 +131,17 @@ public class SymbolicControllerChecker {
     // for all next assignments to environment variables
     BDD reachable = Env.allSucc(ctrl.initial().id(), ctrl.trans().id());
 
-    return reachable.andWith(env.trans().id()).impWith(ctrl.trans().exist(sys.modulePrimeVars()))
-        .forAll(env.modulePrimeVars()).isOne();
+    return reachable
+        .andWith(env.trans().id())
+        .impWith(ctrl.trans().exist(sys.modulePrimeVars()))
+        .forAll(env.modulePrimeVars())
+        .isOne();
   }
 
   /**
-   * Check whether every reachable state (by controller and system) has an
-   * environment successor or is a deadlock state for the system
-   * 
+   * Check whether every reachable state (by controller and system) has an environment successor or
+   * is a deadlock state for the system
+   *
    * @param ctrl
    * @param model
    * @return true if env has successors for all valid system choices
@@ -161,7 +170,8 @@ public class SymbolicControllerChecker {
     return reachable.isZero();
   }
 
-  public static boolean checkStrategyIsWinningForSys(SymbolicController ctrl, ADD weightedArena, double worstInitEng) {
+  public static boolean checkStrategyIsWinningForSys(
+      SymbolicController ctrl, ADD weightedArena, double worstInitEng) {
 
     ADD sourceStates = (ADD) ctrl.initial().id();
     ADD strategyTrans = (ADD) ctrl.trans().and(Env.allSucc(sourceStates.id(), ctrl.trans().id()));
@@ -192,18 +202,21 @@ public class SymbolicControllerChecker {
     ADD minimumCheck = strategyArena.findMin();
     if (minimumCheck.equals(Env.MINUS_INF())) {
       System.out.println(
-          "The strategy is loosing for the system because there is a -INF transition reachable from an initial state");
+          "The strategy is loosing for the system because there is a -INF transition reachable from"
+              + " an initial state");
       minimumCheck.free();
       return false;
     }
     minimumCheck.free();
 
     System.out.println(
-        "Weights of reachable transitions from all initial states, if the system plays according to the constructed strategy:");
+        "Weights of reachable transitions from all initial states, if the system plays according to"
+            + " the constructed strategy:");
     strategyArena.printTerminalValues();
 
     System.out.println(
-        "Checking that the system can play according to this strategy, without going into a negative cycle...");
+        "Checking that the system can play according to this strategy, without going into a"
+            + " negative cycle...");
 
     /*
      * Check that there is no negative cycle reachable from every initial state if
@@ -211,23 +224,25 @@ public class SymbolicControllerChecker {
      */
     if (thereIsNegativeCycle(sourceStates, strategyArena, worstInitEng)) {
       System.out.println(
-          "Error: there is a reachable negative cycle if the system plays according to this controller, i.e. it is loosing for the system!!");
+          "Error: there is a reachable negative cycle if the system plays according to this"
+              + " controller, i.e. it is loosing for the system!!");
       return false;
     }
 
-    System.out.println("We don't have any negative cycles, so this controller is winning for the system!");
+    System.out.println(
+        "We don't have any negative cycles, so this controller is winning for the system!");
 
     return true;
   }
 
   /**
-   * An implementation of symbolic Bellman Ford algorithm for calculating the
-   * shortest paths weights from all given source states.
-   * 
+   * An implementation of symbolic Bellman Ford algorithm for calculating the shortest paths weights
+   * from all given source states.
+   *
    * @param sourceStates
-   * @param arena        the weighted arena
-   * @return true if there is a negative cycle reachable from one of the source
-   *         states; false, otherwise.
+   * @param arena the weighted arena
+   * @return true if there is a negative cycle reachable from one of the source states; false,
+   *     otherwise.
    */
   public static boolean thereIsNegativeCycle(ADD sourceStates, ADD arena, double worstInitEng) {
 
@@ -247,7 +262,9 @@ public class SymbolicControllerChecker {
 
     System.out.println("V = " + V);
     worstInitEng = (-1) * worstInitEng;
-    for (long i = 0; i < V && (prevDistEstimates == null || !curDistEstimates.equals(prevDistEstimates)); i++) {
+    for (long i = 0;
+        i < V && (prevDistEstimates == null || !curDistEstimates.equals(prevDistEstimates));
+        i++) {
       if (i == V - 1) { // V's (last) iteration iff there is a negative cycle in the arena!
         return true;
       }
@@ -257,14 +274,18 @@ public class SymbolicControllerChecker {
        * should stop now (before reaching the V's iteration).
        */
       worstInitEngCheck = curDistEstimates.findMin();
-      if (worstInitEngCheck
-          .getConstantValue() < worstInitEng) { /*
-                                                 * the strategy seems to be wrong, or there might be a negative cycle
-                                                 */
+      if (worstInitEngCheck.getConstantValue() < worstInitEng) {
+        /*
+         * the strategy seems to be wrong, or there might be a negative cycle
+         */
         System.out.println(
-            "the strategy requires energy from the initial states which is higher than the declared worst needed energy level!");
-        System.out.println("The worst energy level that was found: " + (-1) * worstInitEngCheck.getConstantValue()
-            + ", but the declared energy is " + (-1) * worstInitEng);
+            "the strategy requires energy from the initial states which is higher than the declared"
+                + " worst needed energy level!");
+        System.out.println(
+            "The worst energy level that was found: "
+                + (-1) * worstInitEngCheck.getConstantValue()
+                + ", but the declared energy is "
+                + (-1) * worstInitEng);
         return true;
       }
       worstInitEngCheck.free();
@@ -299,10 +320,10 @@ public class SymbolicControllerChecker {
       relaxUnprimed.free();
     }
     return false;
-
   }
 
-  public static int checkMaxAccumulatedWeightUpToLimit(SymbolicController ctrl, Map<Integer, BDD> weights, int limit) {
+  public static int checkMaxAccumulatedWeightUpToLimit(
+      SymbolicController ctrl, Map<Integer, BDD> weights, int limit) {
     // TODO implement fixed point algorithm over reachable states but divided by
     // accumulated weights
 
@@ -312,15 +333,20 @@ public class SymbolicControllerChecker {
     return -1;
   }
 
-  public static boolean checkCompletenessForEnvUpTo(SymbolicController ctrl, GameModel model, BDD upTo) {
+  public static boolean checkCompletenessForEnvUpTo(
+      SymbolicController ctrl, GameModel model, BDD upTo) {
 
     PlayerModule env = model.getEnv();
     PlayerModule sys = model.getSys();
 
     // 1) check that all inital assignments to environment variables have a
     // corresponding inital state in the controller
-    BDD result = env.initial().id().andWith(upTo.not()).impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
-        .forAll(env.moduleUnprimeVars());
+    BDD result =
+        env.initial()
+            .id()
+            .andWith(upTo.not())
+            .impWith(ctrl.initial().exist(sys.moduleUnprimeVars()))
+            .forAll(env.moduleUnprimeVars());
 
     if (!result.isOne()) {
       result.free();
@@ -332,14 +358,16 @@ public class SymbolicControllerChecker {
     // for all next assignments to environment variables
     BDD reachable = Env.allSucc(ctrl.initial().id(), ctrl.trans().id()).andWith(upTo.not());
 
-    return reachable.andWith(env.trans().id()).impWith(ctrl.trans().exist(sys.modulePrimeVars()))
-        .forAll(env.modulePrimeVars()).isOne();
+    return reachable
+        .andWith(env.trans().id())
+        .impWith(ctrl.trans().exist(sys.modulePrimeVars()))
+        .forAll(env.modulePrimeVars())
+        .isOne();
   }
 
   /**
-   * Model-checks controller against GR(1) specification (strict realizability
-   * semantics)
-   * 
+   * Model-checks controller against GR(1) specification (strict realizability semantics)
+   *
    * @param ctrl
    * @param m
    * @return false in case of any exceptions (including counter-examples)
@@ -354,14 +382,13 @@ public class SymbolicControllerChecker {
   }
 
   /**
-   * Model-checks controller against GR(1) specification (strict realizability
-   * semantics)
-   * 
+   * Model-checks controller against GR(1) specification (strict realizability semantics)
+   *
    * @param ctrl
    * @param m
    * @throws ModelCheckException
-   * @throws CounterExampleException (is a ModelCheckException) in case GR(1) spec
-   *                                 is violated by controller
+   * @throws CounterExampleException (is a ModelCheckException) in case GR(1) spec is violated by
+   *     controller
    * @throws ModuleVariableException
    */
   public static void checkGR1SpecWC(SymbolicController ctrl, GameModel m)
@@ -399,16 +426,28 @@ public class SymbolicControllerChecker {
     Spec HrhoE = null;
     // workaround of HISTORICALLY limitation in case of primes in rhoE
     if (Env.containPrimeVars(env.trans())) {
-      HrhoE = new SpecExp(Operator.HISTORICALLY, new SpecExp(Operator.PRIME, new SpecExp(Operator.PREV, rhoE)));
+      HrhoE =
+          new SpecExp(
+              Operator.HISTORICALLY, new SpecExp(Operator.PRIME, new SpecExp(Operator.PREV, rhoE)));
     } else {
       HrhoE = new SpecExp(Operator.HISTORICALLY, rhoE);
     }
-    Spec implS = new SpecExp(Operator.IMPLIES, thetaE,
-        new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.IMPLIES, HrhoE, rhoS)));
-    Spec implJ = new SpecExp(Operator.IMPLIES,
-        new SpecExp(Operator.AND, thetaE, new SpecExp(Operator.AND, new SpecExp(Operator.GLOBALLY, rhoE), envJ)), sysJ);
+    Spec implS =
+        new SpecExp(
+            Operator.IMPLIES,
+            thetaE,
+            new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.IMPLIES, HrhoE, rhoS)));
+    Spec implJ =
+        new SpecExp(
+            Operator.IMPLIES,
+            new SpecExp(
+                Operator.AND,
+                thetaE,
+                new SpecExp(Operator.AND, new SpecExp(Operator.GLOBALLY, rhoE), envJ)),
+            sysJ);
 
-    Spec strongRealizability = new SpecExp(Operator.AND, new SpecExp(Operator.AND, implS, implJ), implI);
+    Spec strongRealizability =
+        new SpecExp(Operator.AND, new SpecExp(Operator.AND, implS, implJ), implI);
 
     // c.modelCheckStandardOutput(strongRealizability);
     c.modelCheck(strongRealizability);
@@ -416,14 +455,17 @@ public class SymbolicControllerChecker {
 
   /**
    * produces a conjunction of all justices as /\_{i} GF(J_i)
-   * 
+   *
    * @param m
    * @return
    */
   private static Spec allJustice(PlayerModule m) {
-    Spec allSysJ = new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.FINALLY, new SpecBDD(m.justiceAt(0))));
+    Spec allSysJ =
+        new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.FINALLY, new SpecBDD(m.justiceAt(0))));
     for (int i = 1; i < m.justiceNum(); i++) {
-      Spec spec = new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.FINALLY, new SpecBDD(m.justiceAt(i))));
+      Spec spec =
+          new SpecExp(
+              Operator.GLOBALLY, new SpecExp(Operator.FINALLY, new SpecBDD(m.justiceAt(i))));
       allSysJ = new SpecExp(Operator.AND, allSysJ, spec);
     }
 
@@ -464,16 +506,28 @@ public class SymbolicControllerChecker {
     Spec HrhoE = null;
     // workaround of HISTORICALLY limitation in case of primes in rhoE
     if (Env.containPrimeVars(env.trans())) {
-      HrhoE = new SpecExp(Operator.HISTORICALLY, new SpecExp(Operator.PRIME, new SpecExp(Operator.PREV, rhoE)));
+      HrhoE =
+          new SpecExp(
+              Operator.HISTORICALLY, new SpecExp(Operator.PRIME, new SpecExp(Operator.PREV, rhoE)));
     } else {
       HrhoE = new SpecExp(Operator.HISTORICALLY, rhoE);
     }
-    Spec implS = new SpecExp(Operator.AND, thetaE,
-        new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.IMPLIES, HrhoE, rhoS)));
-    Spec implJ = new SpecExp(Operator.IMPLIES,
-        new SpecExp(Operator.AND, thetaE, new SpecExp(Operator.AND, new SpecExp(Operator.GLOBALLY, rhoE), envJ)), sysJ);
+    Spec implS =
+        new SpecExp(
+            Operator.AND,
+            thetaE,
+            new SpecExp(Operator.GLOBALLY, new SpecExp(Operator.IMPLIES, HrhoE, rhoS)));
+    Spec implJ =
+        new SpecExp(
+            Operator.IMPLIES,
+            new SpecExp(
+                Operator.AND,
+                thetaE,
+                new SpecExp(Operator.AND, new SpecExp(Operator.GLOBALLY, rhoE), envJ)),
+            sysJ);
 
-    Spec strongRealizability = new SpecExp(Operator.AND, new SpecExp(Operator.AND, implS, implJ), implI);
+    Spec strongRealizability =
+        new SpecExp(Operator.AND, new SpecExp(Operator.AND, implS, implJ), implI);
 
     Spec rabin = new SpecExp(Operator.NOT, strongRealizability);
 

@@ -17,20 +17,19 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinputtrans.translator;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import tau.smlab.syntech.gameinput.model.Constraint;
 import tau.smlab.syntech.gameinput.model.Constraint.Kind;
 import tau.smlab.syntech.gameinput.model.GameInput;
@@ -42,29 +41,23 @@ import tau.smlab.syntech.gameinput.spec.SpecExp;
 import tau.smlab.syntech.gameinput.spec.VariableReference;
 
 /**
- * This translator must run twice, once before most translators to replace alw
- * with G.
- * 
- * Then again after most translators to check whether any previous alw is a
- * state invariant, i.e., has no primes. The state invariants in a former alw
- * are translated to an initial and a safety constraint.
- * 
- * Operates on traceIds in case other translators change object identities of
- * constraints
+ * This translator must run twice, once before most translators to replace alw with G.
  *
- * Uses the operator PRIME internally, i.e., needs to run before
- * RemovePrimesTranslator.
+ * <p>Then again after most translators to check whether any previous alw is a state invariant,
+ * i.e., has no primes. The state invariants in a former alw are translated to an initial and a
+ * safety constraint.
+ *
+ * <p>Operates on traceIds in case other translators change object identities of constraints
+ *
+ * <p>Uses the operator PRIME internally, i.e., needs to run before RemovePrimesTranslator.
  */
 public class StateInvTranslator implements Translator {
-  /**
-   * translators first or second run
-   */
+  /** translators first or second run */
   private boolean before;
-  /**
-   * constraints that are potential state invariants (or use of always instead of
-   * G)
-   */
+
+  /** constraints that are potential state invariants (or use of always instead of G) */
   private static List<Integer> potentialStateInvIDs;
+
   private GameInput input;
 
   public StateInvTranslator(boolean before) {
@@ -92,7 +85,6 @@ public class StateInvTranslator implements Translator {
     for (Monitor mon : input.getMonitors()) {
       replaceStateInv(mon.getExpressions());
     }
-
   }
 
   private void replaceStateInv(List<Constraint> cons) {
@@ -124,10 +116,13 @@ public class StateInvTranslator implements Translator {
               throw new RuntimeException(e);
             }
             Constraint safety = null;
-            if ((assumption && containsSysVarRef(c.getSpec()) || (!assumption && containsEnvVarRef(c.getSpec())))){
+            if ((assumption && containsSysVarRef(c.getSpec())
+                || (!assumption && containsEnvVarRef(c.getSpec())))) {
               safety = new Constraint(Kind.SAFETY, clone, c.getName(), c.getTraceId());
             } else {
-              safety = new Constraint(Kind.SAFETY, new SpecExp(Operator.PRIME, clone), c.getName(), c.getTraceId());
+              safety =
+                  new Constraint(
+                      Kind.SAFETY, new SpecExp(Operator.PRIME, clone), c.getName(), c.getTraceId());
             }
             translated.add(safety);
           }
@@ -140,9 +135,8 @@ public class StateInvTranslator implements Translator {
   }
 
   /**
-   * check whether the spec references a variable of the system module or aux
-   * module
-   * 
+   * check whether the spec references a variable of the system module or aux module
+   *
    * @param spec
    * @return
    */
@@ -156,16 +150,17 @@ public class StateInvTranslator implements Translator {
       }
     } else if (spec instanceof VariableReference) {
       VariableReference v = (VariableReference) spec;
-      if (input.getSys().getVars().contains(v.getVariable()) || input.getAux().getVars().contains(v.getVariable())) {
+      if (input.getSys().getVars().contains(v.getVariable())
+          || input.getAux().getVars().contains(v.getVariable())) {
         return true;
       }
     }
     return false;
   }
-  
+
   /**
    * check whether the spec references a variable of the environment module
-   * 
+   *
    * @param spec
    * @return
    */
@@ -188,7 +183,7 @@ public class StateInvTranslator implements Translator {
 
   /**
    * recursively checks SpecExp or VariableReferences for primes
-   * 
+   *
    * @param spec
    * @return
    */
@@ -212,5 +207,4 @@ public class StateInvTranslator implements Translator {
     }
     return false;
   }
-
 }

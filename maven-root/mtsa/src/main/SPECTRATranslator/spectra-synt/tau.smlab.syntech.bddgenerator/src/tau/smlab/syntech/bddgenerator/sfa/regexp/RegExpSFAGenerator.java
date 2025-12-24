@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.bddgenerator.sfa.regexp;
@@ -33,61 +33,46 @@ import tau.smlab.syntech.gameinput.spec.SpecRegExp;
 import tau.smlab.syntech.sfa.SFA;
 
 /**
- * 
- * Use a {@link RegExpSFAGenerator} to transform regular expressions (instances of {@link SpecRegExp})
- * into {@link SFA}s.
- * 
- * @author Or Pistiner
+ * Use a {@link RegExpSFAGenerator} to transform regular expressions (instances of {@link
+ * SpecRegExp}) into {@link SFA}s.
  *
+ * @author Or Pistiner
  */
 public interface RegExpSFAGenerator {
-	
-	
-	/**
-	 *
-	 * An exception thrown during translations of {@link SpecRegExp} regular expressions to SFAs.
-	 *
-	 */
-	public static class RegExpSFAGeneratorException extends BDDTranslationException {
 
-		public RegExpSFAGeneratorException() {
-			super();
-		}
-		
-		public RegExpSFAGeneratorException(String string, int traceId) {
-			super(string, traceId);
-		}
+  /** An exception thrown during translations of {@link SpecRegExp} regular expressions to SFAs. */
+  public static class RegExpSFAGeneratorException extends BDDTranslationException {
 
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2663503215850452225L;
+    public RegExpSFAGeneratorException() {
+      super();
+    }
 
-	}
-	
-	/**
-	 * 
-	 * Returns an SFA whose language is that of the regular expression which has been supplied to this {@link RegExpSFAGenerator}.
-	 * The returned SFA does not have any epsilon transitions while it may be non-deterministic. Also, it may have an incomplete transition function. 
-	 * 
-	 * @return
-	 */
-	SFA generateRegExpSfa();
-	
-	/**
-	 * 
-	 * Returns a deterministic SFA (DSFA) whose language is that of the regular expression which has been supplied to this {@link RegExpSFAGenerator}.
-	 * The returned DSFA may have an incomplete transition function.
-	 * 
-	 * @param minimal if true, then the returned DSFA is also minimal
-	 * 
-	 */
-	SFA generateRegExpDSfa(boolean minimal);
-	
-	/**
-	 * 
-	 * Frees the SFA that this generator has generated.
-	 * 
-	 */
-	void freeRegExpSfa();
+    public RegExpSFAGeneratorException(String string, int traceId) {
+      super(string, traceId);
+    }
+
+    /** */
+    private static final long serialVersionUID = -2663503215850452225L;
+  }
+
+  /**
+   * Returns an SFA whose language is that of the regular expression which has been supplied to this
+   * {@link RegExpSFAGenerator}. The returned SFA does not have any epsilon transitions while it may
+   * be non-deterministic. Also, it may have an incomplete transition function.
+   *
+   * @return
+   */
+  SFA generateRegExpSfa();
+
+  /**
+   * Returns a deterministic SFA (DSFA) whose language is that of the regular expression which has
+   * been supplied to this {@link RegExpSFAGenerator}. The returned DSFA may have an incomplete
+   * transition function.
+   *
+   * @param minimal if true, then the returned DSFA is also minimal
+   */
+  SFA generateRegExpDSfa(boolean minimal);
+
+  /** Frees the SFA that this generator has generated. */
+  void freeRegExpSfa();
 }

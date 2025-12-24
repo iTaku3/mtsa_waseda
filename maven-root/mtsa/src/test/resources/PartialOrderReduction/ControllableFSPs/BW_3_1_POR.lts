@@ -1,0 +1,53 @@
+const N = 3
+const K = 1
+
+const Teams  = N
+const Steps  = K
+
+range Team   = 0..(Teams-1)
+range Step   = 1..Steps
+
+/*****************************************************************************/
+
+
+Crew(Tid=0) = Pending,
+  Pending = (
+    {approve,refuse} -> ERROR  |
+    assign[Tid] -> Assigned[1] ),
+  Assigned[s:Step] = (
+    reject[Tid][s] -> Rejected[s] |
+    accept[Tid]    -> Accepted    ),
+  Rejected[s:Step] = (
+    refuse  -> Pending |
+    approve -> ERROR |
+    assign[Tid] -> if (s < Steps) then Assigned[s+1] else ERROR ),
+  Accepted = (
+    {approve,refuse} -> Pending |
+    assign[Tid] -> ERROR ).
+
+
+Document = Count[0],
+  Count[c:0..Teams-1] = (
+    reject[Team][Steps] -> Rejected |
+    accept[Team] -> Count[c+1] |
+    approve -> ERROR |
+    refuse -> if (c==0) then Document else ERROR ),
+  Count[Teams] = (
+    {accept[Team],reject[Team][Steps]} -> Count[Teams] |
+    approve -> Document |
+    refuse  -> ERROR ),
+  Rejected = (
+    {accept[Team],reject[Team][Steps]} -> Rejected |
+    approve -> ERROR |
+    refuse  -> Document ).
+
+
+/*****************************************************************************/
+
+controllerSpec Goal = {
+  controllable = {assign[Team], refuse, approve}
+  marking = {refuse, approve}
+  nonblocking
+}
+
+partialOrderReduction ||MonolithicController = (Document || forall [t:Team] Crew(t))~{Goal}.

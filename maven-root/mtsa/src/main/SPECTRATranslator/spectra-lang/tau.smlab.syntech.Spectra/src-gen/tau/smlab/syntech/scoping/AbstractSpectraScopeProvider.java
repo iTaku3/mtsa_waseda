@@ -5,5 +5,4 @@ package tau.smlab.syntech.scoping;
 
 import org.eclipse.xtext.scoping.impl.DelegatingScopeProvider;
 
-public abstract class AbstractSpectraScopeProvider extends DelegatingScopeProvider {
-}
+public abstract class AbstractSpectraScopeProvider extends DelegatingScopeProvider {}

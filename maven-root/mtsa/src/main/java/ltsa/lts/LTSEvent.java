@@ -1,29 +1,29 @@
 package ltsa.lts;
 
 public class LTSEvent {
-    public int kind;
-    public Object info;
-    public String name;
+  public int kind;
+  public Object info;
+  public String name;
 
-    public final static int NEWSTATE = 0;
-    public final static int INVALID = 1;
-    public final static int KILL = 2;
-    
-    // >>> AMES: Enhanced Modularity
-    public final static int NEWCOMPOSITES = 3;
-    public final static int NEWPROCESSES = 4;
-    public final static int NEWLABELSETS = 5;
-    // <<< AMES
+  public static final int NEWSTATE = 0;
+  public static final int INVALID = 1;
+  public static final int KILL = 2;
 
-    public LTSEvent(int kind, Object info){
-        this.kind = kind;
-        this.info = info;
-    }
+  // >>> AMES: Enhanced Modularity
+  public static final int NEWCOMPOSITES = 3;
+  public static final int NEWPROCESSES = 4;
+  public static final int NEWLABELSETS = 5;
 
-    public LTSEvent(int kind, Object info, String name){
-        this.kind = kind;
-        this.info = info;
-        this.name = name;
-    }
+  // <<< AMES
 
+  public LTSEvent(int kind, Object info) {
+    this.kind = kind;
+    this.info = info;
+  }
+
+  public LTSEvent(int kind, Object info, String name) {
+    this.kind = kind;
+    this.info = info;
+    this.name = name;
+  }
 }

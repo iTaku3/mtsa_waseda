@@ -1,5 +1,3 @@
 package MTSSynthesis.controller.model;
 
-public class StateSetFormula {
-
-}
+public class StateSetFormula {}

@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // BDDVarSet.java, created Jul 13, 2006 8:53:13 PM by jwhaley
@@ -31,20 +31,19 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
-
 /**
- * <p>Some BDD methods, namely <tt>exist()</tt>, <tt>forall()</tt>, <tt>unique()</tt>, 
- * <tt>relprod()</tt>, <tt>applyAll()</tt>, <tt>applyEx()</tt>, <tt>applyUni()</tt>, 
- * and <tt>satCount()</tt> take a BDDVarSet argument.</p>
- * 
+ * Some BDD methods, namely <tt>exist()</tt>, <tt>forall()</tt>, <tt>unique()</tt>,
+ * <tt>relprod()</tt>, <tt>applyAll()</tt>, <tt>applyEx()</tt>, <tt>applyUni()</tt>, and
+ * <tt>satCount()</tt> take a BDDVarSet argument.
+ *
  * @author jwhaley
  * @version $Id: BDDVarSet.java,v 1.2 2009/10/18 19:30:54 uid228351 Exp $
  */
 public abstract class BDDVarSet {
 
   /**
-   * <p>Returns the factory that created this BDDVarSet.</p>
-   * 
+   * Returns the factory that created this BDDVarSet.
+   *
    * @return factory that created this BDDVarSet
    */
   public abstract BDDFactory getFactory();
@@ -52,16 +51,19 @@ public abstract class BDDVarSet {
   public abstract BDD toBDD();
 
   public abstract BDDVarSet id();
+
   public abstract void free();
 
   public abstract int size();
+
   public abstract boolean isEmpty();
 
   public abstract int[] toArray();
+
   public abstract int[] toLevelArray();
 
   public String toString() {
-    //return Arrays.toString(toArray());
+    // return Arrays.toString(toArray());
     int[] a = toArray();
     StringBuffer sb = new StringBuffer(a.length * 4 + 2);
     sb.append('[');
@@ -74,11 +76,11 @@ public abstract class BDDVarSet {
   }
 
   /**
-   * <p>Scans this BDD and copies the stored variables into an array of BDDDomains.
-   * The domains returned are guaranteed to be in ascending order.</p>
-   * 
-   * <p>Compare to fdd_scanset.</p>
-   * 
+   * Scans this BDD and copies the stored variables into an array of BDDDomains. The domains
+   * returned are guaranteed to be in ascending order.
+   *
+   * <p>Compare to fdd_scanset.
+   *
    * @return int[]
    */
   public BDDDomain[] getDomains() {
@@ -126,50 +128,46 @@ public abstract class BDDVarSet {
   }
 
   /**
-   * <p>Returns a new BDDVarSet that is the union of the current BDDVarSet
-   * and the given BDDVarSet.  This constructs a new set; neither the current
-   * nor the given BDDVarSet is modified.</p>
-   * 
-   * @param b  BDDVarSet to union with
-   * @return  a new BDDVarSet that is the union of the two sets
+   * Returns a new BDDVarSet that is the union of the current BDDVarSet and the given BDDVarSet.
+   * This constructs a new set; neither the current nor the given BDDVarSet is modified.
+   *
+   * @param b BDDVarSet to union with
+   * @return a new BDDVarSet that is the union of the two sets
    */
   public abstract BDDVarSet union(BDDVarSet b);
 
   /**
-   * <p>Returns a new BDDVarSet that is the union of the current BDDVarSet
-   * and the given variable.  This constructs a new set; the current BDDVarSet
-   * is not modified.</p>
-   * 
-   * @param b  variable to add to set
-   * @return  a new BDDVarSet that includes the given variable
+   * Returns a new BDDVarSet that is the union of the current BDDVarSet and the given variable. This
+   * constructs a new set; the current BDDVarSet is not modified.
+   *
+   * @param b variable to add to set
+   * @return a new BDDVarSet that includes the given variable
    */
   public abstract BDDVarSet union(int var);
 
   /**
-   * <p>Modifies this BDDVarSet to include all of the vars in the given set.
-   * This modifies the current set in place and consumes the given set.</p>
-   * 
-   * @param b  BDDVarSet to union in
+   * Modifies this BDDVarSet to include all of the vars in the given set. This modifies the current
+   * set in place and consumes the given set.
+   *
+   * @param b BDDVarSet to union in
    * @return this
    */
   public abstract BDDVarSet unionWith(BDDVarSet b);
 
   /**
-   * <p>Modifies this BDDVarSet to include the given variable.  This modifies
-   * the current set in place.</p>
-   * 
-   * @param b  variable to add to set
+   * Modifies this BDDVarSet to include the given variable. This modifies the current set in place.
+   *
+   * @param b variable to add to set
    * @return this
    */
   public abstract BDDVarSet unionWith(int var);
 
   /**
-   * <p>Returns a new BDDVarSet that is the union of the current BDDVarSet
-   * and the given BDDVarSet.  This constructs a new set; neither the current
-   * nor the given BDDVarSet is modified.</p>
-   * 
-   * @param b  BDDVarSet to union with
-   * @return  a new BDDVarSet that is the union of the two sets
+   * Returns a new BDDVarSet that is the union of the current BDDVarSet and the given BDDVarSet.
+   * This constructs a new set; neither the current nor the given BDDVarSet is modified.
+   *
+   * @param b BDDVarSet to union with
+   * @return a new BDDVarSet that is the union of the two sets
    */
   public BDDVarSet intersect(BDDVarSet b) {
     BDDVarSet res = this.getFactory().emptySet();
@@ -185,24 +183,23 @@ public abstract class BDDVarSet {
     }
     return res;
   }
-  
+
   /**
-   * <p>Modifies this BDDVarSet to include all of the vars in the given set.
-   * This modifies the current set in place and consumes the given set.</p>
-   * 
-   * @param b  BDDVarSet to union in
+   * Modifies this BDDVarSet to include all of the vars in the given set. This modifies the current
+   * set in place and consumes the given set.
+   *
+   * @param b BDDVarSet to union in
    * @return this
    */
   public abstract BDDVarSet intersectWith(BDDVarSet b);
-  
+
   /**
-   * <p>Returns a new BDDVarSet that is the remainder when removing the 
-   * variables in the given BDDVarSet from the current BDDVarSet. 
-   * This constructs a new set; neither the current
-   * nor the given BDDVarSet is modified.</p>
-   * 
-   * @param b  BDDVarSet to remove
-   * @return  a new BDDVarSet that is current setminus given
+   * Returns a new BDDVarSet that is the remainder when removing the variables in the given
+   * BDDVarSet from the current BDDVarSet. This constructs a new set; neither the current nor the
+   * given BDDVarSet is modified.
+   *
+   * @param b BDDVarSet to remove
+   * @return a new BDDVarSet that is current setminus given
    */
   public BDDVarSet minus(BDDVarSet b) {
     BDDVarSet res = this.getFactory().emptySet();
@@ -213,7 +210,7 @@ public abstract class BDDVarSet {
       for (int j = 0; j < bDoms.length; j++) {
         if (aDoms[i].getIndex() == bDoms[j].getIndex()) {
           notInSecond = false;
-          break; 
+          break;
         }
       }
       if (notInSecond) {
@@ -222,7 +219,7 @@ public abstract class BDDVarSet {
     }
     return res;
   }
-  
+
   /* (non-Javadoc)
    * @see java.lang.Object#hashCode()
    */
@@ -230,7 +227,7 @@ public abstract class BDDVarSet {
 
   /**
    * Returns true if the sets are equal.
-   * 
+   *
    * @param that other set
    * @return true if the sets are equal
    */
@@ -240,30 +237,25 @@ public abstract class BDDVarSet {
    * @see java.lang.Object#equals(java.lang.Object)
    */
   public final boolean equals(Object o) {
-    if (o instanceof BDDVarSet)
-      return equals((BDDVarSet) o);
+    if (o instanceof BDDVarSet) return equals((BDDVarSet) o);
     return false;
   }
 
-  /** 
+  /**
    * Default implementation of BDDVarSet based on BDDs.
-   * 
+   *
    * @author jwhaley
    * @version $Id: BDDVarSet.java,v 1.2 2009/10/18 19:30:54 uid228351 Exp $
    */
   public static class DefaultImpl extends BDDVarSet {
 
-    /**
-     * BDD representation of the set of variables.
-     * Treated like a linked list of variables.
-     */
+    /** BDD representation of the set of variables. Treated like a linked list of variables. */
     protected BDD b;
 
     /**
-     * Construct a BDDVarSet backed by the given BDD.
-     * Ownership of the given BDD is transferred to this BDDVarSet,
-     * so you should not touch it after construction!
-     * 
+     * Construct a BDDVarSet backed by the given BDD. Ownership of the given BDD is transferred to
+     * this BDDVarSet, so you should not touch it after construction!
+     *
      * @param b BDD to use in constructing BDDVarSet
      */
     public DefaultImpl(BDD b) {
@@ -303,11 +295,11 @@ public abstract class BDDVarSet {
       this.b.free();
       this.b = res.b.id();
       res.free();
-      if(this != i) {
+      if (this != i) {
         i.free();
       }
-      //DefaultImpl i = (DefaultImpl) s;
-      //b.orWith(i.b); i.b = null;
+      // DefaultImpl i = (DefaultImpl) s;
+      // b.orWith(i.b); i.b = null;
       return this;
     }
 
@@ -401,7 +393,8 @@ public abstract class BDDVarSet {
      */
     public BDDVarSet unionWith(BDDVarSet s) {
       DefaultImpl i = (DefaultImpl) s;
-      b.andWith(i.b); i.b = null;
+      b.andWith(i.b);
+      i.b = null;
       return this;
     }
 
@@ -424,15 +417,12 @@ public abstract class BDDVarSet {
      * @see net.sf.javabdd.BDDVarSet#equals(net.sf.javabdd.BDDVarSet)
      */
     public boolean equals(BDDVarSet s) {
-      if (s instanceof DefaultImpl)
-        return equals((DefaultImpl) s);
+      if (s instanceof DefaultImpl) return equals((DefaultImpl) s);
       return false;
     }
 
     public boolean equals(DefaultImpl s) {
       return b.equals(s.b);
     }
-
   }
-
 }

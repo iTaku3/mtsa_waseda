@@ -17,20 +17,19 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinputtrans.translator;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import tau.smlab.syntech.gameinput.model.Constraint;
 import tau.smlab.syntech.gameinput.model.Define;
 import tau.smlab.syntech.gameinput.model.DefineArray;
@@ -50,193 +49,196 @@ import tau.smlab.syntech.gameinputtrans.TranslationException;
 
 public class QuantifierTranslator implements Translator {
 
-	@Override
-	public void translate(GameInput input) {
-		// guarantees
-		for (Constraint c : input.getSys().getConstraints()) {
-			c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
-		}
+  @Override
+  public void translate(GameInput input) {
+    // guarantees
+    for (Constraint c : input.getSys().getConstraints()) {
+      c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
+    }
 
-		// assumptions
-		for (Constraint c : input.getEnv().getConstraints()) {
-			c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
-		}
+    // assumptions
+    for (Constraint c : input.getEnv().getConstraints()) {
+      c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
+    }
 
-		// auxiliary constraints
-		for (Constraint c : input.getAux().getConstraints()) {
-			c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
-		}
-		
-		// predicates
-		for (Predicate pred : input.getPredicates()) {
-			pred.setSpec(replaceQuantifiers(pred.getExpression(), pred.getTraceId()));
-		}
+    // auxiliary constraints
+    for (Constraint c : input.getAux().getConstraints()) {
+      c.setSpec(replaceQuantifiers(c.getSpec(), c.getTraceId()));
+    }
 
-		// defines
-		for (Define define : input.getDefines()) {
-			
-			if (define.getExpression() != null) {
-				define.setExpression(replaceQuantifiers(define.getExpression(), 0));
-			} else {
-				define.setDefineArray(replaceQuantifiersInDefineArrays(define.getDefineArray()));
-			}
-		}
+    // predicates
+    for (Predicate pred : input.getPredicates()) {
+      pred.setSpec(replaceQuantifiers(pred.getExpression(), pred.getTraceId()));
+    }
 
-		// Clear Domain variables list
-		// input.getDomainVars().clear();
-	}
+    // defines
+    for (Define define : input.getDefines()) {
 
-	/**
-	 * @param spec
-	 * @return the Spec that represent the result of the reduction from
-	 *         QuantifiedSpec to SpecExp
-	 */
-	private Spec replaceQuantifiers(Spec spec, int traceId) {
+      if (define.getExpression() != null) {
+        define.setExpression(replaceQuantifiers(define.getExpression(), 0));
+      } else {
+        define.setDefineArray(replaceQuantifiersInDefineArrays(define.getDefineArray()));
+      }
+    }
 
-		if (spec instanceof SpecExp) {
-			SpecExp specExp = (SpecExp) spec;
-			for (int i = 0; i < specExp.getChildren().length; i++) {
-				specExp.getChildren()[i] = replaceQuantifiers(specExp.getChildren()[i], traceId);
-			}
+    // Clear Domain variables list
+    // input.getDomainVars().clear();
+  }
 
-			return spec;
-		}
+  /**
+   * @param spec
+   * @return the Spec that represent the result of the reduction from QuantifiedSpec to SpecExp
+   */
+  private Spec replaceQuantifiers(Spec spec, int traceId) {
 
-		if (!(spec instanceof QuantifiedSpec)) {
-			return spec;
-		}
-		QuantifiedSpec qSpec = (QuantifiedSpec) spec;
+    if (spec instanceof SpecExp) {
+      SpecExp specExp = (SpecExp) spec;
+      for (int i = 0; i < specExp.getChildren().length; i++) {
+        specExp.getChildren()[i] = replaceQuantifiers(specExp.getChildren()[i], traceId);
+      }
 
-		// need to translate the inner quantifier first.
-		qSpec.setTempExpr(replaceQuantifiers(qSpec.getTempExpr(), traceId));
+      return spec;
+    }
 
-		// we don't want to translate an expression
-		// that doesn't contains the domain var of the current quantifier expression
-//		if (!getVarsListOfSpec(qSpec.getTempExpr()).contains(qSpec.getDomainVar())) {
-//			// in that case, we can just ignore the current quantifier
-//			return qSpec.getTempExpr();
-//		}
+    if (!(spec instanceof QuantifiedSpec)) {
+      return spec;
+    }
+    QuantifiedSpec qSpec = (QuantifiedSpec) spec;
 
-		Operator op = qSpec.getExprOperator(); // op=AND for FORALL and op=OR for EXISTS
+    // need to translate the inner quantifier first.
+    qSpec.setTempExpr(replaceQuantifiers(qSpec.getTempExpr(), traceId));
 
-		// we get a list of all the values that the current domain var can get
-		List<PrimitiveValue> values = qSpec.getDomainVar().getType().getPrimitivesList();
+    // we don't want to translate an expression
+    // that doesn't contains the domain var of the current quantifier expression
+    //		if (!getVarsListOfSpec(qSpec.getTempExpr()).contains(qSpec.getDomainVar())) {
+    //			// in that case, we can just ignore the current quantifier
+    //			return qSpec.getTempExpr();
+    //		}
 
-		Spec total = null;
-		try {
-			for (PrimitiveValue val : values) { // for every value of the domain var
-				// we try to replace the domain var with the current value
-				Spec newSpec = translateSpec(qSpec.getTempExpr(), qSpec.getDomainVar(), val, traceId);
-	
-				// connects the current new_spec to the whole result spec
-				if (total == null) {
-					total = newSpec;
-				} else {
-					total = new SpecExp(op, total, newSpec);
-				}
-			}
-		} catch (Exception e) {
-			throw new TranslationException(e.getMessage(), traceId);
-		}
+    Operator op = qSpec.getExprOperator(); // op=AND for FORALL and op=OR for EXISTS
 
-		return total;
-	}
+    // we get a list of all the values that the current domain var can get
+    List<PrimitiveValue> values = qSpec.getDomainVar().getType().getPrimitivesList();
 
-	/**
-	 * @param spec
-	 * @param domainVar
-	 * @param primVal
-	 * @return the Spec input after replacing all appearances of domainVar with
-	 *         primVal
-	 */
-	private Spec translateSpec(Spec spec, Variable domainVar, PrimitiveValue primVal, int traceId) throws CloneNotSupportedException {
-		if (spec instanceof VariableReference) {
-			// if we arrived to VariableReference we check if it's a domain var
-			VariableReference varRef = (VariableReference) spec;
+    Spec total = null;
+    try {
+      for (PrimitiveValue val : values) { // for every value of the domain var
+        // we try to replace the domain var with the current value
+        Spec newSpec = translateSpec(qSpec.getTempExpr(), qSpec.getDomainVar(), val, traceId);
 
-			if (varRef.getVariable().getName().equals(domainVar.getName())) {
-				// if it's the current domain var, we return the primitive value instead
-				return new PrimitiveValue(primVal.getValue());
-			} else if (varRef.getIndexSpecs() != null) {
-				try {					
-					if (varRef.getIndexVars().containsKey(domainVar.getName())) {
-						VariableReference newVarRef = varRef.clone();
-						for (int i = 0; i < newVarRef.getIndexSpecs().size(); i++) {
-							Spec interpreted = SpecHelper.interpretWithVariable(newVarRef.getIndexSpecs().get(i), domainVar, primVal);
-							newVarRef.getIndexSpecs().set(i, interpreted);
-						}
-						newVarRef.getIndexVars().remove(domainVar.getName());
-						
-						SpecHelper.updateRefName(newVarRef);
-				        return newVarRef;
-					}
-				} catch (Exception e) {
-					throw new TranslationException(e.getMessage(), traceId);
-				}
-			}
-			
-			return varRef;
-			
-		} else if (spec instanceof DefineReference) {
-			DefineReference defRef = (DefineReference) spec;
-			
-			try {
-				if (defRef.getIndexSpecs() != null && defRef.getIndexVars().containsKey(domainVar.getName())) {
-					DefineReference newDefRef = defRef.clone();
-					
-					SpecHelper.updateDefineReference(newDefRef, domainVar, primVal);
+        // connects the current new_spec to the whole result spec
+        if (total == null) {
+          total = newSpec;
+        } else {
+          total = new SpecExp(op, total, newSpec);
+        }
+      }
+    } catch (Exception e) {
+      throw new TranslationException(e.getMessage(), traceId);
+    }
 
-					return newDefRef;
-				}
-			} catch (Exception e) {
-				throw new TranslationException(e.getMessage(), traceId);
-			}
-			
-			return defRef;
-			
-		// if we arrived to PredicateInstance, we want to replace all the appearances of
-		// the current domain var in the parameters of the PredicateInstance
-		} else if (spec instanceof PredicateInstance) {
-			PredicateInstance pi = ((PredicateInstance) spec).clone();
-			List<Spec> params = pi.getParameters();
-			List<Spec> translatedParams = new ArrayList<Spec>();
-			for (int i = 0; i < params.size(); i++) {
-				translatedParams.add(translateSpec(params.get(i), domainVar, primVal, traceId));
-			}
-			pi.setParameters(translatedParams);
-			return pi;
-		} else if (spec instanceof SpecExp) {
+    return total;
+  }
 
-			// if we got here, the current spec is a SpecExp we want to run on it's children array
-			// and replace all the appearances of the current domain var in it with primVal.
-			SpecExp specExp = ((SpecExp) spec).clone();
-			for (int i = 0; i < specExp.getChildren().length; i++) {
-				specExp.getChildren()[i] = translateSpec(specExp.getChildren()[i], domainVar, primVal, traceId);
-			}
-			return specExp;
-		}
-		
-		return spec;
-	}
-	
-	private DefineArray replaceQuantifiersInDefineArrays(DefineArray defArray) {
+  /**
+   * @param spec
+   * @param domainVar
+   * @param primVal
+   * @return the Spec input after replacing all appearances of domainVar with primVal
+   */
+  private Spec translateSpec(Spec spec, Variable domainVar, PrimitiveValue primVal, int traceId)
+      throws CloneNotSupportedException {
+    if (spec instanceof VariableReference) {
+      // if we arrived to VariableReference we check if it's a domain var
+      VariableReference varRef = (VariableReference) spec;
 
-		List<Spec> newSpec = null;
-		if (defArray.getExpressions() != null) {
-			newSpec = new ArrayList<>();
-			for (Spec exp : defArray.getExpressions()) {
-				newSpec.add(replaceQuantifiers(exp, 0));
-			}
-		}
-		
-		List<DefineArray> newDefArray = null;
-		if (defArray.getDefineArray() != null) {
-			newDefArray = new ArrayList<>();
-			for (DefineArray innerArray : defArray.getDefineArray()) {
-				newDefArray.add(replaceQuantifiersInDefineArrays(innerArray));
-			}
-		}
-		
-		return new DefineArray(newSpec, newDefArray);
-	}
+      if (varRef.getVariable().getName().equals(domainVar.getName())) {
+        // if it's the current domain var, we return the primitive value instead
+        return new PrimitiveValue(primVal.getValue());
+      } else if (varRef.getIndexSpecs() != null) {
+        try {
+          if (varRef.getIndexVars().containsKey(domainVar.getName())) {
+            VariableReference newVarRef = varRef.clone();
+            for (int i = 0; i < newVarRef.getIndexSpecs().size(); i++) {
+              Spec interpreted =
+                  SpecHelper.interpretWithVariable(
+                      newVarRef.getIndexSpecs().get(i), domainVar, primVal);
+              newVarRef.getIndexSpecs().set(i, interpreted);
+            }
+            newVarRef.getIndexVars().remove(domainVar.getName());
+
+            SpecHelper.updateRefName(newVarRef);
+            return newVarRef;
+          }
+        } catch (Exception e) {
+          throw new TranslationException(e.getMessage(), traceId);
+        }
+      }
+
+      return varRef;
+
+    } else if (spec instanceof DefineReference) {
+      DefineReference defRef = (DefineReference) spec;
+
+      try {
+        if (defRef.getIndexSpecs() != null
+            && defRef.getIndexVars().containsKey(domainVar.getName())) {
+          DefineReference newDefRef = defRef.clone();
+
+          SpecHelper.updateDefineReference(newDefRef, domainVar, primVal);
+
+          return newDefRef;
+        }
+      } catch (Exception e) {
+        throw new TranslationException(e.getMessage(), traceId);
+      }
+
+      return defRef;
+
+      // if we arrived to PredicateInstance, we want to replace all the appearances of
+      // the current domain var in the parameters of the PredicateInstance
+    } else if (spec instanceof PredicateInstance) {
+      PredicateInstance pi = ((PredicateInstance) spec).clone();
+      List<Spec> params = pi.getParameters();
+      List<Spec> translatedParams = new ArrayList<Spec>();
+      for (int i = 0; i < params.size(); i++) {
+        translatedParams.add(translateSpec(params.get(i), domainVar, primVal, traceId));
+      }
+      pi.setParameters(translatedParams);
+      return pi;
+    } else if (spec instanceof SpecExp) {
+
+      // if we got here, the current spec is a SpecExp we want to run on it's children array
+      // and replace all the appearances of the current domain var in it with primVal.
+      SpecExp specExp = ((SpecExp) spec).clone();
+      for (int i = 0; i < specExp.getChildren().length; i++) {
+        specExp.getChildren()[i] =
+            translateSpec(specExp.getChildren()[i], domainVar, primVal, traceId);
+      }
+      return specExp;
+    }
+
+    return spec;
+  }
+
+  private DefineArray replaceQuantifiersInDefineArrays(DefineArray defArray) {
+
+    List<Spec> newSpec = null;
+    if (defArray.getExpressions() != null) {
+      newSpec = new ArrayList<>();
+      for (Spec exp : defArray.getExpressions()) {
+        newSpec.add(replaceQuantifiers(exp, 0));
+      }
+    }
+
+    List<DefineArray> newDefArray = null;
+    if (defArray.getDefineArray() != null) {
+      newDefArray = new ArrayList<>();
+      for (DefineArray innerArray : defArray.getDefineArray()) {
+        newDefArray.add(replaceQuantifiersInDefineArrays(innerArray));
+      }
+    }
+
+    return new DefineArray(newSpec, newDefArray);
+  }
 }

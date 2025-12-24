@@ -1,29 +1,26 @@
 /**
  * Copyright (c) since 2015, Tel Aviv University and Software Modeling Lab
- * 
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * Neither the name of Tel Aviv University and Software Modeling Lab nor the
- * names of its contributors may be used to endorse or promote products
- * derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * <p>All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the
+ * above copyright notice, this list of conditions and the following disclaimer. Redistributions in
+ * binary form must reproduce the above copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided with the distribution. Neither
+ * the name of Tel Aviv University and Software Modeling Lab nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without specific prior written
+ * permission.
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and
+ * Software Modeling Lab BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  */
 package tau.smlab.syntech.Spectra.ui.tests;
 
@@ -46,14 +43,10 @@ import tau.smlab.syntech.ui.tests.SpectraUiInjectorProvider;
 @InjectWith(SpectraUiInjectorProvider.class)
 @SuppressWarnings("all")
 public class SpectraTypeCheckTest {
-  @Inject
-  @Extension
-  private ParseHelper<Model> _parseHelper;
-  
-  @Inject
-  @Extension
-  private ValidationTestHelper _validationTestHelper;
-  
+  @Inject @Extension private ParseHelper<Model> _parseHelper;
+
+  @Inject @Extension private ValidationTestHelper _validationTestHelper;
+
   @Test
   public void testBooleanVsNumeric() {
     try {
@@ -65,13 +58,16 @@ public class SpectraTypeCheckTest {
       _builder.append("5=true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.CANT_COMPARE_BETWEEN_BOOLEAN_AND_NON_BOOLEAN);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.CANT_COMPARE_BETWEEN_BOOLEAN_AND_NON_BOOLEAN);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNestedPrimes() {
     try {
@@ -85,12 +81,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(next(counter));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, IssueMessages.CANT_PRIME_MORE_THAN_ONCE);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.CANT_PRIME_MORE_THAN_ONCE);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testArithmetics1() {
     try {
@@ -100,13 +100,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar 3+true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalAdditiveExpr(), null, 
-        IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalAdditiveExpr(),
+          null,
+          IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testArithmetics2() {
     try {
@@ -116,13 +119,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar 3-true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalAdditiveExpr(), null, 
-        IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalAdditiveExpr(),
+          null,
+          IssueMessages.ADDITIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testArithmetics3() {
     try {
@@ -132,13 +138,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar 3*true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalMultiplicativeExpr(), null, 
-        IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalMultiplicativeExpr(),
+          null,
+          IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testArithmetics4() {
     try {
@@ -148,13 +157,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar 3/true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalMultiplicativeExpr(), null, 
-        IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalMultiplicativeExpr(),
+          null,
+          IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testArithmetics5() {
     try {
@@ -164,13 +176,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar 3 mod true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRemainderExpr(), null, 
-        IssueMessages.MOD_EXP_ARGUMENTS_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRemainderExpr(),
+          null,
+          IssueMessages.MOD_EXP_ARGUMENTS_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testImplies1() {
     try {
@@ -182,13 +197,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 implies true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalImpExpr(), null, 
-        IssueMessages.IMPLIES_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalImpExpr(),
+          null,
+          IssueMessages.IMPLIES_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testImplies2() {
     try {
@@ -200,13 +218,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 -> true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalImpExpr(), null, 
-        IssueMessages.IMPLIES_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalImpExpr(),
+          null,
+          IssueMessages.IMPLIES_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testIff1() {
     try {
@@ -218,13 +239,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 iff true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalIffExpr(), null, 
-        IssueMessages.IFF_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalIffExpr(),
+          null,
+          IssueMessages.IFF_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testIff2() {
     try {
@@ -236,13 +260,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 <-> true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalIffExpr(), null, 
-        IssueMessages.IFF_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalIffExpr(),
+          null,
+          IssueMessages.IFF_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testOr1() {
     try {
@@ -254,13 +281,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 or true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalOrExpr(), null, 
-        IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalOrExpr(),
+          null,
+          IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testOr2() {
     try {
@@ -272,13 +302,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 xor true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalOrExpr(), null, 
-        IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalOrExpr(),
+          null,
+          IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testOr3() {
     try {
@@ -290,13 +323,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 | true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalOrExpr(), null, 
-        IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalOrExpr(),
+          null,
+          IssueMessages.OR_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAnd1() {
     try {
@@ -308,13 +344,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 and true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalAndExpr(), null, 
-        IssueMessages.AND_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalAndExpr(),
+          null,
+          IssueMessages.AND_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAnd2() {
     try {
@@ -326,13 +365,16 @@ public class SpectraTypeCheckTest {
       _builder.append("3 & true;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalAndExpr(), null, 
-        IssueMessages.AND_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalAndExpr(),
+          null,
+          IssueMessages.AND_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testPatternParam() {
     try {
@@ -346,13 +388,16 @@ public class SpectraTypeCheckTest {
       _builder.append("}");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.CANT_COMPARE_BOOLEAN_PATT_PARAM_TO_NON_BOOLEAN_EXPR);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.CANT_COMPARE_BOOLEAN_PATT_PARAM_TO_NON_BOOLEAN_EXPR);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNotOperator() {
     try {
@@ -364,13 +409,16 @@ public class SpectraTypeCheckTest {
       _builder.append("!5;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.NOT_EXPR_ARGUMENT_MUST_BE_BOOLEAN);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.NOT_EXPR_ARGUMENT_MUST_BE_BOOLEAN);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testMinusOperator() {
     try {
@@ -382,13 +430,16 @@ public class SpectraTypeCheckTest {
       _builder.append("-false;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.MINUS_EXPR_ARGUMENT_MUST_BE_NUMERIC);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.MINUS_EXPR_ARGUMENT_MUST_BE_NUMERIC);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarDeclVsTypeConstant() {
     try {
@@ -406,13 +457,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (motor!=UP2);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VAR_DECL_AND_TYPE_CONSTANT_COME_FROM_DIFFERENT_ENUMS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VAR_DECL_AND_TYPE_CONSTANT_COME_FROM_DIFFERENT_ENUMS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testUnaryLTL1() {
     try {
@@ -424,13 +478,16 @@ public class SpectraTypeCheckTest {
       _builder.append("PREV 5;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalUnaryExpr(), null, 
-        IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalUnaryExpr(),
+          null,
+          IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testUnaryLTL2() {
     try {
@@ -442,13 +499,16 @@ public class SpectraTypeCheckTest {
       _builder.append("H 5;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalUnaryExpr(), null, 
-        IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalUnaryExpr(),
+          null,
+          IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testUnaryLTL3() {
     try {
@@ -460,13 +520,16 @@ public class SpectraTypeCheckTest {
       _builder.append("ONCE 5;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalUnaryExpr(), null, 
-        IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalUnaryExpr(),
+          null,
+          IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testBinaryTL1() {
     try {
@@ -478,13 +541,16 @@ public class SpectraTypeCheckTest {
       _builder.append("5 SINCE 3;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalBinaryExpr(), null, 
-        IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalBinaryExpr(),
+          null,
+          IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testBinaryTL2() {
     try {
@@ -496,13 +562,16 @@ public class SpectraTypeCheckTest {
       _builder.append("false TRIGGERED 3;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalBinaryExpr(), null, 
-        IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalBinaryExpr(),
+          null,
+          IssueMessages.PASTLTL_EXPR_ARGUMENTS_MUST_BE_BOOLEANS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDomains1() {
     try {
@@ -520,13 +589,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (motor!=motor2);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDomains2() {
     try {
@@ -544,13 +616,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (motor!=motor2);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDomains3() {
     try {
@@ -568,13 +643,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (motor!=motor2);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDomains4() {
     try {
@@ -597,7 +675,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDomains5() {
     try {
@@ -617,13 +695,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (motor!=motor2); ");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineDeclCycles1() {
     try {
@@ -633,12 +714,16 @@ public class SpectraTypeCheckTest {
       _builder.append("define a := a;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineDeclCycles2() {
     try {
@@ -650,12 +735,16 @@ public class SpectraTypeCheckTest {
       _builder.append("define b := a;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testTypeDefCycles1() {
     try {
@@ -665,12 +754,16 @@ public class SpectraTypeCheckTest {
       _builder.append("type a = a;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTypeDef(), null, IssueMessages.TYPEDEF_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTypeDef(),
+          null,
+          IssueMessages.TYPEDEF_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testTypeDefCycles2() {
     try {
@@ -682,12 +775,16 @@ public class SpectraTypeCheckTest {
       _builder.append("type b = a;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTypeDef(), null, IssueMessages.TYPEDEF_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTypeDef(),
+          null,
+          IssueMessages.TYPEDEF_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testPattParamsBooleans1() {
     try {
@@ -707,13 +804,16 @@ public class SpectraTypeCheckTest {
       _builder.append("}");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.PATTERN_PARAMS_ARE_BOOLEAN);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.PATTERN_PARAMS_ARE_BOOLEAN);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testPattParamsBooleans2() {
     try {
@@ -733,13 +833,16 @@ public class SpectraTypeCheckTest {
       _builder.append("}");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.PATTERN_PARAMS_ARE_BOOLEAN);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.PATTERN_PARAMS_ARE_BOOLEAN);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNumArgumentsDontMatch1() {
     try {
@@ -759,12 +862,16 @@ public class SpectraTypeCheckTest {
       _builder.append("}");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, IssueMessages.NUM_ARGS_DOESNT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.NUM_ARGS_DOESNT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNumArgumentsDontMatch2() {
     try {
@@ -784,12 +891,16 @@ public class SpectraTypeCheckTest {
       _builder.append("}");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, IssueMessages.NUM_ARGS_DOESNT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.NUM_ARGS_DOESNT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarININoPrimes1() {
     try {
@@ -803,12 +914,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarININoPrimes2() {
     try {
@@ -822,12 +937,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarININoPrimes3() {
     try {
@@ -841,12 +960,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarJusticeNOPrimes1() {
     try {
@@ -860,12 +983,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarJusticeNOPrimes2() {
     try {
@@ -879,12 +1006,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testGarJusticeNOPrimes3() {
     try {
@@ -898,12 +1029,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLGar(), null, IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLGar(),
+          null,
+          IssueMessages.GAR_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmINIYesEnv() {
     try {
@@ -922,7 +1057,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmININoSys() {
     try {
@@ -936,12 +1071,16 @@ public class SpectraTypeCheckTest {
       _builder.append("x;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmININoAUX() {
     try {
@@ -955,12 +1094,16 @@ public class SpectraTypeCheckTest {
       _builder.append("x;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_INI_CAN_ONLY_HAVE_ENV_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmININoPrimes1() {
     try {
@@ -974,12 +1117,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmININoPrimes2() {
     try {
@@ -993,12 +1140,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmININoPrimes3() {
     try {
@@ -1012,12 +1163,16 @@ public class SpectraTypeCheckTest {
       _builder.append("next(x);");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_INI_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmSafetyYesPrimedEnv() {
     try {
@@ -1036,7 +1191,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmSafetyNoPrimedSys() {
     try {
@@ -1050,12 +1205,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmSafetyNoPrimedAux() {
     try {
@@ -1069,12 +1228,16 @@ public class SpectraTypeCheckTest {
       _builder.append("G (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_SAFETY_CAN_ONLY_HAVE_PRIMED_ENV);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmJusticeNoPrimes1() {
     try {
@@ -1088,12 +1251,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmJusticeNoPrimes2() {
     try {
@@ -1107,12 +1274,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testAsmJusticeNoPrimes3() {
     try {
@@ -1126,12 +1297,16 @@ public class SpectraTypeCheckTest {
       _builder.append("GF (next(x));");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getLTLAsm(), null, IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getLTLAsm(),
+          null,
+          IssueMessages.ASM_JUSTICE_CANT_HAVE_PRIMED_VARS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testTypeConstantVsNonEnumVarDecl() {
     try {
@@ -1147,12 +1322,16 @@ public class SpectraTypeCheckTest {
       _builder.append("STOP=x;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, IssueMessages.VAR_ISNT_ENUM);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VAR_ISNT_ENUM);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumVsVarEnum1() {
     try {
@@ -1173,7 +1352,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumVsVarEnum2() {
     try {
@@ -1189,13 +1368,16 @@ public class SpectraTypeCheckTest {
       _builder.append("motor1=motor2;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumAsTypeVsVarEnumAsType1() {
     try {
@@ -1218,7 +1400,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumAsTypeVsVarEnumAsType2() {
     try {
@@ -1238,13 +1420,16 @@ public class SpectraTypeCheckTest {
       _builder.append("motor1=motor2;  \t");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumAsTypeVsVarEnum() {
     try {
@@ -1262,13 +1447,16 @@ public class SpectraTypeCheckTest {
       _builder.append("motor1=motor2;  \t");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumAsTypeVsVarBoolean() {
     try {
@@ -1286,13 +1474,16 @@ public class SpectraTypeCheckTest {
       _builder.append("motor1=motor2;  \t");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testVarEnumAsTypeVsVarBooleanAsType() {
     try {
@@ -1312,13 +1503,16 @@ public class SpectraTypeCheckTest {
       _builder.append("motor1=motor2;  \t");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalRelationalExpr(), null, 
-        IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalRelationalExpr(),
+          null,
+          IssueMessages.VARS_HAVE_DIFFERENT_DOMAINS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testIntVarComparedToIntArrayLocation() {
     try {
@@ -1340,7 +1534,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testComparisonWithNegativeValue() {
     try {
@@ -1357,7 +1551,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testPredicateEnumParameterPassed() {
     try {
@@ -1382,7 +1576,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineWithArithmeticExpression() {
     try {
@@ -1401,7 +1595,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testSubrangeWithArithmeticExpression() {
     try {
@@ -1416,7 +1610,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testQuantifierInPredicate() {
     try {
@@ -1440,7 +1634,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNestedQuantifierInPredicate() {
     try {
@@ -1469,7 +1663,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testQuantifierInDefine() {
     try {
@@ -1481,7 +1675,8 @@ public class SpectraTypeCheckTest {
       _builder.newLine();
       _builder.append("sys boolean[sizeOfBoolArray] boolArray;\t");
       _builder.newLine();
-      _builder.append("define atLeastOneTrue := exists i in Int(0..(sizeOfBoolArray-1)) . boolArray[i];");
+      _builder.append(
+          "define atLeastOneTrue := exists i in Int(0..(sizeOfBoolArray-1)) . boolArray[i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
       this._validationTestHelper.assertNoErrors(value);
@@ -1489,7 +1684,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testNestedQuantifierInDefine() {
     try {
@@ -1515,7 +1710,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testMinFunctionOnIntArray() {
     try {
@@ -1532,7 +1727,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testMaxFunctionOnIntArray() {
     try {
@@ -1549,7 +1744,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testMinFunctionOnBooleanArray() {
     try {
@@ -1561,13 +1756,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G arr.min;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testMaxFunctionOnBooleanArray() {
     try {
@@ -1579,13 +1777,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G arr.max;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.FUNCTION_CANT_APPLY_ON_BOOLEAN_ARRAY);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testParameterizedGar() {
     try {
@@ -1606,7 +1807,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testParameterizedAsm() {
     try {
@@ -1627,7 +1828,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testTwoParameters() {
     try {
@@ -1648,7 +1849,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayNonConstantIndex() {
     try {
@@ -1662,13 +1863,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_NON_CONSTANT_INDEX);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_NON_CONSTANT_INDEX);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadSize1() {
     try {
@@ -1684,13 +1888,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadSize2() {
     try {
@@ -1704,13 +1911,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i][i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_INDEXES_DONT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadInnerDefine1() {
     try {
@@ -1724,13 +1934,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DIMENSIONS_DONT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DIMENSIONS_DONT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadInnerDefine2() {
     try {
@@ -1744,13 +1957,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[0];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayInnerOutOfBounds() {
     try {
@@ -1764,13 +1980,13 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.INDEX_OUT_OF_BOUNDS);
+      this._validationTestHelper.assertError(
+          value, SpectraPackage.eINSTANCE.getDefineDecl(), null, IssueMessages.INDEX_OUT_OF_BOUNDS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadDimensions1() {
     try {
@@ -1784,13 +2000,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G forall i in Int(0..3) . ind = a1[i][0][2];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.DIMENSIONS_DONT_MATCH);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.DIMENSIONS_DONT_MATCH);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBadDimensions2() {
     try {
@@ -1804,13 +2023,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1;");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.ILLEGAL_ACCESS_TO_DEFINE_ARRAY);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayOutOfBounds() {
     try {
@@ -1824,13 +2046,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[6];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(), null, 
-        IssueMessages.INDEX_OUT_OF_BOUNDS);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getTemporalPrimaryExpr(),
+          null,
+          IssueMessages.INDEX_OUT_OF_BOUNDS);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayCycle1() {
     try {
@@ -1844,13 +2069,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[1];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayCycle2() {
     try {
@@ -1868,13 +2096,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[1];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_CONTAINS_CYCLES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayMixingTypes1() {
     try {
@@ -1888,13 +2119,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[1];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayMixingTypes2() {
     try {
@@ -1908,13 +2142,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G ind = a1[1][1];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.DEFINEDECL_DIFFERENT_TYPES);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineInvalidDimensions() {
     try {
@@ -1930,13 +2167,16 @@ public class SpectraTypeCheckTest {
       _builder.append("gar G i = a1[1];");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getDefineDecl(), null, 
-        IssueMessages.NON_INT_DEFINE_DIMEMSION);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getDefineDecl(),
+          null,
+          IssueMessages.NON_INT_DEFINE_DIMEMSION);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayIntegers() {
     try {
@@ -1959,7 +2199,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayBooleans() {
     try {
@@ -1978,7 +2218,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayIndexes1() {
     try {
@@ -1997,7 +2237,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayIndexes2() {
     try {
@@ -2018,7 +2258,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testDefineArrayDefineDimensions() {
     try {
@@ -2039,7 +2279,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testRegexpDefineInsideToRepetitionRange() {
     try {
@@ -2058,7 +2298,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testRegexpDefineInsideFromRepetitionRange() {
     try {
@@ -2077,7 +2317,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testRegexpDefineInsideFromAndToRepetitionRange() {
     try {
@@ -2098,7 +2338,7 @@ public class SpectraTypeCheckTest {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testRegexpDefineInsideRepetitionRangeBoolean() {
     try {
@@ -2112,13 +2352,16 @@ public class SpectraTypeCheckTest {
       _builder.append("regexp myRegexp := [x>3]{myInt, 3}; ");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getUnaryRegExp(), null, 
-        IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getUnaryRegExp(),
+          null,
+          IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
   }
-  
+
   @Test
   public void testRegexpDefineInsideRepetitionRangeNotAVar() {
     try {
@@ -2132,8 +2375,11 @@ public class SpectraTypeCheckTest {
       _builder.append("regexp myRegexp := [x>3]{myInt, 3}; ");
       _builder.newLine();
       final Model value = this._parseHelper.parse(_builder);
-      this._validationTestHelper.assertError(value, SpectraPackage.eINSTANCE.getUnaryRegExp(), null, 
-        IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
+      this._validationTestHelper.assertError(
+          value,
+          SpectraPackage.eINSTANCE.getUnaryRegExp(),
+          null,
+          IssueMessages.REGEXP_INVALID_RANGE_QUANTIFIER_NOT_A_NUMBER);
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }

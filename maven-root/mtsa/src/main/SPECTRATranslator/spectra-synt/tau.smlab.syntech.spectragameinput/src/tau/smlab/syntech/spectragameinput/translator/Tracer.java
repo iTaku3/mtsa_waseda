@@ -17,31 +17,28 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.spectragameinput.translator;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
-
 import tau.smlab.syntech.spectra.LTLAsm;
 import tau.smlab.syntech.spectra.LTLGar;
 
 /**
- * Tracer maintains a connection between EObjects (e.g., elements of a Spectra specification) and traceIds
- * (integers).<br>
+ * Tracer maintains a connection between EObjects (e.g., elements of a Spectra specification) and
+ * traceIds (integers).<br>
  * Clients can look up this connection in both ways.
- *
  */
 public class Tracer {
 
@@ -56,9 +53,9 @@ public class Tracer {
 
   /**
    * creates a new entry for the EObject with a fresh traceID
-   * 
-   * does not check whether the object already exists!
-   * 
+   *
+   * <p>does not check whether the object already exists!
+   *
    * @param eobject
    * @return the ID of the added object
    */
@@ -66,12 +63,12 @@ public class Tracer {
     trace.put(ID, eobject);
     tracingMap.put(eobject, ID);
     ID++;
-    return ID-1;
+    return ID - 1;
   }
 
   /**
    * looks up the traceId of an EObject
-   * 
+   *
    * @param eobject
    * @return ID of the traced eobject if exists. -1 otherwise.
    */
@@ -84,7 +81,7 @@ public class Tracer {
 
   /**
    * returns the EObject of this traceId (e.g., returns an element of the Spectra specification)
-   * 
+   *
    * @param traceId
    * @return
    */
@@ -93,8 +90,9 @@ public class Tracer {
   }
 
   /**
-   * translates the element with the given traceId to a string (e.g., prints a guarantee from the specification)
-   * 
+   * translates the element with the given traceId to a string (e.g., prints a guarantee from the
+   * specification)
+   *
    * @param traceId
    * @return
    */

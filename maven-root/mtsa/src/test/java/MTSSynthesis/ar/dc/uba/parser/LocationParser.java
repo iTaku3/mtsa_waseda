@@ -4,6 +4,5 @@ import MTSSynthesis.ar.dc.uba.model.lsc.Location;
 
 public interface LocationParser {
 
-	Location parseLocation(String locationAsStr);
-	
+  Location parseLocation(String locationAsStr);
 }

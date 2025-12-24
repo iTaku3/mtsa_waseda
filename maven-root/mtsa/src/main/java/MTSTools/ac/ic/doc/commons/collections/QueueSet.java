@@ -9,45 +9,44 @@ import java.util.Set;
 
 public class QueueSet<E> extends AbstractQueue<E> implements Queue<E>, Set<E> {
 
-	private Queue<E> queue;
-	
-	private Set<E> set;
-	
-	public QueueSet() {
-		queue = new ArrayDeque<>();
-		set = new HashSet<>();
-	}
-	
-	@Override
-	public boolean offer(E e) {
-		return !set.add(e) || queue.offer(e);
-	}
+  private Queue<E> queue;
 
-	@Override
-	public E poll() {
-		E result = queue.poll();
-		set.remove(result);
-		return result;
-	}
+  private Set<E> set;
 
-	@Override
-	public E peek() {
-		return queue.peek();
-	}
-	
-	@Override
-	public boolean contains(Object o) {
-		return set.contains(o);
-	}
+  public QueueSet() {
+    queue = new ArrayDeque<>();
+    set = new HashSet<>();
+  }
 
-	@Override
-	public Iterator<E> iterator() {
-		return queue.iterator();
-	}
+  @Override
+  public boolean offer(E e) {
+    return !set.add(e) || queue.offer(e);
+  }
 
-	@Override
-	public int size() {
-		return queue.size();
-	}
+  @Override
+  public E poll() {
+    E result = queue.poll();
+    set.remove(result);
+    return result;
+  }
 
+  @Override
+  public E peek() {
+    return queue.peek();
+  }
+
+  @Override
+  public boolean contains(Object o) {
+    return set.contains(o);
+  }
+
+  @Override
+  public Iterator<E> iterator() {
+    return queue.iterator();
+  }
+
+  @Override
+  public int size() {
+    return queue.size();
+  }
 }

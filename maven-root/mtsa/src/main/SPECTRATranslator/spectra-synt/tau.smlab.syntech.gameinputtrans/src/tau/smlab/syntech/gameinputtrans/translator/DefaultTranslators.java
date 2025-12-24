@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinputtrans.translator;
@@ -38,18 +38,19 @@ public class DefaultTranslators {
     ts.add(new TemporalInTranslator());
     ts.add(new ArrayFunctionsTranslator());
     ts.add(new TemporalRegexpTranslator());
-    ts.add(new QuantifierTranslator()); //The translator of QuantifiedSpecs
+    ts.add(new QuantifierTranslator()); // The translator of QuantifiedSpecs
     ts.add(new StateInvTranslator(true));
     ts.add(new PredicateInstanceTranslator());
     ts.add(new PatternConstraintTranslator());
     ts.add(new MonitorTranslator());
     ts.add(new CounterTranslator());
-    ts.add(new VarIndexesTranslator()); //The translator of all the complex indexes in arrays
+    ts.add(new VarIndexesTranslator()); // The translator of all the complex indexes in arrays
     ts.add(new DefinesTranslator());
     ts.add(new PastLTLTranslator());
-    ts.add(new StateInvTranslator(false)); // second part of translator to be aware of unfolded primes
-//    ts.add(new PrimesTranslator());
-//    ts.add(new PrimesInJusticeTranslator());
+    ts.add(
+        new StateInvTranslator(false)); // second part of translator to be aware of unfolded primes
+    //    ts.add(new PrimesTranslator());
+    //    ts.add(new PrimesInJusticeTranslator());
     return ts;
   }
 }

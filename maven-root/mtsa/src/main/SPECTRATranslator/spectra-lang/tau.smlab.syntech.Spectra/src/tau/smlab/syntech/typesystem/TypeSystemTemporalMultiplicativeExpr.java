@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.typesystem;
@@ -35,22 +35,25 @@ import tau.smlab.syntech.spectra.TemporalMultiplicativeExpr;
 public class TypeSystemTemporalMultiplicativeExpr {
 
   public static TypeCheckIssue typeCheck(TemporalMultiplicativeExpr temporalMultiplicativeExpr) {
-    for (TemporalExpression temporalExpression : temporalMultiplicativeExpr.getElements())
-    {
-      BooleanAndString isCurrentTemporalExpressionNumeric = TypeSystemUtils.isNumericExpression(temporalExpression);
-      if (! isCurrentTemporalExpressionNumeric.getBoolean())
-      {
-        return new TypeCheckError(SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR, IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC + ": " + isCurrentTemporalExpressionNumeric.getString());
+    for (TemporalExpression temporalExpression : temporalMultiplicativeExpr.getElements()) {
+      BooleanAndString isCurrentTemporalExpressionNumeric =
+          TypeSystemUtils.isNumericExpression(temporalExpression);
+      if (!isCurrentTemporalExpressionNumeric.getBoolean()) {
+        return new TypeCheckError(
+            SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR,
+            IssueMessages.MULTIPLICATIVE_EXP_ARGUMENTS_MUST_BE_NUMERIC
+                + ": "
+                + isCurrentTemporalExpressionNumeric.getString());
       }
     }
-    
-//    TypeCheckIssue issue = TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalMultiplicativeExpr.getElements().get(0), temporalMultiplicativeExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR);
-//    if (issue != null)
-//    {
-//    	return issue;
-//    }
-    
+
+    //    TypeCheckIssue issue =
+    // TypeSystemUtils.typeCheckCorrectWayOfAccessingArray(temporalMultiplicativeExpr.getElements().get(0), temporalMultiplicativeExpr.getElements().get(1), SpectraPackage.Literals.TEMPORAL_MULTIPLICATIVE_EXPR__OPERATOR);
+    //    if (issue != null)
+    //    {
+    //    	return issue;
+    //    }
+
     return null;
   }
-
 }

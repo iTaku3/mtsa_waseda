@@ -1,7 +1,3 @@
 package MTSTools.ac.ic.doc.mtstools.utils;
 
-public class RMITest {
-	
-	
-	
-}
+public class RMITest {}

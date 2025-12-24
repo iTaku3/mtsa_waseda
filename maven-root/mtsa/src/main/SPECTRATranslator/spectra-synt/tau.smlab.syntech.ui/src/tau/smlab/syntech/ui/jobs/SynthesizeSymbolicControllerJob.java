@@ -17,19 +17,18 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.jobs;
 
 import java.io.File;
-
 import net.sf.javabdd.BDD;
 import tau.smlab.syntech.bddgenerator.energy.BDDEnergyReduction;
 import tau.smlab.syntech.games.controller.symbolic.SymbolicController;
@@ -51,7 +50,8 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
     GR1Game gr1;
 
     // initialize game based on configuration
-    if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD) && model.getWeights() != null) {
+    if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD)
+        && model.getWeights() != null) {
       printToConsole("GR1GameEnergyADD (without optimizations)");
       gr1 = new GR1GameEnergyADD(model, gi.getEnergyBound());
     } else {
@@ -60,8 +60,10 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
         printToConsole("GR1GameImplC with memory");
         gr1 = new GR1GameImplC(model);
       } else {
-        String GR1SolverMsg = "GR1GameExperiments (" + (PreferencePage.hasOptSelection() ? "with" : "without")
-            + " optimizations)";
+        String GR1SolverMsg =
+            "GR1GameExperiments ("
+                + (PreferencePage.hasOptSelection() ? "with" : "without")
+                + " optimizations)";
         printToConsole(GR1SolverMsg);
         gr1 = new GR1GameExperiments(model);
       }
@@ -77,7 +79,8 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
 
       this.isRealizable = true;
 
-      if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD) && model.getWeights() != null) {
+      if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD)
+          && model.getWeights() != null) {
         ((GR1GameEnergyADD) gr1).flattenGameMemoryTerminalsToVariables();
         ((GR1GameEnergyADD) gr1).updateSysTransWithEnergyConstraints();
         ((GR1GameEnergyADD) gr1).setSysWinningStatesWithFlatCredits();
@@ -85,7 +88,8 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
 
       start = System.currentTimeMillis();
 
-      SymbolicControllerConstruction cc = new GR1SymbolicControllerConstruction(gr1.getMem(), model);
+      SymbolicControllerConstruction cc =
+          new GR1SymbolicControllerConstruction(gr1.getMem(), model);
       SymbolicController ctrl = cc.calculateSymbolicController();
 
       time = System.currentTimeMillis() - start;
@@ -96,7 +100,8 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
       if (model.getWeights() != null) {
         BDD minWinCred;
         if (PreferencePage.getBDDPackageSelection().equals(BDDPackage.CUDD_ADD)) {
-          minWinCred = Env.getBDDValue("energyVal", (int) ((GR1GameEnergyADD) gr1).getMinWinInitCred());
+          minWinCred =
+              Env.getBDDValue("energyVal", (int) ((GR1GameEnergyADD) gr1).getMinWinInitCred());
         } else {
           minWinCred = BDDEnergyReduction.getMinWinCred(model, gr1.sysWinningStates());
         }
@@ -123,8 +128,8 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
         String location = specFile.getParent().getLocation().toOSString();
         String outLocation = location + File.separator + "out";
 
-        SymbolicControllerReaderWriter.writeSymbolicController(ctrl, model, outLocation,
-            PreferencePage.isReorderBeforeSave());
+        SymbolicControllerReaderWriter.writeSymbolicController(
+            ctrl, model, outLocation, PreferencePage.isReorderBeforeSave());
 
         time = System.currentTimeMillis() - start;
         printToConsole("Controller save to disk: " + time + "ms");
@@ -149,6 +154,4 @@ public class SynthesizeSymbolicControllerJob extends SyntechJob {
   public boolean needsBound() {
     return true;
   }
-
-
 }

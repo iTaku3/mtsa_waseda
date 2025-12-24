@@ -56,7 +56,6 @@ public class ClosureTests {
     String expectedName = "A";
 
     assertTrue(
-
         TransitionSystemDispatcher.isStronglyBisimilar(
             compileClosure(closure, closureName),
             " original ",
@@ -105,11 +104,11 @@ public class ClosureTests {
     String expectedName = "A";
 
     assertTrue(
-            TransitionSystemDispatcher.isWeaklyBisimilar(
-                    compileClosure(closure, closureName),
-                    " original ",
-                    compile(expected, expectedName),
-                    " synthesised ",
-                    new StandardOutput()));
+        TransitionSystemDispatcher.isWeaklyBisimilar(
+            compileClosure(closure, closureName),
+            " original ",
+            compile(expected, expectedName),
+            " synthesised ",
+            new StandardOutput()));
   }
 }

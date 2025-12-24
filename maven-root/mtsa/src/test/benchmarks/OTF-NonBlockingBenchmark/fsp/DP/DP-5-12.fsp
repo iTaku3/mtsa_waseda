@@ -65,3 +65,4 @@ monolithicDirector ||MonolithicController = Plant~{Goal}.
 
 heuristic ||DirectedController = Plant~{Goal}.
 
+partialOrderReduction ||PORController = Plant~{Goal}.

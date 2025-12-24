@@ -17,19 +17,18 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.wizard;
 
 import java.io.InputStream;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -59,10 +58,18 @@ public class NewSpectraFileWizard extends Wizard implements INewWizard {
     if (file != null) {
       String fileNameWithSpectraExtension = file.getName();
       int startOfExtension = fileNameWithSpectraExtension.lastIndexOf(".spectra");
-      String fileNameWithoutSpectraExtension = fileNameWithSpectraExtension.substring(0, startOfExtension);
-      // writing "module [name]" to the new created file      
-      InputStream input = new StringInputStream("spec " + firstToUpper(fileNameWithoutSpectraExtension) + System.lineSeparator()
-          + System.lineSeparator() + "gar" + System.lineSeparator() + "  alw TRUE;");
+      String fileNameWithoutSpectraExtension =
+          fileNameWithSpectraExtension.substring(0, startOfExtension);
+      // writing "module [name]" to the new created file
+      InputStream input =
+          new StringInputStream(
+              "spec "
+                  + firstToUpper(fileNameWithoutSpectraExtension)
+                  + System.lineSeparator()
+                  + System.lineSeparator()
+                  + "gar"
+                  + System.lineSeparator()
+                  + "  alw TRUE;");
       try {
         file.setContents(input, IResource.FORCE, null);
       } catch (CoreException e) {
@@ -73,8 +80,8 @@ public class NewSpectraFileWizard extends Wizard implements INewWizard {
     }
   }
 
-  private String firstToUpper(String s) {    
-    String first = s.substring(0, 1).toUpperCase();    
+  private String firstToUpper(String s) {
+    String first = s.substring(0, 1).toUpperCase();
     return first + s.substring(1, s.length());
   }
 

@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.ui.jobs;
@@ -33,7 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDVarSet;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -52,9 +53,6 @@ import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.xtext.nodemodel.INode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
-
-import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDVarSet;
 import tau.smlab.syntech.bddgenerator.BDDGenerator;
 import tau.smlab.syntech.bddgenerator.BDDGenerator.TraceInfo;
 import tau.smlab.syntech.bddgenerator.BDDTranslationException;
@@ -70,385 +68,385 @@ import tau.smlab.syntech.ui.preferences.PreferencePage;
 
 public abstract class SyntechJob extends Job {
 
-	protected IFile specFile;
-	protected MessageConsole console;
-	protected GameModel model;
-	protected GameInput gi;
-	protected TraceInfo trace = TraceInfo.NONE;
-	protected static IFile previousFileWithMarkers;
-	protected String consoleOutput = "";
-	protected long computationTime;
-	protected long bddTranslationTime;
-	protected boolean isUserCancelledJob = false;
-	protected boolean isRealizable;
-	protected boolean isWellSeparated;
-	protected int coreSize;
-	protected String issuesKind;
-	protected int numIssues;
-	protected List<Translator> translators;
-	private static List<Integer> traceIDListInCore = new ArrayList<Integer>();
+  protected IFile specFile;
+  protected MessageConsole console;
+  protected GameModel model;
+  protected GameInput gi;
+  protected TraceInfo trace = TraceInfo.NONE;
+  protected static IFile previousFileWithMarkers;
+  protected String consoleOutput = "";
+  protected long computationTime;
+  protected long bddTranslationTime;
+  protected boolean isUserCancelledJob = false;
+  protected boolean isRealizable;
+  protected boolean isWellSeparated;
+  protected int coreSize;
+  protected String issuesKind;
+  protected int numIssues;
+  protected List<Translator> translators;
+  private static List<Integer> traceIDListInCore = new ArrayList<Integer>();
 
-	/**
-	 * set info what elements of spec to trace (creates relevant BehaviorInfo).<br>
-	 * Note: the more you trace the longer everything takes due to BDD creation.
-	 * 
-	 * @param trace
-	 */
-	public void setTrace(TraceInfo trace) {
-		this.trace = trace;
-	}
+  /**
+   * set info what elements of spec to trace (creates relevant BehaviorInfo).<br>
+   * Note: the more you trace the longer everything takes due to BDD creation.
+   *
+   * @param trace
+   */
+  public void setTrace(TraceInfo trace) {
+    this.trace = trace;
+  }
 
-	public SyntechJob() {
-		super("SYNTECH");
-	}
+  public SyntechJob() {
+    super("SYNTECH");
+  }
 
-	/**
-	 * Implementation of default run method to start a thread that actually will do
-	 * the work.
-	 */
-	@SuppressWarnings("deprecation")
-	@Override
-	protected IStatus run(IProgressMonitor monitor) {
+  /** Implementation of default run method to start a thread that actually will do the work. */
+  @SuppressWarnings("deprecation")
+  @Override
+  protected IStatus run(IProgressMonitor monitor) {
 
-		long jobTime = System.currentTimeMillis();
+    long jobTime = System.currentTimeMillis();
 
-		Thread t = new Thread(() -> translateAnddoWork());
-		t.start();
-		while (t.isAlive()) {
-			if (monitor.isCanceled()) {
-				t.stop();
-				printToConsole("User cancelled job.");
-				Env.resetEnv();
-				isUserCancelledJob = true;
-				return Status.CANCEL_STATUS;
-			}
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		computationTime = System.currentTimeMillis() - jobTime;
-		printToConsole("Computation time: " + computationTime + "ms");
-		return Status.OK_STATUS;
-	}
-	
-	/**
-	 * determinize b
-	 * 
-	 * @param b
-	 * @param vars
-	 * @return
-	 */
-	protected BDD det(BDD b, BDDVarSet vars) {
-		// set new varorder where vars are at the end
-		Env.disableReorder();
-		int[] oldOrder = b.getFactory().getVarOrder();
-		List<Integer> newOrder = Arrays.stream(oldOrder).boxed().collect(Collectors.toList());
-		List<Integer> varsL = Arrays.stream(vars.toArray()).boxed().collect(Collectors.toList());
-		newOrder.removeAll(varsL);
-		newOrder.addAll(varsL);
-		b.getFactory().setVarOrder(newOrder.stream().mapToInt(i->i).toArray());
+    Thread t = new Thread(() -> translateAnddoWork());
+    t.start();
+    while (t.isAlive()) {
+      if (monitor.isCanceled()) {
+        t.stop();
+        printToConsole("User cancelled job.");
+        Env.resetEnv();
+        isUserCancelledJob = true;
+        return Status.CANCEL_STATUS;
+      }
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    computationTime = System.currentTimeMillis() - jobTime;
+    printToConsole("Computation time: " + computationTime + "ms");
+    return Status.OK_STATUS;
+  }
 
-		BDD det = b.id();
-		for (int var : vars.toArray()) {
-			BDD tmp = det;
-			det = det(tmp, var);
-			tmp.free();
-		}
-		//b.getFactory().setVarOrder(oldOrder);
-		return det;
-	}
-	
-	/**
-	 * determinizes b to a fresh BDD
-	 * @param b
-	 * @param var
-	 * @return
-	 */
-	private BDD det(BDD b, int var) {
+  /**
+   * determinize b
+   *
+   * @param b
+   * @param vars
+   * @return
+   */
+  protected BDD det(BDD b, BDDVarSet vars) {
+    // set new varorder where vars are at the end
+    Env.disableReorder();
+    int[] oldOrder = b.getFactory().getVarOrder();
+    List<Integer> newOrder = Arrays.stream(oldOrder).boxed().collect(Collectors.toList());
+    List<Integer> varsL = Arrays.stream(vars.toArray()).boxed().collect(Collectors.toList());
+    newOrder.removeAll(varsL);
+    newOrder.addAll(varsL);
+    b.getFactory().setVarOrder(newOrder.stream().mapToInt(i -> i).toArray());
 
-		if (b.isZero()) {
-			return b.id();
-		}
+    BDD det = b.id();
+    for (int var : vars.toArray()) {
+      BDD tmp = det;
+      det = det(tmp, var);
+      tmp.free();
+    }
+    // b.getFactory().setVarOrder(oldOrder);
+    return det;
+  }
 
-		if (b.isOne()) {
-			return b.getFactory().nithVar(var).id();
-		}
+  /**
+   * determinizes b to a fresh BDD
+   *
+   * @param b
+   * @param var
+   * @return
+   */
+  private BDD det(BDD b, int var) {
 
-		// var appears so make decision one option
-		// this can only work because of varorder
-		if (b.var() == var) {
-			BDD blow = b.low();
-			if (!blow.isZero()) {
-				// take low branch regardless of high branch        
-				BDD res = b.getFactory().ithVar(var);
-				res = res.ite(Env.FALSE(), blow);
-				blow.free();
-				return res;
-			} else {
-				// there is only one choice for b so it is fine
-				return b.id();
-			}
-		}
+    if (b.isZero()) {
+      return b.id();
+    }
 
+    if (b.isOne()) {
+      return b.getFactory().nithVar(var).id();
+    }
 
-		// var did not appear
-		if (passedVar(b, var)) {
-			BDD res = b.getFactory().ithVar(var);
-			res = res.ite(Env.FALSE(), b);
-			return res;
-		} else {
-			// determinize children
-			BDD res = b.getFactory().ithVar(b.var());
-			BDD bhi = b.high();
-			BDD high = det(bhi, var);
-			bhi.free();
-			BDD blo = b.low();
-			BDD low = det(blo, var);
-			blo.free();
-			res = res.ite(high, low);
-			high.free();
-			low.free();
-			return res;
-		}
-	}
-	
-	/**
-	 * did var only appear above b?
-	 * 
-	 * @param b
-	 * @param var
-	 * @return
-	 */
-	private boolean passedVar(BDD b, int var) {
-		int lvlB = b.getFactory().var2Level(b.var());
-		int lvlVar = b.getFactory().var2Level(var);
-		return lvlB > lvlVar;
-	}
-	
+    // var appears so make decision one option
+    // this can only work because of varorder
+    if (b.var() == var) {
+      BDD blow = b.low();
+      if (!blow.isZero()) {
+        // take low branch regardless of high branch
+        BDD res = b.getFactory().ithVar(var);
+        res = res.ite(Env.FALSE(), blow);
+        blow.free();
+        return res;
+      } else {
+        // there is only one choice for b so it is fine
+        return b.id();
+      }
+    }
 
-	/**
-	 * first translate GameInput into GameModel (this can already be expensive due
-	 * to BDD creation)
-	 */
-	private void translateAnddoWork() {
-		long start = System.currentTimeMillis();
-		try {
-			this.model = BDDGenerator.generateGameModel(gi, trace, PreferencePage.isGroupVarSelection(),
-					PreferencePage.getTransFuncSelection(false));
-			bddTranslationTime = System.currentTimeMillis() - start;
-			printToConsole("BDD translation: " + bddTranslationTime + "ms (" + Env.getBDDPackageInfo() + ")");
-			int sysNonAux = getVarNum(model.getSys().getNonAuxFields());
-			int sysAux = getVarNum(model.getSys().getAuxFields());
-			printToConsole("Statespace env: " + getVarNum(model.getEnv().getAllFields()) + ", sys: " + sysNonAux
-					+ ", aux: " + sysAux);
-			doWork();
-		} catch (BDDTranslationException e) {
-			if (e.getTraceId() >= 0) {
-				createMarker(e.getTraceId(), e.getMessage(), MarkerKind.CUSTOM_TEXT_ERROR);
-			}
-			printToConsole(e.getMessage());
-		} catch (Exception e) {
-			printToConsole(e.getMessage());
-			e.printStackTrace();
-		}
-	}
+    // var did not appear
+    if (passedVar(b, var)) {
+      BDD res = b.getFactory().ithVar(var);
+      res = res.ite(Env.FALSE(), b);
+      return res;
+    } else {
+      // determinize children
+      BDD res = b.getFactory().ithVar(b.var());
+      BDD bhi = b.high();
+      BDD high = det(bhi, var);
+      bhi.free();
+      BDD blo = b.low();
+      BDD low = det(blo, var);
+      blo.free();
+      res = res.ite(high, low);
+      high.free();
+      low.free();
+      return res;
+    }
+  }
 
-	/**
-	 * compute number of variables of player
-	 * 
-	 * @param p
-	 * @return
-	 */
-	private int getVarNum(List<ModuleBDDField> fs) {
-		int varNum = 0;
-		for (ModuleBDDField f : fs) {
-			varNum += f.support().size();
-		}
-		return varNum;
-	}
+  /**
+   * did var only appear above b?
+   *
+   * @param b
+   * @param var
+   * @return
+   */
+  private boolean passedVar(BDD b, int var) {
+    int lvlB = b.getFactory().var2Level(b.var());
+    int lvlVar = b.getFactory().var2Level(var);
+    return lvlB > lvlVar;
+  }
 
-	/**
-	 * do the actual work specific to the Job
-	 */
-	protected abstract void doWork();
+  /**
+   * first translate GameInput into GameModel (this can already be expensive due to BDD creation)
+   */
+  private void translateAnddoWork() {
+    long start = System.currentTimeMillis();
+    try {
+      this.model =
+          BDDGenerator.generateGameModel(
+              gi,
+              trace,
+              PreferencePage.isGroupVarSelection(),
+              PreferencePage.getTransFuncSelection(false));
+      bddTranslationTime = System.currentTimeMillis() - start;
+      printToConsole(
+          "BDD translation: " + bddTranslationTime + "ms (" + Env.getBDDPackageInfo() + ")");
+      int sysNonAux = getVarNum(model.getSys().getNonAuxFields());
+      int sysAux = getVarNum(model.getSys().getAuxFields());
+      printToConsole(
+          "Statespace env: "
+              + getVarNum(model.getEnv().getAllFields())
+              + ", sys: "
+              + sysNonAux
+              + ", aux: "
+              + sysAux);
+      doWork();
+    } catch (BDDTranslationException e) {
+      if (e.getTraceId() >= 0) {
+        createMarker(e.getTraceId(), e.getMessage(), MarkerKind.CUSTOM_TEXT_ERROR);
+      }
+      printToConsole(e.getMessage());
+    } catch (Exception e) {
+      printToConsole(e.getMessage());
+      e.printStackTrace();
+    }
+  }
 
-	public void setSpecFile(IFile f) {
-		specFile = f;
-	}
+  /**
+   * compute number of variables of player
+   *
+   * @param p
+   * @return
+   */
+  private int getVarNum(List<ModuleBDDField> fs) {
+    int varNum = 0;
+    for (ModuleBDDField f : fs) {
+      varNum += f.support().size();
+    }
+    return varNum;
+  }
 
-	public void setConsole(MessageConsole console) {
-		this.console = console;
-	}
+  /** do the actual work specific to the Job */
+  protected abstract void doWork();
 
-	/**
-	 * print a string to the console of the plug-in
-	 * 
-	 * @param s
-	 */
-	public void printToConsole(String s) {
-		consoleOutput += s + System.lineSeparator();
-		MessageConsoleStream mcs = console.newMessageStream();
-		mcs.println(s);
-		try {
-			mcs.flush();
-			mcs.close();
-		} catch (IOException e) {
-		}
-	}
+  public void setSpecFile(IFile f) {
+    specFile = f;
+  }
 
-	public void setGameInput(GameInput i) {
-		this.gi = i;
-	}
+  public void setConsole(MessageConsole console) {
+    this.console = console;
+  }
 
-	/**
-	 * deletes all markers of all SYNTECH MarkerKind(s)
-	 */
-	public void clearMarkers(IFile specIfile) {
-		traceIDListInCore.clear();
+  /**
+   * print a string to the console of the plug-in
+   *
+   * @param s
+   */
+  public void printToConsole(String s) {
+    consoleOutput += s + System.lineSeparator();
+    MessageConsoleStream mcs = console.newMessageStream();
+    mcs.println(s);
+    try {
+      mcs.flush();
+      mcs.close();
+    } catch (IOException e) {
+    }
+  }
 
-		for (MarkerKind k : MarkerKind.values()) {
-			try {
-				specIfile.deleteMarkers(k.getMarkerID(), true, IResource.DEPTH_ZERO);
-			} catch (CoreException e) {
-			}
-		}
-	}
+  public void setGameInput(GameInput i) {
+    this.gi = i;
+  }
 
-	public void clearMarkers() {
-		clearMarkers(specFile);
-	}
+  /** deletes all markers of all SYNTECH MarkerKind(s) */
+  public void clearMarkers(IFile specIfile) {
+    traceIDListInCore.clear();
 
-	/**
-	 * creates markers in the current file for a list of BehaviorInfos
-	 * 
-	 * @param infos
-	 * @param kind
-	 */
-	public void createMarker(List<BehaviorInfo> infos, MarkerKind kind) {
-		if (infos != null && infos.size() > 0) {
-			if (previousFileWithMarkers != null) {
-				clearMarkers(previousFileWithMarkers);
+    for (MarkerKind k : MarkerKind.values()) {
+      try {
+        specIfile.deleteMarkers(k.getMarkerID(), true, IResource.DEPTH_ZERO);
+      } catch (CoreException e) {
+      }
+    }
+  }
 
-			}
-			previousFileWithMarkers = specFile;
-		}
-		for (BehaviorInfo info : infos) {
-			createMarker(info.traceId, kind.getMessage(), kind);
-		}
-	}
+  public void clearMarkers() {
+    clearMarkers(specFile);
+  }
 
-	/**
-	 * create a marker for an element with the given traceId
-	 * 
-	 * @param traceId
-	 * @param message
-	 * @param kind
-	 */
-	public void createMarker(int traceId, String message, MarkerKind kind) {
-		EObject o = Tracer.getTarget(traceId);
-		traceIDListInCore.add(traceId);
-		if (o != null) {
-			INode node = NodeModelUtils.getNode(o);
-			try {
-				IMarker marker = specFile.createMarker(kind.getMarkerID());
-				marker.setAttribute(IMarker.MESSAGE, message);
-				marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_NORMAL);
-				marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO);
-				marker.setAttribute(IMarker.LOCATION, node.getStartLine());
-				marker.setAttribute(IMarker.CHAR_START, node.getOffset());
-				marker.setAttribute(IMarker.CHAR_END, node.getEndOffset());
-			} catch (CoreException e) {
-			}
-		}
-	}
+  /**
+   * creates markers in the current file for a list of BehaviorInfos
+   *
+   * @param infos
+   * @param kind
+   */
+  public void createMarker(List<BehaviorInfo> infos, MarkerKind kind) {
+    if (infos != null && infos.size() > 0) {
+      if (previousFileWithMarkers != null) {
+        clearMarkers(previousFileWithMarkers);
+      }
+      previousFileWithMarkers = specFile;
+    }
+    for (BehaviorInfo info : infos) {
+      createMarker(info.traceId, kind.getMessage(), kind);
+    }
+  }
 
-	public String getConsoleOutput() {
-		return this.consoleOutput;
-	}
+  /**
+   * create a marker for an element with the given traceId
+   *
+   * @param traceId
+   * @param message
+   * @param kind
+   */
+  public void createMarker(int traceId, String message, MarkerKind kind) {
+    EObject o = Tracer.getTarget(traceId);
+    traceIDListInCore.add(traceId);
+    if (o != null) {
+      INode node = NodeModelUtils.getNode(o);
+      try {
+        IMarker marker = specFile.createMarker(kind.getMarkerID());
+        marker.setAttribute(IMarker.MESSAGE, message);
+        marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_NORMAL);
+        marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO);
+        marker.setAttribute(IMarker.LOCATION, node.getStartLine());
+        marker.setAttribute(IMarker.CHAR_START, node.getOffset());
+        marker.setAttribute(IMarker.CHAR_END, node.getEndOffset());
+      } catch (CoreException e) {
+      }
+    }
+  }
 
-	public long getComputationTime() {
-		return this.computationTime;
-	}
+  public String getConsoleOutput() {
+    return this.consoleOutput;
+  }
 
-	public long getBddTranslationTime() {
-		return this.bddTranslationTime;
-	}
+  public long getComputationTime() {
+    return this.computationTime;
+  }
 
-	public boolean isUserCancelledJob() {
-		return this.isUserCancelledJob;
-	}
+  public long getBddTranslationTime() {
+    return this.bddTranslationTime;
+  }
 
-	public boolean isRealizable() {
-		return this.isRealizable;
-	}
+  public boolean isUserCancelledJob() {
+    return this.isUserCancelledJob;
+  }
 
-	public boolean isWellSeparated() {
-		return this.isWellSeparated;
-	}
+  public boolean isRealizable() {
+    return this.isRealizable;
+  }
 
-	public int getCoreSize() {
-		return this.coreSize;
-	}
+  public boolean isWellSeparated() {
+    return this.isWellSeparated;
+  }
 
-	public String getIssuesKind() {
-		return issuesKind;
-	}
+  public int getCoreSize() {
+    return this.coreSize;
+  }
 
-	public int getNumIssues() {
-		return numIssues;
-	}
+  public String getIssuesKind() {
+    return issuesKind;
+  }
 
-	public static List<Integer> getTraceIDListInCore() {
-		// find active ifile
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-		IEditorPart activeEditor = page.getActiveEditor();
-		IFile ifile;
-		if (activeEditor != null) {
-			IEditorInput input = activeEditor.getEditorInput();
-			if (input != null && input instanceof FileEditorInput) {
-				ifile = ((FileEditorInput) input).getFile();
+  public int getNumIssues() {
+    return numIssues;
+  }
 
-				if (ifile == null || !("spectra".equals(ifile.getFileExtension()))
-						|| (ifile != previousFileWithMarkers)) {
-					// return empty list. (We don't want to clear traceIDListInCore in case the user
-					// will open the previousFileWithMarkers again).
-					return new ArrayList<Integer>();
-				}
-			}
-		}
+  public static List<Integer> getTraceIDListInCore() {
+    // find active ifile
+    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+    IEditorPart activeEditor = page.getActiveEditor();
+    IFile ifile;
+    if (activeEditor != null) {
+      IEditorInput input = activeEditor.getEditorInput();
+      if (input != null && input instanceof FileEditorInput) {
+        ifile = ((FileEditorInput) input).getFile();
 
-		return traceIDListInCore;
-	}
+        if (ifile == null
+            || !("spectra".equals(ifile.getFileExtension()))
+            || (ifile != previousFileWithMarkers)) {
+          // return empty list. (We don't want to clear traceIDListInCore in case the user
+          // will open the previousFileWithMarkers again).
+          return new ArrayList<Integer>();
+        }
+      }
+    }
 
-	public void setTranslators(List<Translator> transList) {
-		this.translators = transList;
-	}
+    return traceIDListInCore;
+  }
 
-	@SuppressWarnings("unchecked")
-	public <T extends Translator> T getTranslator(Class<T> translatorClass) {
-		for (Translator t : translators) {
-			if (t.getClass().equals(translatorClass)) {
-				return (T) t;
-			}
-		}
-		return null;
-	}
+  public void setTranslators(List<Translator> transList) {
+    this.translators = transList;
+  }
 
-	public boolean needsBound() {
-		return false;
-	}
+  @SuppressWarnings("unchecked")
+  public <T extends Translator> T getTranslator(Class<T> translatorClass) {
+    for (Translator t : translators) {
+      if (t.getClass().equals(translatorClass)) {
+        return (T) t;
+      }
+    }
+    return null;
+  }
 
-	/**
-	 * If decomposed transitions are used, frees and resets to TRUE (restricted by
-	 * variable domain constraint) the single transition relations of both players
-	 */
-	public void resetSingleTrans() {
-		TransFuncType transFuncType = PreferencePage.getTransFuncSelection(false);
-		if (transFuncType != TransFuncType.SINGLE_FUNC) {
-			this.model.resetSingleTransFunc();
-		}
-	}
+  public boolean needsBound() {
+    return false;
+  }
 
+  /**
+   * If decomposed transitions are used, frees and resets to TRUE (restricted by variable domain
+   * constraint) the single transition relations of both players
+   */
+  public void resetSingleTrans() {
+    TransFuncType transFuncType = PreferencePage.getTransFuncSelection(false);
+    if (transFuncType != TransFuncType.SINGLE_FUNC) {
+      this.model.resetSingleTransFunc();
+    }
+  }
 }

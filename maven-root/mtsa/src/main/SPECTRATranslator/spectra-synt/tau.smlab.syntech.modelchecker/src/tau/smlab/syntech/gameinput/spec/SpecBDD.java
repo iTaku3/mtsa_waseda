@@ -17,13 +17,13 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab 
-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+DISCLAIMED. IN NO EVENT SHALL Tel Aviv University and Software Modeling Lab
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 package tau.smlab.syntech.gameinput.spec;
@@ -31,32 +31,24 @@ package tau.smlab.syntech.gameinput.spec;
 import net.sf.javabdd.BDD;
 import tau.smlab.syntech.jtlv.Env;
 
-/**
- * Specification encapsulating a BDD.
- */
+/** Specification encapsulating a BDD. */
 public class SpecBDD implements Spec {
   private BDD val = null;
   private String identifying_expr = "";
 
   /**
-   * <p>
    * A constructor for a leaf BDD specification, without a string representation.
-   * </p>
-   * 
-   * @param v
-   *          The evaluated BDD.
+   *
+   * @param v The evaluated BDD.
    */
   public SpecBDD(BDD v) {
     this.val = v;
   }
 
   /**
-   * <p>
    * Getter for the BDD value.
-   * </p>
-   * 
+   *
    * @return The BDD value.
-   * 
    * @see SpecBDD#toBDD()
    */
   public BDD getVal() {
@@ -81,10 +73,8 @@ public class SpecBDD implements Spec {
   @Override
   public String toString() {
     if (this.getVal() == null)
-      if (this.identifying_expr != "")
-        return "\"" + this.identifying_expr + "\"";
-      else
-        return "[!$#! Cannot Identify BDD Expression]";
+      if (this.identifying_expr != "") return "\"" + this.identifying_expr + "\"";
+      else return "[!$#! Cannot Identify BDD Expression]";
     return "#[" + Env.toNiceSignleLineString(val) + "]";
   }
 
@@ -104,10 +94,11 @@ public class SpecBDD implements Spec {
   public SpecBDD clone() throws CloneNotSupportedException {
     return new SpecBDD(this.getVal().id());
   }
-  
+
   public boolean isOne() {
     return val.isOne();
   }
+
   public boolean isZero() {
     return val.isZero();
   }

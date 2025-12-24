@@ -1,0 +1,830 @@
+const PodNum   = 20
+const RobotNum = 1
+
+range PodID   = 1..PodNum
+range RobotID = 1..RobotNum
+
+//robot1:ship
+//robot2:replenish
+set Robot = {robot1, robot2}
+set Area  = {shippingArea, boxGettingArea, itemGettingArea, packingArea}
+
+//Action Group
+set MoveActions = {[Robot].move[PodID], [Robot].move[Area]}
+set AreaActions = {ship, supplyBox, supplyItem, getItem, pack}
+
+set PickActions = {[Robot].pick[PodID], [Robot].pick[Area]}
+set PutActions = {[Robot].put[PodID], [Robot].put[Area]}
+set ArmActions = {PickActions, PutActions}
+set Robot1_PickActions = {['robot1].pick[PodID], ['robot1].pick[Area]}
+set Robot1_PutActions = {['robot1].put[PodID], ['robot1].put[Area]}
+set Robot1_ArmActions = {Robot1_PickActions, Robot1_PutActions}
+set Robot2_PickActions = {['robot2].pick[PodID], ['robot2].pick[Area]}
+set Robot2_PutActions = {['robot2].put[PodID], ['robot2].put[Area]}
+set Robot2_ArmActions = {Robot2_PickActions, Robot2_PutActions}
+
+set RequestActions = {reqReplenishItem, reqBringItem, reqBringBox, reqShip , replenish[PodID], bring[PodID]}
+set DoneActions = {doneReplenishItem, doneBringItem, doneBringBox, doneShip}
+
+set ShippingRobotActions = {['robot1].move[PodID], ['robot1].pick[PodID], ['robot1].put[PodID], ['robot1].move[Area], ['robot1].pick[Area], ['robot1].put[Area]}
+set ReplenishRobotActions = {['robot2].move[PodID], ['robot2].pick[PodID], ['robot2].put[PodID], ['robot2].move[Area], ['robot2].pick[Area], ['robot2].put[Area]}
+
+set ControllableActions = {MoveActions, ArmActions, RequestActions, DoneActions}
+set MonitorableActions  = {AreaActions}
+set AllActions = {MoveActions, AreaActions, ArmActions, RequestActions, DoneActions}
+
+//******************************************************************************************//
+// Environment Model
+//******************************************************************************************//
+INITIAL(N = 1)    = MOVEMENT[N],
+MOVEMENT[i:PodID] = (move[ii:PodID] -> MOVEMENT[ii]
+					 |move['shippingArea]    -> SHIP_AREA
+					 |move['boxGettingArea]  -> BOX_GET_AREA
+					 |move['itemGettingArea] -> ITEM_GET_AREA
+					 |move['packingArea]     -> PACK_AREA
+		             |pick[i] -> MOVEMENT[i]
+		             |put[i]  -> MOVEMENT[i]),
+SHIP_AREA     = (move[ii:PodID] -> MOVEMENT[ii]
+				|move['boxGettingArea]  -> BOX_GET_AREA
+				|move['itemGettingArea] -> ITEM_GET_AREA
+				|move['packingArea]     -> PACK_AREA
+				|pick['shippingArea] -> SHIP_AREA
+				|put['shippingArea] -> SHIP_AREA),
+BOX_GET_AREA  = (move[ii:PodID] -> MOVEMENT[ii]
+				|move['shippingArea]    -> SHIP_AREA
+				|move['itemGettingArea] -> ITEM_GET_AREA
+				|move['packingArea]     -> PACK_AREA
+				|pick['boxGettingArea] -> BOX_GET_AREA
+				|put['boxGettingArea] -> BOX_GET_AREA),
+ITEM_GET_AREA = (move[ii:PodID] -> MOVEMENT[ii]
+				|move['shippingArea]    -> SHIP_AREA
+				|move['boxGettingArea]  -> BOX_GET_AREA
+				|move['packingArea]     -> PACK_AREA
+				|pick['itemGettingArea] -> ITEM_GET_AREA
+				|put['itemGettingArea] -> ITEM_GET_AREA),
+PACK_AREA     = (move[ii:PodID] -> MOVEMENT[ii]
+				|move['shippingArea]    -> SHIP_AREA
+				|move['boxGettingArea]  -> BOX_GET_AREA
+				|move['itemGettingArea] -> ITEM_GET_AREA
+				|pick['packingArea] -> PACK_AREA
+				|put['packingArea] -> PACK_AREA).
+
+SHIP_AREA     = (ship -> SHIP_AREA).
+BOX_GET_AREA  = (supplyBox -> BOX_GET_AREA).
+ITEM_GET_AREA = ({supplyItem, getItem} -> ITEM_GET_AREA).
+PACK_AREA     = (pack -> PACK_AREA).
+
+REQUEST_1 = (reqReplenishItem -> replenish[PodID]  -> doneReplenishItem -> REQUEST_1).
+REQUEST_2 = (reqBringItem -> bring[PodID]  -> doneBringItem -> REQUEST_2).
+REQUEST_3 = (reqBringBox  -> doneBringBox -> REQUEST_3).
+REQUEST_4 = (reqShip      -> doneShip     -> REQUEST_4).
+
+||KIVA_System = (['robot1]:INITIAL(1) || ['robot2]:INITIAL(PodNum) || SHIP_AREA || BOX_GET_AREA || ITEM_GET_AREA || PACK_AREA || REQUEST_1 || REQUEST_2 || REQUEST_3 || REQUEST_4).
+
+//*****************************************************************************
+// Requirement
+//*****************************************************************************
+
+//set Area = {shippingArea, boxGettingArea, itemGettingArea, packingArea}
+//set AreaActions = {ship, supplyBox, supplyItem, ship}
+//set RequestActions = {reqReplenishItem, reqBringItem, reqBringBox, reqShip}
+
+/*Fluent*/
+fluent REPLENISH[i:PodID] = <replenish[i], ['robot2].move[i]>
+fluent BRING[i:PodID]     = <bring[i], ['robot2].move[i]>
+
+fluent PROCESS_REQUEST    = <RequestActions, DoneActions>
+fluent PROCESS_REPLENISH_ITEM = <reqReplenishItem, doneReplenishItem>
+fluent PROCESS_BRING_ITEM = <reqBringItem, doneBringItem>
+fluent PROCESS_BRING_BOX  = <reqBringBox, doneBringBox>
+fluent PROCESS_SHIP       = <reqShip, doneShip>
+
+fluent REQ_SHIP_TIMEING = <pack, doneShip>
+
+fluent SHIP_TIMING   = <['robot1].put['shippingArea], doneShip>
+fluent BOX_TIMING    = <['robot1].move['boxGettingArea], ['robot1].pick['boxGettingArea]>
+fluent ITEM_TIMING   = <['robot2].put['itemGettingArea], ['robot2].pick['itemGettingArea]>
+fluent GET_TIMING_1  = <['robot2].put['packingArea], ['robot2].pick['packingArea]>
+fluent GET_TIMING_2  = <doneBringBox, ['robot2].put['packingArea]>
+fluent PACK_TIMING_1 = <doneBringBox, reqShip>
+fluent PACK_TIMING_2 = <doneBringItem, reqShip>
+
+fluent RETURN[i:PodID]   = <['robot2].pick[i], ['robot2].move[i]>
+
+/*FLTL*/
+// Two Robot
+assert SHIP_ROBOT_RULE  = !{['robot1].move['itemGettingArea]}
+assert REPLENISH_ROBOT_RULE = !{['robot2].move['shippingArea], ['robot2].move['boxGettingArea]}
+
+assert REQUEST_TIMING_1 = (reqBringBox  -> X(!reqShip      W doneBringBox))
+assert REQUEST_TIMING_2 = (reqShip      -> X(!reqBringBox  W doneShip))
+assert REQUEST_TIMING_3 = (reqReplenishItem -> X(!reqBringItem W doneReplenishItem))
+assert REQUEST_TIMING_4 = (reqBringItem -> X(!reqReplenishItem W doneBringItem))
+
+// Single Robot
+assert REQUEST_ONLY_1 = (!(PROCESS_SHIP || PROCESS_BRING_BOX)        -> !{['robot1].move[PodID], ['robot1].move[Area], ['robot1].pick[PodID], ['robot1].put[PodID], ['robot1].pick[Area], ['robot1].put[Area]})
+assert REQUEST_ONLY_2 = (!(PROCESS_REPLENISH_ITEM || PROCESS_BRING_ITEM) -> !{['robot2].move[PodID], ['robot2].move[Area], ['robot2].pick[PodID], ['robot2].put[PodID], ['robot2].pick[Area], ['robot2].put[Area]})
+
+assert ROBOT1_ARM_RULE_1 = (!(PROCESS_SHIP || PROCESS_BRING_BOX) -> !{Robot1_ArmActions})
+assert ROBOT1_ARM_RULE_2 = ({Robot1_PickActions} -> X(!{Robot1_PickActions} W {Robot1_PutActions}))
+assert ROBOT1_ARM_RULE_3 = ({Robot1_PutActions}  -> X(!{Robot1_PutActions} W {Robot1_PickActions}))
+assert ROBOT2_ARM_RULE_1 = (!(PROCESS_REPLENISH_ITEM || PROCESS_BRING_ITEM) -> !{Robot2_ArmActions})
+assert ROBOT2_ARM_RULE_2 = ({Robot2_PickActions} -> X(!{Robot2_PickActions} W {Robot2_PutActions}))
+assert ROBOT2_ARM_RULE_3 = ({Robot2_PutActions}  -> X(!{Robot2_PutActions} W {Robot2_PickActions}))
+
+//assert REPLENISH_RULE_1 = (REPLENISH[PodID] -> X(!{replenish[PodID]} W ['robot2].move[PodID]) && !['robot2].move[PodID])
+assert REPLENISH_RULE_1 = (REPLENISH[PodID] -> !['robot2].move[PodID])
+assert REPLENISH_RULE_2 = (replenish[PodID] -> X(!{{ReplenishRobotActions}\{['robot2].move[PodID]}} W ['robot2].move[PodID]))
+assert REPLENISH_RULE01 = (REPLENISH[1]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE02 = (REPLENISH[2]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE03 = (REPLENISH[3]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE04 = (REPLENISH[4]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE05 = (REPLENISH[5]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE06 = (REPLENISH[6]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE07 = (REPLENISH[7]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE08 = (REPLENISH[8]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE09 = (REPLENISH[9]  -> !['robot2].move[PodID])
+assert REPLENISH_RULE10 = (REPLENISH[10] -> !['robot2].move[PodID])
+assert REPLENISH_RULE11 = (REPLENISH[11] -> !['robot2].move[PodID])
+assert REPLENISH_RULE12 = (REPLENISH[12] -> !['robot2].move[PodID])
+assert REPLENISH_RULE13 = (REPLENISH[13] -> !['robot2].move[PodID])
+assert REPLENISH_RULE14 = (REPLENISH[14] -> !['robot2].move[PodID])
+assert REPLENISH_RULE15 = (REPLENISH[15] -> !['robot2].move[PodID])
+assert REPLENISH_RULE16 = (REPLENISH[16] -> !['robot2].move[PodID])
+assert REPLENISH_RULE17 = (REPLENISH[17] -> !['robot2].move[PodID])
+assert REPLENISH_RULE18 = (REPLENISH[18] -> !['robot2].move[PodID])
+assert REPLENISH_RULE19 = (REPLENISH[19] -> !['robot2].move[PodID])
+assert REPLENISH_RULE20 = (REPLENISH[20] -> !['robot2].move[PodID])
+assert REPLENISH_RULE21 = (REPLENISH[21] -> !['robot2].move[PodID])
+assert REPLENISH_RULE22 = (REPLENISH[22] -> !['robot2].move[PodID])
+assert REPLENISH_RULE23 = (REPLENISH[23] -> !['robot2].move[PodID])
+assert REPLENISH_RULE24 = (REPLENISH[24] -> !['robot2].move[PodID])
+assert REPLENISH_RULE25 = (REPLENISH[25] -> !['robot2].move[PodID])
+assert REPLENISH_RULE26 = (REPLENISH[26] -> !['robot2].move[PodID])
+assert REPLENISH_RULE27 = (REPLENISH[27] -> !['robot2].move[PodID])
+assert REPLENISH_RULE28 = (REPLENISH[28] -> !['robot2].move[PodID])
+assert REPLENISH_RULE29 = (REPLENISH[29] -> !['robot2].move[PodID])
+assert REPLENISH_RULE30 = (REPLENISH[30] -> !['robot2].move[PodID])
+assert REPLENISH_RULE31 = (REPLENISH[31] -> !['robot2].move[PodID])
+assert REPLENISH_RULE32 = (REPLENISH[32] -> !['robot2].move[PodID])
+assert REPLENISH_RULE33 = (REPLENISH[33] -> !['robot2].move[PodID])
+assert REPLENISH_RULE34 = (REPLENISH[34] -> !['robot2].move[PodID])
+assert REPLENISH_RULE35 = (REPLENISH[35] -> !['robot2].move[PodID])
+assert REPLENISH_RULE36 = (REPLENISH[36] -> !['robot2].move[PodID])
+assert REPLENISH_RULE37 = (REPLENISH[37] -> !['robot2].move[PodID])
+assert REPLENISH_RULE38 = (REPLENISH[38] -> !['robot2].move[PodID])
+assert REPLENISH_RULE39 = (REPLENISH[39] -> !['robot2].move[PodID])
+assert REPLENISH_RULE40 = (REPLENISH[40] -> !['robot2].move[PodID])
+assert REPLENISH_RULE41 = (REPLENISH[41] -> !['robot2].move[PodID])
+assert REPLENISH_RULE42 = (REPLENISH[42] -> !['robot2].move[PodID])
+assert REPLENISH_RULE43 = (REPLENISH[43] -> !['robot2].move[PodID])
+assert REPLENISH_RULE44 = (REPLENISH[44] -> !['robot2].move[PodID])
+assert REPLENISH_RULE45 = (REPLENISH[45] -> !['robot2].move[PodID])
+assert REPLENISH_RULE46 = (REPLENISH[46] -> !['robot2].move[PodID])
+assert REPLENISH_RULE47 = (REPLENISH[47] -> !['robot2].move[PodID])
+assert REPLENISH_RULE48 = (REPLENISH[48] -> !['robot2].move[PodID])
+assert REPLENISH_RULE49 = (REPLENISH[49] -> !['robot2].move[PodID])
+assert REPLENISH_RULE50 = (REPLENISH[50] -> !['robot2].move[PodID])
+
+//assert BRING_RULE_1 = (BRING[PodID] -> X(!{bring[PodID]} W ['robot2].move[PodID]) && !['robot2].move[PodID])
+assert BRING_RULE_1 = (BRING[PodID] -> !['robot2].move[PodID])
+assert BRING_RULE_2 = (bring[PodID] -> X(!{{ReplenishRobotActions}\{['robot2].move[PodID]}} W ['robot2].move[PodID]))
+assert BRING_RULE01 = (BRING[1]  -> !['robot2].move[PodID])
+assert BRING_RULE02 = (BRING[2]  -> !['robot2].move[PodID])
+assert BRING_RULE03 = (BRING[3]  -> !['robot2].move[PodID])
+assert BRING_RULE04 = (BRING[4]  -> !['robot2].move[PodID])
+assert BRING_RULE05 = (BRING[5]  -> !['robot2].move[PodID])
+assert BRING_RULE06 = (BRING[6]  -> !['robot2].move[PodID])
+assert BRING_RULE07 = (BRING[7]  -> !['robot2].move[PodID])
+assert BRING_RULE08 = (BRING[8]  -> !['robot2].move[PodID])
+assert BRING_RULE09 = (BRING[9]  -> !['robot2].move[PodID])
+assert BRING_RULE10 = (BRING[10] -> !['robot2].move[PodID])
+assert BRING_RULE11 = (BRING[11] -> !['robot2].move[PodID])
+assert BRING_RULE12 = (BRING[12] -> !['robot2].move[PodID])
+assert BRING_RULE13 = (BRING[13] -> !['robot2].move[PodID])
+assert BRING_RULE14 = (BRING[14] -> !['robot2].move[PodID])
+assert BRING_RULE15 = (BRING[15] -> !['robot2].move[PodID])
+assert BRING_RULE16 = (BRING[16] -> !['robot2].move[PodID])
+assert BRING_RULE17 = (BRING[17] -> !['robot2].move[PodID])
+assert BRING_RULE18 = (BRING[18] -> !['robot2].move[PodID])
+assert BRING_RULE19 = (BRING[19] -> !['robot2].move[PodID])
+assert BRING_RULE20 = (BRING[20] -> !['robot2].move[PodID])
+assert BRING_RULE21 = (BRING[21] -> !['robot2].move[PodID])
+assert BRING_RULE22 = (BRING[22] -> !['robot2].move[PodID])
+assert BRING_RULE23 = (BRING[23] -> !['robot2].move[PodID])
+assert BRING_RULE24 = (BRING[24] -> !['robot2].move[PodID])
+assert BRING_RULE25 = (BRING[25] -> !['robot2].move[PodID])
+assert BRING_RULE26 = (BRING[26] -> !['robot2].move[PodID])
+assert BRING_RULE27 = (BRING[27] -> !['robot2].move[PodID])
+assert BRING_RULE28 = (BRING[28] -> !['robot2].move[PodID])
+assert BRING_RULE29 = (BRING[29] -> !['robot2].move[PodID])
+assert BRING_RULE30 = (BRING[30] -> !['robot2].move[PodID])
+assert BRING_RULE31 = (BRING[31] -> !['robot2].move[PodID])
+assert BRING_RULE32 = (BRING[32] -> !['robot2].move[PodID])
+assert BRING_RULE33 = (BRING[33] -> !['robot2].move[PodID])
+assert BRING_RULE34 = (BRING[34] -> !['robot2].move[PodID])
+assert BRING_RULE35 = (BRING[35] -> !['robot2].move[PodID])
+assert BRING_RULE36 = (BRING[36] -> !['robot2].move[PodID])
+assert BRING_RULE37 = (BRING[37] -> !['robot2].move[PodID])
+assert BRING_RULE38 = (BRING[38] -> !['robot2].move[PodID])
+assert BRING_RULE39 = (BRING[39] -> !['robot2].move[PodID])
+assert BRING_RULE40 = (BRING[40] -> !['robot2].move[PodID])
+assert BRING_RULE41 = (BRING[41] -> !['robot2].move[PodID])
+assert BRING_RULE42 = (BRING[42] -> !['robot2].move[PodID])
+assert BRING_RULE43 = (BRING[43] -> !['robot2].move[PodID])
+assert BRING_RULE44 = (BRING[44] -> !['robot2].move[PodID])
+assert BRING_RULE45 = (BRING[45] -> !['robot2].move[PodID])
+assert BRING_RULE46 = (BRING[46] -> !['robot2].move[PodID])
+assert BRING_RULE47 = (BRING[47] -> !['robot2].move[PodID])
+assert BRING_RULE48 = (BRING[48] -> !['robot2].move[PodID])
+assert BRING_RULE49 = (BRING[49] -> !['robot2].move[PodID])
+assert BRING_RULE50 = (BRING[50] -> !['robot2].move[PodID])
+
+assert AREA_RULE_1 = (!SHIP_TIMING   -> !ship)
+assert AREA_RULE_2 = (!BOX_TIMING    -> !supplyBox)
+assert AREA_RULE_3 = (!ITEM_TIMING   -> !supplyItem)
+assert AREA_RULE_4 = (!(GET_TIMING_1 && !GET_TIMING_2 && PROCESS_BRING_ITEM) -> !getItem)
+assert AREA_RULE_5 = (!PACK_TIMING_1 -> !pack)
+assert AREA_RULE_6 = (!PACK_TIMING_2 -> !pack)
+assert AREA_RULE_7 = (pack -> X(!pack W doneBringBox))
+assert AREA_RULE_8 = (pack -> X(!pack W doneBringItem))
+
+set ReplenishItemActions = {reqReplenishItem, replenish[PodID], ['robot2].move[PodID], ['robot2].pick[PodID], ['robot2].move['itemGettingArea], ['robot2].put['itemGettingArea], 
+						supplyItem, ['robot2].pick['itemGettingArea], /*['robot2].move[PodID],*/ ['robot2].put[PodID], doneReplenishItem}
+assert REPLENISH_ITEM_RULE_1 = (PROCESS_REPLENISH_ITEM -> !{{ReplenishRobotActions}\{ReplenishItemActions}})
+assert REPLENISH_ITEM_RULE_2 = (reqReplenishItem -> X(!{{ReplenishRobotActions}\{replenish[PodID]}} W replenish[PodID]))
+assert REPLENISH_ITEM_RULE_3 = (reqReplenishItem -> X(!{['robot2].pick[PodID], ['robot2].pick[Area]} W ['robot2].move[PodID]))
+assert REPLENISH_ITEM_RULE_4 = ((PROCESS_REPLENISH_ITEM && ['robot2].move[PodID]) -> X(!{['robot2].move[PodID], ['robot2].move[Area]} W {['robot2].pick[PodID], ['robot2].put[PodID]}))
+assert REPLENISH_ITEM_RULE_5 = (reqReplenishItem -> X(!['robot2].put[PodID] W ['robot2].pick[PodID]))
+assert REPLENISH_ITEM_RULE_6 = ((PROCESS_REPLENISH_ITEM && ['robot2].pick[PodID]) -> X(!{{ReplenishRobotActions}\{['robot2].move['itemGettingArea]}} W ['robot2].move['itemGettingArea]))
+assert REPLENISH_ITEM_RULE_7 = (['robot2].move['itemGettingArea] -> X(!['robot2].move[PodID] W ['robot2].pick['itemGettingArea]))
+assert REPLENISH_ITEM_RULE_8 = (['robot2].move['itemGettingArea] -> X(!['robot2].pick['itemGettingArea] W supplyItem))
+assert REPLENISH_ITEM_RULE_9 = (supplyItem -> X(!supplyItem W doneReplenishItem))
+assert REPLENISH_ITEM_RULE_10 = (['robot2].pick['itemGettingArea] -> X(!['robot2].put['itemGettingArea] W doneReplenishItem))
+assert REPLENISH_ITEM_RULE_11 = ((PROCESS_REPLENISH_ITEM && RETURN[PodID]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE_12 = ((PROCESS_REPLENISH_ITEM && ['robot2].put[PodID]) -> X(!{{ReplenishRobotActions}\{doneReplenishItem}} W doneReplenishItem))
+assert REPLENISH_ITEM_RULE_13 = ((PROCESS_REPLENISH_ITEM && reqReplenishItem) -> X(!doneReplenishItem W ['robot2].put[PodID]))
+
+assert REPLENISH_ITEM_RULE01_11 = ((PROCESS_REPLENISH_ITEM && RETURN[1]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE02_11 = ((PROCESS_REPLENISH_ITEM && RETURN[2]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE03_11 = ((PROCESS_REPLENISH_ITEM && RETURN[3]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE04_11 = ((PROCESS_REPLENISH_ITEM && RETURN[4]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE05_11 = ((PROCESS_REPLENISH_ITEM && RETURN[5]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE06_11 = ((PROCESS_REPLENISH_ITEM && RETURN[6]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE07_11 = ((PROCESS_REPLENISH_ITEM && RETURN[7]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE08_11 = ((PROCESS_REPLENISH_ITEM && RETURN[8]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE09_11 = ((PROCESS_REPLENISH_ITEM && RETURN[9]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE10_11 = ((PROCESS_REPLENISH_ITEM && RETURN[10]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE11_11 = ((PROCESS_REPLENISH_ITEM && RETURN[11]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE12_11 = ((PROCESS_REPLENISH_ITEM && RETURN[12]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE13_11 = ((PROCESS_REPLENISH_ITEM && RETURN[13]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE14_11 = ((PROCESS_REPLENISH_ITEM && RETURN[14]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE15_11 = ((PROCESS_REPLENISH_ITEM && RETURN[15]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE16_11 = ((PROCESS_REPLENISH_ITEM && RETURN[16]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE17_11 = ((PROCESS_REPLENISH_ITEM && RETURN[17]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE18_11 = ((PROCESS_REPLENISH_ITEM && RETURN[18]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE19_11 = ((PROCESS_REPLENISH_ITEM && RETURN[19]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE20_11 = ((PROCESS_REPLENISH_ITEM && RETURN[20]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE21_11 = ((PROCESS_REPLENISH_ITEM && RETURN[21]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE22_11 = ((PROCESS_REPLENISH_ITEM && RETURN[22]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE23_11 = ((PROCESS_REPLENISH_ITEM && RETURN[23]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE24_11 = ((PROCESS_REPLENISH_ITEM && RETURN[24]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE25_11 = ((PROCESS_REPLENISH_ITEM && RETURN[25]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE26_11 = ((PROCESS_REPLENISH_ITEM && RETURN[26]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE27_11 = ((PROCESS_REPLENISH_ITEM && RETURN[27]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE28_11 = ((PROCESS_REPLENISH_ITEM && RETURN[28]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE29_11 = ((PROCESS_REPLENISH_ITEM && RETURN[29]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE30_11 = ((PROCESS_REPLENISH_ITEM && RETURN[30]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE31_11 = ((PROCESS_REPLENISH_ITEM && RETURN[31]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE32_11 = ((PROCESS_REPLENISH_ITEM && RETURN[32]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE33_11 = ((PROCESS_REPLENISH_ITEM && RETURN[33]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE34_11 = ((PROCESS_REPLENISH_ITEM && RETURN[34]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE35_11 = ((PROCESS_REPLENISH_ITEM && RETURN[35]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE36_11 = ((PROCESS_REPLENISH_ITEM && RETURN[36]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE37_11 = ((PROCESS_REPLENISH_ITEM && RETURN[37]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE38_11 = ((PROCESS_REPLENISH_ITEM && RETURN[38]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE39_11 = ((PROCESS_REPLENISH_ITEM && RETURN[39]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE40_11 = ((PROCESS_REPLENISH_ITEM && RETURN[40]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE41_11 = ((PROCESS_REPLENISH_ITEM && RETURN[41]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE42_11 = ((PROCESS_REPLENISH_ITEM && RETURN[42]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE43_11 = ((PROCESS_REPLENISH_ITEM && RETURN[43]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE44_11 = ((PROCESS_REPLENISH_ITEM && RETURN[44]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE45_11 = ((PROCESS_REPLENISH_ITEM && RETURN[45]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE46_11 = ((PROCESS_REPLENISH_ITEM && RETURN[46]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE47_11 = ((PROCESS_REPLENISH_ITEM && RETURN[47]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE48_11 = ((PROCESS_REPLENISH_ITEM && RETURN[48]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE49_11 = ((PROCESS_REPLENISH_ITEM && RETURN[49]) -> !['robot2].move[PodID])
+assert REPLENISH_ITEM_RULE50_11 = ((PROCESS_REPLENISH_ITEM && RETURN[50]) -> !['robot2].move[PodID])
+
+set BringItemActions = {reqBringItem, bring[PodID], ['robot2].move[PodID], ['robot2].pick[PodID], ['robot2].move['packingArea], ['robot2].put['packingArea], 
+						getItem, ['robot2].pick['packingArea], /*['robot2].move[PodID],*/ ['robot2].put[PodID], doneBringItem}
+assert BRING_ITEM_RULE_1 = (PROCESS_BRING_ITEM -> !{{ReplenishRobotActions}\{BringItemActions}})
+assert BRING_ITEM_RULE_2 = (reqBringItem -> X(!{{ReplenishRobotActions}\{bring[PodID]}} W bring[PodID]))
+assert BRING_ITEM_RULE_3 = (reqBringItem -> X(!{['robot2].pick[PodID], ['robot2].pick[Area]} W ['robot2].move[PodID]))
+assert BRING_ITEM_RULE_4 = ((PROCESS_BRING_ITEM && ['robot2].move[PodID]) -> X(!{['robot2].move[PodID], ['robot2].move[Area]} W {['robot2].pick[PodID], ['robot2].put[PodID]}))
+assert BRING_ITEM_RULE_5 = (reqBringItem -> X(!['robot2].put[PodID] W ['robot2].pick[PodID]))
+assert BRING_ITEM_RULE_6 = ((PROCESS_BRING_ITEM && ['robot2].pick[PodID]) -> X(!{{ReplenishRobotActions}\{['robot2].move['packingArea]}} W ['robot2].move['packingArea]))
+assert BRING_ITEM_RULE_7 = ((PROCESS_BRING_ITEM && ['robot2].move['packingArea]) -> X(!['robot2].move[PodID] W ['robot2].pick['packingArea]))
+assert BRING_ITEM_RULE_8 = ((PROCESS_BRING_ITEM && ['robot2].move['packingArea]) -> X(!['robot2].pick['packingArea] W getItem))
+assert BRING_ITEM_RULE_9 = (getItem -> X(!getItem W doneBringItem))
+assert BRING_ITEM_RULE_10 = ((PROCESS_BRING_ITEM && ['robot2].pick['packingArea]) -> X(!['robot2].put['packingArea] W doneBringItem))
+assert BRING_ITEM_RULE_11 = ((PROCESS_BRING_ITEM && RETURN[PodID]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE_12 = ((PROCESS_BRING_ITEM && ['robot2].put[PodID]) -> X(!{{ReplenishRobotActions}\{doneBringItem}} W doneBringItem))
+assert BRING_ITEM_RULE_13 = ((PROCESS_BRING_ITEM && reqBringItem) -> X(!doneBringItem W ['robot2].put[PodID]))
+
+assert BRING_ITEM_RULE01_11 = ((PROCESS_BRING_ITEM && RETURN[1]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE02_11 = ((PROCESS_BRING_ITEM && RETURN[2]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE03_11 = ((PROCESS_BRING_ITEM && RETURN[3]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE04_11 = ((PROCESS_BRING_ITEM && RETURN[4]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE05_11 = ((PROCESS_BRING_ITEM && RETURN[5]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE06_11 = ((PROCESS_BRING_ITEM && RETURN[6]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE07_11 = ((PROCESS_BRING_ITEM && RETURN[7]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE08_11 = ((PROCESS_BRING_ITEM && RETURN[8]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE09_11 = ((PROCESS_BRING_ITEM && RETURN[9]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE10_11 = ((PROCESS_BRING_ITEM && RETURN[10]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE11_11 = ((PROCESS_BRING_ITEM && RETURN[11]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE12_11 = ((PROCESS_BRING_ITEM && RETURN[12]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE13_11 = ((PROCESS_BRING_ITEM && RETURN[13]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE14_11 = ((PROCESS_BRING_ITEM && RETURN[14]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE15_11 = ((PROCESS_BRING_ITEM && RETURN[15]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE16_11 = ((PROCESS_BRING_ITEM && RETURN[16]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE17_11 = ((PROCESS_BRING_ITEM && RETURN[17]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE18_11 = ((PROCESS_BRING_ITEM && RETURN[18]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE19_11 = ((PROCESS_BRING_ITEM && RETURN[19]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE20_11 = ((PROCESS_BRING_ITEM && RETURN[20]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE21_11 = ((PROCESS_BRING_ITEM && RETURN[21]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE22_11 = ((PROCESS_BRING_ITEM && RETURN[22]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE23_11 = ((PROCESS_BRING_ITEM && RETURN[23]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE24_11 = ((PROCESS_BRING_ITEM && RETURN[24]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE25_11 = ((PROCESS_BRING_ITEM && RETURN[25]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE26_11 = ((PROCESS_BRING_ITEM && RETURN[26]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE27_11 = ((PROCESS_BRING_ITEM && RETURN[27]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE28_11 = ((PROCESS_BRING_ITEM && RETURN[28]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE29_11 = ((PROCESS_BRING_ITEM && RETURN[29]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE30_11 = ((PROCESS_BRING_ITEM && RETURN[30]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE31_11 = ((PROCESS_BRING_ITEM && RETURN[31]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE32_11 = ((PROCESS_BRING_ITEM && RETURN[32]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE33_11 = ((PROCESS_BRING_ITEM && RETURN[33]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE34_11 = ((PROCESS_BRING_ITEM && RETURN[34]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE35_11 = ((PROCESS_BRING_ITEM && RETURN[35]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE36_11 = ((PROCESS_BRING_ITEM && RETURN[36]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE37_11 = ((PROCESS_BRING_ITEM && RETURN[37]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE38_11 = ((PROCESS_BRING_ITEM && RETURN[38]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE39_11 = ((PROCESS_BRING_ITEM && RETURN[39]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE40_11 = ((PROCESS_BRING_ITEM && RETURN[40]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE41_11 = ((PROCESS_BRING_ITEM && RETURN[41]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE42_11 = ((PROCESS_BRING_ITEM && RETURN[42]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE43_11 = ((PROCESS_BRING_ITEM && RETURN[43]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE44_11 = ((PROCESS_BRING_ITEM && RETURN[44]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE45_11 = ((PROCESS_BRING_ITEM && RETURN[45]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE46_11 = ((PROCESS_BRING_ITEM && RETURN[46]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE47_11 = ((PROCESS_BRING_ITEM && RETURN[47]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE48_11 = ((PROCESS_BRING_ITEM && RETURN[48]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE49_11 = ((PROCESS_BRING_ITEM && RETURN[49]) -> !['robot2].move[PodID])
+assert BRING_ITEM_RULE50_11 = ((PROCESS_BRING_ITEM && RETURN[50]) -> !['robot2].move[PodID])
+
+set BringBoxActions = {reqBringBox, ['robot1].move['boxGettingArea], supplyBox,  ['robot1].pick['boxGettingArea],  ['robot1].move['packingArea],  ['robot1].put['packingArea], doneBringBox}
+assert BRING_BOX_RULE_1 = (PROCESS_BRING_BOX -> !{{ShippingRobotActions}\{BringBoxActions}})
+assert BRING_BOX_RULE_2 = (reqBringBox -> X(!['robot1].move['packingArea] W ['robot1].pick['boxGettingArea]))
+assert BRING_BOX_RULE_3 = (reqBringBox -> X(!['robot1].pick['boxGettingArea] W supplyBox))
+assert BRING_BOX_RULE_4 = (supplyBox   -> X(!supplyBox W ['robot1].pick['boxGettingArea]))
+assert BRING_BOX_RULE_5 = (['robot1].pick['boxGettingArea] -> X(!['robot1].move['boxGettingArea] W doneBringBox))
+assert BRING_BOX_RULE_6 = (reqBringBox -> X(!doneBringBox W ['robot1].put['packingArea]))
+
+set ShipActions = {reqShip,  ['robot1].move['packingArea],  ['robot1].pick['packingArea],  ['robot1].move['shippingArea],  ['robot1].put['shippingArea], ship, doneShip}
+assert SHIP_RULE_0 = (!REQ_SHIP_TIMEING -> !reqShip)
+assert SHIP_RULE_1 = (PROCESS_SHIP -> !{{ShippingRobotActions}\{ShipActions}})
+assert SHIP_RULE_2 = (reqShip -> X(!['robot1].move['shippingArea] W ['robot1].pick['packingArea]))
+assert SHIP_RULE_3 = (['robot1].move['shippingArea] -> X(!['robot1].move['packingArea] W doneShip))
+assert SHIP_RULE_4 = (reqShip -> X(!ship W ['robot1].put['shippingArea]))
+assert SHIP_RULE_5 = (ship -> X(!ship W doneShip))
+assert SHIP_RULE_6 = (reqShip -> X(!doneShip W ship))
+
+/*LTL Property*/
+ltl_property P_SHIP_ROBOT_RULE = [](SHIP_ROBOT_RULE)
+ltl_property P_REPLENISH_ROBOT_RULE = [](REPLENISH_ROBOT_RULE)
+
+ltl_property P_REQUEST_TIMING_1 = [](REQUEST_TIMING_1)
+ltl_property P_REQUEST_TIMING_2 = [](REQUEST_TIMING_2)
+ltl_property P_REQUEST_TIMING_3 = [](REQUEST_TIMING_3)
+ltl_property P_REQUEST_TIMING_4 = [](REQUEST_TIMING_4)
+
+ltl_property P_REQUEST_ONLY_1 = [](REQUEST_ONLY_1)
+ltl_property P_REQUEST_ONLY_2 = [](REQUEST_ONLY_2)
+
+ltl_property P_ROBOT1_ARM_RULE_1 = [](ROBOT1_ARM_RULE_1)
+ltl_property P_ROBOT1_ARM_RULE_2 = [](ROBOT1_ARM_RULE_2)
+ltl_property P_ROBOT1_ARM_RULE_3 = [](ROBOT1_ARM_RULE_3)
+ltl_property P_ROBOT2_ARM_RULE_1 = [](ROBOT2_ARM_RULE_1)
+ltl_property P_ROBOT2_ARM_RULE_2 = [](ROBOT2_ARM_RULE_2)
+ltl_property P_ROBOT2_ARM_RULE_3 = [](ROBOT2_ARM_RULE_3)
+
+ltl_property P_REPLENISH_RULE_1 = [](REPLENISH_RULE_1)
+ltl_property P_REPLENISH_RULE_2 = [](REPLENISH_RULE_2)
+
+ltl_property P_REPLENISH_RULE01 = [](REPLENISH_RULE01)
+ltl_property P_REPLENISH_RULE02 = [](REPLENISH_RULE02)
+ltl_property P_REPLENISH_RULE03 = [](REPLENISH_RULE03)
+ltl_property P_REPLENISH_RULE04 = [](REPLENISH_RULE04)
+ltl_property P_REPLENISH_RULE05 = [](REPLENISH_RULE05)
+ltl_property P_REPLENISH_RULE06 = [](REPLENISH_RULE06)
+ltl_property P_REPLENISH_RULE07 = [](REPLENISH_RULE07)
+ltl_property P_REPLENISH_RULE08 = [](REPLENISH_RULE08)
+ltl_property P_REPLENISH_RULE09 = [](REPLENISH_RULE09)
+ltl_property P_REPLENISH_RULE10 = [](REPLENISH_RULE10)
+ltl_property P_REPLENISH_RULE11 = [](REPLENISH_RULE11)
+ltl_property P_REPLENISH_RULE12 = [](REPLENISH_RULE12)
+ltl_property P_REPLENISH_RULE13 = [](REPLENISH_RULE13)
+ltl_property P_REPLENISH_RULE14 = [](REPLENISH_RULE14)
+ltl_property P_REPLENISH_RULE15 = [](REPLENISH_RULE15)
+ltl_property P_REPLENISH_RULE16 = [](REPLENISH_RULE16)
+ltl_property P_REPLENISH_RULE17 = [](REPLENISH_RULE17)
+ltl_property P_REPLENISH_RULE18 = [](REPLENISH_RULE18)
+ltl_property P_REPLENISH_RULE19 = [](REPLENISH_RULE19)
+ltl_property P_REPLENISH_RULE20 = [](REPLENISH_RULE20)
+ltl_property P_REPLENISH_RULE21 = [](REPLENISH_RULE21)
+ltl_property P_REPLENISH_RULE22 = [](REPLENISH_RULE22)
+ltl_property P_REPLENISH_RULE23 = [](REPLENISH_RULE23)
+ltl_property P_REPLENISH_RULE24 = [](REPLENISH_RULE24)
+ltl_property P_REPLENISH_RULE25 = [](REPLENISH_RULE25)
+ltl_property P_REPLENISH_RULE26 = [](REPLENISH_RULE26)
+ltl_property P_REPLENISH_RULE27 = [](REPLENISH_RULE27)
+ltl_property P_REPLENISH_RULE28 = [](REPLENISH_RULE28)
+ltl_property P_REPLENISH_RULE29 = [](REPLENISH_RULE29)
+ltl_property P_REPLENISH_RULE30 = [](REPLENISH_RULE30)
+ltl_property P_REPLENISH_RULE31 = [](REPLENISH_RULE31)
+ltl_property P_REPLENISH_RULE32 = [](REPLENISH_RULE32)
+ltl_property P_REPLENISH_RULE33 = [](REPLENISH_RULE33)
+ltl_property P_REPLENISH_RULE34 = [](REPLENISH_RULE34)
+ltl_property P_REPLENISH_RULE35 = [](REPLENISH_RULE35)
+ltl_property P_REPLENISH_RULE36 = [](REPLENISH_RULE36)
+ltl_property P_REPLENISH_RULE37 = [](REPLENISH_RULE37)
+ltl_property P_REPLENISH_RULE38 = [](REPLENISH_RULE38)
+ltl_property P_REPLENISH_RULE39 = [](REPLENISH_RULE39)
+ltl_property P_REPLENISH_RULE40 = [](REPLENISH_RULE40)
+ltl_property P_REPLENISH_RULE41 = [](REPLENISH_RULE41)
+ltl_property P_REPLENISH_RULE42 = [](REPLENISH_RULE42)
+ltl_property P_REPLENISH_RULE43 = [](REPLENISH_RULE43)
+ltl_property P_REPLENISH_RULE44 = [](REPLENISH_RULE44)
+ltl_property P_REPLENISH_RULE45 = [](REPLENISH_RULE45)
+ltl_property P_REPLENISH_RULE46 = [](REPLENISH_RULE46)
+ltl_property P_REPLENISH_RULE47 = [](REPLENISH_RULE47)
+ltl_property P_REPLENISH_RULE48 = [](REPLENISH_RULE48)
+ltl_property P_REPLENISH_RULE49 = [](REPLENISH_RULE49)
+ltl_property P_REPLENISH_RULE50 = [](REPLENISH_RULE50)
+
+ltl_property P_BRING_RULE_1 = [](BRING_RULE_1)
+ltl_property P_BRING_RULE_2 = [](BRING_RULE_2)
+
+ltl_property P_BRING_RULE01 = [](BRING_RULE01)
+ltl_property P_BRING_RULE02 = [](BRING_RULE02)
+ltl_property P_BRING_RULE03 = [](BRING_RULE03)
+ltl_property P_BRING_RULE04 = [](BRING_RULE04)
+ltl_property P_BRING_RULE05 = [](BRING_RULE05)
+ltl_property P_BRING_RULE06 = [](BRING_RULE06)
+ltl_property P_BRING_RULE07 = [](BRING_RULE07)
+ltl_property P_BRING_RULE08 = [](BRING_RULE08)
+ltl_property P_BRING_RULE09 = [](BRING_RULE09)
+ltl_property P_BRING_RULE10 = [](BRING_RULE10)
+ltl_property P_BRING_RULE11 = [](BRING_RULE11)
+ltl_property P_BRING_RULE12 = [](BRING_RULE12)
+ltl_property P_BRING_RULE13 = [](BRING_RULE13)
+ltl_property P_BRING_RULE14 = [](BRING_RULE14)
+ltl_property P_BRING_RULE15 = [](BRING_RULE15)
+ltl_property P_BRING_RULE16 = [](BRING_RULE16)
+ltl_property P_BRING_RULE17 = [](BRING_RULE17)
+ltl_property P_BRING_RULE18 = [](BRING_RULE18)
+ltl_property P_BRING_RULE19 = [](BRING_RULE19)
+ltl_property P_BRING_RULE20 = [](BRING_RULE20)
+ltl_property P_BRING_RULE21 = [](BRING_RULE21)
+ltl_property P_BRING_RULE22 = [](BRING_RULE22)
+ltl_property P_BRING_RULE23 = [](BRING_RULE23)
+ltl_property P_BRING_RULE24 = [](BRING_RULE24)
+ltl_property P_BRING_RULE25 = [](BRING_RULE25)
+ltl_property P_BRING_RULE26 = [](BRING_RULE26)
+ltl_property P_BRING_RULE27 = [](BRING_RULE27)
+ltl_property P_BRING_RULE28 = [](BRING_RULE28)
+ltl_property P_BRING_RULE29 = [](BRING_RULE29)
+ltl_property P_BRING_RULE30 = [](BRING_RULE30)
+ltl_property P_BRING_RULE31 = [](BRING_RULE31)
+ltl_property P_BRING_RULE32 = [](BRING_RULE32)
+ltl_property P_BRING_RULE33 = [](BRING_RULE33)
+ltl_property P_BRING_RULE34 = [](BRING_RULE34)
+ltl_property P_BRING_RULE35 = [](BRING_RULE35)
+ltl_property P_BRING_RULE36 = [](BRING_RULE36)
+ltl_property P_BRING_RULE37 = [](BRING_RULE37)
+ltl_property P_BRING_RULE38 = [](BRING_RULE38)
+ltl_property P_BRING_RULE39 = [](BRING_RULE39)
+ltl_property P_BRING_RULE40 = [](BRING_RULE40)
+ltl_property P_BRING_RULE41 = [](BRING_RULE41)
+ltl_property P_BRING_RULE42 = [](BRING_RULE42)
+ltl_property P_BRING_RULE43 = [](BRING_RULE43)
+ltl_property P_BRING_RULE44 = [](BRING_RULE44)
+ltl_property P_BRING_RULE45 = [](BRING_RULE45)
+ltl_property P_BRING_RULE46 = [](BRING_RULE46)
+ltl_property P_BRING_RULE47 = [](BRING_RULE47)
+ltl_property P_BRING_RULE48 = [](BRING_RULE48)
+ltl_property P_BRING_RULE49 = [](BRING_RULE49)
+ltl_property P_BRING_RULE50 = [](BRING_RULE50)
+
+ltl_property P_AREA_RULE_1 = [](AREA_RULE_1)
+ltl_property P_AREA_RULE_2 = [](AREA_RULE_2)
+ltl_property P_AREA_RULE_3 = [](AREA_RULE_3)
+ltl_property P_AREA_RULE_4 = [](AREA_RULE_4)
+ltl_property P_AREA_RULE_5 = [](AREA_RULE_5)
+ltl_property P_AREA_RULE_6 = [](AREA_RULE_6)
+ltl_property P_AREA_RULE_7 = [](AREA_RULE_7)
+ltl_property P_AREA_RULE_8 = [](AREA_RULE_8)
+
+ltl_property P_REPLENISH_ITEM_RULE_1 = [](REPLENISH_ITEM_RULE_1)
+ltl_property P_REPLENISH_ITEM_RULE_2 = [](REPLENISH_ITEM_RULE_2)
+ltl_property P_REPLENISH_ITEM_RULE_3 = [](REPLENISH_ITEM_RULE_3)
+ltl_property P_REPLENISH_ITEM_RULE_4 = [](REPLENISH_ITEM_RULE_4)
+ltl_property P_REPLENISH_ITEM_RULE_5 = [](REPLENISH_ITEM_RULE_5)
+ltl_property P_REPLENISH_ITEM_RULE_6 = [](REPLENISH_ITEM_RULE_6)
+ltl_property P_REPLENISH_ITEM_RULE_7 = [](REPLENISH_ITEM_RULE_7)
+ltl_property P_REPLENISH_ITEM_RULE_8 = [](REPLENISH_ITEM_RULE_8)
+ltl_property P_REPLENISH_ITEM_RULE_9 = [](REPLENISH_ITEM_RULE_9)
+ltl_property P_REPLENISH_ITEM_RULE_10 = [](REPLENISH_ITEM_RULE_10)
+ltl_property P_REPLENISH_ITEM_RULE_11 = [](REPLENISH_ITEM_RULE_11)
+ltl_property P_REPLENISH_ITEM_RULE_12 = [](REPLENISH_ITEM_RULE_12)
+ltl_property P_REPLENISH_ITEM_RULE_13 = [](REPLENISH_ITEM_RULE_13)
+
+ltl_property P_REPLENISH_ITEM_RULE01_11 = [](REPLENISH_ITEM_RULE01_11)
+ltl_property P_REPLENISH_ITEM_RULE02_11 = [](REPLENISH_ITEM_RULE02_11)
+ltl_property P_REPLENISH_ITEM_RULE03_11 = [](REPLENISH_ITEM_RULE03_11)
+ltl_property P_REPLENISH_ITEM_RULE04_11 = [](REPLENISH_ITEM_RULE04_11)
+ltl_property P_REPLENISH_ITEM_RULE05_11 = [](REPLENISH_ITEM_RULE05_11)
+ltl_property P_REPLENISH_ITEM_RULE06_11 = [](REPLENISH_ITEM_RULE06_11)
+ltl_property P_REPLENISH_ITEM_RULE07_11 = [](REPLENISH_ITEM_RULE07_11)
+ltl_property P_REPLENISH_ITEM_RULE08_11 = [](REPLENISH_ITEM_RULE08_11)
+ltl_property P_REPLENISH_ITEM_RULE09_11 = [](REPLENISH_ITEM_RULE09_11)
+ltl_property P_REPLENISH_ITEM_RULE10_11 = [](REPLENISH_ITEM_RULE10_11)
+ltl_property P_REPLENISH_ITEM_RULE11_11 = [](REPLENISH_ITEM_RULE11_11)
+ltl_property P_REPLENISH_ITEM_RULE12_11 = [](REPLENISH_ITEM_RULE12_11)
+ltl_property P_REPLENISH_ITEM_RULE13_11 = [](REPLENISH_ITEM_RULE13_11)
+ltl_property P_REPLENISH_ITEM_RULE14_11 = [](REPLENISH_ITEM_RULE14_11)
+ltl_property P_REPLENISH_ITEM_RULE15_11 = [](REPLENISH_ITEM_RULE15_11)
+ltl_property P_REPLENISH_ITEM_RULE16_11 = [](REPLENISH_ITEM_RULE16_11)
+ltl_property P_REPLENISH_ITEM_RULE17_11 = [](REPLENISH_ITEM_RULE17_11)
+ltl_property P_REPLENISH_ITEM_RULE18_11 = [](REPLENISH_ITEM_RULE18_11)
+ltl_property P_REPLENISH_ITEM_RULE19_11 = [](REPLENISH_ITEM_RULE19_11)
+ltl_property P_REPLENISH_ITEM_RULE20_11 = [](REPLENISH_ITEM_RULE20_11)
+ltl_property P_REPLENISH_ITEM_RULE21_11 = [](REPLENISH_ITEM_RULE21_11)
+ltl_property P_REPLENISH_ITEM_RULE22_11 = [](REPLENISH_ITEM_RULE22_11)
+ltl_property P_REPLENISH_ITEM_RULE23_11 = [](REPLENISH_ITEM_RULE23_11)
+ltl_property P_REPLENISH_ITEM_RULE24_11 = [](REPLENISH_ITEM_RULE24_11)
+ltl_property P_REPLENISH_ITEM_RULE25_11 = [](REPLENISH_ITEM_RULE25_11)
+ltl_property P_REPLENISH_ITEM_RULE26_11 = [](REPLENISH_ITEM_RULE26_11)
+ltl_property P_REPLENISH_ITEM_RULE27_11 = [](REPLENISH_ITEM_RULE27_11)
+ltl_property P_REPLENISH_ITEM_RULE28_11 = [](REPLENISH_ITEM_RULE28_11)
+ltl_property P_REPLENISH_ITEM_RULE29_11 = [](REPLENISH_ITEM_RULE29_11)
+ltl_property P_REPLENISH_ITEM_RULE30_11 = [](REPLENISH_ITEM_RULE30_11)
+ltl_property P_REPLENISH_ITEM_RULE31_11 = [](REPLENISH_ITEM_RULE31_11)
+ltl_property P_REPLENISH_ITEM_RULE32_11 = [](REPLENISH_ITEM_RULE32_11)
+ltl_property P_REPLENISH_ITEM_RULE33_11 = [](REPLENISH_ITEM_RULE33_11)
+ltl_property P_REPLENISH_ITEM_RULE34_11 = [](REPLENISH_ITEM_RULE34_11)
+ltl_property P_REPLENISH_ITEM_RULE35_11 = [](REPLENISH_ITEM_RULE35_11)
+ltl_property P_REPLENISH_ITEM_RULE36_11 = [](REPLENISH_ITEM_RULE36_11)
+ltl_property P_REPLENISH_ITEM_RULE37_11 = [](REPLENISH_ITEM_RULE37_11)
+ltl_property P_REPLENISH_ITEM_RULE38_11 = [](REPLENISH_ITEM_RULE38_11)
+ltl_property P_REPLENISH_ITEM_RULE39_11 = [](REPLENISH_ITEM_RULE39_11)
+ltl_property P_REPLENISH_ITEM_RULE40_11 = [](REPLENISH_ITEM_RULE40_11)
+ltl_property P_REPLENISH_ITEM_RULE41_11 = [](REPLENISH_ITEM_RULE41_11)
+ltl_property P_REPLENISH_ITEM_RULE42_11 = [](REPLENISH_ITEM_RULE42_11)
+ltl_property P_REPLENISH_ITEM_RULE43_11 = [](REPLENISH_ITEM_RULE43_11)
+ltl_property P_REPLENISH_ITEM_RULE44_11 = [](REPLENISH_ITEM_RULE44_11)
+ltl_property P_REPLENISH_ITEM_RULE45_11 = [](REPLENISH_ITEM_RULE45_11)
+ltl_property P_REPLENISH_ITEM_RULE46_11 = [](REPLENISH_ITEM_RULE46_11)
+ltl_property P_REPLENISH_ITEM_RULE47_11 = [](REPLENISH_ITEM_RULE47_11)
+ltl_property P_REPLENISH_ITEM_RULE48_11 = [](REPLENISH_ITEM_RULE48_11)
+ltl_property P_REPLENISH_ITEM_RULE49_11 = [](REPLENISH_ITEM_RULE49_11)
+ltl_property P_REPLENISH_ITEM_RULE50_11 = [](REPLENISH_ITEM_RULE50_11)
+
+ltl_property P_BRING_ITEM_RULE_1 = [](BRING_ITEM_RULE_1)
+ltl_property P_BRING_ITEM_RULE_2 = [](BRING_ITEM_RULE_2)
+ltl_property P_BRING_ITEM_RULE_3 = [](BRING_ITEM_RULE_3)
+ltl_property P_BRING_ITEM_RULE_4 = [](BRING_ITEM_RULE_4)
+ltl_property P_BRING_ITEM_RULE_5 = [](BRING_ITEM_RULE_5)
+ltl_property P_BRING_ITEM_RULE_6 = [](BRING_ITEM_RULE_6)
+ltl_property P_BRING_ITEM_RULE_7 = [](BRING_ITEM_RULE_7)
+ltl_property P_BRING_ITEM_RULE_8 = [](BRING_ITEM_RULE_8)
+ltl_property P_BRING_ITEM_RULE_9 = [](BRING_ITEM_RULE_9)
+ltl_property P_BRING_ITEM_RULE_10 = [](BRING_ITEM_RULE_10)
+ltl_property P_BRING_ITEM_RULE_11 = [](BRING_ITEM_RULE_11)
+ltl_property P_BRING_ITEM_RULE_12 = [](BRING_ITEM_RULE_12)
+ltl_property P_BRING_ITEM_RULE_13 = [](BRING_ITEM_RULE_13)
+
+ltl_property P_BRING_ITEM_RULE01_11 = [](BRING_ITEM_RULE01_11)
+ltl_property P_BRING_ITEM_RULE02_11 = [](BRING_ITEM_RULE02_11)
+ltl_property P_BRING_ITEM_RULE03_11 = [](BRING_ITEM_RULE03_11)
+ltl_property P_BRING_ITEM_RULE04_11 = [](BRING_ITEM_RULE04_11)
+ltl_property P_BRING_ITEM_RULE05_11 = [](BRING_ITEM_RULE05_11)
+ltl_property P_BRING_ITEM_RULE06_11 = [](BRING_ITEM_RULE06_11)
+ltl_property P_BRING_ITEM_RULE07_11 = [](BRING_ITEM_RULE07_11)
+ltl_property P_BRING_ITEM_RULE08_11 = [](BRING_ITEM_RULE08_11)
+ltl_property P_BRING_ITEM_RULE09_11 = [](BRING_ITEM_RULE09_11)
+ltl_property P_BRING_ITEM_RULE10_11 = [](BRING_ITEM_RULE10_11)
+ltl_property P_BRING_ITEM_RULE11_11 = [](BRING_ITEM_RULE11_11)
+ltl_property P_BRING_ITEM_RULE12_11 = [](BRING_ITEM_RULE12_11)
+ltl_property P_BRING_ITEM_RULE13_11 = [](BRING_ITEM_RULE13_11)
+ltl_property P_BRING_ITEM_RULE14_11 = [](BRING_ITEM_RULE14_11)
+ltl_property P_BRING_ITEM_RULE15_11 = [](BRING_ITEM_RULE15_11)
+ltl_property P_BRING_ITEM_RULE16_11 = [](BRING_ITEM_RULE16_11)
+ltl_property P_BRING_ITEM_RULE17_11 = [](BRING_ITEM_RULE17_11)
+ltl_property P_BRING_ITEM_RULE18_11 = [](BRING_ITEM_RULE18_11)
+ltl_property P_BRING_ITEM_RULE19_11 = [](BRING_ITEM_RULE19_11)
+ltl_property P_BRING_ITEM_RULE20_11 = [](BRING_ITEM_RULE20_11)
+ltl_property P_BRING_ITEM_RULE21_11 = [](BRING_ITEM_RULE21_11)
+ltl_property P_BRING_ITEM_RULE22_11 = [](BRING_ITEM_RULE22_11)
+ltl_property P_BRING_ITEM_RULE23_11 = [](BRING_ITEM_RULE23_11)
+ltl_property P_BRING_ITEM_RULE24_11 = [](BRING_ITEM_RULE24_11)
+ltl_property P_BRING_ITEM_RULE25_11 = [](BRING_ITEM_RULE25_11)
+ltl_property P_BRING_ITEM_RULE26_11 = [](BRING_ITEM_RULE26_11)
+ltl_property P_BRING_ITEM_RULE27_11 = [](BRING_ITEM_RULE27_11)
+ltl_property P_BRING_ITEM_RULE28_11 = [](BRING_ITEM_RULE28_11)
+ltl_property P_BRING_ITEM_RULE29_11 = [](BRING_ITEM_RULE29_11)
+ltl_property P_BRING_ITEM_RULE30_11 = [](BRING_ITEM_RULE30_11)
+ltl_property P_BRING_ITEM_RULE31_11 = [](BRING_ITEM_RULE31_11)
+ltl_property P_BRING_ITEM_RULE32_11 = [](BRING_ITEM_RULE32_11)
+ltl_property P_BRING_ITEM_RULE33_11 = [](BRING_ITEM_RULE33_11)
+ltl_property P_BRING_ITEM_RULE34_11 = [](BRING_ITEM_RULE34_11)
+ltl_property P_BRING_ITEM_RULE35_11 = [](BRING_ITEM_RULE35_11)
+ltl_property P_BRING_ITEM_RULE36_11 = [](BRING_ITEM_RULE36_11)
+ltl_property P_BRING_ITEM_RULE37_11 = [](BRING_ITEM_RULE37_11)
+ltl_property P_BRING_ITEM_RULE38_11 = [](BRING_ITEM_RULE38_11)
+ltl_property P_BRING_ITEM_RULE39_11 = [](BRING_ITEM_RULE39_11)
+ltl_property P_BRING_ITEM_RULE40_11 = [](BRING_ITEM_RULE40_11)
+ltl_property P_BRING_ITEM_RULE41_11 = [](BRING_ITEM_RULE41_11)
+ltl_property P_BRING_ITEM_RULE42_11 = [](BRING_ITEM_RULE42_11)
+ltl_property P_BRING_ITEM_RULE43_11 = [](BRING_ITEM_RULE43_11)
+ltl_property P_BRING_ITEM_RULE44_11 = [](BRING_ITEM_RULE44_11)
+ltl_property P_BRING_ITEM_RULE45_11 = [](BRING_ITEM_RULE45_11)
+ltl_property P_BRING_ITEM_RULE46_11 = [](BRING_ITEM_RULE46_11)
+ltl_property P_BRING_ITEM_RULE47_11 = [](BRING_ITEM_RULE47_11)
+ltl_property P_BRING_ITEM_RULE48_11 = [](BRING_ITEM_RULE48_11)
+ltl_property P_BRING_ITEM_RULE49_11 = [](BRING_ITEM_RULE49_11)
+ltl_property P_BRING_ITEM_RULE50_11 = [](BRING_ITEM_RULE50_11)
+
+ltl_property P_BRING_BOX_RULE_1  = [](BRING_BOX_RULE_1)
+ltl_property P_BRING_BOX_RULE_2  = [](BRING_BOX_RULE_2)
+ltl_property P_BRING_BOX_RULE_3  = [](BRING_BOX_RULE_3)
+ltl_property P_BRING_BOX_RULE_4  = [](BRING_BOX_RULE_4)
+ltl_property P_BRING_BOX_RULE_5  = [](BRING_BOX_RULE_5)
+ltl_property P_BRING_BOX_RULE_6  = [](BRING_BOX_RULE_6)
+
+ltl_property P_SHIP_RULE_0 = [](SHIP_RULE_0)
+ltl_property P_SHIP_RULE_1 = [](SHIP_RULE_1)
+ltl_property P_SHIP_RULE_2 = [](SHIP_RULE_2)
+ltl_property P_SHIP_RULE_3 = [](SHIP_RULE_3)
+ltl_property P_SHIP_RULE_4 = [](SHIP_RULE_4)
+ltl_property P_SHIP_RULE_5 = [](SHIP_RULE_5)
+ltl_property P_SHIP_RULE_6 = [](SHIP_RULE_6)
+
+
+
+controllerSpec Specification =
+{
+	safety       = {
+					P_REPLENISH_ROBOT_RULE,
+					P_SHIP_ROBOT_RULE,
+					
+					P_REQUEST_TIMING_1,
+					P_REQUEST_TIMING_2,
+					P_REQUEST_TIMING_3,
+					P_REQUEST_TIMING_4,
+					
+					P_REQUEST_ONLY_1,
+					P_REQUEST_ONLY_2,
+					P_ROBOT1_ARM_RULE_1,
+					P_ROBOT1_ARM_RULE_2,
+					P_ROBOT1_ARM_RULE_3,
+					P_ROBOT2_ARM_RULE_1,
+					P_ROBOT2_ARM_RULE_2,
+					P_ROBOT2_ARM_RULE_3,
+					//P_REPLENISH_RULE_1, //軽量化の際にはコメントアウト
+					P_REPLENISH_RULE_2,
+					//P_BRING_RULE_1, //軽量化の際にはコメントアウト
+					P_BRING_RULE_2,
+					P_AREA_RULE_1,
+					P_AREA_RULE_2,
+					P_AREA_RULE_3,
+					P_AREA_RULE_4,
+					P_AREA_RULE_5,
+					P_AREA_RULE_6,
+					P_AREA_RULE_7,
+					P_AREA_RULE_8,
+					
+					P_REPLENISH_ITEM_RULE_1,
+					P_REPLENISH_ITEM_RULE_2,
+					P_REPLENISH_ITEM_RULE_3,
+					P_REPLENISH_ITEM_RULE_4,
+					P_REPLENISH_ITEM_RULE_5,
+					P_REPLENISH_ITEM_RULE_6,
+					P_REPLENISH_ITEM_RULE_7,
+					P_REPLENISH_ITEM_RULE_8,
+					P_REPLENISH_ITEM_RULE_9,
+					P_REPLENISH_ITEM_RULE_10,
+					//P_REPLENISH_ITEM_RULE_11, //軽量化の際にはコメントアウト
+					P_REPLENISH_ITEM_RULE_12,
+					P_REPLENISH_ITEM_RULE_13,
+					
+					P_BRING_ITEM_RULE_1,
+					P_BRING_ITEM_RULE_2,
+					P_BRING_ITEM_RULE_3,
+					P_BRING_ITEM_RULE_4,
+					P_BRING_ITEM_RULE_5,
+					P_BRING_ITEM_RULE_6,
+					P_BRING_ITEM_RULE_7,
+					P_BRING_ITEM_RULE_8,
+					P_BRING_ITEM_RULE_9,
+					P_BRING_ITEM_RULE_10,
+					//P_BRING_ITEM_RULE_11, //軽量化の際にはコメントアウト
+					P_BRING_ITEM_RULE_12,
+					P_BRING_ITEM_RULE_13,
+
+					P_BRING_BOX_RULE_1,
+					P_BRING_BOX_RULE_2,
+					P_BRING_BOX_RULE_3,
+					P_BRING_BOX_RULE_4,
+					P_BRING_BOX_RULE_5,
+					P_BRING_BOX_RULE_6,
+
+					P_SHIP_RULE_0,
+					P_SHIP_RULE_1,
+					P_SHIP_RULE_2,
+					P_SHIP_RULE_3,
+					P_SHIP_RULE_4,
+					P_SHIP_RULE_5,
+					P_SHIP_RULE_6,
+					
+					
+					P_REPLENISH_RULE01, P_BRING_RULE01, P_REPLENISH_ITEM_RULE01_11, P_BRING_ITEM_RULE01_11,
+					P_REPLENISH_RULE02, P_BRING_RULE02, P_REPLENISH_ITEM_RULE02_11, P_BRING_ITEM_RULE02_11,
+					P_REPLENISH_RULE03, P_BRING_RULE03, P_REPLENISH_ITEM_RULE03_11, P_BRING_ITEM_RULE03_11,
+					P_REPLENISH_RULE04, P_BRING_RULE04, P_REPLENISH_ITEM_RULE04_11, P_BRING_ITEM_RULE04_11,
+					P_REPLENISH_RULE05, P_BRING_RULE05, P_REPLENISH_ITEM_RULE05_11, P_BRING_ITEM_RULE05_11,
+					P_REPLENISH_RULE06, P_BRING_RULE06, P_REPLENISH_ITEM_RULE06_11, P_BRING_ITEM_RULE06_11,
+					P_REPLENISH_RULE07, P_BRING_RULE07, P_REPLENISH_ITEM_RULE07_11, P_BRING_ITEM_RULE07_11,
+					P_REPLENISH_RULE08, P_BRING_RULE08, P_REPLENISH_ITEM_RULE08_11, P_BRING_ITEM_RULE08_11,
+					P_REPLENISH_RULE09, P_BRING_RULE09, P_REPLENISH_ITEM_RULE09_11, P_BRING_ITEM_RULE09_11,
+					P_REPLENISH_RULE10, P_BRING_RULE10, P_REPLENISH_ITEM_RULE10_11, P_BRING_ITEM_RULE10_11,
+					P_REPLENISH_RULE11, P_BRING_RULE11, P_REPLENISH_ITEM_RULE11_11, P_BRING_ITEM_RULE11_11,
+					P_REPLENISH_RULE12, P_BRING_RULE12, P_REPLENISH_ITEM_RULE12_11, P_BRING_ITEM_RULE12_11,
+					P_REPLENISH_RULE13, P_BRING_RULE13, P_REPLENISH_ITEM_RULE13_11, P_BRING_ITEM_RULE13_11,
+					P_REPLENISH_RULE14, P_BRING_RULE14, P_REPLENISH_ITEM_RULE14_11, P_BRING_ITEM_RULE14_11,
+					P_REPLENISH_RULE15, P_BRING_RULE15, P_REPLENISH_ITEM_RULE15_11, P_BRING_ITEM_RULE15_11,
+					P_REPLENISH_RULE16, P_BRING_RULE16, P_REPLENISH_ITEM_RULE16_11, P_BRING_ITEM_RULE16_11,
+					P_REPLENISH_RULE17, P_BRING_RULE17, P_REPLENISH_ITEM_RULE17_11, P_BRING_ITEM_RULE17_11,
+					P_REPLENISH_RULE18, P_BRING_RULE18, P_REPLENISH_ITEM_RULE18_11, P_BRING_ITEM_RULE18_11,
+					P_REPLENISH_RULE19, P_BRING_RULE19, P_REPLENISH_ITEM_RULE19_11, P_BRING_ITEM_RULE19_11,
+					P_REPLENISH_RULE20, P_BRING_RULE20, P_REPLENISH_ITEM_RULE20_11, P_BRING_ITEM_RULE20_11,
+/*
+					P_REPLENISH_RULE21, P_BRING_RULE21, P_REPLENISH_ITEM_RULE21_11, P_BRING_ITEM_RULE21_11,
+					P_REPLENISH_RULE22, P_BRING_RULE22, P_REPLENISH_ITEM_RULE22_11, P_BRING_ITEM_RULE22_11,
+					P_REPLENISH_RULE23, P_BRING_RULE23, P_REPLENISH_ITEM_RULE23_11, P_BRING_ITEM_RULE23_11,
+					P_REPLENISH_RULE24, P_BRING_RULE24, P_REPLENISH_ITEM_RULE24_11, P_BRING_ITEM_RULE24_11,
+					P_REPLENISH_RULE25, P_BRING_RULE25, P_REPLENISH_ITEM_RULE25_11, P_BRING_ITEM_RULE25_11,
+					P_REPLENISH_RULE26, P_BRING_RULE26, P_REPLENISH_ITEM_RULE26_11, P_BRING_ITEM_RULE26_11,
+					P_REPLENISH_RULE27, P_BRING_RULE27, P_REPLENISH_ITEM_RULE27_11, P_BRING_ITEM_RULE27_11,
+					P_REPLENISH_RULE28, P_BRING_RULE28, P_REPLENISH_ITEM_RULE28_11, P_BRING_ITEM_RULE28_11,
+					P_REPLENISH_RULE29, P_BRING_RULE29, P_REPLENISH_ITEM_RULE29_11, P_BRING_ITEM_RULE29_11,
+					P_REPLENISH_RULE30, P_BRING_RULE30, P_REPLENISH_ITEM_RULE30_11, P_BRING_ITEM_RULE30_11,
+					P_REPLENISH_RULE31, P_BRING_RULE31, P_REPLENISH_ITEM_RULE31_11, P_BRING_ITEM_RULE31_11,
+					P_REPLENISH_RULE32, P_BRING_RULE32, P_REPLENISH_ITEM_RULE32_11, P_BRING_ITEM_RULE32_11,
+					P_REPLENISH_RULE33, P_BRING_RULE33, P_REPLENISH_ITEM_RULE33_11, P_BRING_ITEM_RULE33_11,
+					P_REPLENISH_RULE34, P_BRING_RULE34, P_REPLENISH_ITEM_RULE34_11, P_BRING_ITEM_RULE34_11,
+					P_REPLENISH_RULE35, P_BRING_RULE35, P_REPLENISH_ITEM_RULE35_11, P_BRING_ITEM_RULE35_11,
+					P_REPLENISH_RULE36, P_BRING_RULE36, P_REPLENISH_ITEM_RULE36_11, P_BRING_ITEM_RULE36_11
+					P_REPLENISH_RULE37, P_BRING_RULE37, P_REPLENISH_ITEM_RULE37_11, P_BRING_ITEM_RULE37_11,
+					P_REPLENISH_RULE38, P_BRING_RULE38, P_REPLENISH_ITEM_RULE38_11, P_BRING_ITEM_RULE38_11,
+					P_REPLENISH_RULE39, P_BRING_RULE39, P_REPLENISH_ITEM_RULE39_11, P_BRING_ITEM_RULE39_11,
+					P_REPLENISH_RULE40, P_BRING_RULE40, P_REPLENISH_ITEM_RULE40_11, P_BRING_ITEM_RULE40_11,
+					P_REPLENISH_RULE41, P_BRING_RULE41, P_REPLENISH_ITEM_RULE41_11, P_BRING_ITEM_RULE41_11,
+					P_REPLENISH_RULE42, P_BRING_RULE42, P_REPLENISH_ITEM_RULE42_11, P_BRING_ITEM_RULE42_11,
+					P_REPLENISH_RULE43, P_BRING_RULE43, P_REPLENISH_ITEM_RULE43_11, P_BRING_ITEM_RULE43_11,
+					P_REPLENISH_RULE44, P_BRING_RULE44, P_REPLENISH_ITEM_RULE44_11, P_BRING_ITEM_RULE44_11,
+					P_REPLENISH_RULE45, P_BRING_RULE45, P_REPLENISH_ITEM_RULE45_11, P_BRING_ITEM_RULE45_11,
+					P_REPLENISH_RULE46, P_BRING_RULE46, P_REPLENISH_ITEM_RULE46_11, P_BRING_ITEM_RULE46_11,
+					P_REPLENISH_RULE47, P_BRING_RULE47, P_REPLENISH_ITEM_RULE47_11, P_BRING_ITEM_RULE47_11,
+					P_REPLENISH_RULE48, P_BRING_RULE48, P_REPLENISH_ITEM_RULE48_11, P_BRING_ITEM_RULE48_11,
+					P_REPLENISH_RULE49, P_BRING_RULE49, P_REPLENISH_ITEM_RULE49_11, P_BRING_ITEM_RULE49_11,
+					P_REPLENISH_RULE50, P_BRING_RULE50, P_REPLENISH_ITEM_RULE50_11, P_BRING_ITEM_RULE50_11,
+*/
+				   }
+	//liveness     = {GOAL}
+	controllable = {AllActions}
+}
+
+
+//*****************************************************************************
+//Controller
+//*****************************************************************************
+
+//Traditional Synthesis
+||Environment = (KIVA_System).
+controller ||TraditionalController = (Environment)~{Specification}.
+
+//Stepwise Synthesis
+controller ||Controller = (['robot1]:INITIAL(1) || ['robot2]:INITIAL(PodNum) || SHIP_AREA || BOX_GET_AREA || ITEM_GET_AREA || PACK_AREA || REQUEST_1 || REQUEST_2 || REQUEST_3 || REQUEST_4)~{Specification}.
+

@@ -1,0 +1,17 @@
+const N = 8
+
+Parte(Sid=0) = S0,
+S0 = (s[Sid] -> S1),
+S1 = (r -> S0).
+
+Contador = Cnt[0],
+Cnt[c:0..N-1] = (s[0..N-1] -> Cnt[c+1]),
+Cnt[N] = (r -> Cnt[0]).
+
+controllerSpec Goal = {
+  controllable = {s[0..N/2-1],r}
+  marking = {r}
+  nonblocking
+}
+
+partialOrderReduction ||MonolithicController = (forall [id:0..N-1] Parte(id) || Contador)~{Goal}.
