@@ -2311,6 +2311,7 @@ public class HPWindow extends JFrame implements Runnable {
             //             env_combination.add(unsynthesized_env_list.get(j));
             //         }
             //     }
+            //     env_combination.sort(Comparator.comparing(env -> env.name));
             //     env_combination_list.add(env_combination);
             // }
 
@@ -2319,6 +2320,7 @@ public class HPWindow extends JFrame implements Runnable {
             // for (int i = 0 ; i < unsynthesized_env_list.size() ; i++) {
             //     List<CompactState> env_combination = new ArrayList<>(unsynthesized_env_list);
             //     env_combination.remove(i);
+            //     env_combination.sort(Comparator.comparing(env -> env.name));
             //     env_combination_list.add(env_combination);
             // }
 
@@ -2378,6 +2380,8 @@ public class HPWindow extends JFrame implements Runnable {
                 env_combination.sort(Comparator.comparing(env -> env.name));
                 env_combination_list.add(env_combination);
             }
+
+
 
             // 最終ソート（元のまま）
             env_combination_list.sort((list1, list2) -> {
