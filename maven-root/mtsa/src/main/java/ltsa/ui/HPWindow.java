@@ -67,7 +67,6 @@ public class HPWindow extends JFrame implements Runnable {
     PrintWindow prints;
     LTSDrawWindow draws;
     LTSLayoutWindow layouts;
-    StepwiseWindow stepwise;
     JTabbedPane textIO;
     JToolBar tools;
     JTextField stepscount;
@@ -129,7 +128,8 @@ public class HPWindow extends JFrame implements Runnable {
     JMenuItem build_compile;
     JMenuItem build_compose;
     JMenuItem build_minimise;
-    JMenuItem build_stepwise;
+    JMenuItem build_preController;
+    JMenuItem build_resumeController;
     JMenuItem help_about;
     JMenuItem help_version;
     JMenuItem supertrace_options;
@@ -180,7 +180,6 @@ public class HPWindow extends JFrame implements Runnable {
     JCheckBoxMenuItem window_print;
     JCheckBoxMenuItem window_draw;
     JCheckBoxMenuItem window_layout;
-    JCheckBoxMenuItem window_stepwise;
     JRadioButtonMenuItem strategyDFS, strategyBFS, strategyRandom;
     ButtonGroup strategyGroup;
     JMenuItem maxStateGeneration;
@@ -193,7 +192,8 @@ public class HPWindow extends JFrame implements Runnable {
             newFileTool,
             openFileTool, saveFileTool, compileTool, composeTool,
             minimizeTool,
-            stepwiseTool,
+            preControllerTool,
+            resumeControllerTool,
             undoTool, redoTool;
 
     public static final Font FIXED = new Font("Monospaced", Font.PLAIN, 12);
@@ -393,7 +393,8 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(compileTool = createTool("icon/compile.gif", "Compile", new DoAction(DO_compile)));
         tools.add(composeTool = createTool("icon/compose.gif", "Compose", new DoAction(DO_doComposition)));
         tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
-        tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_stepwiseControllerSynthesis)));
+        tools.add(preControllerTool = createTool("icon/precon.gif", "PreController", new DoAction(DO_preControllerSynthesis)));
+        tools.add(resumeControllerTool = createTool("icon/recon.gif", "ResumeController", new DoAction(DO_resumeControllerSynthesis)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
         targetChoice.setEditable(false);
@@ -634,11 +635,6 @@ public class HPWindow extends JFrame implements Runnable {
         window_layout.setSelected(true);
         window_layout.addActionListener(new WinLayoutAction());
         window.add(window_layout);
-        //stepwise
-        window_stepwise = new JCheckBoxMenuItem("Stepwise");
-        window_stepwise.setSelected(false);
-        window_stepwise.addActionListener(new WinStepwiseAction());
-        window.add(window_stepwise);
     }
 
     private void buildMenu(JMenuBar mb) {
@@ -660,9 +656,13 @@ public class HPWindow extends JFrame implements Runnable {
         build_minimise = new JMenuItem("Minimise");
         build_minimise.addActionListener(new DoAction(DO_minimiseComposition));
         build.add(build_minimise);
-        build_stepwise = new JMenuItem("Stepwise");
-        build_stepwise.addActionListener(new DoAction(DO_stepwiseControllerSynthesis));
-        build.add(build_stepwise);
+        build_preController = new JMenuItem("PreController");
+        build_preController.addActionListener(new DoAction(DO_preControllerSynthesis));
+        build.add(build_preController);
+        build_resumeController = new JMenuItem("Resume");
+        build_resumeController.addActionListener(new DoAction(DO_resumeControllerSynthesis));
+        build.add(build_resumeController);
+
     }
 
     private void checkMenu(JMenuBar mb) {
@@ -840,7 +840,8 @@ public class HPWindow extends JFrame implements Runnable {
         build_compile.setEnabled(flag);
         build_compose.setEnabled(flag);
         build_minimise.setEnabled(flag);
-        build_stepwise.setEnabled(flag);
+        build_preController.setEnabled(flag);
+        build_resumeController.setEnabled(flag);
         stopTool.setEnabled(true);
         parseTool.setEnabled(flag);
         safetyTool.setEnabled(flag);
@@ -848,7 +849,8 @@ public class HPWindow extends JFrame implements Runnable {
         compileTool.setEnabled(flag);
         composeTool.setEnabled(flag);
         minimizeTool.setEnabled(flag);
-        stepwiseTool.setEnabled(flag);
+        preControllerTool.setEnabled(flag);
+        resumeControllerTool.setEnabled(flag);
 
         file_save.setEnabled(application);
         file_saveAs.setEnabled(application);
@@ -872,8 +874,9 @@ public class HPWindow extends JFrame implements Runnable {
     private final static int DO_liveness = 9;
     private final static int DO_parse = 10;
 
-    //Stepwise Controller Synthesis
-    private final static int DO_stepwiseControllerSynthesis = 101;
+    //PreController Synthesis
+    private final static int DO_preControllerSynthesis = 101;
+    private final static int DO_resumeControllerSynthesis = 102;
 
     // Dipi
     private final static int DO_PLUS_CR = 11;
@@ -978,10 +981,13 @@ public class HPWindow extends JFrame implements Runnable {
                     showOutput();
                     minimiseComposition();
                     break;
-                case DO_stepwiseControllerSynthesis:
+                case DO_preControllerSynthesis:
                     showOutput();
-                    stepwiseControllerSynthesis();
-                    // generateStepwiseContorllerSynthesisProcess();
+                    preControllerSynthesis();
+                    break;
+                case DO_resumeControllerSynthesis:
+                    showOutput();
+                    resumeControllerSynthesis();
                     break;
                 case DO_progress:
                     showOutput();
@@ -1709,12 +1715,6 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    class WinStepwiseAction implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
-            newStepwiseWindow(window_stepwise.isSelected());
-        }
-    }
-
     class HelpAboutAction implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             aboutDialog();
@@ -1956,7 +1956,7 @@ public class HPWindow extends JFrame implements Runnable {
     // ------------------------------------------------------------------------
 
     private boolean compile() {
-        ltsOutput.clearOutput();
+        if (preControllers == null || preControllers.isEmpty()) ltsOutput.clearOutput(); //edit
         current = docompile();
         if (current == null) {
             return false;
@@ -2125,6 +2125,11 @@ public class HPWindow extends JFrame implements Runnable {
     public static int maxStates;
     public static int maxTransitions;
 
+    /* Data: PreControllerSynthesisからResumeControllerSynthesisに引き継ぐ */
+    private static Vector<CompactState> preControllers = new Vector<>();
+    private static List<CompactState> beforeModels = new ArrayList<>(); //PreControllerSynthesisで使用した入力モデル
+    private static List<List<CompactState>> env_combination_list = new ArrayList<>(); //PreControllerSynthesisの環境モデル構成を格納
+
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
         long free = Runtime.getRuntime().freeMemory() /1000;
@@ -2143,6 +2148,9 @@ public class HPWindow extends JFrame implements Runnable {
 
     /* Composition */
     private void doComposition() {
+        preControllers.clear();
+        beforeModels.clear();
+        env_combination_list.clear();
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
@@ -2205,6 +2213,9 @@ public class HPWindow extends JFrame implements Runnable {
 
     /* Composition + Minimize */
     private void minimiseComposition() {
+        preControllers.clear();
+        beforeModels.clear();
+        env_combination_list.clear();
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
@@ -2246,8 +2257,11 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     
-    /* Stepwise Synthesis */
-    private void stepwiseControllerSynthesis() {
+    /* Precontroller Synthesis */
+    private void preControllerSynthesis() {
+        preControllers.clear();
+        beforeModels.clear();
+        env_combination_list.clear();
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
@@ -2267,7 +2281,6 @@ public class HPWindow extends JFrame implements Runnable {
 
             boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
             CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
-            Vector<CompactState> preControllers = new Vector<>();
             List<CompactState> unsynthesized_req_list = new ArrayList<>();
             List<CompactState> unsynthesized_env_list = new ArrayList<>();
 
@@ -2275,6 +2288,7 @@ public class HPWindow extends JFrame implements Runnable {
             /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
             for (CompactState machine : all_models.machines) {
                 machine.initActions();
+                beforeModels.add(machine);
                 if (machine.hasERROR())
                     unsynthesized_req_list.add(machine);
                 else
@@ -2297,11 +2311,7 @@ public class HPWindow extends JFrame implements Runnable {
 
             ltsOutput.outln("");
             ltsOutput.outln("[info] Pre-Controller Pattern");
-            //環境モデルの全ての組み合わせ（2^n）でループ処理
-            //①組み合わせごとに予め合成できる監視モデルを導出
-            //②予め合成
-            //③予め合成リストに追加（最終的にはcurrent.machinesに追加）
-
+            
             /* --- CASE1：全通りの組み合わせ（2^|Es|）--- */
             // List<List<CompactState>> env_combination_list = new ArrayList<>();
             // for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
@@ -2366,22 +2376,18 @@ public class HPWindow extends JFrame implements Runnable {
             full.set(0, allModels.size());
 
             // comb -> env_combination_list へ直変換（Set<Set<String>> を作らない）
-            List<List<CompactState>> env_combination_list = new ArrayList<>(comb.size());
             for (BitSet bs : comb) {
                 if (bs.isEmpty() || bs.equals(full)) continue;
 
                 List<CompactState> env_combination = new ArrayList<>(bs.cardinality());
                 for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
                     String envName = allModels.get(i);
-                    CompactState cs = envByName.get(envName); // O(1)
+                    CompactState cs = envByName.get(envName);
                     if (cs != null) env_combination.add(cs);
                 }
-
                 env_combination.sort(Comparator.comparing(env -> env.name));
                 env_combination_list.add(env_combination);
             }
-
-
 
             // 最終ソート（元のまま）
             env_combination_list.sort((list1, list2) -> {
@@ -2433,14 +2439,14 @@ public class HPWindow extends JFrame implements Runnable {
 
                 //出力を処理
                 current.composition.initActions();
-                current.composition.componentModels = new ArrayList<>(this_step_env_name);
-                current.composition.componentModels.addAll(this_step_req_name);
-                ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
+                current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
+                current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
+                ltsOutput.outln("[info] " + current.name + ".componentEnvModels : " + current.composition.componentEnvModels.toString());
+                ltsOutput.outln("[info] " + current.name + ".componentReqModels : " + current.composition.componentReqModels.toString());
 
                 preControllers.add(current.composition);
             }
             current.machines = new Vector<>(preControllers);
-            preControllers.clear();
             postState(current);
 
         long endTime = System.currentTimeMillis();
@@ -2467,8 +2473,135 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
     }
 
+
+    /* for Precontroller Synthesis (precontroller synthesisの後ではなければ実行不可) */
+    private void resumeControllerSynthesis() {
+        if (preControllers == null || preControllers.isEmpty()) {
+            ltsOutput.clearOutput();
+            ltsOutput.outln("[ERROR] Please execute Pre-Controller Synthesis first.");
+        }
+        else {
+            current.machines = new Vector<>(); //current.machinesの参照先をpreControllersから切る
+
+            maxMemoryUsage = 0;
+            maxStates = 0;
+            maxTransitions = 0;
+            // ltsOutput.clearOutput();
+            long startTime = System.currentTimeMillis();
+            compile();
+            // ltsOutput.clearOutput();
+            ltsOutput.outln("Compile is Complete!");
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("            Resume Controller Synthesis            ");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("[info] current.name     : " + current.name);
+            ltsOutput.outln("[info] current.machines : " + getNameList(current.machines));
+            ltsOutput.outln("[info] Num of PreController : " + preControllers.size());
+            ltsOutput.outln("");
+
+            /* 前準備（PreControllerの再利用） */
+            // STEP1: 変化した環境モデル（変化前モデル）の特定
+            List<String> old_env_list = new ArrayList<>(getNameList(beforeModels));
+            old_env_list.removeAll(getNameList(current.machines));
+            ltsOutput.outln("[info] Changed Env List     : " + old_env_list);
+
+            if (old_env_list == null || old_env_list.isEmpty()) {
+                ltsOutput.outln("[info] The environment has not changed.");
+            }
+            else {
+                // STEP2: 再利用するPartControllerの選定
+                // [TBD] 変化する環境モデルが０の時，挙動が変化する
+                int max = 0;
+                List<CompactState> target_env = new ArrayList<>();
+                for (List<CompactState> env_combination : env_combination_list) {
+                    if (env_combination.size() > max &&
+                        Collections.disjoint(getNameList(env_combination), old_env_list)) {
+                        max = env_combination.size();
+                        target_env = env_combination;
+                    }
+                }
+                List<String> target_env_names = getNameList(target_env);
+                CompactState target_preController = null;
+                for (CompactState preController : preControllers) {
+                    if (Objects.equals(preController.componentEnvModels, target_env_names)) {
+                        target_preController = preController;
+                        break;
+                    }
+                }
+                ltsOutput.outln("[info] target_env           : " + getNameList(target_env));
+                if (target_preController != null) ltsOutput.outln("[info] target_preController : " + target_preController.name);
+                else ltsOutput.outln("[info] target_preController : not found");
+
+                // STEP3: current.machines に含まれるCSのうち，
+                //        該当PartControllerを構成するモデルとPartControllerを置き換える
+
+                if (target_preController != null) {
+
+                    // 削除対象名をまとめる（高速化のためSetにする）
+                    Set<String> removeNames = new HashSet<>();
+                    removeNames.addAll(target_preController.componentEnvModels);
+                    removeNames.addAll(target_preController.componentReqModels);
+
+                    // 条件に一致するCompactStateを削除
+                    current.machines.removeIf(cs -> removeNames.contains(cs.name));
+
+                    // 置き換えとしてPreControllerを追加
+                    current.machines.add(target_preController);
+
+                    ltsOutput.outln("[info] Replaced models with : " + target_preController.name);
+                    ltsOutput.outln("[info] Updated current.machines : " + getNameList(current.machines));
+                }
+                else {
+                    ltsOutput.outln("[info] No PreController to reuse.");
+                }
+
+                // 入力モデルの分類（合成後Controllerの情報付与に必要）
+                List<String> this_step_env_name = new ArrayList<>();
+                List<String> this_step_req_name = new ArrayList<>();
+                for (CompactState machine : current.machines) {
+                    machine.initActions();
+                    if (machine.hasERROR())
+                        this_step_req_name.add(machine.name);
+                    else
+                        this_step_env_name.add(machine.name);
+                }
+
+                // STEP4: 合成
+                ltsOutput.outln("");
+                ltsOutput.outln("-- Synthesis --------------------------------------");
+                ltsOutput.outln("[info] Output Model : " + current.name);
+                ltsOutput.outln("[info] Input Models : " + getNameList(current.machines));
+                ltsOutput.outln("---------------------------------------------------");
+
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+                current.composition.initActions();
+                current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
+                current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
+                ltsOutput.outln("");
+                ltsOutput.outln("[info] " + current.name + ".componentEnvModels : " + current.composition.componentEnvModels.toString());
+                ltsOutput.outln("[info] " + current.name + ".componentReqModels : " + current.composition.componentReqModels.toString());
+                postState(current);
+                long endTime = System.currentTimeMillis();
+                long executionTime = endTime - startTime; //ms
+                checkMemoryUsage();
+
+                ltsOutput.outln("");
+                ltsOutput.outln("");
+                ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
+                ltsOutput.outln("[info] Use Pre-Controller : " + target_preController.name);
+                ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
+                ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
+                ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
+                ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+                ltsOutput.outln("");
+            }
+        }
+    }
+
     // ------------------------------------------------------------------------
-    /* For StepwiseControllerSynthesis */
+    /* For PreControllerSynthesis */
 
     //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
@@ -2476,8 +2609,8 @@ public class HPWindow extends JFrame implements Runnable {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
                 if (checkContainList(req.actions,env.actions))
-                    if (env.componentModels!=null)
-                        req.ideal_monitoredModels.addAll(env.componentModels);
+                    if (env.componentEnvModels!=null)
+                        req.ideal_monitoredModels.addAll(env.componentEnvModels);
                     else
                         req.ideal_monitoredModels.add(env.name);
             }
@@ -2856,23 +2989,6 @@ public class HPWindow extends JFrame implements Runnable {
             alphabet = null;
         }
     }
-
-    // ------------------------------------------------------------------------
-
-    private void newStepwiseWindow(boolean disp) {
-        if (disp && textIO.indexOfTab("Stepwise") < 0) {
-            // create Stepwise window
-            stepwise = new StepwiseWindow(current, eman);
-            textIO.addTab("Stepwise", stepwise);
-            swapto(textIO.indexOfTab("Stepwise"));
-        } else if (!disp && textIO.indexOfTab("Stepwise") > 0) {
-            swapto(0);
-            textIO.removeTabAt(textIO.indexOfTab("Stepwise"));
-            stepwise.removeClient();
-            stepwise = null;
-        }
-    }
-
 
     // ------------------------------------------------------------------------
 
