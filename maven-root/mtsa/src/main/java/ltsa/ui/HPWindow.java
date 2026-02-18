@@ -2262,7 +2262,7 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("              Pre-Controller Synthesis             ");
             ltsOutput.outln("===================================================");
             ltsOutput.outln("[info] current.name     : " + current.name);
-            ltsOutput.outln("[info] current.machines : " + current.machines);
+            ltsOutput.outln("[info] current.machines : " + getNameList(current.machines));
             ltsOutput.outln("");
 
             boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
@@ -2271,46 +2271,93 @@ public class HPWindow extends JFrame implements Runnable {
             List<CompactState> unsynthesized_req_list = new ArrayList<>();
             List<CompactState> unsynthesized_env_list = new ArrayList<>();
 
-            /* 分配則に対応する場合，unsynthesized_req_listに追加するとき，監視対象をモデルで分けて，一つの監視モデルを複数に複製して追加する */
-            /* analysisMonitoredModels()内でやった方がいいかも */
+            /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
+            /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
             for (CompactState machine : all_models.machines) {
                 machine.initActions();
-                if (machine.name.startsWith("P_")) 
+                if (machine.hasERROR())
                     unsynthesized_req_list.add(machine);
-                else 
+                else
                     unsynthesized_env_list.add(machine);
             }
 
             ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[info.] Environment Models");
+            ltsOutput.outln("[info] Environment Models");
             for (CompactState env : unsynthesized_env_list) {
                 ltsOutput.outln("- " + env.name + " : " + env.actions.toString());
             }
-            ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[info.] Monitor Models");
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Monitor Models");
             for (CompactState req : unsynthesized_req_list) {
                 ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
             }
-            ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[info.] Monitored Models");
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Monitored Models");
             analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
 
-            ltsOutput.outln("---------------------------------------------------");
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Pre-Controller Pattern");
             //環境モデルの全ての組み合わせ（2^n）でループ処理
             //①組み合わせごとに予め合成できる監視モデルを導出
             //②予め合成
             //③予め合成リストに追加（最終的にはcurrent.machinesに追加）
-            List<List<CompactState>> env_combination_list = new ArrayList<>();
-            for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
-                List<CompactState> env_combination = new ArrayList<>();
-                for (int j = 0 ; j < unsynthesized_env_list.size() ; j++) {
+
+            /* --- CASE1：全通りの組み合わせ（2^|Es|）--- */
+            // List<List<CompactState>> env_combination_list = new ArrayList<>();
+            // for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
+            //     List<CompactState> env_combination = new ArrayList<>();
+            //     for (int j = 0 ; j < unsynthesized_env_list.size() ; j++) {
+            //         if ((i >> j & 1) == 1) {
+            //             env_combination.add(unsynthesized_env_list.get(j));
+            //         }
+            //     }
+            //     env_combination_list.add(env_combination);
+            // }
+
+            /* --- CASE2：各環境モデル1つだけ足りない組み合わせ（|Es|）--- */
+            // List<List<CompactState>> env_combination_list = new ArrayList<>();
+            // for (int i = 0 ; i < unsynthesized_env_list.size() ; i++) {
+            //     List<CompactState> env_combination = new ArrayList<>(unsynthesized_env_list);
+            //     env_combination.remove(i);
+            //     env_combination_list.add(env_combination);
+            // }
+
+            /* --- CASE3：監視対象モデルのunion closure（和集合閉包）による環境モデル集合 --- */
+            // 1. env_combinationリスト（監視対象モデルの組み合わせモデル）を作成
+            Set<Set<String>> env_combination_set = new HashSet<>();
+            for (int i = 0 ; i < 1 << unsynthesized_req_list.size() ; i++) {
+                Set<String> env_combination = new HashSet<>();
+                for (int j = 0 ; j < unsynthesized_req_list.size() ; j++) {
                     if ((i >> j & 1) == 1) {
-                        env_combination.add(unsynthesized_env_list.get(j));
+                        env_combination.addAll(
+                            unsynthesized_req_list.get(j).ideal_monitoredModels
+                        );
                     }
+                }
+                env_combination_set.add(env_combination);
+            }
+            /* 「全環境モデル集合」と「空集合」は部分合成では必要ないため削除する */
+            /* Tips：環境モデルの追加に関しては必要になるが，制御器を部分制御器にすればいい */
+            env_combination_set.removeIf(Set::isEmpty);
+            env_combination_set.remove(getNameSet(unsynthesized_env_list));
+            
+            /* 2. set<string> env_combination_setをlist<cmpactstate> に置き換え */
+            List<List<CompactState>> env_combination_list = new ArrayList<>();
+            for(Set<String> combination : env_combination_set){
+                List<CompactState> env_combination = new ArrayList<>();
+                for(String env_name : combination){
+                    env_combination.add(getCompactState(env_name, unsynthesized_env_list)); //env_nameと同じCompactStateを
                 }
                 env_combination_list.add(env_combination);
             }
 
+            int num_of_combination = 0;
+            for (List<CompactState> combination : env_combination_list) {
+                ltsOutput.outln("- Precontroller_" + num_of_combination + " : [" + String.join(", ", getNameList(combination)) + "]");
+                num_of_combination++;
+            }
+
+            //env_combination_listに基づいて，部分合成
             //null（空集合）は除いて処理
             for (int id = 1 ; id < env_combination_list.size() ; id++) {
                 Vector<CompactState> this_step_machines = new Vector<>();
@@ -2335,7 +2382,7 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("");
                 ltsOutput.outln("-- Synthesis --------------------------------------");
                 ltsOutput.outln("[info] Output Model : " + current.name);
-                ltsOutput.outln("[info] Input Models : " + current.machines);
+                ltsOutput.outln("[info] Input Models : " + getNameList(current.machines));
                 ltsOutput.outln("---------------------------------------------------");
 
                 //予め合成
@@ -2361,14 +2408,17 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("[info] Component List of Synthesized Pre-Controllers");
         //環境モデルの全通り組み合わせ（env_combination_list）の出力
+        int pattern = 0;
         for (int id = 0 ; id < env_combination_list.size() ; id++) {
-            ltsOutput.outln("PreController_"+ id + " : " + env_combination_list.get(id));
+            ltsOutput.outln("PreController_"+ id + " : " + getNameList(env_combination_list.get(id)));
+            pattern++;
         }
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Pre-Controller Synthesis is Complete!");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
         ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
+        ltsOutput.outln("[info] Number of Pattern : " + pattern);
         // ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
         // ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
@@ -2379,7 +2429,6 @@ public class HPWindow extends JFrame implements Runnable {
 
     //監視対象モデルの分析：req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
-        ltsOutput.outln("[info] Monitored Models");
         for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
@@ -2391,6 +2440,34 @@ public class HPWindow extends JFrame implements Runnable {
             }
             ltsOutput.outln("- " + req.name + " : " + req.ideal_monitoredModels.toString());
         }
+    }
+
+    /* CompactStateのListに含まれる全要素の.nameのListを作成して返す */
+    private List<String> getNameList(List<CompactState> models){
+        List<String> name_list = new ArrayList<>();
+        for (CompactState model : models) {
+            name_list.add(model.name);
+        }
+        return name_list;
+    }
+
+    /* CompactStateのListに含まれる全要素の.nameのSetを作成して返す */
+    private Set<String> getNameSet(List<CompactState> models){
+        Set<String> name_set = new HashSet<>();
+        for (CompactState model : models) {
+            name_set.add(model.name);
+        }
+        return name_set;
+    }
+
+    /* CompactStateのListに含まれる全要素の.nameのSetを作成して返す */
+    private CompactState getCompactState(String name, List<CompactState> models){
+        for (CompactState model : models) {
+             if(model.name.equals(name)){
+                return model;
+             }
+        }
+        return null;
     }
 
     /* smallリストの要素が一つ以上largeに含まれるか（含まれるならtrue）*/
