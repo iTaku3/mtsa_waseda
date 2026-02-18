@@ -2323,33 +2323,72 @@ public class HPWindow extends JFrame implements Runnable {
             // }
 
             /* --- CASE3：監視対象モデルのunion closure（和集合閉包）による環境モデル集合 --- */
-            // 1. env_combinationリスト（監視対象モデルの組み合わせモデル）を作成
-            Set<Set<String>> env_combination_set = new HashSet<>();
-            for (int i = 0 ; i < 1 << unsynthesized_req_list.size() ; i++) {
-                Set<String> env_combination = new HashSet<>();
-                for (int j = 0 ; j < unsynthesized_req_list.size() ; j++) {
-                    if ((i >> j & 1) == 1) {
-                        env_combination.addAll(
-                            unsynthesized_req_list.get(j).ideal_monitoredModels
-                        );
-                    }
-                }
-                env_combination_set.add(env_combination);
+            // 前処理：env_name -> CompactState（getCompactStateの線形探索を避ける）
+            Map<String, CompactState> envByName = new HashMap<>();
+            for (CompactState cs : unsynthesized_env_list) {
+                envByName.put(cs.name, cs);
             }
-            /* 「全環境モデル集合」と「空集合」は部分合成では必要ないため削除する */
-            /* Tips：環境モデルの追加に関しては必要になるが，制御器を部分制御器にすればいい */
-            env_combination_set.removeIf(Set::isEmpty);
-            env_combination_set.remove(getNameSet(unsynthesized_env_list));
-            
-            /* 2. set<string> env_combination_setをlist<cmpactstate> に置き換え */
-            List<List<CompactState>> env_combination_list = new ArrayList<>();
-            for(Set<String> combination : env_combination_set){
-                List<CompactState> env_combination = new ArrayList<>();
-                for(String env_name : combination){
-                    env_combination.add(getCompactState(env_name, unsynthesized_env_list)); //env_nameと同じCompactStateを
+
+            // 前処理：モデル名 -> index（全環境モデル集合）
+            List<String> allModels = new ArrayList<>(getNameSet(unsynthesized_env_list));
+            Map<String, Integer> idx = new HashMap<>(allModels.size() * 2);
+            for (int k = 0; k < allModels.size(); k++) idx.put(allModels.get(k), k);
+
+            // reqごとのBitSetを作る
+            int nReq = unsynthesized_req_list.size();
+            BitSet[] reqBits = new BitSet[nReq];
+            for (int j = 0; j < nReq; j++) {
+                BitSet bs = new BitSet(allModels.size());
+                for (String m : unsynthesized_req_list.get(j).ideal_monitoredModels) {
+                    Integer id = idx.get(m);
+                    if (id != null) bs.set(id);
                 }
+                reqBits[j] = bs;
+            }
+
+            // 組み合わせ生成（BitSetの閉包）
+            // ここでは空集合も入るが後で除外する
+            Set<BitSet> comb = new HashSet<>();
+            comb.add(new BitSet(allModels.size()));
+            for (BitSet r : reqBits) {
+                List<BitSet> snapshot = new ArrayList<>(comb);
+                for (BitSet cur : snapshot) {
+                    BitSet next = (BitSet) cur.clone();
+                    next.or(r);
+                    comb.add(next);
+                }
+            }
+
+            // 空集合と全集合を除外
+            BitSet full = new BitSet(allModels.size());
+            full.set(0, allModels.size());
+
+            // comb -> env_combination_list へ直変換（Set<Set<String>> を作らない）
+            List<List<CompactState>> env_combination_list = new ArrayList<>(comb.size());
+            for (BitSet bs : comb) {
+                if (bs.isEmpty() || bs.equals(full)) continue;
+
+                List<CompactState> env_combination = new ArrayList<>(bs.cardinality());
+                for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+                    String envName = allModels.get(i);
+                    CompactState cs = envByName.get(envName); // O(1)
+                    if (cs != null) env_combination.add(cs);
+                }
+
+                env_combination.sort(Comparator.comparing(env -> env.name));
                 env_combination_list.add(env_combination);
             }
+
+            // 最終ソート（元のまま）
+            env_combination_list.sort((list1, list2) -> {
+                int sizeCompare = Integer.compare(list1.size(), list2.size());
+                if (sizeCompare != 0) return sizeCompare;
+                for (int i = 0; i < list1.size(); i++) {
+                    int cmp = list1.get(i).name.compareTo(list2.get(i).name);
+                    if (cmp != 0) return cmp;
+                }
+                return 0;
+            });
 
             int num_of_combination = 0;
             for (List<CompactState> combination : env_combination_list) {
