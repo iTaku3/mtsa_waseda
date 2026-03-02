@@ -475,14 +475,12 @@ public class HPWindow extends JFrame implements Runnable {
 
     private void enactmentMenu(JMenuBar mb) {
 
-
         //Try to load Spring ltsa-context.xml file
         try {
             applicationContext = new ClassPathXmlApplicationContext("classpath*:ltsa-context.xml");
         } catch (Exception a) {
             Diagnostics.fatal("Error loading application context:" + a.getMessage());
         }
-
 
 //        menu_enactment = new JMenu("Enactment");
 //        mb.add(menu_enactment);
@@ -685,7 +683,6 @@ public class HPWindow extends JFrame implements Runnable {
         check_liveness = new JMenu("LTL");
         if (hasLTL2BuchiJar())
             check.add(check_liveness);
-        
 
 
         mtsBisimulation = new JMenuItem("Bisimulation");
@@ -719,8 +716,6 @@ public class HPWindow extends JFrame implements Runnable {
         check_reachable = new JMenuItem("Supertrace");
         check_reachable.addActionListener(new DoAction(DO_reachable));
         check.add(check_reachable);
-
-
 
         // check_stop = new JMenuItem("Stop");
         // check_stop.addActionListener(new StopAction());
@@ -917,7 +912,7 @@ public class HPWindow extends JFrame implements Runnable {
         // stopTool.setEnabled(true);
         theAction = action;
         executer = new Thread(this);
-//        executer.setPriority(Thread.NORM_PRIORITY - 1);
+        // executer.setPriority(Thread.NORM_PRIORITY - 1);
         executer.start();
     }
 
@@ -1205,7 +1200,6 @@ public class HPWindow extends JFrame implements Runnable {
             catch (Exception e) {
                 ltsOutput.outln("Error creating FileInputStream: " + e);
             }
-
         // >>> AMES: Arbitrary Fixes
         input.setCaretPosition(0);
         // <<< AMES
@@ -1686,8 +1680,6 @@ public class HPWindow extends JFrame implements Runnable {
             f.pack();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
-
-
         }
     }
 
@@ -2124,11 +2116,15 @@ public class HPWindow extends JFrame implements Runnable {
     public static long maxMemoryUsage;
     public static int maxStates;
     public static int maxTransitions;
+    public static boolean experiment_mode = true;
 
     /* Data: PreControllerSynthesisからResumeControllerSynthesisに引き継ぐ */
     private static Vector<CompactState> preControllers = new Vector<>();
     private static List<CompactState> beforeModels = new ArrayList<>(); //PreControllerSynthesisで使用した入力モデル
     private static List<List<CompactState>> env_combination_list = new ArrayList<>(); //PreControllerSynthesisの環境モデル構成を格納
+    private static List<Integer> maxStates_list = new ArrayList<>(); //PreControllerごとの状態数
+    private static List<Integer> maxTransitions_list = new ArrayList<>(); //PreControllerごとの遷移数
+    private static List<Long> executionTime_list = new ArrayList<>(); //PreControllerごとの合成時間
 
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
@@ -2146,331 +2142,474 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-    /* Composition */
-    private void doComposition() {
-        preControllers.clear();
-        beforeModels.clear();
-        env_combination_list.clear();
+    public static void resetData() {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+        preControllers.clear();
+        beforeModels.clear();
+        env_combination_list.clear();
+        maxStates_list.clear();
+        maxTransitions_list.clear();
+        executionTime_list.clear();
+    }
+
+    /* Composition */
+    private void doComposition() {
+        resetData();
         ltsOutput.clearOutput();
+        compile();
+        ltsOutput.outln("Compile is Complete!");
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                    Composition                    ");
+        ltsOutput.outln("===================================================");
+        
         long startTime = System.currentTimeMillis();
-
-            compile();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("                    Composition                    ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            postState(current);
-
-            int[] current_states = new int[current.machines.size() + 1];
-            for (int i = 0; i < current.machines.size() + 1; i++)
-                current_states[i] = 0;
-            layouts.setCurrentState(current_states);
-
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        postState(current);
+        int[] current_states = new int[current.machines.size() + 1];
+        for (int i = 0; i < current.machines.size() + 1; i++)
+            current_states[i] = 0;
+        layouts.setCurrentState(current_states);
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime; //ms
-
-        /* When reusing other results */
-        // ltsOutput.clearOutput();
-        // compileIfChange();
-        // if (current != null) {
-        //     try {
-        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-                
-        //     } catch (LTSCompositionException e) {
-        //         return;
-        //     }
-            
-        //     boolean isControllable = current.composition != null;
-        //     if (!isControllable) {
-        //         return;
-        //         //throw new LTSException("Composition not controllable.");
-                
-        //     }
-            
-        //     postState(current);
-        //     int[] current_states = new int[current.machines.size() + 1];
-        //     for (int i = 0; i < current.machines.size() + 1; i++)
-        //         current_states[i] = 0;
-        //     layouts.setCurrentState(current_states);
-        // }
 
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Composition is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] File Name           : " + openFile);
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
         ltsOutput.outln("");
     }
 
 
     /* Composition + Minimize */
     private void minimiseComposition() {
-        preControllers.clear();
-        beforeModels.clear();
-        env_combination_list.clear();
-        maxMemoryUsage = 0;
-        maxStates = 0;
-        maxTransitions = 0;
+        resetData();
         ltsOutput.clearOutput();
+        compile();
+        ltsOutput.outln("Compile is Complete!");
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("               Composition + Minimise              ");
+        ltsOutput.outln("===================================================");
+        
         long startTime = System.currentTimeMillis();
-
-            compile();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("               Composition + Minimise              ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput);
-            postState(current);
-
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        postState(current);
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime; //ms
-
-        /* When reusing other results */
-        // ltsOutput.clearOutput();
-        // compileIfChange();
-        // if (compileIfChange() && current != null) {
-        //     if (current.composition == null)
-        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-        //     TransitionSystemDispatcher.minimise(current, ltsOutput);
-        //     postState(current);
-        // }
 
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Minimise Composition is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+        ltsOutput.outln("[info] File Name           : " + openFile);
+        ltsOutput.outln("[info] Maximum State       : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
         ltsOutput.outln("");
     }
 
     
     /* Precontroller Synthesis */
     private void preControllerSynthesis() {
-        preControllers.clear();
-        beforeModels.clear();
-        env_combination_list.clear();
-        maxMemoryUsage = 0;
-        maxStates = 0;
-        maxTransitions = 0;
+        resetData();
         ltsOutput.clearOutput();
+        compile();
+        ltsOutput.outln("Compile is Complete!");
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("              Pre-Controller Synthesis             ");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("[info] current.name     : " + current.name);
+        ltsOutput.outln("[info] current.machines : " + getNameList(current.machines));
+        ltsOutput.outln("");
+
         long startTime = System.currentTimeMillis();
-            compile();
-            // ltsOutput.clearOutput();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("              Pre-Controller Synthesis             ");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("[info] current.name     : " + current.name);
-            ltsOutput.outln("[info] current.machines : " + getNameList(current.machines));
-            ltsOutput.outln("");
+        long startTime_analysis = System.currentTimeMillis();
+        boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
+        CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
+        List<CompactState> unsynthesized_req_list = new ArrayList<>();
+        List<CompactState> unsynthesized_env_list = new ArrayList<>();
 
-            boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
-            CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
-            List<CompactState> unsynthesized_req_list = new ArrayList<>();
-            List<CompactState> unsynthesized_env_list = new ArrayList<>();
+        /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
+        /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
+        for (CompactState machine : all_models.machines) {
+            machine.initActions();
+            beforeModels.add(machine);
+            if (machine.hasERROR())
+                unsynthesized_req_list.add(machine);
+            else
+                unsynthesized_env_list.add(machine);
+        }
 
-            /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
-            /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
-            for (CompactState machine : all_models.machines) {
-                machine.initActions();
-                beforeModels.add(machine);
-                if (machine.hasERROR())
-                    unsynthesized_req_list.add(machine);
-                else
-                    unsynthesized_env_list.add(machine);
+        ltsOutput.outln("---------------------------------------------------");
+        ltsOutput.outln("[info] Environment Models");
+        for (CompactState env : unsynthesized_env_list) {
+            ltsOutput.outln("- " + env.name + " : " + env.actions.toString());
+        }
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Monitor Models");
+        for (CompactState req : unsynthesized_req_list) {
+            ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
+        }
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Monitored Models");
+        analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Pre-Controller Pattern");
+        
+
+        /* --- CASE1：全通りの組み合わせ（2^|Es|）--- */
+        // List<List<CompactState>> env_combination_list = new ArrayList<>();
+        // for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
+        //     List<CompactState> env_combination = new ArrayList<>();
+        //     for (int j = 0 ; j < unsynthesized_env_list.size() ; j++) {
+        //         if ((i >> j & 1) == 1) {
+        //             env_combination.add(unsynthesized_env_list.get(j));
+        //         }
+        //     }
+        //     env_combination.sort(Comparator.comparing(env -> env.name));
+        //     env_combination_list.add(env_combination);
+        // }
+
+
+        /* --- CASE2：各環境モデル1つだけ足りない組み合わせ（|Es|）--- */
+        // List<List<CompactState>> env_combination_list = new ArrayList<>();
+        // for (int i = 0 ; i < unsynthesized_env_list.size() ; i++) {
+        //     List<CompactState> env_combination = new ArrayList<>(unsynthesized_env_list);
+        //     env_combination.remove(i);
+        //     env_combination.sort(Comparator.comparing(env -> env.name));
+        //     env_combination_list.add(env_combination);
+        // }
+
+
+        /* --- CASE3：監視対象モデルのunion closure（和集合閉包）による環境モデル集合 --- */
+        // 前処理：env_name -> CompactState（getCompactStateの線形探索を避ける）
+        Map<String, CompactState> envByName = new HashMap<>();
+        for (CompactState cs : unsynthesized_env_list) {
+            envByName.put(cs.name, cs);
+        }
+
+        // 前処理：モデル名 -> index（全環境モデル集合）
+        List<String> allModels = new ArrayList<>(getNameSet(unsynthesized_env_list));
+        Map<String, Integer> idx = new HashMap<>(allModels.size() * 2);
+        for (int k = 0; k < allModels.size(); k++) idx.put(allModels.get(k), k);
+
+        // reqごとのBitSetを作る
+        int nReq = unsynthesized_req_list.size();
+        BitSet[] reqBits = new BitSet[nReq];
+        for (int j = 0; j < nReq; j++) {
+            BitSet bs = new BitSet(allModels.size());
+            for (String m : unsynthesized_req_list.get(j).ideal_monitoredModels) {
+                Integer id = idx.get(m);
+                if (id != null) bs.set(id);
             }
+            reqBits[j] = bs;
+        }
 
-            ltsOutput.outln("---------------------------------------------------");
-            ltsOutput.outln("[info] Environment Models");
-            for (CompactState env : unsynthesized_env_list) {
-                ltsOutput.outln("- " + env.name + " : " + env.actions.toString());
+        // 組み合わせ生成（BitSetの閉包）
+        // ここでは空集合も入るが後で除外する
+        Set<BitSet> comb = new HashSet<>();
+        comb.add(new BitSet(allModels.size()));
+        for (BitSet r : reqBits) {
+            List<BitSet> snapshot = new ArrayList<>(comb);
+            for (BitSet cur : snapshot) {
+                BitSet next = (BitSet) cur.clone();
+                next.or(r);
+                comb.add(next);
             }
-            ltsOutput.outln("");
-            ltsOutput.outln("[info] Monitor Models");
+        }
+
+        // 空集合と全集合を除外
+        BitSet full = new BitSet(allModels.size());
+        full.set(0, allModels.size());
+
+        // comb -> env_combination_list へ直変換（Set<Set<String>> を作らない）
+        for (BitSet bs : comb) {
+            if (bs.isEmpty() || bs.equals(full)) continue;
+            List<CompactState> env_combination = new ArrayList<>(bs.cardinality());
+            for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+                String envName = allModels.get(i);
+                CompactState cs = envByName.get(envName);
+                if (cs != null) env_combination.add(cs);
+            }
+            env_combination.sort(Comparator.comparing(env -> env.name));
+            env_combination_list.add(env_combination);
+        }
+
+        // 最終ソート
+        env_combination_list.sort((list1, list2) -> {
+            int sizeCompare = Integer.compare(list1.size(), list2.size());
+            if (sizeCompare != 0) return sizeCompare;
+            for (int i = 0; i < list1.size(); i++) {
+                int cmp = list1.get(i).name.compareTo(list2.get(i).name);
+                if (cmp != 0) return cmp;
+            }
+            return 0;
+        });
+
+        int num_of_combination = 0;
+        for (List<CompactState> combination : env_combination_list) {
+            ltsOutput.outln("- Precontroller_" + num_of_combination + " : [" + String.join(", ", getNameList(combination)) + "]");
+            num_of_combination++;
+        }
+        long endTime_analysis = System.currentTimeMillis();
+        long analysisTime = endTime_analysis - startTime_analysis; //ms
+
+        //env_combination_listに基づいて，部分合成
+        for (int id = 0 ; id < env_combination_list.size() ; id++) {
+            maxStates = 0;
+            maxTransitions = 0;
+            long startTime_synthesis = System.currentTimeMillis();
+            Vector<CompactState> this_step_machines = new Vector<>();
+            List<String> this_step_env_name = new ArrayList<>();
+            List<String> this_step_req_name = new ArrayList<>();
+
+            //入力に環境モデルの追加
+            for (CompactState env : env_combination_list.get(id)) {
+                this_step_machines.add(env);
+                this_step_env_name.add(env.name);
+            }
+            //入力に監視モデル（要求モデル）の追加
             for (CompactState req : unsynthesized_req_list) {
-                ltsOutput.outln("- " + req.name + " : " + req.actions.toString());
+                if (checkInList(req.ideal_monitoredModels, this_step_env_name)) {
+                    this_step_machines.add(req);
+                    this_step_req_name.add(req.name);
+                }
             }
+            current.name = "PreController_" + id;
+            current.machines = new Vector<>(this_step_machines);
+            current.env = null;
             ltsOutput.outln("");
-            ltsOutput.outln("[info] Monitored Models");
-            analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
+            ltsOutput.outln("-- Synthesis --------------------------------------");
+            ltsOutput.outln("[info] Output Model : " + current.name);
+            ltsOutput.outln("[info] Input Environment : " + this_step_env_name);
+            ltsOutput.outln("[info] Input Reqirement  : " + this_step_req_name);
+            ltsOutput.outln("---------------------------------------------------");
 
-            ltsOutput.outln("");
-            ltsOutput.outln("[info] Pre-Controller Pattern");
-            
-            /* --- CASE1：全通りの組み合わせ（2^|Es|）--- */
-            // List<List<CompactState>> env_combination_list = new ArrayList<>();
-            // for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
-            //     List<CompactState> env_combination = new ArrayList<>();
-            //     for (int j = 0 ; j < unsynthesized_env_list.size() ; j++) {
-            //         if ((i >> j & 1) == 1) {
-            //             env_combination.add(unsynthesized_env_list.get(j));
-            //         }
-            //     }
-            //     env_combination.sort(Comparator.comparing(env -> env.name));
-            //     env_combination_list.add(env_combination);
-            // }
+            //予め合成
+            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+            checkMemoryUsage();
 
-            /* --- CASE2：各環境モデル1つだけ足りない組み合わせ（|Es|）--- */
-            // List<List<CompactState>> env_combination_list = new ArrayList<>();
-            // for (int i = 0 ; i < unsynthesized_env_list.size() ; i++) {
-            //     List<CompactState> env_combination = new ArrayList<>(unsynthesized_env_list);
-            //     env_combination.remove(i);
-            //     env_combination.sort(Comparator.comparing(env -> env.name));
-            //     env_combination_list.add(env_combination);
-            // }
+            //出力を処理
+            current.composition.initActions();
+            current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
+            current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
 
-            /* --- CASE3：監視対象モデルのunion closure（和集合閉包）による環境モデル集合 --- */
-            // 前処理：env_name -> CompactState（getCompactStateの線形探索を避ける）
-            Map<String, CompactState> envByName = new HashMap<>();
-            for (CompactState cs : unsynthesized_env_list) {
-                envByName.put(cs.name, cs);
-            }
+            preControllers.add(current.composition);
+            long endTime_synthesis = System.currentTimeMillis();
+            executionTime_list.add(endTime_synthesis - startTime_synthesis); //ms
+            maxStates_list.add(maxStates);
+            maxTransitions_list.add(maxTransitions);
 
-            // 前処理：モデル名 -> index（全環境モデル集合）
-            List<String> allModels = new ArrayList<>(getNameSet(unsynthesized_env_list));
-            Map<String, Integer> idx = new HashMap<>(allModels.size() * 2);
-            for (int k = 0; k < allModels.size(); k++) idx.put(allModels.get(k), k);
-
-            // reqごとのBitSetを作る
-            int nReq = unsynthesized_req_list.size();
-            BitSet[] reqBits = new BitSet[nReq];
-            for (int j = 0; j < nReq; j++) {
-                BitSet bs = new BitSet(allModels.size());
-                for (String m : unsynthesized_req_list.get(j).ideal_monitoredModels) {
-                    Integer id = idx.get(m);
-                    if (id != null) bs.set(id);
-                }
-                reqBits[j] = bs;
-            }
-
-            // 組み合わせ生成（BitSetの閉包）
-            // ここでは空集合も入るが後で除外する
-            Set<BitSet> comb = new HashSet<>();
-            comb.add(new BitSet(allModels.size()));
-            for (BitSet r : reqBits) {
-                List<BitSet> snapshot = new ArrayList<>(comb);
-                for (BitSet cur : snapshot) {
-                    BitSet next = (BitSet) cur.clone();
-                    next.or(r);
-                    comb.add(next);
-                }
-            }
-
-            // 空集合と全集合を除外
-            BitSet full = new BitSet(allModels.size());
-            full.set(0, allModels.size());
-
-            // comb -> env_combination_list へ直変換（Set<Set<String>> を作らない）
-            for (BitSet bs : comb) {
-                if (bs.isEmpty() || bs.equals(full)) continue;
-
-                List<CompactState> env_combination = new ArrayList<>(bs.cardinality());
-                for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-                    String envName = allModels.get(i);
-                    CompactState cs = envByName.get(envName);
-                    if (cs != null) env_combination.add(cs);
-                }
-                env_combination.sort(Comparator.comparing(env -> env.name));
-                env_combination_list.add(env_combination);
-            }
-
-            // 最終ソート（元のまま）
-            env_combination_list.sort((list1, list2) -> {
-                int sizeCompare = Integer.compare(list1.size(), list2.size());
-                if (sizeCompare != 0) return sizeCompare;
-                for (int i = 0; i < list1.size(); i++) {
-                    int cmp = list1.get(i).name.compareTo(list2.get(i).name);
-                    if (cmp != 0) return cmp;
-                }
-                return 0;
-            });
-
-            int num_of_combination = 0;
-            for (List<CompactState> combination : env_combination_list) {
-                ltsOutput.outln("- Precontroller_" + num_of_combination + " : [" + String.join(", ", getNameList(combination)) + "]");
-                num_of_combination++;
-            }
-
-            //env_combination_listに基づいて，部分合成
-            //null（空集合）は除いて処理
-            for (int id = 1 ; id < env_combination_list.size() ; id++) {
-                Vector<CompactState> this_step_machines = new Vector<>();
-                List<String> this_step_env_name = new ArrayList<>();
-                List<String> this_step_req_name = new ArrayList<>();
-
-                //入力に環境モデルの追加
-                for (CompactState env : env_combination_list.get(id)) {
-                    this_step_machines.add(env);
-                    this_step_env_name.add(env.name);
-                }
-                //入力に監視モデル（要求モデル）の追加
-                for (CompactState req : unsynthesized_req_list) {
-                    if (checkInList(req.ideal_monitoredModels, this_step_env_name)) {
-                        this_step_machines.add(req);
-                        this_step_req_name.add(req.name);
-                    }
-                }
-                current.name = "PreController_" + id;
-                current.machines = new Vector<>(this_step_machines);
-                current.env = null;
-                ltsOutput.outln("");
-                ltsOutput.outln("-- Synthesis --------------------------------------");
-                ltsOutput.outln("[info] Output Model : " + current.name);
-                ltsOutput.outln("[info] Input Models : " + getNameList(current.machines));
-                ltsOutput.outln("---------------------------------------------------");
-
-                //予め合成
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-
-                //出力を処理
-                current.composition.initActions();
-                current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
-                current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
-                ltsOutput.outln("[info] " + current.name + ".componentEnvModels : " + current.composition.componentEnvModels.toString());
-                ltsOutput.outln("[info] " + current.name + ".componentReqModels : " + current.composition.componentReqModels.toString());
-
-                preControllers.add(current.composition);
-            }
-            current.machines = new Vector<>(preControllers);
-            postState(current);
+        }
+        current.machines = new Vector<>(preControllers);
+        postState(current);
 
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime; //ms
         checkMemoryUsage();
 
+        int num_precontroller = env_combination_list.size();
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Component List of Synthesized Pre-Controllers");
-        //環境モデルの全通り組み合わせ（env_combination_list）の出力
-        int pattern = 0;
-        for (int id = 0 ; id < env_combination_list.size() ; id++) {
-            ltsOutput.outln("PreController_"+ id + " : " + getNameList(env_combination_list.get(id)));
-            pattern++;
+        ltsOutput.outln("");
+        for (int id = 0 ; id < num_precontroller ; id++) {
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] PreController_" + id);
+            ltsOutput.outln(" * Component Models    : [" + String.join(", ", getNameList(env_combination_list.get(id))) + "]");
+            ltsOutput.outln(" * State               : " + maxStates_list.get(id));
+            ltsOutput.outln(" * Transition          : " + maxTransitions_list.get(id));
+            ltsOutput.outln(" * Execution Time (ms) : " + executionTime_list.get(id));
         }
         ltsOutput.outln("");
         ltsOutput.outln("");
-        ltsOutput.outln("[info] Pre-Controller Synthesis is Complete!");
-        ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-        ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-        ltsOutput.outln("[info] Number of Pattern : " + pattern);
-        // ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-        // ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
         ltsOutput.outln("");
+        ltsOutput.outln("[info] Pre-Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] File Name           : " + openFile);
+        ltsOutput.outln("[info] PreController Size  : " + num_precontroller);
+        ltsOutput.outln("[info] State");
+        ltsOutput.outln("     * sum                 : " + getSumIntList(maxStates_list));
+        ltsOutput.outln("     * average             : " + getSumIntList(maxStates_list)/num_precontroller);
+        ltsOutput.outln("[info] Transition");
+        ltsOutput.outln("     * sum                 : " + getSumIntList(maxTransitions_list));
+        ltsOutput.outln("     * average             : " + getSumIntList(maxTransitions_list)/num_precontroller);
+        ltsOutput.outln("[info] Synthesis Time (ms)");
+        ltsOutput.outln("     * sum                 : " + getSumLongList(executionTime_list));
+        ltsOutput.outln("     * average             : " + getSumLongList(executionTime_list)/num_precontroller);
+        ltsOutput.outln("[info] Analysis Time  (ms) : " + analysisTime);
+        ltsOutput.outln("[info] All Time       (ms) : " + executionTime);
+        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+        ltsOutput.outln("");
+
+        // --------------------------------------------------------------------
+
+        /* 実験用：全環境変化を考慮して合成 (precontroller synthesisの後ではなければ実行不可) */
+        if (experiment_mode == true) {
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("          Resume ALL Controller Synthesis          ");
+            ltsOutput.outln("===================================================");
+            ltsOutput.outln("");
+            
+            List<List<String>> synthesis_detail_list = new ArrayList<>();
+            List<List<String>> resumable_env_list = new ArrayList<>();
+            List<List<String>> unresumable_env_list = new ArrayList<>();
+            List<Long> synthesis_time_list = new ArrayList<>();   //合成順に合成にかかった時間をadd
+            List<List<String>> change_env_all_list = new ArrayList<>();
+            List<String> old_env_list = new ArrayList<>();
+            for (CompactState machine : beforeModels) {
+                    if (!machine.hasERROR()) old_env_list.add(machine.name);
+            }
+
+            int n = old_env_list.size();
+            // 1 〜 (2^n) まで回す（空集合を除く）
+            for (int mask = 1; mask < (1 << n) ; mask++) {
+                startTime = System.currentTimeMillis();
+
+                //STEP1: 環境変化する環境モデルの特定
+                List<String> change_env_list = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    if ((mask & (1 << i)) != 0) {
+                        change_env_list.add(old_env_list.get(i));
+                    }
+                }
+                change_env_all_list.add(change_env_list);
+            }
+            // 合成順を並び替え
+            change_env_all_list.sort(
+                Comparator
+                    .comparingInt(List<String>::size)
+                    .thenComparing(list -> String.join(",", list))
+            );
+
+            n = change_env_all_list.size();
+            for (int i = 0 ; i < n ; i++) {
+                List<String> change_env_list = new ArrayList<>(change_env_all_list.get(i));
+                synthesis_detail_list.add(change_env_list);
+                ltsOutput.outln("[info] Changed Environment      : " + change_env_list);
+                // STEP2: 再利用するPartControllerの選定
+                // [TBD] 変化する環境モデルが０の時，挙動が変化する
+                int max = 0;
+                List<CompactState> target_env = new ArrayList<>();
+                for (List<CompactState> env_combination : env_combination_list) {
+                    if (env_combination.size() > max &&
+                        Collections.disjoint(getNameList(env_combination), change_env_list)) {
+                        max = env_combination.size();
+                        target_env = env_combination;
+                    }
+                }
+                List<String> target_env_names = getNameList(target_env);
+                CompactState target_preController = null;
+                for (CompactState preController : preControllers) {
+                    if (Objects.equals(preController.componentEnvModels, target_env_names)) {
+                        target_preController = preController;
+                        break;
+                    }
+                }
+                ltsOutput.outln("[info] Reusable Environment     : " + getNameList(target_env));
+                if (target_preController != null) ltsOutput.outln("[info] Taget PreController      : " + target_preController.name);
+                else ltsOutput.outln("[info] Taget PreController      : not found");
+
+
+                // STEP3: current.machines に含まれるCSのうち，
+                //        該当PartControllerを構成するモデルとPartControllerを置き換える
+                current.machines = new Vector(beforeModels);
+                if (target_preController != null) {
+                    resumable_env_list.add(change_env_list);
+                    // 削除対象名をまとめる（高速化のためSetにする）
+                    Set<String> removeNames = new HashSet<>();
+                    removeNames.addAll(target_preController.componentEnvModels);
+                    removeNames.addAll(target_preController.componentReqModels);
+
+                    // 条件に一致するCompactStateを削除
+                    current.machines.removeIf(cs -> removeNames.contains(cs.name));
+
+                    // 置き換えとしてPreControllerを追加
+                    current.machines.add(target_preController);
+
+                    ltsOutput.outln("[info] Replaced models with     : " + target_preController.name);
+                    ltsOutput.outln("[info] Updated current.machines : " + getNameList(current.machines));
+                
+                    // 入力モデルの分類（合成後Controllerの情報付与に必要）
+                    List<String> this_step_env_name = new ArrayList<>();
+                    List<String> this_step_req_name = new ArrayList<>();
+                    for (CompactState machine : current.machines) {
+                        machine.initActions();
+                        if (machine.hasERROR())
+                            this_step_req_name.add(machine.name);
+                        else
+                            this_step_env_name.add(machine.name);
+                    }
+
+                    // STEP4: 合成
+                    ltsOutput.outln("");
+                    ltsOutput.outln("-- Synthesis --------------------------------------");
+                    ltsOutput.outln("[info] Output Model      : " + current.name);
+                    ltsOutput.outln("[info] Input Environment : " + this_step_env_name);
+                    ltsOutput.outln("[info] Input Reqirement  : " + this_step_req_name);
+                    ltsOutput.outln("---------------------------------------------------");
+
+                    current.name = "Controller";
+                    TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+                    current.composition.initActions();
+                    current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
+                    current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
+                    postState(current);
+                    endTime = System.currentTimeMillis();
+                    executionTime = endTime - startTime; //ms
+                    checkMemoryUsage();
+
+                    ltsOutput.outln("");
+                    ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
+                    ltsOutput.outln("[info] File Name           : " + openFile);
+                    ltsOutput.outln("[info] Changed Environment : " + change_env_list);
+                    ltsOutput.outln("[info] Used PreController  : " + target_preController.name + " " + getNameList(target_env));
+                    ltsOutput.outln("[info] Maximum State       : " + maxStates);
+                    ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+                    ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+                    ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+                    ltsOutput.outln("");
+                }
+                else {
+                    unresumable_env_list.add(change_env_list);
+                    ltsOutput.outln("[info] No PreController to reuse.");
+                    ltsOutput.outln("");
+                }
+            }
+
+            ltsOutput.outln("");
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] All Synthesis is Complete!");
+            ltsOutput.outln("[info] File Name                     : " + openFile);
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Environment change pattern    : " + synthesis_detail_list.size());
+            ltsOutput.outln("[info] Resumable Environment Changes : " + resumable_env_list.size());
+            for (int i=0 ; i < resumable_env_list.size() ; i++) {
+                ltsOutput.outln("     * " + resumable_env_list.get(i));
+            }
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Unresumable Environment Changes : " + unresumable_env_list.size());
+            for (int i=0 ; i < unresumable_env_list.size() ; i++) {
+                ltsOutput.outln("     * " + unresumable_env_list.get(i));
+            }
+            ltsOutput.outln("");
+        }
     }
 
 
@@ -2482,35 +2621,33 @@ public class HPWindow extends JFrame implements Runnable {
         }
         else {
             current.machines = new Vector<>(); //current.machinesの参照先をpreControllersから切る
-
             maxMemoryUsage = 0;
             maxStates = 0;
             maxTransitions = 0;
-            // ltsOutput.clearOutput();
-            long startTime = System.currentTimeMillis();
             compile();
-            // ltsOutput.clearOutput();
             ltsOutput.outln("Compile is Complete!");
+
             ltsOutput.outln("");
             ltsOutput.outln("");
             ltsOutput.outln("===================================================");
             ltsOutput.outln("            Resume Controller Synthesis            ");
             ltsOutput.outln("===================================================");
-            ltsOutput.outln("[info] current.name     : " + current.name);
-            ltsOutput.outln("[info] current.machines : " + getNameList(current.machines));
-            ltsOutput.outln("[info] Num of PreController : " + preControllers.size());
+            ltsOutput.outln("[info] current.name             : " + current.name);
+            ltsOutput.outln("[info] current.machines         : " + getNameList(current.machines));
+            ltsOutput.outln("[info] Num of PreController     : " + preControllers.size());
             ltsOutput.outln("");
 
             /* 前準備（PreControllerの再利用） */
             // STEP1: 変化した環境モデル（変化前モデル）の特定
             List<String> old_env_list = new ArrayList<>(getNameList(beforeModels));
             old_env_list.removeAll(getNameList(current.machines));
-            ltsOutput.outln("[info] Changed Env List     : " + old_env_list);
+            ltsOutput.outln("[info] Changed Environment      : " + old_env_list);
 
             if (old_env_list == null || old_env_list.isEmpty()) {
                 ltsOutput.outln("[info] The environment has not changed.");
             }
             else {
+                long startTime = System.currentTimeMillis();
                 // STEP2: 再利用するPartControllerの選定
                 // [TBD] 変化する環境モデルが０の時，挙動が変化する
                 int max = 0;
@@ -2530,15 +2667,13 @@ public class HPWindow extends JFrame implements Runnable {
                         break;
                     }
                 }
-                ltsOutput.outln("[info] target_env           : " + getNameList(target_env));
-                if (target_preController != null) ltsOutput.outln("[info] target_preController : " + target_preController.name);
-                else ltsOutput.outln("[info] target_preController : not found");
+                ltsOutput.outln("[info] Reusable Environment     : " + getNameList(target_env));
+                if (target_preController != null) ltsOutput.outln("[info] Taget PreController      : " + target_preController.name);
+                else ltsOutput.outln("[info] Taget PreController      : not found");
 
                 // STEP3: current.machines に含まれるCSのうち，
                 //        該当PartControllerを構成するモデルとPartControllerを置き換える
-
                 if (target_preController != null) {
-
                     // 削除対象名をまとめる（高速化のためSetにする）
                     Set<String> removeNames = new HashSet<>();
                     removeNames.addAll(target_preController.componentEnvModels);
@@ -2550,7 +2685,7 @@ public class HPWindow extends JFrame implements Runnable {
                     // 置き換えとしてPreControllerを追加
                     current.machines.add(target_preController);
 
-                    ltsOutput.outln("[info] Replaced models with : " + target_preController.name);
+                    ltsOutput.outln("[info] Replaced models with     : " + target_preController.name);
                     ltsOutput.outln("[info] Updated current.machines : " + getNameList(current.machines));
                 }
                 else {
@@ -2571,17 +2706,15 @@ public class HPWindow extends JFrame implements Runnable {
                 // STEP4: 合成
                 ltsOutput.outln("");
                 ltsOutput.outln("-- Synthesis --------------------------------------");
-                ltsOutput.outln("[info] Output Model : " + current.name);
-                ltsOutput.outln("[info] Input Models : " + getNameList(current.machines));
+                ltsOutput.outln("[info] Output Model      : " + current.name);
+                ltsOutput.outln("[info] Input Environment : " + this_step_env_name);
+                ltsOutput.outln("[info] Input Reqirement  : " + this_step_req_name);
                 ltsOutput.outln("---------------------------------------------------");
 
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput);
                 current.composition.initActions();
                 current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
                 current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
-                ltsOutput.outln("");
-                ltsOutput.outln("[info] " + current.name + ".componentEnvModels : " + current.composition.componentEnvModels.toString());
-                ltsOutput.outln("[info] " + current.name + ".componentReqModels : " + current.composition.componentReqModels.toString());
                 postState(current);
                 long endTime = System.currentTimeMillis();
                 long executionTime = endTime - startTime; //ms
@@ -2590,11 +2723,13 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("");
                 ltsOutput.outln("");
                 ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
-                ltsOutput.outln("[info] Use Pre-Controller : " + target_preController.name);
-                ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
-                ltsOutput.outln("[info] Maximum Memory : " + maxMemoryUsage + " KB");
-                ltsOutput.outln("[info] Maximum Space  : " + maxStates + "(state)");
-                ltsOutput.outln("                      : " + maxTransitions+ "(transition)");
+                ltsOutput.outln("[info] File Name           : " + openFile);
+                ltsOutput.outln("[info] Changed Environment : " + old_env_list);
+                ltsOutput.outln("[info] Used PreController  : " + target_preController.name + " " + getNameList(target_env));
+                ltsOutput.outln("[info] Maximum State       : " + maxStates);
+                ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+                ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+                ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
                 ltsOutput.outln("");
             }
         }
@@ -2660,6 +2795,22 @@ public class HPWindow extends JFrame implements Runnable {
             if(!large.contains(s)) return false;
         }
         return true;
+    }
+
+    private Integer getSumIntList(List<Integer> list) {
+        Integer sum = 0;
+        for (Integer value : list) {
+            sum += value;
+        }
+        return sum;
+    }
+
+    private Long getSumLongList(List<Long> list) {
+        Long sum = 0L;
+        for (Long value : list) {
+            sum += value;
+        }
+        return sum;
     }
 
     /**************************************************************************/

@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 public class CompactState implements Automata {
-
+    
     public String name;
     public int maxStates;
     public String[] alphabet;
