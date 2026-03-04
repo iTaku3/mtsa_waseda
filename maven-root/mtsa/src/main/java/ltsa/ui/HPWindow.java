@@ -2657,6 +2657,7 @@ public class HPWindow extends JFrame implements Runnable {
                     ltsOutput.outln("[info] Input Reqirement  : " + this_step_req_name);
                     ltsOutput.outln("---------------------------------------------------");
 
+                    // TBD: 環境モデル1つ，監視モデル0の時，そのパターンの合成を中止する（CMなど該当）
                     current.name = "Controller";
                     TransitionSystemDispatcher.applyComposition(current, ltsOutput);
                     current.composition.initActions();
