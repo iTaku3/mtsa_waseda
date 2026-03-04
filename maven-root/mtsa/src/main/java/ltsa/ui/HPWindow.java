@@ -2753,20 +2753,33 @@ public class HPWindow extends JFrame implements Runnable {
                 unresume_time = unresume_time + unresume_time_list.get(i);
             }
 
-            double resumableProbability =
-                (double) resumable_env_list.size() / synthesis_detail_list.size() * 100.0;
             ltsOutput.outln("");
             ltsOutput.outln("[info] File Name                       : " + openFile);
             ltsOutput.outln("[info] PreSynthesis Method             : " + presynthesis_method);
             ltsOutput.outln("[info] Environment change pattern      : " + synthesis_detail_list.size());
-            ltsOutput.outln("[info] Resumable Synthesis Probability : " + String.format("%.2f", resumableProbability));
+            if (synthesis_detail_list.size() > 0) {
+                double resumableProbability =
+                    (double) resumable_env_list.size() / synthesis_detail_list.size() * 100.0;
+                ltsOutput.outln("[info] Resumable Synthesis Probability : "
+                        + String.format("%.2f", resumableProbability));
+            }
             ltsOutput.outln("[info] Execution Time (ms)");
-            ltsOutput.outln("     * avarage (resumable)             : " + resume_time/resumable_env_list.size());
-            ltsOutput.outln("     * avarage (unresumable)           : " + unresume_time/unresumable_env_list.size());
-            ltsOutput.outln("     * avarage (resumable+unresumable) : " + (resume_time+unresume_time)/(resumable_env_list.size()+unresumable_env_list.size()));
-            ltsOutput.outln("     * total                           : " + resume_time+unresume_time);
+            if (resumable_env_list.size() > 0) {
+                ltsOutput.outln("     * avarage (resumable)             : "
+                        + resume_time / resumable_env_list.size());
+            }
+            if (unresumable_env_list.size() > 0) {
+                ltsOutput.outln("     * avarage (unresumable)           : "
+                        + unresume_time / unresumable_env_list.size());
+            }
+            if ((resumable_env_list.size() + unresumable_env_list.size()) > 0) {
+                ltsOutput.outln("     * avarage (resumable+unresumable) : "
+                        + (resume_time + unresume_time) /
+                          (resumable_env_list.size() + unresumable_env_list.size()));
+            }
+            ltsOutput.outln("     * total                           : " + (resume_time + unresume_time));
             ltsOutput.outln("");
-
+            
             if (presynthesis_method == 1) {
                 proposal_unresumable_env_list = new ArrayList<>(unresumable_env_list);
                 proposal_unresumable_time_list = new ArrayList<>(unresume_time_list);
