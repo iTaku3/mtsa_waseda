@@ -395,6 +395,9 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
         tools.add(preControllerTool = createTool("icon/precon.gif", "PreController", new DoAction(DO_preControllerSynthesis)));
         tools.add(resumeControllerTool = createTool("icon/recon.gif", "ResumeController", new DoAction(DO_resumeControllerSynthesis)));
+        // tools.add(preControllerTool = createTool("icon/precon.gif", "Ex1", new DoAction(DO_Ex1)));
+        // tools.add(preControllerTool = createTool("icon/precon.gif", "Ex2", new DoAction(DO_Ex2)));
+        // tools.add(preControllerTool = createTool("icon/precon.gif", "Ex3", new DoAction(DO_Ex3)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
         targetChoice.setEditable(false);
@@ -2275,7 +2278,7 @@ public class HPWindow extends JFrame implements Runnable {
 
         /* --- CASE1：全通りの組み合わせ（2^|Es|）--- */
         // List<List<CompactState>> env_combination_list = new ArrayList<>();
-        // for (int i = 0 ; i < 1 << unsynthesized_env_list.size() ; i++) {
+        // for (int i = 1 ; i < 1 << unsynthesized_env_list.size() ; i++) {
         //     List<CompactState> env_combination = new ArrayList<>();
         //     for (int j = 0 ; j < unsynthesized_env_list.size() ; j++) {
         //         if ((i >> j & 1) == 1) {
@@ -2333,11 +2336,9 @@ public class HPWindow extends JFrame implements Runnable {
                 comb.add(next);
             }
         }
-
         // 空集合と全集合を除外
         BitSet full = new BitSet(allModels.size());
         full.set(0, allModels.size());
-
         // comb -> env_combination_list へ直変換（Set<Set<String>> を作らない）
         for (BitSet bs : comb) {
             if (bs.isEmpty() || bs.equals(full)) continue;
@@ -2350,6 +2351,7 @@ public class HPWindow extends JFrame implements Runnable {
             env_combination.sort(Comparator.comparing(env -> env.name));
             env_combination_list.add(env_combination);
         }
+
 
         // 最終ソート
         env_combination_list.sort((list1, list2) -> {
@@ -2396,7 +2398,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.env = null;
             ltsOutput.outln("");
             ltsOutput.outln("-- Synthesis --------------------------------------");
-            ltsOutput.outln("[info] Output Model : " + current.name);
+            ltsOutput.outln("[info] Output Model      : " + current.name);
             ltsOutput.outln("[info] Input Environment : " + this_step_env_name);
             ltsOutput.outln("[info] Input Reqirement  : " + this_step_req_name);
             ltsOutput.outln("---------------------------------------------------");
@@ -2470,18 +2472,17 @@ public class HPWindow extends JFrame implements Runnable {
             List<List<String>> synthesis_detail_list = new ArrayList<>();
             List<List<String>> resumable_env_list = new ArrayList<>();
             List<List<String>> unresumable_env_list = new ArrayList<>();
-            List<Long> synthesis_time_list = new ArrayList<>();   //合成順に合成にかかった時間をadd
+            List<Long> resume_time_list = new ArrayList<>();   //合成順に合成にかかった時間をadd
+            List<Long> unresume_time_list = new ArrayList<>();   //合成順に合成にかかった時間をadd
             List<List<String>> change_env_all_list = new ArrayList<>();
             List<String> old_env_list = new ArrayList<>();
             for (CompactState machine : beforeModels) {
-                    if (!machine.hasERROR()) old_env_list.add(machine.name);
+                if (!machine.hasERROR()) old_env_list.add(machine.name);
             }
 
             int n = old_env_list.size();
             // 1 〜 (2^n) まで回す（空集合を除く）
             for (int mask = 1; mask < (1 << n) ; mask++) {
-                startTime = System.currentTimeMillis();
-
                 //STEP1: 環境変化する環境モデルの特定
                 List<String> change_env_list = new ArrayList<>();
                 for (int i = 0; i < n; i++) {
@@ -2500,6 +2501,7 @@ public class HPWindow extends JFrame implements Runnable {
 
             n = change_env_all_list.size();
             for (int i = 0 ; i < n ; i++) {
+                startTime = System.currentTimeMillis();
                 List<String> change_env_list = new ArrayList<>(change_env_all_list.get(i));
                 synthesis_detail_list.add(change_env_list);
                 ltsOutput.outln("[info] Changed Environment      : " + change_env_list);
@@ -2524,7 +2526,7 @@ public class HPWindow extends JFrame implements Runnable {
                 }
                 ltsOutput.outln("[info] Reusable Environment     : " + getNameList(target_env));
                 if (target_preController != null) ltsOutput.outln("[info] Taget PreController      : " + target_preController.name);
-                else ltsOutput.outln("[info] Taget PreController      : not found");
+                else ltsOutput.outln("[info] Taget PreController      : N/A");
 
 
                 // STEP3: current.machines に含まれるCSのうち，
@@ -2568,16 +2570,16 @@ public class HPWindow extends JFrame implements Runnable {
                     current.name = "Controller";
                     TransitionSystemDispatcher.applyComposition(current, ltsOutput);
                     current.composition.initActions();
-                    current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
-                    current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
+                    // current.composition.componentEnvModels = new ArrayList<>(this_step_env_name);
+                    // current.composition.componentReqModels = new ArrayList<>(this_step_req_name);
                     postState(current);
                     endTime = System.currentTimeMillis();
                     executionTime = endTime - startTime; //ms
+                    resume_time_list.add(executionTime);
                     checkMemoryUsage();
 
                     ltsOutput.outln("");
                     ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
-                    ltsOutput.outln("[info] File Name           : " + openFile);
                     ltsOutput.outln("[info] Changed Environment : " + change_env_list);
                     ltsOutput.outln("[info] Used PreController  : " + target_preController.name + " " + getNameList(target_env));
                     ltsOutput.outln("[info] Maximum State       : " + maxStates);
@@ -2585,30 +2587,63 @@ public class HPWindow extends JFrame implements Runnable {
                     ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
                     ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
                     ltsOutput.outln("");
+                    ltsOutput.outln("");
                 }
                 else {
                     unresumable_env_list.add(change_env_list);
                     ltsOutput.outln("[info] No PreController to reuse.");
                     ltsOutput.outln("");
+
+                    current.name = "Controller";
+                    TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+                    current.composition.initActions();
+                    postState(current);
+                    endTime = System.currentTimeMillis();
+                    executionTime = endTime - startTime; //ms
+                    unresume_time_list.add(executionTime);
+                    checkMemoryUsage();
+
+                    ltsOutput.outln("");
+                    ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
+                    ltsOutput.outln("[info] Changed Environment : " + change_env_list);
+                    ltsOutput.outln("[info] Used PreController  : N/A ");
+                    ltsOutput.outln("[info] Maximum State       : " + maxStates);
+                    ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
+                    ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
+                    ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+                    ltsOutput.outln("");
                 }
             }
+
 
             ltsOutput.outln("");
             ltsOutput.outln("");
             ltsOutput.outln("[info] All Synthesis is Complete!");
-            ltsOutput.outln("[info] File Name                     : " + openFile);
             ltsOutput.outln("");
-            ltsOutput.outln("[info] Environment change pattern    : " + synthesis_detail_list.size());
+
             ltsOutput.outln("[info] Resumable Environment Changes : " + resumable_env_list.size());
+            long resume_time = 0;
             for (int i=0 ; i < resumable_env_list.size() ; i++) {
-                ltsOutput.outln("     * " + resumable_env_list.get(i));
+                ltsOutput.outln("     * " + resumable_env_list.get(i) + " : " + resume_time_list.get(i) + " ms");
+                resume_time = resume_time + resume_time_list.get(i);
             }
             ltsOutput.outln("");
+
             ltsOutput.outln("[info] Unresumable Environment Changes : " + unresumable_env_list.size());
+            long unresume_time = 0;
             for (int i=0 ; i < unresumable_env_list.size() ; i++) {
-                ltsOutput.outln("     * " + unresumable_env_list.get(i));
+                ltsOutput.outln("     * " + unresumable_env_list.get(i) + " : " + unresume_time_list.get(i) + " ms");
+                unresume_time = unresume_time + unresume_time_list.get(i);
             }
             ltsOutput.outln("");
+            ltsOutput.outln("[info] File Name                       : " + openFile);
+            ltsOutput.outln("[info] Environment change pattern      : " + synthesis_detail_list.size());
+            ltsOutput.outln("[info] Resumable Synthesis Probability : " + (double)resumable_env_list.size()/synthesis_detail_list.size()*100);
+            ltsOutput.outln("[info] Execution Time (ms)");
+            ltsOutput.outln("     * avarage (resumable)             : " + resume_time/resumable_env_list.size());
+            ltsOutput.outln("     * avarage (unresumable)           : " + unresume_time/unresumable_env_list.size());
+            ltsOutput.outln("     * avarage (resumable+unresumable) : " + (resume_time+unresume_time)/(resumable_env_list.size()+unresumable_env_list.size()));
+            ltsOutput.outln("     * total                           : " + resume_time+unresume_time);
         }
     }
 
