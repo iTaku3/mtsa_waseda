@@ -2775,7 +2775,9 @@ public class HPWindow extends JFrame implements Runnable {
             }
             else if (proposal_unresumable_env_list != null && !proposal_unresumable_env_list.isEmpty()) {
                 ltsOutput.outln("");
-                ltsOutput.outln("[info] Comparison information");
+                ltsOutput.outln("===================================================");
+                ltsOutput.outln("              Composition Infomation               ");
+                ltsOutput.outln("===================================================");
                 ltsOutput.outln("");
                 // 比較手法が有効な場合（提案手法が再利用できなかった場合）
                 double oldTime_sum = 0.0;
