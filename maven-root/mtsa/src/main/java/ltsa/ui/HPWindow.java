@@ -2779,7 +2779,7 @@ public class HPWindow extends JFrame implements Runnable {
             }
             ltsOutput.outln("     * total                           : " + (resume_time + unresume_time));
             ltsOutput.outln("");
-            
+
             if (presynthesis_method == 1) {
                 proposal_unresumable_env_list = new ArrayList<>(unresumable_env_list);
                 proposal_unresumable_time_list = new ArrayList<>(unresume_time_list);
@@ -2795,7 +2795,7 @@ public class HPWindow extends JFrame implements Runnable {
                 // 比較手法が有効な場合（提案手法が再利用できなかった場合）
                 double oldTime_sum = 0.0;
                 double newTime_sum = 0.0;
-                ltsOutput.outln("[info] Compare Execution Time (ms) [proposal is NOT effective]");
+                ltsOutput.outln("[info] Compare Execution Time [proposal is NOT effective]");
                 ltsOutput.outln("     * [Changed Environment] : method"+ presynthesis_method +" time (ms) -> method1 time (ms)");
                 for (int i = 0; i < compair_unresume_env_list.size(); i++) {
                     double oldTime = compair_unresume_time_list.get(i).get(0);
@@ -2823,7 +2823,7 @@ public class HPWindow extends JFrame implements Runnable {
                 // 提案のみ有効な場合（提案手法が再利用できた場合）
                 oldTime_sum = 0.0;
                 newTime_sum = 0.0;
-                ltsOutput.outln("[info] Compare Execution Time (ms) [proposal is effective]");
+                ltsOutput.outln("[info] Compare Execution Time [proposal is effective]");
                 ltsOutput.outln("     * [Changed Environment] : method"+ presynthesis_method +" time (ms) -> method1 time (ms)");
 
                 for (int i = 0; i < compair_resume_env_list.size(); i++) {
