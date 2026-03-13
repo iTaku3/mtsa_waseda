@@ -113,6 +113,8 @@ public class SymbolTable {
 
         //Stepwise controller synthesis
         addSymbols("stepwiseController", Symbol.STEPWISE_CONTROLLER);
+        addSymbols("minimize", Symbol.MINIMIZE);
+        addSymbols("monitoring", Symbol.MONITORING);
     }
 
     private static void addSymbols(String key, Integer elem) {
