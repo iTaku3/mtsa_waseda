@@ -2759,8 +2759,7 @@ public class HPWindow extends JFrame implements Runnable {
         int choice = JOptionPane.showOptionDialog(null, "Choose the next action", "Next action", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, aviableActions, aviableActions[0]);
 
         if (choice == -1)
-            return;
-
+            return
         this.explorer.explore(aviableActions[choice]);
 
         exploration_output();
