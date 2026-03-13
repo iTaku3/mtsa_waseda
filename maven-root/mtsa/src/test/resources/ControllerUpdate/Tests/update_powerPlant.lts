@@ -1,0 +1,361 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - After Composing, you can animate the controller obtained pressing 
+// the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {stopPump, startPump, procedure, endProcedure}
+set A = {ControllableActions, request}
+
+    //OldEnvironment and NewEnvironment
+    MAINTENANCE = (request -> endProcedure -> MAINTENANCE).
+
+    ENV = STARTED,
+    STARTED = (stopPump -> STOPPED | 
+                    procedure -> STARTED | 
+                    endProcedure -> STARTED),
+	STOPPED = (startPump -> STARTED | 
+				procedure -> STOPPED |
+				endProcedure -> STOPPED).
+
+    //Mapping Environment
+	BEFORE_RECONF = (reconfigure -> AFTER_RECONF | A -> BEFORE_RECONF),
+	AFTER_RECONF = (A -> AFTER_RECONF).
+
+
+||OldEnvironment = (MAINTENANCE || ENV).
+||NewEnvironment = (MAINTENANCE || ENV).
+||MappingEnvironment = (MAINTENANCE || ENV || BEFORE_RECONF).
+
+//Fluents declaration
+fluent PumpOff = <{stopPump},{startPump}>
+fluent PumpOn = <{startPump},{stopPump}> initially 1
+fluent RequestPending = <{request},{endProcedure}>
+fluent MainteinanceFinished = <{procedure}, {request}> 
+fluent PendingOk = <procedure, endProcedure>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert PROCEDURE_WHILE_STOPPED = (procedure -> PumpOff)
+assert MAINTEINANCE_GUARANTEED = (endProcedure -> (MainteinanceFinished && !PumpOff))
+assert PROCEDURE_IF_REQUEST = (procedure -> RequestPending)
+assert PUMP_OFF_ONLY_OK_NOT_PENDING = (stopPump -> !PendingOk)
+
+ltl_property P_PROCEDURE_WHILE_STOPPED = []PROCEDURE_WHILE_STOPPED
+ltl_property P_MAINTEINANCE_GUARANTEED = []MAINTEINANCE_GUARANTEED
+ltl_property P_PROCEDURE_IF_REQUEST = []PROCEDURE_IF_REQUEST
+ltl_property P_PUMP_OFF_ONLY_OK_NOT_PENDING = []PUMP_OFF_ONLY_OK_NOT_PENDING
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+minimal ||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_PROCEDURE_WHILE_STOPPED, P_MAINTEINANCE_GUARANTEED,
+			  P_PROCEDURE_IF_REQUEST, P_PUMP_OFF_ONLY_OK_NOT_PENDING}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert MAINTEINANCE_GUARANTEED_NEW = (endProcedure -> MainteinanceFinished)
+assert NEVER_STOP = (!stopPump)
+ltl_property P_MAINTEINANCE_GUARANTEED_NEW = []MAINTEINANCE_GUARANTEED_NEW 
+ltl_property P_NEVER_STOP = []NEVER_STOP
+
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+controllerSpec NewSpec= {
+    safety = {P_NEVER_STOP, P_MAINTEINANCE_GUARANTEED_NEW, P_PROCEDURE_IF_REQUEST}
+    controllable = {ControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert AnyAction = (stopPump || startPump || procedure || endProcedure || request)
+
+ltl_property LeavesPumpOn = ((StopOldSpec && PumpOff) -> (!StartNewSpec))
+ltl_property NoTransition = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    mapping = MappingEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+//	T = True is executed if no transition requirement is set
+//	transition = LeavesPumpOn,
+//	transition = NoTransition,
+	nonblocking
+}
+
+||C = (UpdCont).
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = (PROCEDURE_WHILE_STOPPED && MAINTEINANCE_GUARANTEED && PROCEDURE_IF_REQUEST && PUMP_OFF_ONLY_OK_NOT_PENDING)
+assert S_NEW = (NEVER_STOP && MAINTEINANCE_GUARANTEED_NEW && PROCEDURE_IF_REQUEST)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert LeavesPumpOn = []((StopOldSpec && PumpOff) -> (!StartNewSpec))
+
+assert DESIRABLE_BEHAVIOUR = !<>[](PumpOff && StartNewSpec)
+
+
+
+||ExpectedC = UPDATE_CONTROLLER.
+
+	UPDATE_CONTROLLER = Q0,
+	Q0	= (stopPump -> Q1
+		  |beginUpdate -> Q111
+		  |request -> Q116),
+	Q1	= (startPump -> Q0
+		  |beginUpdate -> Q2
+		  |request -> Q70),
+	Q2	= (stopOldSpec -> Q3
+		  |request -> Q62),
+	Q3	= (startNewSpec -> Q4
+		  |reconfigure -> Q35
+		  |procedure -> Q38
+		  |startPump -> Q55
+		  |request -> Q60),
+	Q4	= (reconfigure -> Q5
+		  |startPump -> Q31
+		  |request -> Q34),
+	Q5	= (startPump -> Q6
+		  |request -> Q16),
+	Q6	= (request -> Q7),
+	Q7	= (procedure -> Q8),
+	Q8	= (endProcedure -> Q9
+		  |procedure -> Q10),
+	Q9	= (request -> Q7),
+	Q10	= (endProcedure -> Q11
+		  |procedure -> Q13),
+	Q11	= (request -> Q12),
+	Q12	= (procedure -> Q10),
+	Q13	= (procedure -> Q8
+		  |endProcedure -> Q14),
+	Q14	= (request -> Q15),
+	Q15	= (procedure -> Q13),
+	Q16	= (startPump -> Q7
+		  |procedure -> Q17),
+	Q17	= (endProcedure -> Q18
+		  |procedure -> Q20
+		  |startPump -> Q30),
+	Q18	= (request -> Q16
+		  |startPump -> Q19),
+	Q19	= (request -> Q7),
+	Q20	= (endProcedure -> Q21
+		  |procedure -> Q24
+		  |startPump -> Q29),
+	Q21	= (startPump -> Q22
+		  |request -> Q23),
+	Q22	= (request -> Q12),
+	Q23	= (startPump -> Q12
+		  |procedure -> Q20),
+	Q24	= (procedure -> Q17
+		  |endProcedure -> Q25
+		  |startPump -> Q28),
+	Q25	= (startPump -> Q26
+		  |request -> Q27),
+	Q26	= (request -> Q15),
+	Q27	= (startPump -> Q15
+		  |procedure -> Q24),
+	Q28	= (procedure -> Q8
+		  |endProcedure -> Q14),
+	Q29	= (endProcedure -> Q11
+		  |procedure -> Q13),
+	Q30	= (endProcedure -> Q9
+		  |procedure -> Q10),
+	Q31	= (reconfigure -> Q32
+		  |request -> Q33),
+	Q32	= (request -> Q15),
+	Q33	= (reconfigure -> Q12),
+	Q34	= (reconfigure -> Q27),
+	Q35	= (startNewSpec -> Q36
+		  |request -> Q37),
+	Q36	= (request -> Q27
+		  |startPump -> Q32),
+	Q37	= (startNewSpec -> Q23),
+	Q38	= (startNewSpec -> Q39
+		  |request -> Q51),
+	Q39	= (reconfigure -> Q40
+		  |startPump -> Q44
+		  |request -> Q49),
+	Q40	= (startPump -> Q41
+		  |request -> Q43),
+	Q41	= (request -> Q42),
+	Q42	= (procedure -> Q8),
+	Q43	= (procedure -> Q17
+		  |startPump -> Q42),
+	Q44	= (reconfigure -> Q45
+		  |request -> Q47),
+	Q45	= (request -> Q46),
+	Q46	= (procedure -> Q13),
+	Q47	= (reconfigure -> Q48),
+	Q48	= (procedure -> Q10),
+	Q49	= (reconfigure -> Q50),
+	Q50	= (procedure -> Q24
+		  |startPump -> Q46),
+	Q51	= (startNewSpec -> Q52),
+	Q52	= (startPump -> Q47
+		  |reconfigure -> Q50
+		  |procedure -> Q53),
+	Q53	= (reconfigure -> Q54),
+	Q54	= (endProcedure -> Q21
+		  |procedure -> Q24
+		  |startPump -> Q29),
+	Q55	= (startNewSpec -> Q56
+		  |request -> Q57),
+	Q56	= (reconfigure -> Q32
+		  |request -> Q33),
+	Q57	= (startNewSpec -> Q58),
+	Q58	= (reconfigure -> Q12
+		  |procedure -> Q59),
+	Q59	= (reconfigure -> Q30),
+	Q60	= (startNewSpec -> Q61),
+	Q61	= (reconfigure -> Q27
+		  |startPump -> Q33
+		  |procedure -> Q53),
+	Q62	= (stopOldSpec -> Q63),
+	Q63	= (reconfigure -> Q37
+		  |startPump -> Q57
+		  |startNewSpec -> Q61
+		  |endProcedure -> Q64
+		  |procedure -> Q65),
+	Q64	= (startNewSpec -> Q4
+		  |request -> Q60),
+	Q65	= (startNewSpec -> Q66),
+	Q66	= (procedure -> Q53
+		  |reconfigure -> Q54
+		  |endProcedure -> Q67
+		  |startPump -> Q69),
+	Q67	= (request -> Q34
+		  |reconfigure -> Q68),
+	Q68	= (request -> Q16
+		  |startPump -> Q19),
+	Q69	= (reconfigure -> Q30),
+	Q70	= (beginUpdate -> Q62
+		  |procedure -> Q71
+		  |startPump -> Q116),
+	Q71	= (procedure -> Q71
+		  |beginUpdate -> Q72
+		  |startPump -> Q82),
+	Q72	= (stopOldSpec -> Q73),
+	Q73	= (procedure -> Q65
+		  |startNewSpec -> Q66
+		  |endProcedure -> Q74
+		  |reconfigure -> Q77
+		  |startPump -> Q79),
+	Q74	= (request -> Q60
+		  |startNewSpec -> Q75),
+	Q75	= (request -> Q34
+		  |reconfigure -> Q68
+		  |startPump -> Q76),
+	Q76	= (reconfigure -> Q26
+		  |request -> Q33),
+	Q77	= (startNewSpec -> Q78),
+	Q78	= (endProcedure -> Q18
+		  |procedure -> Q20
+		  |startPump -> Q30),
+	Q79	= (startNewSpec -> Q80),
+	Q80	= (reconfigure -> Q30
+		  |procedure -> Q59
+		  |endProcedure -> Q81),
+	Q81	= (reconfigure -> Q26
+		  |request -> Q33),
+	Q82	= (beginUpdate -> Q83
+		  |endProcedure -> Q90),
+	Q83	= (stopOldSpec -> Q84),
+	Q84	= (startNewSpec -> Q80
+		  |stopPump -> Q85
+		  |endProcedure -> Q86
+		  |reconfigure -> Q88
+		  |procedure -> Q89),
+	Q85	= (startNewSpec -> Q66),
+	Q86	= (request -> Q57
+		  |startNewSpec -> Q87),
+	Q87	= (reconfigure -> Q26
+		  |request -> Q33),
+	Q88	= (startNewSpec -> Q28),
+	Q89	= (startNewSpec -> Q80),
+	Q90	= (stopPump -> Q91
+		  |beginUpdate -> Q98
+		  |request -> Q116),
+	Q91	= (request -> Q70
+		  |beginUpdate -> Q92
+		  |startPump -> Q97),
+	Q92	= (request -> Q62
+		  |stopOldSpec -> Q93),
+	Q93	= (procedure -> Q38
+		  |request -> Q60
+		  |startNewSpec -> Q75
+		  |reconfigure -> Q94
+		  |startPump -> Q96),
+	Q94	= (request -> Q37
+		  |startNewSpec -> Q95),
+	Q95	= (startPump -> Q26
+		  |request -> Q27),
+	Q96	= (request -> Q57
+		  |startNewSpec -> Q87),
+	Q97	= (stopPump -> Q91
+		  |beginUpdate -> Q98
+		  |request -> Q116),
+	Q98	= (stopOldSpec -> Q99
+		  |request -> Q107),
+	Q99	= (request -> Q57
+		  |startNewSpec -> Q87
+		  |stopPump -> Q100
+		  |reconfigure -> Q101
+		  |procedure -> Q103),
+	Q100	= (request -> Q60
+		  |startNewSpec -> Q75),
+	Q101	= (startNewSpec -> Q22
+		  |request -> Q102),
+	Q102	= (startNewSpec -> Q7),
+	Q103	= (startNewSpec -> Q104
+		  |request -> Q105),
+	Q104	= (reconfigure -> Q45
+		  |request -> Q47),
+	Q105	= (startNewSpec -> Q106),
+	Q106	= (reconfigure -> Q48
+		  |procedure -> Q59),
+	Q107	= (stopOldSpec -> Q108),
+	Q108	= (startNewSpec -> Q58
+		  |procedure -> Q89
+		  |reconfigure -> Q102
+		  |stopPump -> Q109
+		  |endProcedure -> Q110),
+	Q109	= (startNewSpec -> Q61),
+	Q110	= (startNewSpec -> Q56
+		  |request -> Q57),
+	Q111	= (request -> Q107
+		  |stopOldSpec -> Q112),
+	Q112	= (startNewSpec -> Q56
+		  |request -> Q57
+		  |procedure -> Q103
+		  |stopPump -> Q113
+		  |reconfigure -> Q114),
+	Q113	= (startNewSpec -> Q4
+		  |request -> Q60),
+	Q114	= (request -> Q102
+		  |startNewSpec -> Q115),
+	Q115	= (request -> Q12),
+	Q116	= (beginUpdate -> Q107
+		  |stopPump -> Q117),
+	Q117	= (beginUpdate -> Q62
+		  |procedure -> Q71
+		  |startPump -> Q116).
+

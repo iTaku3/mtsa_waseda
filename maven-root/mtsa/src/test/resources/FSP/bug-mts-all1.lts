@@ -1,0 +1,255 @@
+const ClientsCount = 2
+range Clients = 1..ClientsCount
+
+set AvailableServices = {car,flight}
+set Agency = {agency.{req,resp,idle}}
+set Network = {yesNetwork, noNetwork}
+set ControllableC1 = {AvailableServices.{buy, query, reserve}, idle}
+set Controllable = {{ControllableC1}, agency.resp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail}}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess}, agency.{req,idle}}
+set A = {Controllable, Uncontrollable, Agency}
+
+//Environment model
+SERVICE(SRV='car, M_IDEAL=1, M_RESERVE=1, M_QINC=0) = IDLE,
+IDLE = ([SRV].query -> QUERYIDEALCHECK),
+QUERYIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].querySuccess -> REQUERYCHECK) 
+					else QUERYING,
+QUERYING = ([SRV].queryFail -> IDLE | [SRV].querySuccess -> REQUERYCHECK),
+REQUERYCHECK = if (M_QINC==1) 
+				then REQUERY 
+				else RESERVECHECK,
+RESERVECHECK = if (M_RESERVE==1) then RESULTSET else RESERVED,
+REQUERY = ([SRV].query -> REQUERYIDEALCHECK),
+REQUERYIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].querySuccess -> RESERVECHECK) 
+					else REQUERYING,
+REQUERYING = ([SRV].queryFail -> IDLE | [SRV].querySuccess -> REQUERIED),
+REQUERIED = if (M_RESERVE==1) 
+			then RESULTSET 
+			else RESERVED,
+RESULTSET = ([SRV].reserve -> RESERVEIDEALCHECK | [SRV].buy -> BUYCHECK),
+RESERVEIDEALCHECK = if (M_IDEAL==1) 
+					then ([SRV].reserveSuccess->RESERVED) 
+					else RESERVING,
+BUYCHECK = if (M_RESERVE==1) 
+			then ([SRV].reserveRequired->RESULTSET) 
+			else BUYING,
+RESERVING =([SRV].reserveFail -> RESULTSET | [SRV].reserveSuccess -> RESERVED),			
+WARNING = ([SRV].reserveRequired->RESULTSET),
+RESERVED = ([SRV].buy -> BUYIDEALCHECK),
+BUYIDEALCHECK= if (M_IDEAL==1) 
+				then ([SRV].buySuccess -> IDLE)
+				else BUYING,
+BUYING = ([SRV].buyFail -> RESERVED | [SRV].buySuccess -> IDLE)
+										+{[SRV].{reserve, reserveFail, reserveSuccess}}.
+
+//||SERVICES = (forall[srv:AvailableServices] SERVICE(srv,1,0)).
+||SERVICES = (SERVICE('car,1,0,0) || SERVICE('flight,1,1,1)).
+
+
+AGENCY = (agency.idle-> AGENCY | agency.req->RESPONSE), 
+RESPONSE = (agency.resp->AGENCY).
+
+||ENV = (SERVICES || AGENCY || NETWORK).
+
+INCERTAIN_INTERFACE = (AvailableServices.{buyFail?, queryFail?}->INCERTAIN_INTERFACE).
+
+INCERTAIN_CAR_INTERFACE = (['car].buyFail?->INCERTAIN_CAR_INTERFACE).
+||INCERTAIN_CAR = (SERVICE('car,0,1,0)||INCERTAIN_CAR_INTERFACE).
+
+INCERTAIN_FLIGHT_INTERFACE = (['flight].queryFail?->INCERTAIN_FLIGHT_INTERFACE).
+||INCERTAIN_FLIGHT = (SERVICE('flight,0,0,0)||INCERTAIN_FLIGHT_INTERFACE).
+
+NETWORK = YES, 
+YES = ({Controllable,Uncontrollable} -> YES | noNetwork -> NO),
+NO = (yesNetwork -> NOBIS | network.idle->NO), 
+NOBIS = ({Controllable,Uncontrollable} -> YES).
+
+//fluent definitions
+fluent F_AgencyResp = <agency.resp, A\{agency.resp}>
+fluent F_AgencyReq = <agency.req, A\{agency.req}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+//fluent F_Reserved[srv:AvailableServices] = <[srv].reserveSuccess, {[srv].buySuccess}>
+fluent F_BoughtSuccessfully[srv:AvailableServices] = <[srv].buySuccess, agency.req>
+fluent F_PendingReq = <agency.req, agency.resp>
+fluent F_NetworkOk = <yesNetwork, noNetwork>
+
+//assertions
+assert NetworkOk = F_NetworkOk
+assert Failures = F_Failures
+assert HolidaysPackage = F_AgencyResp
+assert PendingRequest = F_PendingReq
+assert AllBought = forall[srv:AvailableServices](F_BoughtSuccessfully[srv])
+assert SomeQuery =  exists[srv:AvailableServices] ([srv].query)
+assert RequestsArrive = F_AgencyReq
+
+//Safety definition
+ltl_property NoSpontaneousQueries = [](SomeQuery -> F_PendingReq)
+ltl_property AgencyRspImpliesAllBought = [](F_AgencyResp -> AllBought)
+ltl_property QueryImpliesNotBought = [](forall[srv:AvailableServices] 
+										([srv].query -> !F_BoughtSuccessfully[srv]))
+ltl_property NoBuyIfReserveOrQueryMayFail = 
+		forall[srv1:AvailableServices] [] ([srv1].buy -> 
+			forall[srv2:AvailableServices] 
+				((![srv2].reserveFail && ![srv2].queryFail) W AllBought))
+
+//Controller specifications
+||ENV2 = (INCERTAIN_FLIGHT || INCERTAIN_CAR || AGENCY || NETWORK).
+controller ||C_7_Incertain_FlightQuery_CarBuy = (ENV2)~{G3}.
+
+||AA = (C_7_Incertain_FlightQuery_CarBuy || C_7_Incertain_FlightQuery_CarBuy).
+
+//Defined controllerSpecs
+assert GOAL_WITH_FAILURES = (([]<> PendingRequest && []<> NetworkOk) -> []<> (HolidaysPackage||Failures))
+assert GOAL = (([]<> PendingRequest && []<> NetworkOk) -> []<> HolidaysPackage)
+
+controllerSpec G3 = {
+       safety = {NoBuyIfReserveOrQueryMayFail,AgencyRspImpliesAllBought,
+				NoSpontaneousQueries, QueryImpliesNotBought}
+       failure = {Failures}
+       assumption = {PendingRequest, NetworkOk}
+       liveness = {HolidaysPackage}
+       controllable = {Controllable}
+}
+
+//1) FLight tiene query.fail? y Car tiene buy.fail? Se anima a comprar Flight sin hacer query de Car pero no al reves.
+//2) Ambos tienen query.fail? y buy.fail?  Con Goal con failures da ALL, sin Failures da SOME
+
+controller ||BB = B~{G3}.
+ B = Q0,
+	Q0	= (n -> Q46),
+	Q1	= (network.idle -> Q2
+		  |yesNetwork -> Q24),
+	Q2	= (n -> Q1),
+	Q3	= (n -> Q21),
+	Q4	= (noNetwork -> Q2
+		  |car.query -> Q11
+		  |flight.query -> Q29
+		  |idle -> Q39),
+	Q5	= (car.reserveRequired -> Q81),
+	Q6	= (noNetwork -> Q26
+		  |flight.querySuccess -> Q75),
+	Q7	= (car.querySuccess -> Q3
+		  |car.queryFail -> Q8
+		  |noNetwork -> Q71),
+	Q8	= (n -> Q4),
+	Q9	= (idle -> Q62),
+	Q10	= (flight.querySuccess -> Q75),
+	Q11	= (n -> Q7),
+	Q12	= (flight.buySuccess -> Q23
+		  |flight.buyFail -> Q57
+		  |noNetwork -> Q61),
+	Q13	= (n -> Q69),
+	Q14	= (n -> Q9),
+	Q15	= (car.reserveRequired -> Q13
+		  |noNetwork -> Q42),
+	Q16	= (n -> Q12),
+	Q17	= (idle -> Q23
+		  |noNetwork -> Q40),
+	Q18	= (yesNetwork -> Q14
+		  |network.idle -> Q22),
+	Q19	= (n -> Q15),
+	Q20	= (car.query -> Q11
+		  |flight.query -> Q29),
+	Q21	= (car.buy -> Q19
+		  |noNetwork -> Q67),
+	Q22	= (n -> Q18),
+	Q23	= (n -> Q17),
+	Q24	= (n -> Q20),
+	Q25	= (yesNetwork -> Q34
+		  |network.idle -> Q40),
+	Q26	= (n -> Q44),
+	Q27	= (n -> Q43),
+	Q28	= (flight.queryFail -> Q8
+		  |noNetwork -> Q26
+		  |flight.querySuccess -> Q75),
+	Q29	= (n -> Q6
+		  |fqF -> Q28),
+	Q30	= (yesNetwork -> Q27
+		  |network.idle -> Q33),
+	Q31	= (idle -> Q23),
+	Q32	= (car.query -> Q11
+		  |flight.query -> Q29),
+	Q33	= (n -> Q30),
+	Q34	= (n -> Q31),
+	Q35	= (flight.queryFail -> Q8
+		  |flight.querySuccess -> Q75),
+	Q36	= (yesNetwork -> Q37
+		  |network.idle -> Q42
+		  |car.reserveRequired -> Q70),
+	Q37	= (n -> Q5),
+	Q38	= (car.query -> Q11
+		  |flight.query -> Q29
+		  |noNetwork -> Q64),
+	Q39	= (n -> Q38),
+	Q40	= (n -> Q25),
+	Q41	= (n -> Q10
+		  |fqF -> Q35),
+	Q42	= (n -> Q36),
+	Q43	= (agency.req -> Q39
+		  |{agency.idle, idle} -> Q50),
+	Q44	= (network.idle -> Q26
+		  |yesNetwork -> Q41),
+	Q45	= (flight.buySuccess -> Q23
+		  |flight.buyFail -> Q57),
+	Q46	= (noNetwork -> Q33
+		  |agency.req -> Q39
+		  |{agency.idle, idle} -> Q50),
+	Q47	= (noNetwork -> Q49
+		  |idle -> Q62),
+	Q48	= (n -> Q83),
+	Q49	= (n -> Q52),
+	Q50	= (n -> Q53),
+	Q51	= (yesNetwork -> Q55
+		  |network.idle -> Q61),
+	Q52	= (network.idle -> Q49
+		  |yesNetwork -> Q54),
+	Q53	= (agency.req -> Q39
+		  |{agency.idle, idle} -> Q50
+		  |noNetwork -> Q56),
+	Q54	= (n -> Q74),
+	Q55	= (n -> Q45),
+	Q56	= (n -> Q59),
+	Q57	= (n -> Q58),
+	Q58	= (flight.buy -> Q16
+		  |noNetwork -> Q22
+		  |idle -> Q62),
+	Q59	= (network.idle -> Q56
+		  |yesNetwork -> Q63),
+	Q60	= (n -> Q32),
+	Q61	= (n -> Q51),
+	Q62	= (n -> Q47),
+	Q63	= (n -> Q65),
+	Q64	= (n -> Q66),
+	Q65	= (agency.req -> Q39
+		  |{agency.idle, idle} -> Q50),
+	Q66	= (yesNetwork -> Q60
+		  |network.idle -> Q64),
+	Q67	= (n -> Q84),
+	Q68	= (network.idle -> Q70
+		  |yesNetwork -> Q81),
+	Q69	= (idle -> Q13
+		  |noNetwork -> Q70),
+	Q70	= (n -> Q68),
+	Q71	= (n -> Q73),
+	Q72	= (n -> Q77),
+	Q73	= (network.idle -> Q71
+		  |yesNetwork -> Q76),
+	Q74	= (idle -> Q62),
+	Q75	= (n -> Q78),
+	Q76	= (n -> Q80),
+	Q77	= (flight.buy -> Q16),
+	Q78	= (flight.buy -> Q16
+		  |noNetwork -> Q48),
+	Q79	= (car.buy -> Q19),
+	Q80	= (car.querySuccess -> Q3
+		  |car.queryFail -> Q8),
+	Q81	= (n -> Q85),
+	Q82	= (n -> Q79),
+	Q83	= (network.idle -> Q48
+		  |yesNetwork -> Q72),
+	Q84	= (network.idle -> Q67
+		  |yesNetwork -> Q82),
+	Q85	= (idle -> Q13).//\{n}.

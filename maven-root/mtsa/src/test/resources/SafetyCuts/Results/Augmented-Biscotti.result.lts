@@ -1,0 +1,4 @@
+\begin{tabular}{ | c | c c c c c c c | c c c c c | c c c c c | c c c c c | }\
+\rot{test name}&\rot{$c'=c$}&\rot{$c'<c$}&\rot{$c'>c$}&\rot{$|As|$}&\rot{$|G|$}&\rot{$|F|$}&\rot{ass.Comp.}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}\
+Augmented Biscotti&N&N&N&1&1&0&Y&GR&14&6&-8&T&1&GR+CUT&14&6&-8&F&16&GR.only&14&6&-8&T&7\
+\end{tabular}\

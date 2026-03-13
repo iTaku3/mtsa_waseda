@@ -1,0 +1,17 @@
+/*
+The constraint keyword builds an LTS from an FLTL formula such
+that its traces are all traces that satisfy the formula.
+
+The formula must be a safety property.
+The alphabet of the resulting LTS contains exactly all events that appear
+in the formula or in fluent definitions used by the formula.
+This implies that the interpetation of the next operator (X) is like an alphabetised next.
+
+*/
+
+constraint P = [] (p -> X q)
+
+fluent A = <a, c>
+fluent B = <b, c>
+
+constraint Q= [](A -> X B)

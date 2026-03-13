@@ -1,0 +1,88 @@
+const CantArms = 2
+range RangeArms = 1..CantArms
+set Arms = {[RangeArms]}
+
+const CantParts = 2
+range RangeParts = 1..CantParts
+set Parts = {[RangeParts]}
+set ArmNoContorla = {ePaint}
+set ArmPartsActions = {getPart,putPart,sPaint}
+set ArmNotControl = {ArmNoContorla.[Parts]}
+set ArmControl = {ArmPartsActions.[Parts], getAssembled, putAssembled}
+set ControllableActions = {[Arms].ArmControl, sEject, sAssemble}
+set UncontrollableActions = {[Arms].ArmNotControl, eEject, eAssemble}
+set Alphabet = {ControllableActions, UncontrollableActions}
+
+ARM(C=1) = IDLE, 
+IDLE = ( [C].getPart.[p:RangeParts]-> PART[p] | [C].getAssembled -> ASSEMBLED), 
+PART[p:RangeParts] = ([C].sPaint.[p] -> [C].ePaint.[p] -> PART[p] | [C].putPart.[p] -> IDLE),
+ASSEMBLED = ([C].putAssembled ->IDLE | [C].sPaint.[p:RangeParts] -> [C].ePaint.[p] -> ASSEMBLED).
+
+ASSEMBLER = NOT_ASSEMBLED, 
+NOT_ASSEMBLED = ( [id:RangeArms].getPart.[p:RangeParts] -> NOT_ASSEMBLED | sAssemble -> eAssemble -> ASSEMBLED),
+ASSEMBLED = ([id:RangeArms].getAssembled -> ASSEMBLED | eEject-> NOT_ASSEMBLED).
+
+ASSEMBLED_PART =  IDLE, 
+IDLE = ([id:RangeArms].getAssembled -> IN_USE),
+IN_USE = ([id:RangeArms].putAssembled-> IDLE).
+
+EJECTER = IDLE,
+IDLE = (sEject -> eEject-> IDLE).
+
+PART(C=1) = IDLE,
+IDLE = ([id:RangeArms].getPart.[C] -> IN_USE),
+IN_USE = ([id:RangeArms].putPart.[C] -> IDLE).
+
+fluent IN_USE[id:RangeParts] = <[id1:RangeArms].{getAssembled,getPart.[id]}, [id2:RangeArms].{putAssembled,putPart.[id]}>
+
+fluent IN_USE_ARM[id:RangeArms] = <[id].{getAssembled,getPart.[id1:RangeParts]}, [id].{putAssembled,putPart.[id2:RangeParts]}>
+
+fluent PAINTED[id:RangeParts] = <[id1:RangeArms].ePaint.[id], eEject>
+fluent ASSEMBLED = <eAssemble, eEject>
+fluent EJECTING = <sEject, eEject>
+fluent ASSEMBLING = <sAssemble, eAssemble>
+fluent EJECTED = <eEject, Alphabet\{eEject}>
+
+
+assert KEEP_BUSY = forall[p:Parts]IN_USE_ARM[p]
+
+ltl_property AssembleNotInUse = [] (ASSEMBLING -> !(exists[p:Parts] IN_USE[p]))
+ltl_property AssembleNotEjecting = [] (ASSEMBLING -> !EJECTING)
+ltl_property EjectOnlyIfPainted = [] (EJECTING -> (forall[p:Parts] PAINTED[p]))
+ltl_property EjectOnlyIfAssembled = [] (EJECTING -> ASSEMBLED )
+ltl_property EjectOnlyIfNotInUse = [] (EJECTING -> !(exists[p:Parts] IN_USE[p]))
+
+ltl_property IfImEjectingFinish = [] (sEject -> X eEject)
+
+ltl_property DontPaintTwice1 = [] ([r:RangeArms].sPaint.[1] -> !PAINTED[1])
+ltl_property DontPaintTwice2 = [] ([r:RangeArms].sPaint.[2] -> !PAINTED[2])
+
+ltl_property DontGetIfPainted1 = [] ([r:RangeArms].getPart.[1] -> !PAINTED[1])
+ltl_property DontGetIfPainted2 = [] ([r:RangeArms].getPart.[2] -> !PAINTED[2])
+ltl_property DontGetIfPainted = [] ([r:RangeArms].getAssembled -> !(PAINTED[2] && PAINTED[1]))
+
+ltl_property DontPutBeforePaint1 = [] ([r:RangeArms].putPart.[1] -> PAINTED[1])
+ltl_property DontPutBeforePaint2 = [] ([r:RangeArms].putPart.[2] -> PAINTED[2])
+ltl_property DontPutBeforePaint = [] ([r:RangeArms].putAssembled -> PAINTED[2] && PAINTED[1])
+
+
+
+|| ENV = (forall[a:Arms] ARM(a) || ASSEMBLER || forall[p:Parts] PART(p) ||  ASSEMBLED_PART || EJECTER).
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	safety={DontPaintTwice1,DontPaintTwice2,DontPutBeforePaint1,DontPutBeforePaint2, DontGetIfPainted1, DontPutBeforePaint2, DontGetIfPainted, DontPutBeforePaint,
+	AssembleNotInUse,AssembleNotEjecting,EjectOnlyIfPainted,EjectOnlyIfAssembled,EjectOnlyIfNotInUse/*,IfImEjectingFinish*/}
+	liveness = {EJECTED}
+	//concurrencyFluents={KEEP_BUSY}
+	//lazyness = 1
+	//non_transient
+	controllable = {ControllableActions}
+}		
+
+ 

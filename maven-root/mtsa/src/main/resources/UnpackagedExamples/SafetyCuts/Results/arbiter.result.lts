@@ -1,0 +1,8 @@
+M = (p.1.request -> E_2 | p.2.request -> E_7),
+E_2 = (p.1.grant -> E_6 | p.2.request -> E_3),
+E_3 = (p.1.grant -> E_4 | p.2.grant -> E_5),
+E_4 = (p.1.release -> E_7),
+E_5 = (p.2.release -> E_2),
+E_6 = (p.1.release -> M | p.2.request -> E_4),
+E_7 = (p.1.request -> E_3 | p.2.grant -> E_8),
+E_8 = (p.1.request -> E_5 | p.2.release -> M).

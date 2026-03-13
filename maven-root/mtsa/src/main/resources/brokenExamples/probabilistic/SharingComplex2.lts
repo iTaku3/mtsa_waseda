@@ -1,0 +1,11 @@
+A = ( (1) a -> STOP
+    | (1) b -> STOP
+    ).
+B = ( (1) c -> STOP
+    | (3) b -> STOP
+    ).
+C = ( (1) a-> STOP
+	| (3) b-> STOP).
+
+
+||SYS = ( A || B || C).

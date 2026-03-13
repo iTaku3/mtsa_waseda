@@ -1,0 +1,84 @@
+/** 
+Esta variante del SLB
+ */
+
+const N = 2// number of each type of car
+range T = 0..N // type of car count
+range ID= 1..N // car identities
+
+const True = 1
+const False = 0
+range B = False..True
+
+set A = {{blue, red}[1..2].{enter, enterFailure, enteredOk, exit, request}}
+
+set Controllable = {red[ID].enter, blue[ID].enter}
+
+//Involved fluents
+fluent RedPassFluent[i:ID] = <red[i].enter, red[i].exit>
+fluent BluePassFluent[i:ID] = <blue[i].enter, blue[i].exit>
+fluent RedRequestFluent[i:ID] = <red[i].request, red[i].enter>
+fluent BlueRequestFluent[i:ID] = <blue[i].request, blue[i].enter>
+fluent RedFailFluent[i:ID] = <red[i].enterFailure, A\{red[i].enterFailure}>
+fluent BlueFailFluent[i:ID] = <blue[i].enterFailure, A\{blue[i].enterFailure}>
+
+//Real assertions
+assert GeneralGoalBlue = ([]<>FailuresGoal || []<>GoalForBlue)
+assert GeneralGoalRed = ([]<>FailuresGoal || []<>GoalForRed)
+assert GeneralGoal = (GeneralGoalRed && GeneralGoalBlue)
+
+//Goal assertions
+assert BluePass = exists[i:ID] BluePassFluent[i]
+assert RedPass = exists[i:ID] RedPassFluent[i]
+assert BlueRequest = exists[i:ID] BlueRequestFluent[i]
+assert RedRequest = exists[i:ID] RedRequestFluent[i]
+
+assert RedFailure = exists[i:ID] RedFailFluent[i]
+assert BlueFailure = exists[i:ID] BlueFailFluent[i]
+
+assert GoalForBlue = (BluePass || !BlueRequest)
+assert GoalForRed = (RedPass || !RedRequest)
+assert FailuresGoal = (BlueFailure || RedFailure)
+
+ltl_property OneWay = []( !(RedPassFluent[ID] && BluePassFluent[ID]))
+
+//Goal definition
+controllerSpec G1 = {
+safety = {OneWay}
+failure = {FailuresGoal}
+assumption = {}
+liveness = {GoalForRed, GoalForBlue}
+controllable = {Controllable}
+}
+
+controller ||CSLB1 = SLB1~{G1}.
+
+controller ||CSLB2 = SLB2~{G1}.
+minimal ||MCSLB2 = CSLB2.
+minimal ||MCSLB1 = CSLB1.
+
+||A = (MCSLB1 || MCSLB2).
+
+BR =({request, exit} -> BR
+	 |enter -> (enteredOk->BR | enterFailure ->BR)).
+||BRID = (red[ID]:BR || blue[ID]:BR).
+||B = (BRID || BRIDGE).
+
+||SLB2 = (red[ID]:CAR || blue[ID]:CAR || BRID).
+
+BRIDGE =(red[ID].request -> BRIDGE
+		|red[ID].enter  -> (red[ID].enteredOk->BRIDGE
+							| red[ID].enterFailure ->BRIDGE) 
+        |red[ID].exit     -> BRIDGE
+        |blue[ID].request -> BRIDGE
+        |blue[ID].enter -> (blue[ID].enteredOk->BRIDGE
+							| blue[ID].enterFailure ->BRIDGE)
+        |blue[ID].exit    -> BRIDGE
+	).
+
+CAR = (request->ToEnter),
+ToEnter = (enter->Q),
+Q = (enteredOk->exit->CAR 
+	| enterFailure->ToEnter).
+
+||SLB1 = (red[ID]:CAR || blue[ID]:CAR || BRIDGE).

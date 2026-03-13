@@ -1,0 +1,28 @@
+set DIR = {north, west, south, east}
+set LOCATIONS = {}
+
+MAP = (arrived['i1]->I1),
+I1 = (south->arrived['n1]->N1),
+N1 = (south->arrived['o1]->O1
+		|east->arrived['n2]->N2
+		|north->arrived['i1]->I1),
+O1 = (north->arrived['n1]->N1),
+N2 = (south->arrived['io1]->IO1
+		|west->arrived['n1]->N1),
+IO1 = (north->arrived['n2]->N2).
+
+ARM = (pickup->pick_success->ARM | putdown->put_success->ARM).
+
+ROBOT = ({DIR}->ROBOT).
+||ENV = ({a,b}:ARM || MAP || ROBOT).
+
+fluent F_LOC[l:
+ltl_property putOnlyIn = [] (putdown -> F_LOC['i1])
+
+//[]<> (put_success && locO1)
+//[]<> (pick_success && locI1)
+
+controllerSpec G1 = {
+
+	 liveness = {}
+}

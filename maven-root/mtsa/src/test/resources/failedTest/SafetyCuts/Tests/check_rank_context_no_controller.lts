@@ -1,0 +1,15 @@
+set ControllableActions = {g1,g2}
+
+E = Q1,
+Q1 = (g1 -> Q4),
+Q4 = (g2->Q4).
+
+fluent G1 = <g1, c>
+fluent G2 = <g2, c>
+
+controllerSpec Spec = {
+liveness = {G1, G2}
+controllable = {ControllableActions}
+}
+
+controller ||C = E~{Spec}.

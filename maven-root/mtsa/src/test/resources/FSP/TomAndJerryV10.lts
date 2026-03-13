@@ -1,0 +1,358 @@
+set CatFlaps = {c1,c2,c3,c4,c5,c6,c7a,c7b}
+set MouseFlaps = {m1,m2,m3,m4,m5,m6}
+set Controllable = {CatFlaps, MouseFlaps}
+
+CAT(Init=2) = (start->cat_in[Init]->CAT[Init]),
+CAT[0] = (c1 -> ECAT[1] | c4 -> ECAT[3]),
+CAT[1] = (c2 -> ECAT[2] | c7b -> ECAT[3]),
+CAT[2] = (c3 -> ECAT[0] ),
+CAT[3] = (c5 -> ECAT[4] | c7a -> ECAT[1]),
+CAT[4] = (c6 -> ECAT[0] ),
+ECAT[room:0..4] = (cat_in[room]->CAT[room]).
+
+MOUSE(Init=4) = (start->mouse_in[Init]->MOUSE[Init]),
+MOUSE[0] = (m1 -> EMOUSE[2] | m4 -> EMOUSE[4]),
+MOUSE[1] = (m3 -> EMOUSE[0] ),
+MOUSE[2] = (m2 -> EMOUSE[1] ),
+MOUSE[3] = (m6 -> EMOUSE[0] ),
+MOUSE[4] = (m5 -> EMOUSE[3] ),
+EMOUSE[room:0..4] = (mouse_in[room]->MOUSE[room]).
+
+
+fluent CATROOM[room:0..4] = <cat_in[room],{cat_in[0..4]}\{cat_in[room]}>
+fluent MOUSEROOM[room:0..4] = <mouse_in[room],{mouse_in[0..4]}\{mouse_in[room]}>
+
+assert A1 = !MOUSEROOM[2]
+assert A2 = !MOUSEROOM[4]
+assert A3 = !CATROOM[2]
+assert A4 = !CATROOM[4]
+//ltlprops
+
+ltl_property SAFE1 = []( !exists[i:0..4] (CATROOM[i] && MOUSEROOM[i]))
+
+controllerSpec G1 = {
+//safety = {ltlprops}
+assumption = {} 
+liveness = {A1, A2, A3, A4}
+controllable = {Controllable}
+}
+
+||Models = (CAT || MOUSE || SAFE1).
+
+controller	||C2 = (Models)~{G1}.
+
+//controller ||C3 = C2~{G1}.
+//||A = (C2 || C3). 
+
+/*
+||ModelsNoTop = (NoTopForMOUSEROOM4 || NoTopForMOUSEROOM2 || 
+			NoTopForCATROOM4 || NoTopForCATROOM2 || 
+			CAT || MOUSE || SAFE).
+
+controller	||C1 = (ModelsNoTop)~{G1}.
+||A = (C1 || C2).
+//||A = (Models || C || RUNSAFE).
+//controller	||C = (Models)~{G1}. no setea el controllerSpec.
+//||ModelsC = Models <<{mouse_in[0..4],cat_in[0..4]}.
+//||ModelsC = Models >>{mouse_in[0..4],cat_in[0..4]}.
+*/
+
+
+NoTopForCATROOM4 = FALSE,
+TRUE = (cat_in.[4] -> TRUE | {cat_in.[1], cat_in.[2], cat_in.[3], cat_in.[0]} -> FALSE),
+FALSE = (cat_in.[4] -> TRUE | {cat_in.[1], cat_in.[2], cat_in.[3], cat_in.[0]} -> FALSE).
+
+NoTopForCATROOM2 = FALSE,
+TRUE = (cat_in.[2] -> TRUE | {cat_in.[1], cat_in.[4], cat_in.[3], cat_in.[0]} -> FALSE),
+FALSE = (cat_in.[2] -> TRUE | {cat_in.[1], cat_in.[4], cat_in.[3], cat_in.[0]} -> FALSE).
+
+//[CATROOM.4 = <[cat_in.4] , [cat_in.1, cat_in.2, cat_in.3, cat_in.0] > initially false, 
+//CATROOM.2 = <[cat_in.2] , [cat_in.1, cat_in.3, cat_in.4, cat_in.0] > initially false
+
+//Automatic top removal
+NoTopForMOUSEROOM4 = FALSE, 
+FALSE = (mouse_in.[4] -> TRUE | 
+		{mouse_in.[3], mouse_in.[2], mouse_in.[1], mouse_in.[0]} -> FALSE), 
+TRUE = (mouse_in.[4] -> TRUE | 
+		{mouse_in.[3], mouse_in.[2], mouse_in.[1], mouse_in.[0]} -> FALSE).
+
+NoTopForMOUSEROOM2 = FALSE, 
+FALSE = (mouse_in.[2] -> TRUE | 
+		{mouse_in.[3], mouse_in.[4], mouse_in.[1], mouse_in.[0]} -> FALSE), 
+TRUE = (mouse_in.[2] -> TRUE | 
+		{mouse_in.[3], mouse_in.[4], mouse_in.[1], mouse_in.[0]} -> FALSE).
+
+//ltl_property SAFE = []( !exists[i:0..4] (CATROOM[i] && MOUSEROOM[i]))
+SAFE = Q0,
+	Q0	= (cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10),
+	Q1	= (mouse_in[1] -> ERROR
+		  |cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[2] -> Q11
+		  |mouse_in[3] -> Q12
+		  |mouse_in[4] -> Q13
+		  |mouse_in[0] -> Q14),
+	Q2	= (mouse_in[2] -> ERROR
+		  |cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[1] -> Q15
+		  |mouse_in[3] -> Q16
+		  |mouse_in[4] -> Q17
+		  |mouse_in[0] -> Q18),
+	Q3	= (mouse_in[3] -> ERROR
+		  |cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[1] -> Q19
+		  |mouse_in[2] -> Q20
+		  |mouse_in[4] -> Q21
+		  |mouse_in[0] -> Q22),
+	Q4	= (mouse_in[4] -> ERROR
+		  |cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[1] -> Q23
+		  |mouse_in[2] -> Q24
+		  |mouse_in[3] -> Q25
+		  |mouse_in[0] -> Q26),
+	Q5	= (mouse_in[0] -> ERROR
+		  |cat_in[1] -> Q1
+		  |cat_in[2] -> Q2
+		  |cat_in[3] -> Q3
+		  |cat_in[4] -> Q4
+		  |cat_in[0] -> Q5
+		  |mouse_in[1] -> Q27
+		  |mouse_in[2] -> Q28
+		  |mouse_in[3] -> Q29
+		  |mouse_in[4] -> Q30),
+	Q6	= (cat_in[1] -> ERROR
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10
+		  |cat_in[2] -> Q15
+		  |cat_in[3] -> Q19
+		  |cat_in[4] -> Q23
+		  |cat_in[0] -> Q27),
+	Q7	= (cat_in[2] -> ERROR
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10
+		  |cat_in[1] -> Q11
+		  |cat_in[3] -> Q20
+		  |cat_in[4] -> Q24
+		  |cat_in[0] -> Q28),
+	Q8	= (cat_in[3] -> ERROR
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10
+		  |cat_in[1] -> Q12
+		  |cat_in[2] -> Q16
+		  |cat_in[4] -> Q25
+		  |cat_in[0] -> Q29),
+	Q9	= (cat_in[4] -> ERROR
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10
+		  |cat_in[1] -> Q13
+		  |cat_in[2] -> Q17
+		  |cat_in[3] -> Q21
+		  |cat_in[0] -> Q30),
+	Q10	= (cat_in[0] -> ERROR
+		  |mouse_in[1] -> Q6
+		  |mouse_in[2] -> Q7
+		  |mouse_in[3] -> Q8
+		  |mouse_in[4] -> Q9
+		  |mouse_in[0] -> Q10
+		  |cat_in[1] -> Q14
+		  |cat_in[2] -> Q18
+		  |cat_in[3] -> Q22
+		  |cat_in[4] -> Q26),
+	Q11	= ({cat_in[2], mouse_in[1]} -> ERROR
+		  |{cat_in[1], mouse_in[2]} -> Q11
+		  |mouse_in[3] -> Q12
+		  |mouse_in[4] -> Q13
+		  |mouse_in[0] -> Q14
+		  |cat_in[3] -> Q20
+		  |cat_in[4] -> Q24
+		  |cat_in[0] -> Q28),
+	Q12	= ({cat_in[3], mouse_in[1]} -> ERROR
+		  |mouse_in[2] -> Q11
+		  |{cat_in[1], mouse_in[3]} -> Q12
+		  |mouse_in[4] -> Q13
+		  |mouse_in[0] -> Q14
+		  |cat_in[2] -> Q16
+		  |cat_in[4] -> Q25
+		  |cat_in[0] -> Q29),
+	Q13	= ({cat_in[4], mouse_in[1]} -> ERROR
+		  |mouse_in[2] -> Q11
+		  |mouse_in[3] -> Q12
+		  |{cat_in[1], mouse_in[4]} -> Q13
+		  |mouse_in[0] -> Q14
+		  |cat_in[2] -> Q17
+		  |cat_in[3] -> Q21
+		  |cat_in[0] -> Q30),
+	Q14	= ({cat_in[0], mouse_in[1]} -> ERROR
+		  |mouse_in[2] -> Q11
+		  |mouse_in[3] -> Q12
+		  |mouse_in[4] -> Q13
+		  |{cat_in[1], mouse_in[0]} -> Q14
+		  |cat_in[2] -> Q18
+		  |cat_in[3] -> Q22
+		  |cat_in[4] -> Q26),
+	Q15	= ({cat_in[1], mouse_in[2]} -> ERROR
+		  |{cat_in[2], mouse_in[1]} -> Q15
+		  |mouse_in[3] -> Q16
+		  |mouse_in[4] -> Q17
+		  |mouse_in[0] -> Q18
+		  |cat_in[3] -> Q19
+		  |cat_in[4] -> Q23
+		  |cat_in[0] -> Q27),
+	Q16	= ({cat_in[3], mouse_in[2]} -> ERROR
+		  |cat_in[1] -> Q12
+		  |mouse_in[1] -> Q15
+		  |{cat_in[2], mouse_in[3]} -> Q16
+		  |mouse_in[4] -> Q17
+		  |mouse_in[0] -> Q18
+		  |cat_in[4] -> Q25
+		  |cat_in[0] -> Q29),
+	Q17	= ({cat_in[4], mouse_in[2]} -> ERROR
+		  |cat_in[1] -> Q13
+		  |mouse_in[1] -> Q15
+		  |mouse_in[3] -> Q16
+		  |{cat_in[2], mouse_in[4]} -> Q17
+		  |mouse_in[0] -> Q18
+		  |cat_in[3] -> Q21
+		  |cat_in[0] -> Q30),
+	Q18	= ({cat_in[0], mouse_in[2]} -> ERROR
+		  |cat_in[1] -> Q14
+		  |mouse_in[1] -> Q15
+		  |mouse_in[3] -> Q16
+		  |mouse_in[4] -> Q17
+		  |{cat_in[2], mouse_in[0]} -> Q18
+		  |cat_in[3] -> Q22
+		  |cat_in[4] -> Q26),
+	Q19	= ({cat_in[1], mouse_in[3]} -> ERROR
+		  |cat_in[2] -> Q15
+		  |{cat_in[3], mouse_in[1]} -> Q19
+		  |mouse_in[2] -> Q20
+		  |mouse_in[4] -> Q21
+		  |mouse_in[0] -> Q22
+		  |cat_in[4] -> Q23
+		  |cat_in[0] -> Q27),
+	Q20	= ({cat_in[2], mouse_in[3]} -> ERROR
+		  |cat_in[1] -> Q11
+		  |mouse_in[1] -> Q19
+		  |{cat_in[3], mouse_in[2]} -> Q20
+		  |mouse_in[4] -> Q21
+		  |mouse_in[0] -> Q22
+		  |cat_in[4] -> Q24
+		  |cat_in[0] -> Q28),
+	Q21	= ({cat_in[4], mouse_in[3]} -> ERROR
+		  |cat_in[1] -> Q13
+		  |cat_in[2] -> Q17
+		  |mouse_in[1] -> Q19
+		  |mouse_in[2] -> Q20
+		  |{cat_in[3], mouse_in[4]} -> Q21
+		  |mouse_in[0] -> Q22
+		  |cat_in[0] -> Q30),
+	Q22	= ({cat_in[0], mouse_in[3]} -> ERROR
+		  |cat_in[1] -> Q14
+		  |cat_in[2] -> Q18
+		  |mouse_in[1] -> Q19
+		  |mouse_in[2] -> Q20
+		  |mouse_in[4] -> Q21
+		  |{cat_in[3], mouse_in[0]} -> Q22
+		  |cat_in[4] -> Q26),
+	Q23	= ({cat_in[1], mouse_in[4]} -> ERROR
+		  |cat_in[2] -> Q15
+		  |cat_in[3] -> Q19
+		  |{cat_in[4], mouse_in[1]} -> Q23
+		  |mouse_in[2] -> Q24
+		  |mouse_in[3] -> Q25
+		  |mouse_in[0] -> Q26
+		  |cat_in[0] -> Q27),
+	Q24	= ({cat_in[2], mouse_in[4]} -> ERROR
+		  |cat_in[1] -> Q11
+		  |cat_in[3] -> Q20
+		  |mouse_in[1] -> Q23
+		  |{cat_in[4], mouse_in[2]} -> Q24
+		  |mouse_in[3] -> Q25
+		  |mouse_in[0] -> Q26
+		  |cat_in[0] -> Q28),
+	Q25	= ({cat_in[3], mouse_in[4]} -> ERROR
+		  |cat_in[1] -> Q12
+		  |cat_in[2] -> Q16
+		  |mouse_in[1] -> Q23
+		  |mouse_in[2] -> Q24
+		  |{cat_in[4], mouse_in[3]} -> Q25
+		  |mouse_in[0] -> Q26
+		  |cat_in[0] -> Q29),
+	Q26	= ({cat_in[0], mouse_in[4]} -> ERROR
+		  |cat_in[1] -> Q14
+		  |cat_in[2] -> Q18
+		  |cat_in[3] -> Q22
+		  |mouse_in[1] -> Q23
+		  |mouse_in[2] -> Q24
+		  |mouse_in[3] -> Q25
+		  |{cat_in[4], mouse_in[0]} -> Q26),
+	Q27	= ({cat_in[1], mouse_in[0]} -> ERROR
+		  |cat_in[2] -> Q15
+		  |cat_in[3] -> Q19
+		  |cat_in[4] -> Q23
+		  |{cat_in[0], mouse_in[1]} -> Q27
+		  |mouse_in[2] -> Q28
+		  |mouse_in[3] -> Q29
+		  |mouse_in[4] -> Q30),
+	Q28	= ({cat_in[2], mouse_in[0]} -> ERROR
+		  |cat_in[1] -> Q11
+		  |cat_in[3] -> Q20
+		  |cat_in[4] -> Q24
+		  |mouse_in[1] -> Q27
+		  |{cat_in[0], mouse_in[2]} -> Q28
+		  |mouse_in[3] -> Q29
+		  |mouse_in[4] -> Q30),
+	Q29	= ({cat_in[3], mouse_in[0]} -> ERROR
+		  |cat_in[1] -> Q12
+		  |cat_in[2] -> Q16
+		  |cat_in[4] -> Q25
+		  |mouse_in[1] -> Q27
+		  |mouse_in[2] -> Q28
+		  |{cat_in[0], mouse_in[3]} -> Q29
+		  |mouse_in[4] -> Q30),
+	Q30	= ({cat_in[4], mouse_in[0]} -> ERROR
+		  |cat_in[1] -> Q13
+		  |cat_in[2] -> Q17
+		  |cat_in[3] -> Q21
+		  |mouse_in[1] -> Q27
+		  |mouse_in[2] -> Q28
+		  |mouse_in[3] -> Q29
+		  |{cat_in[0], mouse_in[4]} -> Q30).
+
+

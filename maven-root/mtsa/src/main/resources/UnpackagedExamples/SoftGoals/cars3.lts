@@ -1,0 +1,54 @@
+const CantPos = 3
+const CantCars = 2
+const CantBalls =2
+range PositionsBall = 0..1
+range Cars = 0..CantCars-1
+range Balls = 0..CantBalls-1
+range Positions = 0..(CantPos-1)
+set Controllable = {c[ar:Cars].sPut.b[all:Balls].p[os:Positions],c[ar:Cars].sMove[os:Positions][os:Positions],c[ar:Cars].sPick.b[all:Balls].p[os:Positions]}
+
+
+BALL(C=1, P=1) 	= IDLE[P], 
+IDLE[pos:Positions] = (c[car:Cars].sPick.b[C].p[pos] -> c[car].ePick.b[C].p[pos] -> PICKED[car]), 
+PICKED[car:Cars]	= (c[car].sPut.b[C].p[pos:Positions] -> c[car].ePut.b[C].p[pos]-> IDLE[pos]).
+
+VIA(IN=0) = FREE, 
+FREE = (c[car:Cars].sMove[(IN+1)%CantPos][IN] -> OCCUPPIED[car] | c[car:Cars].sMove[IN][(IN+1+CantPos) % CantPos] -> OCCUPPIED[car]), 
+OCCUPPIED[car:Cars] = (c[car].eMove[(IN+1)%CantPos][IN]-> FREE | c[car].eMove[IN][(IN+1+CantPos) % CantPos]-> FREE ).
+
+
+CAR(C=0,P=0) = IDLE[P], 
+IDLE[p:Positions] = 
+					(c[C].sMove[p][(p+1) % CantPos] -> MOVING[p][(p+1) % CantPos] 
+					|c[C].sMove[p][(p-1+CantPos) % CantPos] -> MOVING[p][(p-1+CantPos) % CantPos]
+					|c[C].sPick.b[b:Balls].p[p] -> c[C].ePick.b[b].p[p]-> PICK_IDLE[p][b]), 
+PICK_IDLE[p:Positions][b:Balls]  = 
+						(c[C].sMove[p][(p+1) % CantPos] -> MOVING_BALL[p][(p+1) % CantPos][b] 
+						|c[C].sMove[p][ (p-1+CantPos) % CantPos] -> MOVING_BALL[p][(p-1+CantPos) % CantPos][b]
+						|c[C].sPut.b[b].p[p] -> c[C].ePut.b[b].p[p]-> IDLE[p]),
+MOVING_BALL[f:Positions][t:Positions][b:Balls] = (c[C].eMove[f][t]-> PICK_IDLE[t][b]),
+MOVING[f:Positions][t:Positions] = (c[C].eMove[f][t]-> IDLE[t]).
+
+||ENV = (forall[in:Positions] VIA(in) || forall[c:Cars] CAR(c,0) || forall[b:Balls] BALL(b,1)).
+
+
+ltl_property LaBolaEnHuecos = [] forall[os:2..(CantPos-1)] forall[all:Balls] forall[ar:Cars] (!c[ar].sPut.b[all].p[os])
+
+fluent EnCasillero[ba:Balls][po:Positions] =   <c[car:Cars].ePut.b[ba].p[po], c[car:Cars].sPick.b[ba].p[po]>
+
+assert Llevarlas = (forall[ba:Balls] EnCasillero[ba][0])
+assert Traerlas  = (forall[ba:Balls] EnCasillero[ba][1])
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	safety={LaBolaEnHuecos}
+	liveness = {Llevarlas,Traerlas}
+	//concurrencyFluents={}
+	lazyness=1
+	controllable = {Controllable}
+}

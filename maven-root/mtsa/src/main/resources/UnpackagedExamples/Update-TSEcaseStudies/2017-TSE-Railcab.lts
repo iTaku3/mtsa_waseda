@@ -1,0 +1,176 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button (||).
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can specify
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar.
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller goal formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActionsOld = {requestEnter, brake, emergencyBrake, idle_c}
+set ControllableActionsNew = {requestEnter, brake, emergencyBrake, idle_c, checkCrossingStatus}
+set AlphabetOld = {ControllableActionsOld, endOfTS, lastBrake, lastEmergencyBrake, noReturn,enterCrossing, enterAllowed[0..1]}
+set AlphabetNew = {ControllableActionsNew, endOfTS, lastBrake, lastEmergencyBrake, noReturn,enterCrossing, enterAllowed[0..1], working, notWorking, approachingCrossing}
+
+    //oldEnvironment
+	MILESTONES_OLD = (endOfTS -> ENDOFTS),
+	ENDOFTS = (lastBrake -> LB | {brake,emergencyBrake} -> MILESTONES_OLD),
+	LB = (lastEmergencyBrake -> LEB | {brake, emergencyBrake} -> MILESTONES_OLD),
+	LEB = (noReturn -> NR | {brake, emergencyBrake} -> MILESTONES_OLD),
+	NR = (enterCrossing -> MILESTONES_OLD).
+
+	REQUEST_ATOMIC_OLD = (requestEnter -> RESPONSE | {AlphabetOld\ControllableActionsOld}\{enterAllowed[0..1]} -> REQUEST_ATOMIC_OLD),
+	RESPONSE = (enterAllowed[0..1] -> REQUEST_ATOMIC_OLD).
+
+	TURNS_OLD = ({AlphabetOld\ControllableActionsOld}\{enterAllowed[0..1],enterCrossing} -> TURNS2 | enterCrossing -> TURNS_OLD),
+	TURNS2 = (ControllableActionsOld -> TURNS_OLD).
+	
+    //NewEnvironment
+	MILESTONES_NEW = (endOfTS -> ENDOFTS),
+	ENDOFTS = (approachingCrossing -> AC | {brake,emergencyBrake} -> MILESTONES_NEW),
+	AC = (lastBrake -> LB| {brake,emergencyBrake} -> MILESTONES_NEW),
+	LB = (lastEmergencyBrake -> LEB | {brake, enterCrossing} -> MILESTONES_NEW),
+	LEB = (noReturn -> NR | {brake, enterCrossing} -> MILESTONES_NEW),
+	NR = (enterCrossing -> MILESTONES_NEW).
+
+	REQUEST_ATOMIC_NEW = (requestEnter -> RESPONSE | {AlphabetNew\ControllableActionsNew}\{enterAllowed[0..1]} -> REQUEST_ATOMIC_NEW),
+	RESPONSE = (enterAllowed[0..1] -> REQUEST_ATOMIC_NEW).
+
+	TURNS_NEW = ({AlphabetNew\ControllableActionsNew}\{working, notWorking, enterAllowed[0..1],enterCrossing} -> TURNS2 | enterCrossing -> TURNS_NEW),
+	TURNS2 = (ControllableActionsNew -> TURNS_NEW).
+
+	ANOTHER_REQUEST = (checkCrossingStatus -> ANSWER | {AlphabetNew\ControllableActionsNew}\{working,notWorking}-> ANOTHER_REQUEST),
+	ANSWER 		   = ({working,notWorking} -> ANOTHER_REQUEST).
+	
+	// MAPPING ENVIRONMENT
+	MILESTONES_MAP = MILESTONES_OLD,
+	MILESTONES_OLD = (endOfTS -> ENDOFTS_OLD | reconfigure -> MILESTONES_NEW),
+	ENDOFTS_OLD = (lastBrake -> LB_OLD | {brake,emergencyBrake} -> MILESTONES_OLD | reconfigure -> ENDOFTS_NEW | reconfigure -> AC_NEW),
+	LB_OLD = (lastEmergencyBrake -> LEB_OLD | {brake, emergencyBrake} -> MILESTONES_OLD | reconfigure -> LB_NEW),
+	LEB_OLD = (noReturn -> NR_OLD | {brake, emergencyBrake} -> MILESTONES_OLD | reconfigure -> approachingCrossing -> LEB_NEW),
+	NR_OLD = (enterCrossing -> MILESTONES_OLD | reconfigure -> approachingCrossing -> NR_NEW),
+
+	MILESTONES_NEW = (endOfTS -> ENDOFTS_NEW),
+	ENDOFTS_NEW = (approachingCrossing -> AC_NEW | {brake,emergencyBrake} -> MILESTONES_NEW),
+	AC_NEW = (lastBrake -> LB_NEW | {brake,emergencyBrake} -> MILESTONES_NEW),
+	LB_NEW = (lastEmergencyBrake -> LEB_NEW | {brake, emergencyBrake} -> MILESTONES_NEW),
+	LEB_NEW = (noReturn -> NR_NEW | {brake, emergencyBrake} -> MILESTONES_NEW),
+	NR_NEW = (enterCrossing -> MILESTONES_NEW).
+
+	REQUEST_ATOMIC_MAP = REQUEST_ATOMIC_OLD,
+	REQUEST_ATOMIC_OLD = (requestEnter -> RESPONSE_OLD | {AlphabetOld\ControllableActionsOld}\{enterAllowed[0..1]} -> REQUEST_ATOMIC_OLD | reconfigure -> REQUEST_ATOMIC_NEW),
+	RESPONSE_OLD = (enterAllowed[0..1] -> REQUEST_ATOMIC_OLD | reconfigure -> RESPONSE_NEW),
+	REQUEST_ATOMIC_NEW = (requestEnter -> RESPONSE_NEW | {AlphabetNew\ControllableActionsNew}\{enterAllowed[0..1]} -> REQUEST_ATOMIC_NEW),
+	RESPONSE_NEW = (enterAllowed[0..1] -> REQUEST_ATOMIC_NEW).
+
+	TURNS_MAP = TURNS_OLD,
+	TURNS_OLD = ({AlphabetOld\ControllableActionsOld}\{enterAllowed[0..1],enterCrossing} -> TURNS2_OLD | enterCrossing -> TURNS_OLD | reconfigure -> TURNS_NEW),
+	TURNS2_OLD = (ControllableActionsOld -> TURNS_OLD | reconfigure -> TURNS2_NEW),
+	TURNS_NEW = ({AlphabetNew\ControllableActionsNew}\{working, notWorking, enterAllowed[0..1],enterCrossing} -> TURNS2_NEW | enterCrossing -> TURNS_NEW),
+	TURNS2_NEW = (ControllableActionsNew -> TURNS_NEW).
+	
+	ANOTHER_REQUEST_MAP = (reconfigure -> ANOTHER_REQUEST | AlphabetOld -> ANOTHER_REQUEST_MAP),
+	ANOTHER_REQUEST = (checkCrossingStatus -> ANSWER | AlphabetNew\{checkCrossingStatus,working,notWorking}-> ANOTHER_REQUEST),
+	ANSWER 		   = ({working,notWorking} -> ANOTHER_REQUEST).
+
+||OldEnvironment = (MILESTONES_OLD || REQUEST_ATOMIC_OLD || TURNS_OLD).
+||NewEnvironment = (MILESTONES_NEW || REQUEST_ATOMIC_NEW || TURNS_NEW || ANOTHER_REQUEST).
+||MappingEnvironment = (MILESTONES_MAP || REQUEST_ATOMIC_MAP || TURNS_MAP || ANOTHER_REQUEST_MAP).
+
+//Fluents declaration
+fluent RequestedOnce = <{requestEnter},{endOfTS}>
+fluent CantEnter = <{enterAllowed[0]},{endOfTS}>
+fluent LastEmergencyBrake = <lastEmergencyBrake, endOfTS>
+fluent NoReturn = <noReturn,endOfTS>
+fluent ApproachingCrossingHappen = <{approachingCrossing},{endOfTS}>
+
+fluent AskedWorkingOnce = <{checkCrossingStatus},{endOfTS}>
+fluent NotWorking = <notWorking, endOfTS>
+
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+assert NOT_CRASH = !((CantEnter && NoReturn) || (!RequestedOnce && NoReturn))
+assert BRAKE_DURING_LASTBRAKE			= (brake -> !LastEmergencyBrake)
+assert EBRAKE_DURING_ELASTBRAKE  		= (emergencyBrake -> !NoReturn)
+assert BRAKE_ONLY_IF_IM_NOT_ALLOWED		= (brake -> CantEnter)
+assert EBRAKE_ONLY_IF_IM_NOT_ALLOWED	= (emergencyBrake -> CantEnter)
+ltl_property P_NOT_CRASH						= []NOT_CRASH
+ltl_property P_BRAKE_DURING_LASTBRAKE			= []BRAKE_DURING_LASTBRAKE
+ltl_property P_EBRAKE_DURING_ELASTBRAKE  		= []EBRAKE_DURING_ELASTBRAKE
+ltl_property P_BRAKE_ONLY_IF_IM_NOT_ALLOWED		= []BRAKE_ONLY_IF_IM_NOT_ALLOWED
+ltl_property P_EBRAKE_ONLY_IF_IM_NOT_ALLOWED	= []EBRAKE_ONLY_IF_IM_NOT_ALLOWED
+
+//Old Controller
+controllerSpec OldSpec = {
+    safety = {P_BRAKE_DURING_LASTBRAKE, P_EBRAKE_DURING_ELASTBRAKE, P_NOT_CRASH, 
+			P_BRAKE_ONLY_IF_IM_NOT_ALLOWED, P_EBRAKE_ONLY_IF_IM_NOT_ALLOWED}
+    controllable = {ControllableActionsOld}
+}
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldController || OldEnvironment).
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert NEW_NOT_CRASH = !((CantEnter && NoReturn) || ((!RequestedOnce || !AskedWorkingOnce) && NoReturn) || (NotWorking && NoReturn))
+assert BRAKE_IF_SOMETHING_BAD			= (brake -> (CantEnter || NotWorking))
+assert EBRAKE_IF_SOMETHING_BAD			= (emergencyBrake -> (CantEnter || NotWorking))
+assert CHECK_STATUS_AFTER_APPROACHING_CROSSING = (checkCrossingStatus -> (ApproachingCrossingHappen && !LastEmergencyBrake))
+assert CHECK_STATUS_BEFORE_LAST_EMERGENCY_BRAKE = (LastEmergencyBrake -> (!checkCrossingStatus))
+ltl_property P_BRAKE_IF_SOMETHING_BAD	    = []BRAKE_IF_SOMETHING_BAD
+ltl_property P_EBRAKE_IF_SOMETHING_BAD	    = []EBRAKE_IF_SOMETHING_BAD
+ltl_property P_NEW_NOT_CRASH 				= []NEW_NOT_CRASH
+ltl_property P_CHECK_STATUS_AFTER_APPROACHING_CROSSING = []CHECK_STATUS_AFTER_APPROACHING_CROSSING
+ltl_property P_CHECK_STATUS_BEFORE_LAST_EMERGENCY_BRAKE = []CHECK_STATUS_BEFORE_LAST_EMERGENCY_BRAKE
+
+controllerSpec NewSpec = {
+    safety = {P_BRAKE_DURING_LASTBRAKE, P_EBRAKE_DURING_ELASTBRAKE, P_NEW_NOT_CRASH, P_CHECK_STATUS_BEFORE_LAST_EMERGENCY_BRAKE,
+			P_BRAKE_IF_SOMETHING_BAD, P_EBRAKE_IF_SOMETHING_BAD, P_CHECK_STATUS_AFTER_APPROACHING_CROSSING}
+    controllable = {ControllableActionsNew}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewControllerAndNewEnvironment = (NewController || NewEnvironment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+
+// Updating Controller Fluents
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert AnyAction = (requestEnter || brake || emergencyBrake || idle_c || checkCrossingStatus|| endOfTS || approachingCrossing|| 
+			lastBrake|| lastEmergencyBrake || noReturn || enterCrossing || enterAllowed[1] || enterAllowed[0] || working || notWorking)
+
+fluent Ebrake = <emergencyBrake, endOfTS>
+
+ltl_property T_BRAKE = ((StopOldSpec && !StartNewSpec) -> ((NoReturn || Ebrake) -> LastEmergencyBrake))
+ltl_property T_NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    mapping = MappingEnvironment,
+    oldGoal = OldSpec,
+    newGoal = NewSpec,
+// 	T = True is executed if no transition requirement is set
+//	transition = T_NO_TP,
+//	transition = T_BRAKE,
+	nonblocking
+
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = (BRAKE_DURING_LASTBRAKE && EBRAKE_DURING_ELASTBRAKE && NOT_CRASH && 
+            BRAKE_ONLY_IF_IM_NOT_ALLOWED && EBRAKE_ONLY_IF_IM_NOT_ALLOWED)
+assert S_NEW = (BRAKE_DURING_LASTBRAKE && EBRAKE_DURING_ELASTBRAKE && NEW_NOT_CRASH && CHECK_STATUS_BEFORE_LAST_EMERGENCY_BRAKE &&
+            BRAKE_IF_SOMETHING_BAD && EBRAKE_IF_SOMETHING_BAD && CHECK_STATUS_AFTER_APPROACHING_CROSSING)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+

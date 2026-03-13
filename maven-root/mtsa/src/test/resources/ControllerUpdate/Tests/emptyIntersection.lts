@@ -1,0 +1,51 @@
+set OldControllable = {old1, old2}
+set NewControllable = {new1, new2}
+
+//ENVIRONMENTS
+
+OldEnv = ({old1, old2} -> OldEnv).
+NewEnv = ({new1, new2} -> NewEnv).
+
+
+||OLDENVIRONMENT = OldEnv.
+||NEWENVIRONMENT = NewEnv.
+
+
+ltl_property OldGoal = [](old1 -> X(old2))
+ltl_property NewGoal = [](new1 -> X(new2))
+
+
+// Controllers
+// 1
+controllerSpec OLD_SPEC = {
+	safety = {OldGoal}
+	controllable = {OldControllable}
+}
+
+controller ||OLDCONTROLLER = OLDENVIRONMENT~{OLD_SPEC}.
+||OLD_CONTROLLER_ENVIRONMENT = (OLDCONTROLLER||OLDENVIRONMENT).
+
+// 2
+controllerSpec NEW_SPEC = {
+	safety = {NewGoal}
+	controllable = {NewControllable}
+}
+
+controller ||NEWCONTROLLER = NEWENVIRONMENT~{NEW_SPEC}.
+||NEWCONTROLLER_ENVIRONMENT = (NEWCONTROLLER || NEWENVIRONMENT).
+
+//UPDATE
+fluent Old = <old1, old2>
+
+updatingController OLD_NEW = {
+    oldController = OLDCONTROLLER_ENVIRONMENT,
+    oldEnvironment = OLDENVIRONMENT,
+    newEnvironment = NEWENVIRONMENT,
+	oldGoal = OLD_SPEC,
+	newGoal = NEW_SPEC,
+    updateFluents = {
+		{Old, Old}
+	}
+}
+
+||UPDATE = OLD_NEW.

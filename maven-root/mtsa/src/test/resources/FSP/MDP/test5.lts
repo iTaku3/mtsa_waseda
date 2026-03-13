@@ -1,0 +1,10 @@
+//Abstraccion elimina una rama
+//Resultado esperado:
+//Dist deberia ser igual Expected. Q4 es estado de error que se ve en prism.
+//La distancia debe dar infinito (Rmin=? [F "exception"]). Esto es porque existe una rama donde el modelo de distancia no diverge. 
+R = (t -> {0.4:RA + 0.6:RB}),
+RA = (a -> STOP),
+RB = (b -> STOP).
+A = (t -> a -> STOP).
+probabilistic mdp ||C = (R||A).
+

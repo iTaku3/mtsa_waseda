@@ -1,0 +1,100 @@
+//ACTION SETS
+const N = 1
+//range ProductCount = 1..N
+set ProductTypes = {a, b}
+range P = 1..2
+set Toolset = {oven.[P],drill}//drill,oven,press}
+set ProductsTypeA = {a}//{a}.[ProductCount]}
+set ProductsTypeB = {b}//{b}.[ProductCount]}
+set ProductTypesSet = {ProductsTypeA, ProductsTypeB}
+set BlankAlpha = {[ProductTypesSet].{inTray, getInTray, putOutTray}, {put}.Toolset.[ProductTypesSet]}
+set ArmAlpha = { [ProductTypesSet].{getInTray, putOutTray}, {put, get}.Toolset.[ProductTypesSet] }
+set ToolsAlpha  = { {put,get}.Toolset.[ProductTypesSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+set ControllableActions = {[ProductTypesSet].{getInTray,putOutTray}, {put,get}.Toolset.[ProductTypesSet]}
+set UncontrollableActions = {Alphabet\ControllableActions}
+set PriorityActions = {UncontrollableActions\{[ProductTypesSet].{idle}}}
+//DEFINED FLUENTS 
+//The ending action needs to be getInTray, so the controller can't postpone an element indefinitely
+fluent ADDED_TO_INTRAY[e:ProductTypesSet] = <[e].inTray, [e].getInTray>
+fluent ADDED_TO_OUTTRAY[e:ProductTypesSet] = <[e].putOutTray, Alphabet\{[e].putOutTray}>
+fluent BEING_PROCESSED[e:ProductTypesSet] = <[e].getInTray, [e].putOutTray>
+
+//DEFINED ASSERTIONS
+assert ASSUME_ON_A1 = (ADDED_TO_INTRAY['a] || BEING_PROCESSED['a])
+assert ASSUME_ON_B1 = (ADDED_TO_INTRAY['b] || BEING_PROCESSED['b])
+assert GOAL_FOR_A = exists[e:ProductsTypeA] ADDED_TO_OUTTRAY[e]
+assert GOAL_FOR_B = exists[e:ProductsTypeB] ADDED_TO_OUTTRAY[e]
+
+//DEFINED CONTROLLERS
+controller ||C = (Plant)~{Objective}.
+checkCompatibility ||Comp = (Plant)~{Objective}.
+
+//SAFETY DEFINITIONS
+
+//ASSUMPTIONS COMPATIBILITY CHECKS
+
+//DEFINED GOALS 
+controllerSpec Objective = {
+	safety = {PRODUCT_PROCESS}
+	assumption = {ASSUME_ON_A1, ASSUME_ON_B1}
+	liveness = {GOAL_FOR_A, GOAL_FOR_B}
+	controllable = {ControllableActions}
+}
+
+//MODELS FOR TESTING
+||AnalysedPlant = (Plant || PRODUCT_PROCESS).
+
+//ENVIRONMENT MODEL
+INIT_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> END).
+TRY_TOOL(T='any, C=1) = (put[T][C] -> END).
+FINISH_PRODUCT(C=1) = ([C].putOutTray -> END).
+
+/*
+PRODUCT_A(C=1)= INIT_PRODUCT(C);
+				TRY_TOOL('oven,C);
+//				TRY_TOOL('drill,C);
+//				TRY_TOOL('press,C);
+				FINISH_PRODUCT(C);
+				PRODUCT_A.
+*/
+
+PRODUCT_B(C=1)= INIT_PRODUCT(C);
+					TRY_TOOL('drill,C);
+//					TRY_TOOL('press,C);
+					TRY_TOOL('oven[1],C);
+					FINISH_PRODUCT(C);
+					PRODUCT_B.
+
+PRODUCT_A(C=1)= ([C].inTray -> [C].getInTray -> TRY),
+TRY = (put.['oven[1]][C]->FINISH | put.['oven[2]][C]->FINISH),
+FINISH = ([C].putOutTray->PRODUCT_A).
+
+compose ||PRODUCT_PROCESS = (forall[a:ProductsTypeA] PRODUCT_A(a) || forall[b:ProductsTypeB] PRODUCT_B(b)).
+
+RAW_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> TOOLS_AVAIL),
+TOOLS_AVAIL = (put[t:Toolset][C] -> get[t].[C] -> TOOLS_AVAIL 
+				| [C].putOutTray -> RAW_PRODUCT).
+
+||RAW_PRODUCTS = forall[p:ProductTypesSet] RAW_PRODUCT(p).
+
+TOOL(T='any) = (put[T][e:ProductTypesSet] -> get[T][e] -> TOOL). 
+
+O2(C=1) = (put.['oven[2]][C]->O),
+O = (cooking?->O2 | finish->FINISH),
+FINISH = ([C].putOutTray->O2).
+||OVEN2 = (forall[a:ProductsTypeA] O2(a)).
+
+||TOOLS = (forall[t:Toolset] TOOL(t) || OVEN2).
+
+ARM = IDLE,
+IDLE = ([e:ProductTypesSet].getInTray -> PICKED_UP[e]
+		| get[t:Toolset][e:ProductTypesSet] -> PICKED_UP[e]),
+PICKED_UP[e:ProductTypesSet] = (put[t:Toolset][e] -> IDLE
+               | [e].putOutTray -> IDLE).
+
+||Plant = (RAW_PRODUCTS || TOOLS || ARM || OVEN_A || OVEN_B).
+OVEN_B = ({put.oven[1].b?,put.oven[2].b?}->OVEN_B).
+OVEN_A = ({put.oven[1].a?,put.oven[2].a?}->OVEN_A).
+
+

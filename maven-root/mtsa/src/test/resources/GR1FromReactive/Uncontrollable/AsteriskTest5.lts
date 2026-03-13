@@ -1,0 +1,31 @@
+Ejemplo = A0,
+A0 = ({a,b} -> c -> A0).
+
+||Plant = Ejemplo.
+set All = {a, b, c}
+fluent A = <a, All\{a}>
+fluent B = <b, All\{b}>
+fluent C = <c, All\{c}>
+
+assert Astrsk1 = (a && (b || c))
+
+assert NoAstrsk1 = (A && (B || C))
+
+controllerSpec GoalAstrsk = {
+        liveness = {Astrsk1}
+        controllable = {a, b, c}
+}
+
+controllerSpec GoalNoAstrsk = {
+        liveness = {NoAstrsk1}
+        controllable = {a, b, c}
+}
+
+heuristic ||WithAsterisk = Plant~{GoalAstrsk}.
+heuristic ||WithAlphabetSet = Plant~{GoalNoAstrsk}.
+
+assert CheckWith = ([]<>Astrsk1)
+assert CheckWithout = ([]<>NoAstrsk1)
+
+||SysWith = (WithAsterisk || Plant).
+||SysWithout = (WithAlphabetSet || Plant).

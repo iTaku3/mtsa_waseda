@@ -1,0 +1,92 @@
+set Gotos = {{go}.{s,n,e,w}}
+
+set Nowinds = {nowind}
+
+set Arrivals = {{arrive}.[row:RRow][col:RCol]}
+
+set Winds = {{wind}.{n,s,e,w}}
+
+set ControllableActions = {Gotos,Arrivals}
+
+set UncontrollableActions = {Nowinds,Winds}
+
+set Alphabet = {ControllableActions, UncontrollableActions}
+
+set Positions = {d.readPos[RRow][RCol],d.writePos[RRow][RCol],w.readPos[RRow][RCol],w.writePos[RRow][RCol]}
+
+GRID = POS[StartingRow][StartingColumn],
+POS[row:RRow][col:RCol] = ({d,w}.readPos[row][col] -> POS[row][col] | {d,w}.writePos[rowp:RRow][colp:RCol] -> arrive[rowp][colp]-> POS[rowp][colp]).
+
+
+DRONE = (d.readPos[row:RRow][col:RCol] -> 
+		( when (row<SizeRow) go.s-> d.writePos[row+1][col] -> DRONE
+ 	        | when (col<SizeCol) go.e-> d.writePos[row][col+1] -> DRONE
+                | when (row>0) go.n -> d.writePos[row-1][col] -> DRONE
+                | when (col>0) go.w -> d.writePos[row][col-1] -> DRONE)
+	)+{d.readPos[RRow][RCol],d.writePos[RRow][RCol]}.
+
+WIND = (w.readPos[row:RRow][col:RCol] -> 
+		( when (row<SizeRow) wind.s-> w.writePos[row+1][col] -> WIND
+	       | when (col<SizeCol) wind.e-> w.writePos[row][col+1] -> WIND
+                | when (row>0) wind.n -> w.writePos[row-1][col] -> WIND
+                | when (col>0) wind.w -> w.writePos[row][col-1] -> WIND
+		| nowind -> w.writePos[row][col] -> WIND)
+	)+{w.readPos[RRow][RCol],w.writePos[RRow][RCol]}.
+
+
+NOWIND = STOP + {Winds,Nowinds,w.readPos[RRow][RCol],w.writePos[RRow][RCol]}.
+
+
+
+DRONE_MOVE = (d.readPos[RRow][RCol] -> go.{s,n,e,w} -> d.writePos[RRow][RCol] -> END).
+WIND_MOVE = (w.readPos[RRow][RCol] -> (wind.{s,n,e,w} ->  w.writePos[RRow][RCol] -> END | nowind -> w.writePos[RRow][RCol] -> END)).
+
+
+
+
+//No Wind. 
+minimal ||ENV = (GRID || DRONE || NOWIND)\{Positions}.
+
+//Wind without failures
+//minimal ||ENV = (GRID || DRONE || WIND || RELATIVE_SPEED)\{Positions}.
+//RELATIVE_SPEED = DRONE_MOVE;WIND_MOVE;RELATIVE_SPEED.
+
+//Slow wind
+//minimal ||ENV = (GRID || DRONE || WIND || RELATIVE_SPEED)\{Positions}.
+//RELATIVE_SPEED = DRONE_MOVE;DRONE_MOVE;WIND_MOVE;RELATIVE_SPEED.
+
+//Wind with failures
+//minimal ||ENV = (GRID || DRONE || WIND || RELATIVE_SPEED)\{Positions}.
+//RELATIVE_SPEED = DRONE_MOVE;WIND_MOVE;RELATIVE_SPEED.
+
+
+fluent G[row:RRow][col:RCol] = <{arrive[row][col]}, Alphabet\{arrive[row][col]}>
+
+
+
+ltl_property Safe = []((!DangerZone))
+
+set FailureSet = {{wind}.{e,w,s,n}}
+
+fluent F_Failures = <FailureSet, Alphabet\{FailureSet}>
+
+
+assert Failures = F_Failures
+
+constraint TESTF = Failures
+
+||TEST = TESTF.
+
+
+
+controllerSpec SPEC = {
+
+failure = {Failures}
+
+}
+
+
+
+controller ||C = (ENV)~{SPEC}.
+
+||ANIMAR = (C || ENV).

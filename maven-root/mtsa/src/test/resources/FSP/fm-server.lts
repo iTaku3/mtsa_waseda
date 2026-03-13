@@ -1,0 +1,8 @@
+set A = {req, resp1, resp2}
+set Controllable = {resp1,resp2}
+
+SERVER = (req->RESP), 
+RESP = ({resp1,resp2}->SERVER). 
+PING = (ping?->PING).
+||D = (SERVER || PING).
+

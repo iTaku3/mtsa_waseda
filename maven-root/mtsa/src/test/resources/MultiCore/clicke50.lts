@@ -1,0 +1,21 @@
+const N = 50
+
+//BUFF = (hola[i:0..N]-> BUFF[i]),
+BUFF = BUFF[0],
+BUFF[i:0..N] = (
+	hola[j:0..N] -> BUFF[j]).
+
+
+fluent Apagar = <hola[i:1..N],hola[0]>
+assert NoController = Apagar
+
+set Control = {hola[i:0..N]}
+
+controllerSpec Goal = {
+	controllable ={Control}
+	liveness = {NoController}
+}
+
+
+controller ||C = BUFF ~{Goal}.
+assert TESTGOAL = []<>NoController

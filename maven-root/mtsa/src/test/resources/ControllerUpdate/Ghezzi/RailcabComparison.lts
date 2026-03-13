@@ -1,0 +1,77 @@
+
+	LTS_APPROACH = Q0,
+	Q0	= (reconfigure -> Q1
+		  |endOfTS -> Q9),
+	Q1	= (endOfTS -> Q2),
+	Q2	= (brake -> Q3
+		  |approachingCrossing -> Q4),
+	Q3	= (endOfTS -> Q2),
+	Q4	= (brake -> Q5
+		  |lastBrake -> Q6),
+	Q5	= (endOfTS -> Q2),
+	Q6	= (brake -> Q7
+		  |enterCrossing -> Q8),
+	Q7	= (endOfTS -> Q2),
+	Q8	= (endOfTS -> Q2),
+	Q9	= (reconfigure -> Q2
+		  |brake -> Q10
+		  |reconfigure -> Q11
+		  |lastBrake -> Q15),
+	Q10	= (reconfigure -> Q3
+		  |endOfTS -> Q9),
+	Q11	= (brake -> Q3
+		  |lastBrake -> Q12),
+	Q12	= (brake -> Q13
+		  |enterCrossing -> Q14),
+	Q13	= (endOfTS -> Q2),
+	Q14	= (endOfTS -> Q2),
+	Q15	= (reconfigure -> Q12
+		  |brake -> Q16
+		  |enterCrossing -> Q17),
+	Q16	= (endOfTS -> Q9
+		  |reconfigure -> Q13),
+	Q17	= (endOfTS -> Q9
+		  |reconfigure -> Q14).
+
+||LTS = LTS_APPROACH.
+property ||LTS_errors = LTS.
+
+
+	LTKS_APPROACH = Q0,
+	Q0	= (reconfigure -> Q1
+		  |endOfTS -> Q9),
+	Q1	= (endOfTS -> Q2),
+	Q2	= (brake -> Q3
+		  |approachingCrossing -> Q4),
+	Q3	= (endOfTS -> Q2),
+	Q4	= (brake -> Q5
+		  |lastBrake -> Q6),
+	Q5	= (endOfTS -> Q2),
+	Q6	= (brake -> Q7
+		  |enterCrossing -> Q8),
+	Q7	= (endOfTS -> Q2),
+	Q8	= (endOfTS -> Q2),
+	Q9	= (reconfigure -> Q2
+		  |brake -> Q10
+		  |no_obs -> Q11),
+	Q10	= (reconfigure -> Q3
+		  |endOfTS -> Q9),
+	Q11	= (reconfigure -> Q4
+		  |brake -> Q12
+		  |lastBrake -> Q13),
+	Q12	= (reconfigure -> Q5
+		  |endOfTS -> Q9),
+	Q13	= (reconfigure -> Q6
+		  |brake -> Q14
+		  |enterCrossing -> Q15),
+	Q14	= (reconfigure -> Q7
+		  |endOfTS -> Q9),
+	Q15	= (reconfigure -> Q8
+		  |endOfTS -> Q9).
+
+||LTKS = LTKS_APPROACH\{no_obs}.
+property ||LTKS_errors = LTKS.
+
+||Compare = (LTKS || LTS).
+||Compare1 = (LTKS || LTS_errors).
+||Compare2 = (LTKS_errors || LTS).

@@ -1,0 +1,15 @@
+Plant = (a-> AUX | b-> AUX2),
+AUX = (a->AUX),
+AUX2 = (b->AUX2).
+
+fluent FA = <a,b>
+assert S = FA
+
+controllerSpec Goal = {
+        liveness = {S}
+        controllable = {a,b}
+}
+
+heuristic ||DirectedController = Plant~{Goal}.
+assert Check = ([]<>S)
+||Sys = (DirectedController || Plant).

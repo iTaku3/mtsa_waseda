@@ -1,0 +1,40 @@
+UpdEnv = Q0,
+	Q0	= (beginUpdate -> Q1
+		  |takeoff.old -> Q5),
+	Q1	= ({blink, startNewSpec, stopOldSpec} -> Q1
+		  |takeoff -> Q2
+		  |read -> Q4
+		  |reconfigure -> Q10),
+	Q2	= (land -> Q1
+		  |{blink, startNewSpec, stopOldSpec} -> Q2
+		  |read -> Q3
+		  |reconfigure -> Q12),
+	Q3	= (read.val[0..2] -> Q2
+		  |{startNewSpec, stopOldSpec} -> Q3
+		  |reconfigure -> Q11),
+	Q4	= (read.val[0..2] -> Q1
+		  |{startNewSpec, stopOldSpec} -> Q4
+		  |reconfigure -> Q13),
+	Q5	= (land.old -> Q0
+		  |beginUpdate -> Q2
+		  |read.old -> Q6),
+	Q6	= (beginUpdate -> Q3
+		  |read.val[1] -> Q7
+		  |read.val.{[0], [2]} -> Q9),
+	Q7	= (beginUpdate -> Q2
+		  |blink.old -> Q8),
+	Q8	= (land.old -> Q0
+		  |beginUpdate -> Q2
+		  |blink.old -> Q8),
+	Q9	= (land.old -> Q0
+		  |beginUpdate -> Q2),
+	Q10	= ({blink, startNewSpec, stopOldSpec} -> Q10
+		  |takeoff -> Q12
+		  |read -> Q13),
+	Q11	= ({startNewSpec, stopOldSpec} -> Q11
+		  |read.val[0..2] -> Q12),
+	Q12	= (land -> Q10
+		  |read -> Q11
+		  |{blink, startNewSpec, stopOldSpec} -> Q12),
+	Q13	= (read.val[0..2] -> Q10
+		  |{startNewSpec, stopOldSpec} -> Q13).

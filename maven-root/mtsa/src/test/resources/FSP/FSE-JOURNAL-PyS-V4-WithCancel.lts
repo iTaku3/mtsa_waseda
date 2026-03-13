@@ -1,0 +1,81 @@
+set User = {usrReq, offerRcvd, usrAck, usrNack, respOk, reqCancelled}//, reqDenied}
+set Producer = {prodInfoReq, infoRcvd, prodReq, prodCancel}
+set Shipper = {shipInfoReq, costAndTime, shipReq, shipCancel}
+set Controllable = {prodInfoReq, prodReq, shipInfoReq, shipReq
+					, offerRcvd, shipCancel, prodCancel, respOk
+					, reqCancelled}//, reqDenied}
+set A = {User, Producer, Shipper}
+
+PRODUCER = (prodInfoReq->REQUESTED), 
+REQUESTED = (infoRcvd->ORDER_PENDING),
+ORDER_PENDING = (prodReq->PRODUCER | prodCancel->PRODUCER).
+ 
+SHIPPER = (shipInfoReq->REQUESTED), 
+REQUESTED = (costAndTime->SHIPPING_PENDING),
+SHIPPING_PENDING = (shipReq->SHIPPER | shipCancel->SHIPPER).
+
+USER = (usrReq->REQUESTED), 
+REQUESTED = (offerRcvd->ACK_NACK),// | reqDenied->USER),
+ACK_NACK = (usrAck->ACKD | usrNack->reqCancelled->USER), 
+ACKD = (respOk->USER).// | reqDenied->USER).
+
+||ENV = (USER || SHIPPER || PRODUCER).
+
+//fluents definition
+fluent F_RespOk = <respOk, A\{respOk}>
+fluent F_ShipInfoReq = <shipInfoReq, A\{shipInfoReq}>
+fluent F_ProdInfoReq = <prodInfoReq, A\{prodInfoReq}>
+fluent F_UsrReq = <usrReq, offerRcvd>//{offerRcvd, reqDenied}>
+fluent F_OfferRcvd = <offerRcvd, A\{offerRcvd}>
+fluent F_CostAndTime = <costAndTime, {shipReq,usrNack}>
+fluent F_InfoRcvd = <infoRcvd, {prodReq,usrNack}>
+fluent F_ShipReq = <shipReq, A\{shipReq}>
+fluent F_ProdReq = <prodReq, A\{prodReq}>
+fluent F_UsrAck = <usrAck, respOk> 
+fluent F_JustUsrAck = <usrAck, A\{usrAck}> 
+fluent F_ShipCancel = <shipCancel, A\{shipCancel}>
+fluent F_ProdCancel = <prodCancel, A\{prodCancel}> 
+fluent F_ShipCancelled = <shipCancel, shipInfoReq>
+fluent F_ProdCancelled = <prodCancel, prodInfoReq> 
+fluent F_ReqCancelled = <reqCancelled, A\{reqCancelled}>// usrReq>
+fluent F_ReqJustCancelled = <reqCancelled, A\{reqCancelled}>
+fluent F_ReqNacked = <usrNack, reqCancelled>
+fluent F_ShipRequested = <shipReq, shipInfoReq>
+fluent F_ProdRequested = <prodReq, prodInfoReq>
+fluent F_JustUsrNack = <usrNack, A\{usrNack}> 
+fluent F_OfferAck = <offerRcvd, usrAck>//{usrAck, reqDenied}>
+
+//Safety requirements
+ltl_property OfferRcvdImpliesInfoAvailable = [](F_OfferRcvd -> (F_CostAndTime && F_InfoRcvd))
+ltl_property ShipAndProdReqImpliesACK = []((F_ShipReq || F_ProdReq) -> F_UsrAck)
+ltl_property NoInfoReqBeforeUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> F_UsrReq)
+ltl_property CancelRestrictions = []( (F_ProdCancel || F_ShipCancel) -> F_ReqNacked)
+ltl_property ReqCancellation = []( F_ReqCancelled -> (F_ProdCancelled && F_ShipCancelled))
+ltl_property ResponseOk = [](F_RespOk -> (F_ProdRequested && F_ShipRequested))
+
+//assertions
+assert AssumptionOnUser = !F_OfferAck
+assert UsrRespOk = F_RespOk
+
+//Controller specifications
+controller ||C = (USER || SHIPPER || PRODUCER)~{G1}.
+checkCompatibility ||Compatible = (USER || SHIPPER || PRODUCER)~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {NoInfoReqBeforeUsrReq, OfferRcvdImpliesInfoAvailable,
+				ShipAndProdReqImpliesACK, 
+				CancelRestrictions,
+				ReqCancellation, 
+				ResponseOk}
+       assumption = {AssumptionOnUser}
+       liveness = {UsrRespOk}
+       controllable = {Controllable}
+}
+
+||TestModel = (USER || SHIPPER || PRODUCER
+				|| NoInfoReqBeforeUsrReq || OfferRcvdImpliesInfoAvailable 
+				|| ShipAndProdReqImpliesACK 
+				|| CancelRestrictions
+				|| ReqCancellation
+				).

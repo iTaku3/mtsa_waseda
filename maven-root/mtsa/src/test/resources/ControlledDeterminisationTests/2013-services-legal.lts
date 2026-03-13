@@ -1,0 +1,104 @@
+const ClientsCount = 2
+range Clients = 1..ClientsCount
+
+set ServicesPrefixes = {a,b,c}
+set AvailableServices = {car, flight}//, hotel}
+set Agency = {agency.req, agency.resp}
+set Network = {yesNetwork, noNetwork}
+set ControllableC1 = {AvailableServices.{buy, query, reserve, bind}}
+set Controllable = {{ControllableC1}, agency.resp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail}}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess}}
+set A = {Controllable, Uncontrollable, Agency, Network}
+
+
+//Environment model
+SERVICE(SRV='car, M_RESERVE=1, M_QINC=0) = ([SRV].bind->IDLE),
+IDLE = ([SRV].query -> ( [SRV].queryFail -> IDLE 
+		| [SRV].querySuccess -> if (M_QINC==1) then REQUERY else RESULTSET)),
+REQUERY = ([SRV].query -> ( [SRV].queryFail -> IDLE 
+			| [SRV].querySuccess -> if (M_RESERVE==1) then RESULTSET else RESERVED)),
+RESULTSET = ([SRV].reserve -> ([SRV].reserveFail -> IDLE | [SRV].reserveSuccess -> RESERVED)
+			|[SRV].buy -> if (M_RESERVE==1) then ([SRV].reserveRequired->RESULTSET) else BUY),
+WARNING = ([SRV].reservationRequired->RESULTSET),
+RESERVED = ([SRV].buy -> BUY),
+BUY = ([SRV].buyFail -> RESERVED | [SRV].buySuccess -> IDLE)
+										+{[SRV].{reserve, reserveFail, reserveSuccess}}.
+
+//This is the case where some services require reservation and others don't. 
+//The IA control problem would also have solution if all services had the same 
+//interface (e.g., a:SERVICE(srv,1,0), and b:SERVICE(srv,1,0))
+||SERVICES1 = (forall[srv:AvailableServices] a:SERVICE(srv,1,0) 
+				|| b:SERVICE('car,0,0)
+				|| c:SERVICE('flight,1,0)).
+
+||SERVICES = (SERVICES1)/{flight/ServicesPrefixes.flight
+						, car/ServicesPrefixes.car
+						, hotel/ServicesPrefixes.hotel}.
+
+AGENCY = (agency.idle-> AGENCY | agency.req->agency.resp->AGENCY).
+
+||ENV = (SERVICES || AGENCY || NETWORK).
+
+
+NETWORK = YES, 
+YES = ({Controllable,Uncontrollable} -> YES | noNetwork -> NO),
+NO = (yesNetwork -> NOBIS), 
+NOBIS = ({Controllable,Uncontrollable} -> YES).
+
+
+//fluent definitions
+fluent F_UsrReq = <agency.req, A\{agency.req}>
+fluent F_AgencyResp = <agency.resp, A\{agency.resp}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Reserved[srv:AvailableServices] = <[srv].reserveSuccess, {[srv].buySuccess}>//, [srv].buyFail}>
+fluent F_BuySuccessfully[srv:AvailableServices] = <[srv].buySuccess, A\{[srv].buySuccess}>
+fluent F_Query[srv:AvailableServices] = <[srv].query, A\{[srv].query}>
+fluent F_BoughtSuccessfully[srv:AvailableServices] = <[srv].buySuccess, agency.req>
+fluent F_TryToBuy[srv:AvailableServices] = <[srv].buy, A\{[srv].buy}>
+fluent F_PendingReq = <agency.req, agency.resp>
+fluent F_Reserve[srv:AvailableServices] = <[srv].reserve, A\{[srv].reserve}>
+fluent F_SuccessfullyFound[srv:AvailableServices] = <[srv].querySuccess, agency.req>
+
+fluent F_NETWORK = <yesNetwork, noNetwork>
+assert A_NETWORK = F_NETWORK
+
+//assertions
+assert Failures = F_Failures
+assert UsrResp = F_AgencyResp
+assert AssumptionOnRequests = F_PendingReq
+assert AllBought = forall[srv:AvailableServices](F_BoughtSuccessfully[srv])
+assert SomeQuery =  exists[srv:AvailableServices] F_Query[srv]
+
+//Safety definition
+ltl_property ServiceQueryImpliesUsrReq = [](SomeQuery -> F_PendingReq)
+ltl_property UsrRspImpliesAllBought = [](F_AgencyResp -> AllBought)
+ltl_property QueryImpliesNotBought = [](forall[srv:AvailableServices] 
+										(F_Query[srv] -> !F_BoughtSuccessfully[srv]))
+
+ltl_property NoBuyIfReserveOrQueryFail = 
+		forall[srv1:AvailableServices] [] ([srv1].buy -> 
+			forall[srv2:AvailableServices] ( (![srv2].reserveFail && ![srv2].queryFail) W AllBought))
+
+
+ltl_property OneBindPerReq = forall[srv:AvailableServices] [] ([srv].bind -> X ([] ![srv].bind))
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+controlled_det ||DET = DET~{G1}.
+controlled_det ||DET_PLANT = PLANT~{G1}.
+
+plant ||PLANT = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {OneBindPerReq,
+        NoBuyIfReserveOrQueryFail, 
+			UsrRspImpliesAllBought, ServiceQueryImpliesUsrReq, 
+				QueryImpliesNotBought}
+       failure = {Failures}
+       assumption = {AssumptionOnRequests, A_NETWORK}
+       liveness = {UsrResp}
+       controllable = {Controllable}
+}

@@ -1,0 +1,115 @@
+//HumanoidLTL_377_Humanoid automatically_translated 
+
+set ControlledActions = {leftmotor.fwd, leftmotor.bwd, leftmotor.stop, rightmotor.fwd, rightmotor.bwd, rightmotor.stop, headmotor.fwd, headmotor.bwd, headmotor.stop, outputmovemode.fwd, outputmovemode.turn, outputmovemode.bwd, tick, env_constraint[60].respondsto.responded, not_env_constraint[60].respondsto.responded}
+set UncontrolledActions = {obstacle.clear, obstacle.blocked, inputmovemode.fwd, inputmovemode.turn, inputmovemode.bwd, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Obstacle_Actions = {obstacle.clear, obstacle.blocked}
+fluent OBSTACLE_CLEAR = <obstacle.clear, Obstacle_Actions\{obstacle.clear}>
+fluent OBSTACLE_BLOCKED = <obstacle.blocked, Obstacle_Actions\{obstacle.blocked}>
+
+set InputMoveMode_Actions = {inputmovemode.fwd, inputmovemode.turn, inputmovemode.bwd}
+fluent INPUTMOVEMODE_FWD = <inputmovemode.fwd, InputMoveMode_Actions\{inputmovemode.fwd}>
+fluent INPUTMOVEMODE_TURN = <inputmovemode.turn, InputMoveMode_Actions\{inputmovemode.turn}>
+fluent INPUTMOVEMODE_BWD = <inputmovemode.bwd, InputMoveMode_Actions\{inputmovemode.bwd}>
+
+set LeftMotor_Actions = {leftmotor.fwd, leftmotor.bwd, leftmotor.stop}
+fluent LEFTMOTOR_FWD = <leftmotor.fwd, LeftMotor_Actions\{leftmotor.fwd}>
+fluent LEFTMOTOR_BWD = <leftmotor.bwd, LeftMotor_Actions\{leftmotor.bwd}>
+fluent LEFTMOTOR_STOP = <leftmotor.stop, LeftMotor_Actions\{leftmotor.stop}>
+
+set RightMotor_Actions = {rightmotor.fwd, rightmotor.bwd, rightmotor.stop}
+fluent RIGHTMOTOR_FWD = <rightmotor.fwd, RightMotor_Actions\{rightmotor.fwd}>
+fluent RIGHTMOTOR_BWD = <rightmotor.bwd, RightMotor_Actions\{rightmotor.bwd}>
+fluent RIGHTMOTOR_STOP = <rightmotor.stop, RightMotor_Actions\{rightmotor.stop}>
+
+set HeadMotor_Actions = {headmotor.fwd, headmotor.bwd, headmotor.stop}
+fluent HEADMOTOR_FWD = <headmotor.fwd, HeadMotor_Actions\{headmotor.fwd}>
+fluent HEADMOTOR_BWD = <headmotor.bwd, HeadMotor_Actions\{headmotor.bwd}>
+fluent HEADMOTOR_STOP = <headmotor.stop, HeadMotor_Actions\{headmotor.stop}>
+
+set OutputMoveMode_Actions = {outputmovemode.fwd, outputmovemode.turn, outputmovemode.bwd}
+fluent OUTPUTMOVEMODE_FWD = <outputmovemode.fwd, OutputMoveMode_Actions\{outputmovemode.fwd}>
+fluent OUTPUTMOVEMODE_TURN = <outputmovemode.turn, OutputMoveMode_Actions\{outputmovemode.turn}>
+fluent OUTPUTMOVEMODE_BWD = <outputmovemode.bwd, OutputMoveMode_Actions\{outputmovemode.bwd}>
+
+set ENV_CONSTRAINT_60_respondsTo_responded_Actions = {env_constraint[60].respondsto.responded, not_env_constraint[60].respondsto.responded}
+fluent ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED = <env_constraint[60].respondsto.responded, ENV_CONSTRAINT_60_respondsTo_responded_Actions\{env_constraint[60].respondsto.responded}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED))
+minimal || Initial_0_min =  Initial_0.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min).
+
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> ((INPUTMOVEMODE_FWD && OBSTACLE_BLOCKED) -> ((OUTPUTMOVEMODE_BWD && LEFTMOTOR_BWD) && RIGHTMOTOR_FWD)))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> ((INPUTMOVEMODE_BWD && OBSTACLE_CLEAR) -> ((OUTPUTMOVEMODE_FWD && LEFTMOTOR_FWD) && RIGHTMOTOR_BWD)))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+ltl_property G2 = [](tick -> ((INPUTMOVEMODE_FWD && OBSTACLE_CLEAR) -> (LEFTMOTOR_FWD && RIGHTMOTOR_FWD)))
+minimal ||G2_min = G2.
+
+//property divided into 1 subproperties.
+ltl_property G3 = [](tick -> (OBSTACLE_BLOCKED -> OUTPUTMOVEMODE_BWD))
+minimal ||G3_min = G3.
+
+
+//property divided into 2 subproperties.
+ltl_property G4 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED)) || (OBSTACLE_CLEAR || (ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED && !OUTPUTMOVEMODE_BWD))))
+minimal ||G4_min = G4.
+ltl_property G5 = [](tick -> ((!OBSTACLE_CLEAR && (!ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED || OUTPUTMOVEMODE_BWD)) || X(!tick W (tick && ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED))))
+minimal ||G5_min = G5.
+
+fluent True = <tick, tock>
+assert G_l0 = (True || !True)
+//property divided into 1 subproperties.
+assert A_l0 = (tock && ENV_CONSTRAINT_60_RESPONDSTO_RESPONDED)
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		G0_min || G1_min || G2_min || G3_min || G4_min || G5_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l0, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l0 && A_clock) -> ([]<>G_l0))
+assert ASM =   ([]<>A_l0 && A_clock)
+assert GNT = ([]<>G_l0)
+progress Time  = {tick}

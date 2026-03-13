@@ -1,0 +1,16 @@
+WINDOW = (open->({opened,stop}->WINDOW) 
+         |close->({closed,stop}->WINDOW)
+         ).
+
+animation WINDOW = "xml/window.xml"
+                   actions {
+                      open/open,
+                      close/close,
+                      stop/stop
+                   }
+                   controls {
+                      {opened,closed}/end,
+                      open/open,
+                      close/close,
+                      stop/stop
+                   }

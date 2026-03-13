@@ -1,0 +1,12 @@
+M = (t1->TRY1), 
+TRY1 = (f1->F1 | s1->S1),
+F1 = (a1->T2), 
+S1 = (a2->T2 | a1->a2->g->M),
+T2 = (t2->TRY2),
+TRY2 = (f2->F2 | s2->S2), 
+F2 = (a1->M),
+S2 = (a2->M).
+
+M2 = (t->TRY1), 
+TRY1 = (f->t->TRY2 | s1->a->g->M2),
+TRY2 = (f->TRY2 | s->a->M2).

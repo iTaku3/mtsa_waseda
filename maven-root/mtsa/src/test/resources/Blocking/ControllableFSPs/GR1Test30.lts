@@ -1,0 +1,25 @@
+Ejemplo = A0,
+A0 = ({a,b,c} -> A1),
+A1 = (d -> A2),
+A2 = (e -> A0).
+
+||Plant = Ejemplo.
+set All = {a, b, c, d, e}
+fluent F1 = <a,e>
+fluent FA = <a,All\{a}>
+fluent FB = <b,All\{b}>
+fluent FC = <c,All\{c}>
+
+assert S1 = FA
+assert S2 = (FB && !FC)
+assert S3 = (S2 -> !S1)
+assert S4 = !F1
+
+controllerSpec Goal = {
+        liveness = {S3,S4}
+        controllable = {a, b, c, d}
+}
+
+heuristic ||DirectedController = Plant~{Goal}.
+assert Check = ([]<>S3 && []<>S4)
+||Sys = (DirectedController || Plant).

@@ -1,0 +1,36 @@
+const MAX = 2
+range R = 0..MAX
+
+
+// -------- BEFORE ---------
+set ControllableActions = {takeoff, land, blink, read}
+set A = {ControllableActions, read.val[R]}
+
+ARDRONE = LANDED,
+LANDED = (takeoff -> AIR | blink -> LANDED| read -> read.val[R] -> LANDED),
+AIR = (land -> LANDED | blink -> AIR | read -> read.val[R] -> AIR).
+
+
+assert LIGHTOFFWHENLANDED = [](blink -> IN_AIR)
+fluent IN_AIR = <takeoff,land> initially 0
+assert NOREADWHENLANDED = [](read -> IN_AIR)
+
+assert NOREAD_UNTIL_VALPROCESSED = [](read.val[1] -> PROCESS_VALUE && ((read.val[0] || read.val[2]) -> (!blink W read)))
+assert PROCESS_VALUE = ((!read && !land) W blink)
+
+assert NOTWOPROCESSEDINAIR = [](read -> X(!read W !IN_AIR))
+
+ltl_property S = (NOREADWHENLANDED && LIGHTOFFWHENLANDED && NOREAD_UNTIL_VALPROCESSED && NOTWOPROCESSEDINAIR)
+
+fluent Read = <read, A\{read}>
+
+controllerSpec ObjectiveBefore = {
+	safety = {S}
+//	assumption = {}
+	liveness = {Read}
+	controllable = {ControllableActions}
+}
+
+controller ||C =(ARDRONE)~{ObjectiveBefore}.
+
+||TEST = (C || ARDRONE).

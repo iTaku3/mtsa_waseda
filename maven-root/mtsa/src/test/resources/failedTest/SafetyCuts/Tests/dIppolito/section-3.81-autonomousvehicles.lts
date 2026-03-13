@@ -1,0 +1,144 @@
+set Moves = {n, s, q}
+const NORTH = 'n
+const SOUTH = 's
+const STOPPED = 'q
+
+set Positions = {pos1, pos2, pos3, pos4}
+set Controlled = {mn, ms, me, mw, getPackage, putPackage}
+set Uncontrolled = {Positions, getPackageFailed, getPackageOk, openDoor, closeDoor}
+set A = {Controlled, Uncontrolled}
+
+fluent F_Pos1 = <pos1, Positions\{pos1}>
+fluent F_Pos4 = <pos4, Positions\{pos4}>
+
+fluent F_GetPackageOk = <getPackageOk, A\{getPackageOk}>
+fluent F_DoorOpen = <openDoor, closeDoor>
+fluent F_TryToGetPackage = <getPackage, getPackageOk>
+fluent F_PutPackage = <putPackage, A\{putPackage}>
+
+assert GetPackageOk = F_GetPackageOk
+assert DoorOpen = F_DoorOpen
+assert TryToGetPackage = F_TryToGetPackage
+
+assert ASSUME_ON_BALL = (GetPackageOk || !TryToGetPackage)
+assert ASSUME_ON_DOOR = DoorOpen
+assert Pos1AndPackageLoaded = (F_Pos1 && F_GetPackageOk)
+assert Pos4AndPackageUnloaded = (F_Pos4 && F_PutPackage)
+assert Pos1 = (F_Pos1)
+assert PackageUnloaded = (F_PutPackage)
+
+assert G = (F_Pos4 && F_PutPackage)
+
+controllerSpec G1 = {
+	safety = {ROBOT_RESTRICTION}
+	assumption = {ASSUME_ON_BALL, ASSUME_ON_DOOR}
+	liveness = {G}
+	controllable = {Controlled}
+}
+controller ||C = (ENV)~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+DOOR = (openDoor->closeDoor->DOOR).
+ARM = (getPackage->TRY), TRY = (getPackageOk->putPackage->ARM | getPackageFailed->ARM).
+ROBOT = (mn->ROBOT | ms->ROBOT | me->ROBOT | mw->ROBOT).
+TOPOLOGY = (pos1->ENV_P[1][0][0][STOPPED]),
+ENV_P[pos:1..4][doorOpen:0..1][packageOn:0..1][moving:Moves] = (
+  when(doorOpen==0)								openDoor->ENV_P[pos][1][packageOn][moving]
+	| when(moving==STOPPED)&&(pos==1)&&(packageOn==1)	mn -> ENV_P[pos][doorOpen][packageOn][NORTH]
+	| when(moving==STOPPED)&&(pos==1)&&(packageOn==0) 	getPackage->TRY_GET_BALL[pos][doorOpen][packageOn][moving]
+	| when(moving==STOPPED)&&(pos!=4)&&(pos!=1)		mn -> ENV_P[pos][doorOpen][packageOn][NORTH] 
+	| when(moving==STOPPED)&&(pos!=1)				ms->ENV_P[pos][doorOpen][packageOn][SOUTH]
+	| when(pos==1)&&(moving==NORTH)					pos2->ENV_P[2][doorOpen][packageOn][STOPPED]
+	| when(pos==2)&&(moving==SOUTH)					pos1->ENV_P[1][doorOpen][packageOn][STOPPED]
+	| when(pos==2)&&(doorOpen==1)&&(moving==NORTH)	pos3->closeDoor->ENV_P[3][0][packageOn][STOPPED]
+	| when(pos==2)&&(doorOpen==0)&&(moving==NORTH)	pos2->ENV_P[pos][doorOpen][packageOn][STOPPED]
+	| when(pos==3)&&(moving==NORTH)					pos4->ENV_P[4][doorOpen][packageOn][STOPPED]
+	| when(pos==3)&&(doorOpen==1)&&(moving==SOUTH)	pos2->closeDoor->ENV_P[2][0][packageOn][STOPPED]
+	| when(pos==3)&&(doorOpen==0)&&(moving==SOUTH)	pos3->ENV_P[pos][doorOpen][packageOn][STOPPED]
+	| when(pos==4)&&(moving==SOUTH)&&(packageOn==0)	pos3->ENV_P[3][doorOpen][packageOn][STOPPED] 
+	| when(pos==4)&&(packageOn==1)&&(moving==STOPPED)	putPackage->ENV_P[pos][doorOpen][0][moving]),
+TRY_GET_BALL[pos:1..4][doorOpen:0..1][packageOn:0..1][moving:Moves] = 
+													(getPackageOk->ENV_P[pos][doorOpen][1][moving] 
+													| getPackageFailed->ENV_P[pos][doorOpen][0][moving])+{me,mw}. 
+
+
+||ENV = (DOOR || ARM || ROBOT || TOPOLOGY).
+
+
+ROBOT_RESTRICTION = (pos1->ROBOT_D[1][0][0][STOPPED]),
+ROBOT_D[pos:1..4][doorOpen:0..1][packageOn:0..1][moving:Moves] = (
+	  when(doorOpen==0)								openDoor -> ROBOT_D[pos][1][packageOn][moving]
+	| when(moving==STOPPED)&&(pos==1)&&(packageOn==1)	mn -> ROBOT_D[pos][doorOpen][packageOn][NORTH]
+	| when(moving==STOPPED)&&(pos==1)&&(packageOn==0) 	getPackage->TRY_GET_BALL[pos][doorOpen][packageOn][moving]
+	| when(moving==STOPPED)&&(pos!=4)&&(pos!=1)		mn -> ROBOT_D[pos][doorOpen][packageOn][NORTH]
+	| when(moving==STOPPED)&&(pos==4)&&(packageOn==0)	ms -> ROBOT_D[pos][doorOpen][packageOn][SOUTH]
+	| when(moving==STOPPED)&&(pos!=1)&&(pos!=4)		ms -> ROBOT_D[pos][doorOpen][packageOn][SOUTH]
+	| when(pos==1)&&(moving==NORTH) 				pos2->ROBOT_D[2][doorOpen][packageOn][STOPPED]
+	| when(pos==2)&&(doorOpen==1)&&(moving==NORTH)	pos3->closeDoor->ROBOT_D[3][0][packageOn][STOPPED]
+	| when(pos==2)&&(doorOpen==0)&&(moving==NORTH)	pos2->ROBOT_D[2][doorOpen][packageOn][STOPPED]
+	| when(pos==2)&&(moving==SOUTH)					pos1->ROBOT_D[1][doorOpen][packageOn][STOPPED] 
+	| when(pos==3)&&(moving==NORTH)					pos4->ROBOT_D[4][doorOpen][packageOn][STOPPED]
+	| when(pos==3)&&(doorOpen==1)&&(moving==SOUTH)	pos2->closeDoor->ROBOT_D[2][0][packageOn][STOPPED]
+	| when(pos==3)&&(doorOpen==0)&&(moving==SOUTH)	pos3->ROBOT_D[3][doorOpen][packageOn][STOPPED]
+//	| when(pos==4)&&(packageOn==1)&&(moving==STOPPED)	putPackage->ROBOT_D[pos][doorOpen][0][moving]
+	| when(packageOn==1)								putPackage->ROBOT_D[pos][doorOpen][0][moving]
+	| when(pos==4)&&(moving==SOUTH)&&(packageOn==0)	pos3->ROBOT_D[3][doorOpen][packageOn][STOPPED]), 
+TRY_GET_BALL[pos:1..4][doorOpen:0..1][packageOn:0..1][moving:Moves] = 
+													(getPackageOk->ROBOT_D[pos][doorOpen][1][moving] 
+													| getPackageFailed->ROBOT_D[pos][doorOpen][0][moving])+{me,mw}. 
+
+EXP = Q0,
+	Q0	= (pos1 -> Q31),
+	Q1	= (mn -> Q4),
+	Q2	= (putPackage -> Q9),
+	Q3	= (getPackage -> Q10),
+	Q4	= (pos2 -> Q18),
+	Q5	= (closeDoor -> Q27),
+	Q6	= (mn -> Q20),
+	Q7	= (openDoor -> Q3),
+	Q8	= (getPackageFailed -> Q7
+		  |getPackageOk -> Q24),
+	Q9	= (ms -> Q32),
+	Q10	= (getPackageOk -> Q1
+		  |getPackageFailed -> Q3),
+	Q11	= (openDoor -> Q13
+		  |pos1 -> Q31),
+	Q12	= (pos3 -> Q33
+		  |openDoor -> Q35),
+	Q13	= (pos1 -> Q25),
+	Q14	= (openDoor -> Q6
+		  |mn -> Q22),
+	Q15	= (openDoor -> Q18
+		  |mn -> Q19),
+	Q16	= (ms -> Q35),
+	Q17	= (openDoor -> Q2
+		  |putPackage -> Q34),
+	Q18	= (mn -> Q28),
+	Q19	= (pos2 -> Q15
+		  |openDoor -> Q28),
+	Q20	= (pos4 -> Q2),
+	Q21	= (ms -> Q13),
+	Q22	= (pos4 -> Q17
+		  |openDoor -> Q20),
+	Q23	= (closeDoor -> Q14),
+	Q24	= (openDoor -> Q26
+		  |mn -> Q36),
+	Q25	= (getPackage -> Q10),
+	Q26	= (mn -> Q4),
+	Q27	= (ms -> Q11
+		  |openDoor -> Q21),
+	Q28	= (pos3 -> Q23),
+	Q29	= (openDoor -> Q32
+		  |pos3 -> Q33),
+	Q30	= (ms -> Q32),
+	Q31	= (getPackage -> Q8
+		  |openDoor -> Q25),
+	Q32	= (pos3 -> Q16),
+	Q33	= (ms -> Q12
+		  |openDoor -> Q16),
+	Q34	= (ms -> Q29
+		  |openDoor -> Q30),
+	Q35	= (pos2 -> Q5),
+	Q36	= (openDoor -> Q4
+		  |pos2 -> Q15).
+

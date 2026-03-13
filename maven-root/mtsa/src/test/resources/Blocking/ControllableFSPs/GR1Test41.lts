@@ -1,0 +1,32 @@
+Ejemplo = A0,
+A0 = (c01 -> A1 | c02 -> A2 | c03 -> A3),
+A1 = (u14 -> A4 | u15 -> A5),
+A2 = (c25 -> A5 | u23 -> A3),
+A3 = (u32 -> A2 | c3d -> D),
+A4 = (c45 -> A5 | c47 -> A7),
+A5 = (u56 -> A6),
+A6 = (c6d -> D | c64 -> A4),
+A7 = (c78 -> A8),
+A8 = (u8d -> D | u87 -> A7).
+
+||Plant = Ejemplo.
+set All = {c01, u02, u03, c14, u15, c25, u23, u32, c3d, c45, c47, u56, c6d, c64, c78, u8d, u87}
+fluent FA1 = <{c25,u15},{u14,c64}>
+fluent FAD = <{c01,c02,c03},{u8d,c6d,c3d}>
+fluent FG1 = <c01,{u14,c64}>
+fluent FG2 = <u56,{u14,c64}>
+
+assert A1 = FA1
+assert A2 = FAD
+assert G1 = FG1
+assert G2 = FG2
+
+controllerSpec Goal = {
+        assumption = {A1, A2}
+        liveness = {G1, G2}
+        controllable = {c01,c02,c03,c25,c3d,c45,c47,c6d,c64,c78}
+}
+
+heuristic ||DirectedController = Plant~{Goal}.
+assert Check = (([]<>A1 && []<>A2) -> ([]<>G1 && []<>G2))
+||Sys = (DirectedController || Plant).

@@ -1,0 +1,21 @@
+UpdEnv = Q0,
+	Q0	= (c1.old -> Q0
+		  |beginUpdate -> Q1),
+	Q1	= ({c1, startNewSpec, stopOldSpec} -> Q1
+		  |c2 -> Q2
+		  |c3 -> Q3
+		  |reconfigure -> Q5),
+	Q2	= (u1 -> Q1
+		  |{startNewSpec, stopOldSpec} -> Q2
+		  |reconfigure -> Q6),
+	Q3	= ({startNewSpec, stopOldSpec} -> Q3
+		  |u2 -> Q4
+		  |reconfigure -> Q5),
+	Q4	= (c1 -> Q1
+		  |c2 -> Q2
+		  |c3 -> Q3
+		  |{startNewSpec, stopOldSpec} -> Q4),
+	Q5	= ({c1, startNewSpec, stopOldSpec} -> Q5
+		  |c2 -> Q6),
+	Q6	= (u1 -> Q5
+		  |{startNewSpec, stopOldSpec} -> Q6).

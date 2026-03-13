@@ -1,0 +1,98 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+
+set Table = {left, center, right}
+range Box = 1..16
+set Arms = {a1, a2}
+set ControllableActions = {pick[Box][Table], on[Box][Table], stack[Box][Box]}
+set All = {ControllableActions, on[Box][Table], stack[Box][Box]}
+
+ENVIRONMENT = ({on[Box][Table],stack[Box][Box]} -> OUTSIDE_PARTY | idle -> CONTROLLABLE).
+CONTROLLABLE = 
+
+
+ARM_1 = (pick[])
+ARM_2
+||Environment = (ENVIRONMENT).
+
+
+assert 
+
+
+//Fluents declaration
+
+
+// ---------------------------OLD CONTROLLER SPEC (until 2 packet loss)-----------------------------
+/*
+assert OLD_BUFFER_POLICY = (((ReadX && !ReadY) -> !buffer[2]) && (ReadY -> !buffer[1]) )
+
+ltl_property P_OLD_BUFFER_POLICY = []OLD_BUFFER_POLICY
+
+controllerSpec OldSpec = {
+    safety = {P_OLD_BUFFER_POLICY}
+    controllable = {OldControllableActions}
+}
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||OldEnvironmentController = (OldController || OldEnvironment).
+
+// ---------------------------NEW CONTROLLER SPEC (until 3 packet loss)-----------------------------
+
+assert NEW_BUFFER_POLICY = (((ReadX && !ReadY) -> !buffer[2..3]) && (ReadY && !ReadZ -> (!buffer[1] && !buffer[3])) &&
+								(ReadZ -> !buffer[1..2]) )
+
+ltl_property P_NEW_BUFFER_POLICY = []NEW_BUFFER_POLICY
+
+controllerSpec NewSpec = {
+    safety = {P_NEW_BUFFER_POLICY}
+    controllable = {NewControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+||NewEnvironmentController = (NewController || NewEnvironment).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+
+//Fluents for updates
+fluent EncodeDone = <encode,output>
+fluent SendDone = <send,output>
+fluent ReceiveDone = <receive,output>
+fluent BufferedX = <buffer[1],output>
+fluent BufferedY = <buffer[2],output>
+fluent OutputDone = <output,shift['x]>
+fluent AlreadyBuffered = <buffer[1..3],output>
+
+
+//ltl_property T = 
+
+updatingController UpdCont = { 
+    oldController = OldEnvironmentController,
+    oldEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec,
+    newGoal = NewSpec,
+//    transition = T,
+    nonblocking,
+    updateFluents = {
+        {EncodeDone, EncodeDone},
+        {SendDone, SendDone},
+        {ReceiveDone, ReceiveDone},
+        {ReadX, ReadX},
+        {ReadY, ReadY},
+		{BufferedX,BufferedX},
+		{BufferedY,BufferedY}
+    }
+}
+
+// ---------------------------TEST AND RESULTS-----------------------------
+
+assert S_OLD = ()
+assert S_NEW = ()
+
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))
+
+*/
+

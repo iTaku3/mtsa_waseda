@@ -1,0 +1,28 @@
+set A = {u1, u2, u3, c1, c2, g}
+set Controllable = {c1, c2, g}
+
+MUT = (u1 -> CASE_1 | u2 -> CASE_2 | u3 -> CASE_3),
+CASE_1 = (u1 -> CASE_1_G | c1 -> u1 -> CASE_1_ERROR),
+CASE_1_G = (g -> CASE_1_G),
+CASE_2 = (g -> CASE_2 | c1 -> c1 -> CASE_2_ERROR),
+CASE_3 = (c1 -> u3 -> CASE_3_ERROR | c2 -> CASE_1_G).
+
+EXP= (u1 -> CASE_1 | u2 -> CASE_1_G | u3 -> CASE_3),
+CASE_1 = (u1 -> CASE_1_G),
+CASE_1_G = (g -> CASE_1_G),
+CASE_3 = (c2 -> CASE_1_G).
+
+minimal ||M_MUT = (MUT).
+minimal ||M_EXP = (EXP).
+
+//controllers
+controller ||C = (MUT)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       controllable = {Controllable}
+}
+
+minimal ||M_C = (C).
+minimal ||ID = (C || M_EXP).
+

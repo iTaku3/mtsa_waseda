@@ -1,0 +1,183 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+//ACTION SETS
+set ControllableActions = {drill, polish, clean, out, stamp}
+set OldAlphabet = {ControllableActions, in, drillOk, drillNOk, polishOk, polishNOk, cleanOk, cleanNOk, stampOk, reset}
+set NewControllableActions = {drill, paint, clean, out, stamp}
+set NewAlphabet = {NewControllableActions, in, drillOk, drillNOk, paintOk, paintNOk, cleanOk, cleanNOk, stampOk, reset}
+
+//Domain Old Model
+	PRODUCTION_CELL_OLD = (in -> ARM),
+	ARM = ( polish -> POLISHED 
+		| drill -> DRILLED
+		| clean -> CLEANED
+		| stamp -> TRASHED
+		| out -> reset -> PRODUCTION_CELL_OLD),
+	DRILLED = ({drillOk,drillNOk}  -> ARM),
+	POLISHED = ({polishOk,polishNOk} -> ARM),
+	CLEANED = ({cleanOk,cleanNOk} -> ARM),
+	TRASHED = (stampOk -> ARM).
+
+//Domain New Model
+	PRODUCTION_CELL_NEW = (in -> ARM),
+	ARM = ( paint -> PAINTED 
+		| drill -> DRILLED
+		| clean -> CLEANED
+		| stamp -> TRASHED
+		| out -> reset -> PRODUCTION_CELL_NEW),
+	DRILLED = ({drillOk,drillNOk} -> ARM),
+	PAINTED = ({paintOk,paintNOk} -> ARM),
+	CLEANED = ({cleanOk,cleanNOk} -> ARM),
+	TRASHED = (stampOk -> ARM).
+
+//Domain mapping Model
+	PRODUCTION_CELL_MAP =  PRODUCTION_CELL_OLD,
+	PRODUCTION_CELL_OLD = (in -> ARM_OLD | reconfigure -> PRODUCTION_CELL_NEW),
+	ARM_OLD = ( polish -> POLISHED_OLD 
+		| drill -> DRILLED_OLD
+		| clean -> CLEANED_OLD
+		| stamp -> TRASHED_OLD
+		| out -> OUT_OLD
+		| reconfigure -> ARM_NEW),
+	OUT_OLD = (reset -> PRODUCTION_CELL_OLD | reconfigure -> OUT_NEW),
+	DRILLED_OLD = ({drillOk,drillNOk}  -> ARM_OLD | reconfigure -> DRILLED_NEW),
+	POLISHED_OLD = ({polishOk,polishNOk} -> ARM_OLD | reconfigure -> ARM_NEW),
+	CLEANED_OLD = ({cleanOk,cleanNOk} -> ARM_OLD | reconfigure -> CLEANED_NEW),
+	TRASHED_OLD = (stampOk -> ARM_OLD | reconfigure -> TRASHED_NEW),
+
+	PRODUCTION_CELL_NEW = (in -> ARM_NEW),
+	ARM_NEW = ( paint -> PAINTED_NEW 
+		| drill -> DRILLED_NEW
+		| clean -> CLEANED_NEW
+		| stamp -> TRASHED_NEW
+		| out -> OUT_NEW),
+	OUT_NEW = (reset -> PRODUCTION_CELL_NEW),
+	DRILLED_NEW = ({drillOk,drillNOk} -> ARM_NEW),
+	PAINTED_NEW = ({paintOk,paintNOk} -> ARM_NEW),
+	CLEANED_NEW = ({cleanOk,cleanNOk} -> ARM_NEW),
+	TRASHED_NEW = (stampOk -> ARM_NEW).
+
+||OLD_ENV = (PRODUCTION_CELL_OLD).
+||NEW_ENV = (PRODUCTION_CELL_NEW).
+||MAPPING_ENV = (PRODUCTION_CELL_MAP).
+
+
+//DEFINED FLUENTS 
+fluent Drilled = <drillOk,reset>
+fluent DrillPending = <drill,{drillOk,drillNOk}>
+fluent Polished = <polishOk,reset>
+fluent PolishPending = <polish,{polishOk,polishNOk}>
+fluent Cleaned = <cleanOk,reset>
+fluent CleanPending = <clean,{cleanOk,cleanNOk}>
+fluent Painted = <paintOk,reset>
+fluent PaintPending = <paint,{paintOk,paintNOk}>
+fluent Faulty = <stampOk,reset>
+fluent FaultyPending = <stamp,stampOk>
+
+fluent OldToolApplied = <{drillOk,cleanOk,polishOk},reset>
+fluent NewToolApplied = <{paintOk,drillOk,cleanOk},reset>
+fluent AnyToolApplied = <{paintOk,drillOk,cleanOk,polishOk},reset>
+fluent Processing = <in,reset>
+fluent OutDone = <out,reset>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+assert OLD_TOOL_ORDER = ((CleanPending -> Polished) && (PolishPending -> Drilled))
+assert OLD_OUT_IF_FINISHED = (out-> (Drilled && Polished && Cleaned))
+assert DRILL_ONCE = ( drill-> !Drilled )
+assert POLISH_ONCE = ( polish -> !Polished )
+assert CLEAN_ONCE = ( clean -> !Cleaned )
+assert AVOID_STAMPING = ( !stamp )
+
+ltl_property P_OLD_TOOL_ORDER = []OLD_TOOL_ORDER
+ltl_property P_OLD_OUT_IF_FINISHED = []OLD_OUT_IF_FINISHED
+ltl_property P_DRILL_ONCE = []DRILL_ONCE
+ltl_property P_POLISH_ONCE = []POLISH_ONCE
+ltl_property P_CLEAN_ONCE = []CLEAN_ONCE
+ltl_property P_AVOID_STAMPING = []AVOID_STAMPING
+
+controllerSpec DRILL_POLISH_CLEAN = {
+	safety = {P_OLD_TOOL_ORDER, P_OLD_OUT_IF_FINISHED,
+			P_DRILL_ONCE, P_POLISH_ONCE, P_CLEAN_ONCE,
+			P_AVOID_STAMPING 
+			}
+	controllable = {ControllableActions}
+}
+controller ||C_DRILL_POLISH_CLEAN = (OLD_ENV)~{DRILL_POLISH_CLEAN}.
+||DrillPolishClean = (C_DRILL_POLISH_CLEAN || OLD_ENV).
+
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert NEW_TOOL_ORDER = ((DrillPending -> (Painted && Cleaned)) && (PaintPending -> (Cleaned && !Drilled)) && (CleanPending -> (!Painted && !Drilled)))
+assert NEW_OUT_IF_FINISHED = (out -> (Drilled && Cleaned && Painted))
+assert PAINT_ONCE =   ( paint -> !Painted )
+
+ltl_property P_NEW_TOOL_ORDER = []NEW_TOOL_ORDER
+ltl_property P_NEW_OUT_IF_FINISHED = []NEW_OUT_IF_FINISHED
+ltl_property P_PAINT_ONCE = []PAINT_ONCE
+
+
+controllerSpec CLEAN_PAINT_DRILL = {
+	safety = {P_NEW_TOOL_ORDER, P_NEW_OUT_IF_FINISHED,
+			P_DRILL_ONCE, P_CLEAN_ONCE,
+			P_PAINT_ONCE, P_AVOID_STAMPING
+			}
+	controllable = {NewControllableActions}
+}
+controller ||C_CLEAN_PAINT_DRILL = (NEW_ENV)~{CLEAN_PAINT_DRILL}.
+||CleanPaintDrill = (C_CLEAN_PAINT_DRILL || NEW_ENV).
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+assert AnyAction = (drill || polish || clean || out || stamp || paint || in || drillOk || drillNOk || 
+				polishOk || polishNOk || cleanOk || cleanNOk || stampOk || reset || paintOk || paintNOk)
+
+
+ltl_property T_UPDATE_WHILE_EMPTY = (StartNewSpec -> !Processing) // should give no controller because in is uncontrollable
+ltl_property T_NO_POLISH_ON_UPDATE = (startNewSpec -> (Processing -> !Polished))
+ltl_property T_REMOVE_POLISHED_OR_NEW_REQ = ((StopOldSpec && !StartNewSpec) -> (S_NEW || (out -> Faulty)) )
+ltl_property T_NO_TP = ((StopOldSpec && !StartNewSpec) -> !AnyAction)
+
+
+fluent ToolApplied = <{drillOk,polishOk, cleanOk}, {reset}>
+ltl_property T_FINISH_WITH_OLD_REQ = ((ToolApplied && StopOldSpec && !StartNewSpec) -> OLD_TOOL_ORDER))
+ltl_property T_SWITCH_TO_NEW_ASAP = ((ToolApplied && StopOldSpec && !StartNewSpec) -> NEW_TOOL_ORDER))
+
+updatingController UpdCont = {
+    oldController = DrillPolishClean,
+    mapping = MAPPING_ENV,
+    oldGoal = DRILL_POLISH_CLEAN,
+    newGoal = CLEAN_PAINT_DRILL,
+//    transition = T_NO_TP,
+//    transition = T_REMOVE_POLISHED_OR_NEW_REQ,
+//	  transition = T_UPDATE_WHILE_EMPTY,
+//    transition = T_NO_POLISH_ON_UPDATE,
+//    transition = T_FINISH_WITH_OLD_REQ,
+//	  transition = T_SWITCH_TO_NEW_ASAP,
+    nonblocking
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec,beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert S_OLD = (OLD_TOOL_ORDER  && OLD_OUT_IF_FINISHED && DRILL_ONCE && POLISH_ONCE && CLEAN_ONCE)
+assert S_NEW = (NEW_TOOL_ORDER && NEW_OUT_IF_FINISHED && DRILL_ONCE && PAINT_ONCE && CLEAN_ONCE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+

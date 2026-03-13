@@ -1,0 +1,68 @@
+set ToolsStart = {sOven, sDrill, sFix}
+set ToolsEnd = {eOven, eDrill, eFix}
+set QActions = {eQueryFAIL,eQueryOK}
+set ProductChoice = {uA,uB}
+set StartActions = {begin}
+set FinishActions = {done}
+set Controllable = {ToolsStart,sQuery,StartActions,FinishActions}
+set Uncontrollable = {ToolsEnd,QActions,ProductChoice}
+set Alphabet = {Controllable,Uncontrollable}
+
+
+OVEN = (sOven->eOven->OVEN).
+DRILL = (sDrill->eDrill->DRILL).
+FIX = (sFix -> eFix -> FIX).
+
+QA = (sQuery -> (eQueryFAIL -> QA | eQueryOK -> QA)).
+
+PROD = (begin -> (uA -> DONE | uB -> DONE)),
+DONE = (done -> PROD).
+
+||ENV = (OVEN || DRILL || FIX || QA || PROD).
+
+
+fluent HEATED  = <eOven, FinishActions>
+fluent DRILLED  = <eDrill, FinishActions>
+fluent FAIL  = <eQueryFAIL, FinishActions>
+
+fluent FDRILLING  = <sDrill, eDrill>
+fluent FHEATING  = <sOven, eOven>
+
+fluent GOOD  = <{eFix,eQueryOK}, StartActions>
+
+fluent PROD_A = <uA, FinishActions>
+fluent PROD_B = <uB, FinishActions>
+fluent PROD_CHOICE = <ProductChoice,FinishActions>
+
+fluent GOAL = <FinishActions, Alphabet\FinishActions>
+
+assert SPEC = ((HEATED && !DRILLED && PROD_A) || (HEATED && DRILLED && PROD_B))
+
+assert QUALITY = (GOOD)
+
+assert DRILLING = FDRILLING
+assert HEATING = FHEATING
+
+ltl_property DO_QUERY = (!sQuery U (SPEC))
+
+ltl_property DONT_DRILL = [](sOven -> !FDRILLING)
+
+ltl_property DONT_WORK_EXTRA = []((sDrill||sOven) -> PROD_CHOICE)
+
+
+ltl_property QUALITY_PRODUCT = [] ((sFix -> FAIL) && (sQuery -> SPEC) && (done -> QUALITY))
+
+controller ||C = (ENV)~{G}.
+
+controllerSpec G = {
+	safety = {DONT_DRILL,QUALITY_PRODUCT,DONT_WORK_EXTRA}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={DRILLING, HEATING}
+	//lazyness=1
+	non_transient
+	controllable = {Controllable}
+}
+
+||CC = (C).

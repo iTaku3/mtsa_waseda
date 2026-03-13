@@ -1,0 +1,22 @@
+Ejemplo = A0,
+A0 = (c_0_m1 -> M1 | c_0_b2 -> B2),
+M1 = (u_m1_livelock -> Livelock | u_m1_0 -> A0),
+B2 = (u_b2_b3 -> B3),
+B3 = (u_b3_b4 -> B4 | u_loop_controlable -> B2),
+B4 = (u_b4_0 ->A0),
+Livelock = (u_l_l -> Livelock).
+
+fluent En_Loop_No_Controlable = <u_loop_controlable, u_b3_b4> //una vez que toma u_b3_b4 salio del loop controlable
+
+ltl_property Nunca_Loop_No_Controlable = [](!En_Loop_No_Controlable) //quiero que nunca entre al loop
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+safety = {Nunca_Loop_No_Controlable}
+controllable = {c_0_m1, c_0_b2}
+marking = {u_b3_b4, c_0_m1}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

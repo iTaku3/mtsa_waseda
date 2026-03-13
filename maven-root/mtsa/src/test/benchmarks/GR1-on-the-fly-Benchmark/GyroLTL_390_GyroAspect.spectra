@@ -1,0 +1,129 @@
+// Based on http://smlab.cs.tau.ac.il/syntech/performance/index.html SYNTECH15
+
+set ControlledActions = {stp, fwd, bwd, turn_l, turn_r, tick}
+set UncontrolledActions = {block, clear, ready, not_ready, tock, responded, not_responded}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+// fluents representing DistSense
+set DistSense_Actions = {clear, block}
+fluent Clear = <clear, DistSense_Actions\{clear}> //initially no restrictions
+fluent Blocked = <block, DistSense_Actions\{block}>
+
+
+// fluent representing IsReady
+fluent IsReady = <ready, not_ready> //initially 0
+//NEVER_NOT_READY = STOP + {not_ready}.
+
+
+//fluent representation of Balancer
+set Balancer_Actions = {stp, fwd, bwd, turn_l, turn_r}
+fluent STP = <stp, Balancer_Actions \ {stp}> //initially 1
+fluent BWD = <bwd, Balancer_Actions \ {bwd}>
+fluent FWD = <fwd, Balancer_Actions \ {fwd}>
+fluent TURN_L = <turn_l, Balancer_Actions \ {turn_l}>
+fluent TURN_R = <turn_r, Balancer_Actions \ {turn_r}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+//=======Starting values=======
+constraint Initial_IsReady = (!tock W (tock && !IsReady))
+ltl_property Initial_Balancer = (!tick W (tick && STP))
+//DistSense has no indication of initial value
+||Initial_Values = (Initial_IsReady || Initial_Balancer).
+
+
+//=======Assumptions of the original problem=======
+//safety assumptions, reduce possibilities of the composed plant
+//assumption
+//	G (isReady -> next(isReady));
+constraint A1 = [](tock -> (IsReady -> X(!tock W (tock && IsReady))))
+
+//liveness assumptions, always eventually the conditions hold
+//  GF (isReady);
+assert A_l1 = (tock && IsReady)
+
+
+//=======Guarantees of the original problem=======
+//guarantees
+//guarantee -- goal of gyro
+//  GF (balancer=FWD);
+assert G_live = (tick && FWD)
+
+//when not ready, balancer is Stopped. Safety1
+ltl_property S1 = [](tick -> (!IsReady -> STP))
+//	G (!isReady -> balancer=STP);
+
+//guarantee -- safety requirement
+ltl_property S2 = [](tick -> ((Blocked && IsReady) -> !FWD))
+//	G ((distSense=BLOCKED & isReady) -> !(balancer=FWD));
+
+//guarantee -- safety requirement
+ltl_property S3 = [](tick -> ((Clear && IsReady) -> FWD))
+//	G ((distSense=CLEAR & isReady) -> (balancer=FWD));
+
+//guarantee -- safety requirement
+ltl_property S4 = [](tick -> (FWD -> X(!tick W (tick && !(TURN_L || TURN_R))) ) )
+//	G ((balancer=FWD) -> next(!(balancer=TURN_RIGHT | balancer=TURN_LEFT)));
+
+//guarantee  -- safety requirement
+ltl_property S5 = [](tick -> ( (Blocked && STP && IsReady) -> X(!tick W (tick && !STP)) ))
+//	G ((distSense=BLOCKED & balancer=STP & isReady) -> next(!(balancer=STP)));
+
+//assumption
+//respondsTo(!(balancer=FWD|balancer=STP),(distSense=CLEAR));
+
+//pattern respondsTo(trigger, response) {
+//  var boolean responded;
+//  responded;
+//  G (next(responded) iff (response or (responded and !trigger)));
+//  GF (responded);
+//}
+
+fluent Responded = <responded, not_responded> //initially 1
+constraint Initial_Responded = (!tock W (tock && Responded))
+assert Trigger = !(FWD || STP)
+constraint Update_Responded = [](tock -> (
+			((Clear || (Responded && !(Trigger))) -> X(!tock W (tock && Responded))) &&
+			(X(!tock W (tock && !Responded)) || (Clear || (Responded && !(Trigger))))  ))
+assert A_respond = (tock && Responded)
+//G (next(responded) iff (distSense=CLEAR || (responded && (balancer=FWD|balancer=STP)) ))
+//GF responded
+//responded False es: me hicieron un request y todavía no respondí
+
+||All_initial_with_macros = (Initial_Values || Initial_Responded).
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || All_initial_with_macros ||
+       A1 || Update_Responded || S1 || S2 || S3 || S4 || S5). //user safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l1, A_respond, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_live}  //user leness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l1 && []<>A_respond && []<>A_clock) -> ([]<>(G_live)))
+assert ASM =   ([]<>A_l1 && []<>A_respond && []<>A_clock)
+assert GNT = ([]<>G_live)
+progress Time  = {tick}

@@ -1,0 +1,17 @@
+set A = {a,b}
+set Controllable = {a}
+
+E = (a->E | b->E).
+
+fluent F_B = <b, a>
+
+assert B = F_B
+
+//controllers
+rtc ||C = (E)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       liveness = {B}
+       controllable = {Controllable}
+}

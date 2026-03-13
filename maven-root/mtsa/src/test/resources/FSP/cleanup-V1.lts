@@ -1,0 +1,33 @@
+
+DOMAIN = Q1, //Q0,
+//Q0	= (_init -> Q1), //First change, there is no need for the init action.
+//check why they needed it
+Q1	= (startGotoX -> Q2
+	  |startGotoTarget -> Q16),
+Q2	= (_arrivedAtX -> Q3
+	  |startGotoTarget -> Q16),
+Q3	= (startLoadAtX -> Q4
+	  |startGotoTarget -> Q16),
+Q4	= (_loadedAtX -> Q5
+	  |startGotoTarget -> Q16),
+Q5	= (startUnloadAtX -> Q6
+	  |startGotoTarget -> Q7),
+Q6	= (_unloadedAtX -> Q3),
+Q7	= (_arrivedAtTarget -> Q8
+	  |startGotoX -> Q15),
+Q8	= (startUnloadAtTarget -> Q9
+	  |startGotoX -> Q15),
+Q9	= (_unloadedAtTarget -> Q10),
+Q10	= (startGotoX -> Q11
+	  |startLoadAtTarget -> Q14),
+Q11	= (_arrivedAtX -> Q12
+	  |startGotoTarget -> Q13),
+Q12	= (startGotoTarget -> Q13),
+Q13	= (_arrivedAtTarget -> Q10
+	  |startGotoX -> Q11),
+Q14	= (_loadedAtTarget -> Q8
+	  |startGotoX -> Q11),
+Q15	= (_arrivedAtX -> Q5
+	  |startGotoTarget -> Q7),
+Q16	= (startGotoX -> Q2
+	  |_arrivedAtTarget -> Q17).

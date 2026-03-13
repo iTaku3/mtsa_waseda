@@ -1,0 +1,41 @@
+range Rooms = 0..1
+const E = 'e
+const W = 'w
+const I = 'idle
+set Moves = {e,w,idle}
+set CatMoves = {c.Moves}
+set MouseMoves = {m.Moves}
+set CatA = {CatMoves, in[Rooms]}
+set MouseA = {MouseMoves, in[Rooms]}
+
+set A = {CatMoves, MouseMoves, in[Rooms]}
+
+set Controllable = {CatMoves, in[Rooms]}
+set Obs = {Controllable}
+ 
+CAT(Init=0) = CAT[Init],
+CAT[0] = (c[E] -> CAT[1] | c[I] -> CAT[0] | in[0]->CAT[0]),
+CAT[1] = (c[W] -> CAT[0] | c[I] -> CAT[1] | in[1]->CAT[1]).
+
+MOUSE(Init=1) = MOUSE[Init],
+MOUSE[0] = (m[W] -> MOUSE[1] | m[I] -> MOUSE[0] | in[0]->MOUSE[0]),
+MOUSE[1] = (m[E] -> MOUSE[0] | m[I] -> MOUSE[1] | in[1]->MOUSE[1]).
+
+MOUSE_SPEED = (MouseA->CAT_TURN), 
+CAT_TURN = (CatA->CAT_TURN2), 
+CAT_TURN2 = (CatA->MOUSE_SPEED).
+
+fluent IN[room:Rooms] = <in[room],Obs\{in[room]}>
+
+assert CAT_CAUGHT_MOUSE = exists[i:Rooms] (IN[i])
+assert GF_CAT_CAUGHT_MOUSE = []<> (exists[i:Rooms] (IN[i]))
+
+controllerSpec G1 = {
+	liveness = {CAT_CAUGHT_MOUSE}
+	controllable = {Controllable}
+}
+
+||Tom_Jerry = (CAT || MOUSE || MOUSE_SPEED)\{MouseMoves}.
+controller	||C = (Tom_Jerry)~{G1}.
+
+||SOLUTION = (C || MOUSE).

@@ -1,0 +1,63 @@
+/* 
+This a deterministic model of the Canadian Traveller Problem. 
+The truck start in the initial location I and has to reach the final 
+location F. There are N locations. 
+The locations are connected in a circular shape. For instance, the location 
+0 is connected with the location N and 1. Each pair of locations are connected 
+with two roads and one of them is fine while the other one has snow. 
+*/
+const N = 4
+const I = 0
+const F = 2
+const Cant = 1
+range CantRoads = 0..Cant
+
+set Name = {route}
+set Prefix = {way}
+set Roads = {Prefix.[m:CantRoads]}
+set Controllable = {Name.[0..N-1].{observe,Roads},win}
+
+set Uncontrollable = {Name.[0..N-1].{observe.Roads,crash,arrived}}
+set Alphabet = {Controllable,Uncontrollable}
+
+DOUBLE_EDGE =(
+	observe -> OBS |
+    Prefix.[r:CantRoads] -> UNCERTAINTY[r] 
+),
+
+UNCERTAINTY[r:CantRoads] = (crash -> ERROR | arrived -> AVAILABLE[r]), 
+
+AVAILABLE[r:CantRoads] = (
+foreach[w:CantRoads] 
+	when (w==r) Prefix.[w] -> arrived -> AVAILABLE[w] |
+    when (w!=r) Prefix.[w] -> crash -> ERROR), 
+
+OBS = (observe.Prefix.[r:CantRoads] -> AVAILABLE[r]).
+
+
+MAP = POS[I], 
+POS[i:0..N-1] = (
+				Name.{[(i-1+N)%N],[i]}.observe-> POS[i] 
+				| Name.[(i-1+N)%N].Roads -> MOV[(i-1+N)%N][(i-1+N)%N]
+				| Name.[i].Roads -> MOV[i][(i+1)%N]
+				| when (i==F) win -> WIN
+),
+MOV[i:0..N-1][p:0..N-1] = (
+	Name.[i].arrived -> POS[p]
+), 
+WIN = (win-> WIN).
+
+
+||Game = (forall [i:0..N-1] Name.[i]::DOUBLE_EDGE || MAP).
+
+fluent Win = <win, Alphabet\{win}>
+
+controllerSpec Goal = {
+  liveness = {Win}
+  controllable = {Controllable}
+}
+
+controller ||C = Game~{Goal}.
+
+assert TESTGOAL = <> Win
+

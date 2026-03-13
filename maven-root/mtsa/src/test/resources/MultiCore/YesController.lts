@@ -1,0 +1,28 @@
+set ALL ={a,b,c,d,e,f}
+set Controllable = {b,a,f}
+
+INIT = (b->B|a->A),
+A = (d->A | c->C),
+B = (f->C | e->B).
+
+
+//Controller
+fluent OnE = <e, ALL\{e}>
+assert ALWAYS_E = OnE
+
+fluent OnA = <ALL\{a}, a >
+fluent OnC = <ALL\{c}, c >
+assert Not_A = OnA
+assert Not_C = OnC
+
+controllerSpec G = {
+		liveness = {ALWAYS_E}
+		assumption = {Not_A, Not_C}
+		controllable = {Controllable}
+}
+
+
+
+controller ||C = (INIT)~{G}.
+
+assert TESTGOAL = (([]<>Not_A && []<>Not_C) -> []<>ALWAYS_E)

@@ -1,0 +1,351 @@
+// Constants Sets Ranges
+const WEST = 0
+const MIDDLE = 1
+const EAST = 2
+
+const LEFT = 3
+const RIGHT = 4
+
+range Directions = LEFT..RIGHT
+range Positions = WEST..EAST
+
+set Controllable1 = {go[Directions], pick, put}
+set Controllable2 = {go[Directions], pickRed, put, turnColorOn, turnColorOff}
+set Controllable3 = {go[Directions], pickRed, pickYellow, put, turnColorOn, turnColorOff}
+set Failures		= {arriveFailure[p:Positions], pickFailure, putFailure}
+set Uncontrollable	= {arriveSuccess[p:Positions]}
+set Alphabet1		= {Controllable1, Failures, Uncontrollable}
+set Alphabet2		= {Controllable2, Failures, Uncontrollable}
+set Alphabet3		= {Controllable3, Failures, Uncontrollable}
+
+//Environment 3
+ROBOT_3 = ROBOT_3[WEST],
+ROBOT_3[p:Positions] = (
+	turnColorOn ->	ROBOT_3[p]		|
+	turnColorOff ->	ROBOT_3[p]		|
+	pickRed ->	PICKER[p]		|
+	pickYellow ->	PICKER[p]		|
+	put ->	PUTER[p]		|
+	go[d:Directions]	-> MAP[p][d]
+),
+
+MAP[x:Positions][LEFT] = (
+	when (x > WEST) arriveSuccess[x-1] -> ROBOT_3[x - 1]	|
+	arriveFailure[x] -> ROBOT_3[x]
+),
+MAP[x:Positions][RIGHT] = (
+	when (x < EAST) arriveSuccess[x+1] -> ROBOT_3[x + 1]	|
+	arriveFailure[x] -> ROBOT_3[x]
+),
+
+PICKER[p:Positions] = (
+	{pickSuccess, pickFailure} -> ROBOT_3[p]
+),
+
+PUTER[p:Positions] = (
+	{putSuccess, putFailure} -> ROBOT_3[p]
+).
+
+COLOR_3 = (
+	turnColorOn -> COLOR_ON	|
+	{pickRed, pickYellow} -> pickFailure -> COLOR_3
+),
+COLOR_ON = (
+	{pickRed, pickYellow} -> (
+		{pickSuccess, pickFailure} -> COLOR_ON
+	) |
+	turnColorOff -> COLOR_3
+).
+
+COLOR_2 = (
+	turnColorOn -> COLOR_ON	|
+	pickRed -> pickFailure -> COLOR_3
+),
+COLOR_ON = (
+	pickRed -> (
+		{pickSuccess, pickFailure} -> COLOR_ON
+	) |
+	turnColorOff -> COLOR_2
+).
+
+COLOR_1 = (
+	pick -> ({pickSuccess, pickFailure} -> COLOR_1)
+).
+
+ALTERNATOR = ALTERNATOR[0],
+ALTERNATOR[0] = (
+	pickRed -> pickSuccess -> ALTERNATOR[2]	|
+	pickRed -> pickFailure -> ALTERNATOR[0]	|
+	pickYellow -> pickSuccess -> ALTERNATOR[1]	|
+	pickYellow -> pickFailure -> ALTERNATOR[0]
+),
+ALTERNATOR[1] = (
+	pickRed -> pickSuccess -> ALTERNATOR[2]	|
+	pickRed -> pickFailure -> ALTERNATOR[1]	
+),
+ALTERNATOR[2] = (
+	pickYellow -> pickSuccess -> ALTERNATOR[1]	|
+	pickYellow -> pickFailure -> ALTERNATOR[2]	
+).
+
+//Environment 2
+||ROBOT_AUX_2 = ROBOT_3
+\{pickYellow}. //hide yellow pick
+deterministic ||ROBOT_2 = ROBOT_AUX_2. //remove tau
+
+//Environment 1
+||ROBOT_AUX_1 = ROBOT_2
+/{pick/pickRed} //replace pickRed with pick
+\{turnColorOff,turnColorOn}. //hide color actions
+deterministic ||ROBOT_1 = ROBOT_AUX_1. //remove tau
+
+||ENVIRONMENT_3 = (ROBOT_3 || COLOR_3 ).//|| ALTERNATOR).
+||ENVIRONMENT_2 = (ROBOT_2 || COLOR_2).
+||ENVIRONMENT_1 = (ROBOT_1 || COLOR_1).
+
+//Fluents & Properties
+//Location
+set AtWest = {arriveFailure[WEST], arriveSuccess[WEST]}
+set AtMiddle = {arriveFailure[MIDDLE], arriveSuccess[MIDDLE]}
+set AtEast = {arriveFailure[EAST], arriveSuccess[EAST]}
+fluent AT_WEST 	= 	<AtWest,{AtEast,AtMiddle}>  initially 1
+fluent AT_MIDDLE= 	<AtMiddle,{AtWest,AtEast}>
+fluent AT_EAST 	= 	<AtEast,{AtWest,AtMiddle}>
+
+assert DONT_GO_LEFT = (go[LEFT] -> !AT_WEST) 
+assert DONT_GO_RIGHT = (go[RIGHT] -> !AT_EAST)
+ltl_property P_DONT_GO_OFF_LIMITS = ([]DONT_GO_LEFT && []DONT_GO_RIGHT)
+
+//Pick-Put
+assert PICK_AT_EAST = (pick -> AT_EAST)
+assert DONT_PICK_TWICE_1 = (pick -> !PICKED)
+ltl_property P_PICK_AT_EAST = [](PICK_AT_EAST)
+ltl_property P_DONT_PICK_TWICE_1 = [](DONT_PICK_TWICE_1)
+
+assert PICK_AT_EAST_2 = (pickRed -> AT_EAST)
+assert DONT_PICK_TWICE_2 = (pickRed -> (!PICKED))
+ltl_property P_PICK_AT_EAST_2 = [](PICK_AT_EAST_2)
+ltl_property P_DONT_PICK_TWICE_2 = [](DONT_PICK_TWICE_2)
+
+assert PICK_AT_EAST_3 = (pickYellow -> AT_EAST)
+assert DONT_PICK_TWICE_3 = (pickYellow -> (!PICKED))
+ltl_property P_PICK_AT_EAST_3 = [](PICK_AT_EAST_3)
+ltl_property P_DONT_PICK_TWICE_3 = [](DONT_PICK_TWICE_3)
+
+fluent PICKED = <{pickSuccess}, {putSuccess}>
+
+assert PUT_WHEN_PICKED = (put -> PICKED)
+assert PUT_AT_WEST = (put -> AT_WEST)
+ltl_property P_PUT_WHEN_PICKED = [](PUT_WHEN_PICKED)
+ltl_property P_PUT_AT_WEST = [](PUT_AT_WEST)
+
+assert DONT_GO_BACK = ((AT_MIDDLE && go[RIGHT] -> !PICKED) && (AT_MIDDLE && go[LEFT] -> PICKED))
+ltl_property P_DONT_GO_BACK = [](DONT_GO_BACK)
+assert PICK_IT = ((AT_EAST && go[LEFT])-> PICKED)
+assert DROP_IT = ((AT_WEST && go[RIGHT])-> !PICKED)
+ltl_property P_PICK_IT = [](PICK_IT)
+ltl_property P_DROP_IT = [](DROP_IT)
+
+//Color
+fluent COLOR_ON = <{turnColorOn},{turnColorOff}>
+
+assert PICK_WHEN_COLOR_ON_2 = ((pickRed -> COLOR_ON))
+assert PICK_WHEN_COLOR_ON_3 = ((pickYellow -> COLOR_ON))
+ltl_property P_PICK_WHEN_COLOR_ON_2 = [](PICK_WHEN_COLOR_ON_2)
+ltl_property P_PICK_WHEN_COLOR_ON_3 = [](PICK_WHEN_COLOR_ON_3)
+
+//property that forces to call reconfigure and turnColorOn before stop1Spec 
+assert KEEP_IT_ON = (COLOR_ON) //Keep the color recognizer ON all the time
+ltl_property P_KEEP_IT_ON = [](KEEP_IT_ON)
+
+// Controllers
+// 1
+controllerSpec SPECIFICATION_1 = {
+    safety = {P_DONT_GO_OFF_LIMITS, P_PICK_AT_EAST, P_PUT_AT_WEST, P_DONT_PICK_TWICE_1, P_PUT_WHEN_PICKED, P_DONT_GO_BACK, P_PICK_IT, P_DROP_IT}
+    controllable = {Controllable1}
+}
+controller ||CONTROLLER_1 = ENVIRONMENT_1~{SPECIFICATION_1}.
+||CONTROLLER_ENVIRONMENT_1 = (CONTROLLER_1||ENVIRONMENT_1).
+
+// 2
+controllerSpec SPECIFICATION_2 = {
+	safety = {P_DONT_GO_OFF_LIMITS, P_PICK_AT_EAST_2, P_PUT_AT_WEST, P_DONT_PICK_TWICE_2, P_PUT_WHEN_PICKED, P_DONT_GO_BACK, P_PICK_IT, P_DROP_IT,
+	P_PICK_WHEN_COLOR_ON_2}//, P_KEEP_IT_ON}
+    controllable = {Controllable2}
+}
+controller ||CONTROLLER_2 = ENVIRONMENT_2~{SPECIFICATION_2}.
+||CONTROLLER_ENVIRONMENT_2 = (CONTROLLER_2||ENVIRONMENT_2).
+
+// 3
+controllerSpec SPECIFICATION_3 = {
+	safety = {P_DONT_GO_OFF_LIMITS, P_PICK_AT_EAST_2, P_PICK_AT_EAST_3, P_PUT_AT_WEST, P_DONT_PICK_TWICE_2, P_DONT_PICK_TWICE_3, P_PUT_WHEN_PICKED, P_DONT_GO_BACK, P_PICK_IT, P_DROP_IT,
+	P_PICK_WHEN_COLOR_ON_2, P_PICK_WHEN_COLOR_ON_3}//, P_KEEP_IT_ON}
+    controllable = {Controllable3}
+}
+controller ||CONTROLLER_3 = ENVIRONMENT_3~{SPECIFICATION_3}.
+||CONTROLLER_ENVIRONMENT_3 = (CONTROLLER_3||ENVIRONMENT_3).
+
+// --------- T ------------
+assert FINISH_THE_JOB = (stopOldSpec -> (!PICKED))
+assert DONT_TURN_OFF = (!turnColorOff)
+assert TURN_OFF = (reconfigure -> !COLOR_ON)
+ltl_property T12 = (
+	// FINISH_THE_JOB
+	PICK_AT_EAST &&
+	PICK_AT_EAST_2 &&
+	PUT_WHEN_PICKED &&
+	PUT_AT_WEST
+	&& DONT_PICK_TWICE_1
+	&& DONT_PICK_TWICE_2
+)
+
+ltl_property T13 = (
+	PICK_AT_EAST &&
+	PICK_AT_EAST_2 &&
+	PICK_AT_EAST_3 &&
+	PUT_WHEN_PICKED &&
+	PUT_AT_WEST &&
+	DONT_PICK_TWICE_1 &&
+	DONT_PICK_TWICE_2 &&
+	DONT_PICK_TWICE_3
+)
+
+ltl_property T21 = (
+//	TURN_OFF &&
+	PICK_AT_EAST &&
+	PICK_AT_EAST_2 &&
+	PUT_WHEN_PICKED &&
+	PUT_AT_WEST &&
+	DONT_PICK_TWICE_1 &&
+	DONT_PICK_TWICE_2
+)
+
+ltl_property T23 = (
+	PICK_AT_EAST_2 &&
+	PICK_AT_EAST_3 &&
+	PUT_WHEN_PICKED &&
+	PUT_AT_WEST && 
+	DONT_PICK_TWICE_2 && 
+	DONT_PICK_TWICE_3
+)
+
+ltl_property T31 = (
+//	TURN_OFF &&
+	PICK_AT_EAST &&
+	PICK_AT_EAST_2 &&
+	PICK_AT_EAST_3 &&
+	PUT_WHEN_PICKED &&
+	PUT_AT_WEST	&&
+	DONT_PICK_TWICE_1 &&
+	DONT_PICK_TWICE_2 &&
+	DONT_PICK_TWICE_3
+)
+// --------- T ------------
+
+fluent MOVING_RIGHT = <go[RIGHT], {arriveFailure[p:Positions],arriveSuccess[p:Positions]}>
+fluent MOVING_LEFT = <go[LEFT], {arriveFailure[p:Positions],arriveSuccess[p:Positions]}>
+fluent PICKING = <{pick},{pickSuccess, pickFailure}>
+fluent PICKING2 = <{pickRed},{pickSuccess, pickFailure}>
+fluent PICKING3 = <{pickYellow},{pickSuccess, pickFailure}>
+fluent PUTTING = <{put},{putSuccess, putFailure}>
+
+
+updatingController UpdatingController12 = {
+    oldController = CONTROLLER_ENVIRONMENT_1,
+    oldEnvironment = ENVIRONMENT_1,
+    newEnvironment = ENVIRONMENT_2,
+	oldGoal = SPECIFICATION_1,
+	newGoal = SPECIFICATION_2,
+	transition = T12,
+	oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, FALSE, MOVING_RIGHT, MOVING_LEFT, PICKING, PUTTING }
+    newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING2, PUTTING}
+}
+
+updatingController UpdatingController13 = {
+    oldController = CONTROLLER_ENVIRONMENT_1,
+    oldEnvironment = ENVIRONMENT_1,
+    newEnvironment = ENVIRONMENT_3,
+	oldGoal = SPECIFICATION_1,
+	newGoal = SPECIFICATION_3,
+	transition = T13,
+    oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE,	PICKED,	FALSE, MOVING_RIGHT, MOVING_LEFT, PICKING, FALSE, PUTTING}
+	newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING2, PICKING3, PUTTING}
+}
+
+updatingController UpdatingController21 = {
+    oldController = CONTROLLER_ENVIRONMENT_2,
+    oldEnvironment = ENVIRONMENT_2,
+    newEnvironment = ENVIRONMENT_1,
+	oldGoal = SPECIFICATION_2,
+	newGoal = SPECIFICATION_1,
+	transition = T21,
+    oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, MOVING_RIGHT, MOVING_LEFT, PICKING2, PUTTING}
+	newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, MOVING_RIGHT, MOVING_LEFT, PICKING, PUTTING}
+}
+
+updatingController UpdatingController23 = {
+    oldController = CONTROLLER_ENVIRONMENT_2,
+    oldEnvironment = ENVIRONMENT_2,
+    newEnvironment = ENVIRONMENT_3,
+	oldGoal = SPECIFICATION_2,
+	newGoal = SPECIFICATION_3,
+	transition = T23,
+    oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING2, FALSE, PUTTING}
+	newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING2, PICKING3, PUTTING}
+}
+
+updatingController UpdatingController31 = {
+    oldController = CONTROLLER_ENVIRONMENT_3,
+    oldEnvironment = ENVIRONMENT_3,
+    newEnvironment = ENVIRONMENT_1,
+	oldGoal = SPECIFICATION_3,
+	newGoal = SPECIFICATION_1,
+	transition = T31,
+    oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, MOVING_RIGHT, MOVING_LEFT, PICKING3, PICKING2, PUTTING}
+	newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, MOVING_RIGHT, MOVING_LEFT, PICKING, PICKING, PUTTING}
+}
+
+updatingController UpdatingController32 = {	
+    oldController = CONTROLLER_ENVIRONMENT_3,
+    oldEnvironment = ENVIRONMENT_3,
+    newEnvironment = ENVIRONMENT_2,
+	oldGoal = SPECIFICATION_3,
+	newGoal = SPECIFICATION_2,
+	transition = T23,
+    oldPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING3, PICKING2, PUTTING}
+	newPropositions = {AT_WEST, AT_EAST, AT_MIDDLE, PICKED, COLOR_ON, MOVING_RIGHT, MOVING_LEFT, PICKING2, PICKING2, PUTTING}
+}
+
+graphUpdate Graph = { 
+	initialState = UpdatingController13
+	transitions = { 
+		UpdatingController12,
+		UpdatingController13,
+		UpdatingController21,
+		UpdatingController23,
+		UpdatingController31,
+		UpdatingController32
+	}
+}
+
+
+fluent StopOldSpec = <stopOldSpec,beginUpdate>
+fluent StartNewSpec = <startNewSpec,beginUpdate>
+
+assert S_OLD = (DONT_GO_LEFT && DONT_GO_RIGHT && PICK_AT_EAST && PUT_AT_WEST && DONT_PICK_TWICE_1 && PUT_WHEN_PICKED &&
+				DONT_GO_BACK && PICK_IT && DROP_IT)
+assert S_NEW = (DONT_GO_LEFT && DONT_GO_RIGHT && PICK_AT_EAST_2 && PUT_AT_WEST && DONT_PICK_TWICE_2 && PUT_WHEN_PICKED &&
+DONT_GO_BACK && PICK_IT && DROP_IT && PICK_WHEN_COLOR_ON_2 && KEEP_IT_ON)
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FORMULA4 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))
+
+||A12 = (UpdatingController12).
+||A13 = (UpdatingController13).
+||A21 = (UpdatingController21).
+||A23 = (UpdatingController23).
+||A31 = (UpdatingController31).
+||A32 = (UpdatingController32).

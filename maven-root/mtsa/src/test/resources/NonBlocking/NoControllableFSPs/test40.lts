@@ -1,0 +1,20 @@
+Ejemplo = A1Inic,
+A1Inic = (a00u12 -> A2),
+A2 = (b00c2Losing -> A3Losing | i00c27 -> A7),
+A3Losing = (f00u3Live -> A5Livelock | c00u34Losing -> A4Losing),
+A4Losing = (g00u4Live -> A5Livelock | d00u46 -> A6M),
+A5Livelock = (h00ulive -> A5Livelock),
+A6M = (e00u61 -> A1Inic),
+A7 = (j00u78 -> A8),
+A8 = (k00u89 -> A9),
+A9 = (l00u92UltimaExplora -> A2).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {b00c2Losing, i00c27}
+marking = {d00u46}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

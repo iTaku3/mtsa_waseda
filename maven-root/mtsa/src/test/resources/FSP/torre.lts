@@ -1,0 +1,14 @@
+range C = 1..7
+
+T = (pos[1][1]->J2[1][1]),
+J2[f:C][c:C] = (up[nf:C]->UP2[nf][f][c] | right[nc:C]->RIGHT2[nc][f][c]),
+UP2[n:C][f:C][c:C] = (when(n>f && c==8 && f==8) pos[n][c]->win2->W2 
+					| when(n>f && c!=8 || f!=8) pos[n][c]->J1[n][c]),
+RIGHT2[n:C][f:C][c:C] = (when(n>c && c==8 && f==8) pos[c][n]->win2->W2 
+					| when(n>c && c!=8 || f!=8) pos[f][n]->J1[f][n]),
+W2 = (w2->W2),
+J1[f:C][c:C] = (up[nf:C]->POS1[nf][c] | right[nc:C]->POS1[f][nc]),
+POS1[f:C][c:C] = (when(c==8 && f==8) pos[f][c]->win1->W1 
+				| when(c!=8 || f!=8) pos[f][c]->J2[f][c]), 
+W1 = (w1->W1).
+

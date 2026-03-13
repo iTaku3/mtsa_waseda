@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+	<extension point="org.eclipse.emf.ecore.generated_package">
+		<package
+			uri = "http://smlab.cs.tau.ac.il/syntech/Spectra"
+			class = "tau.smlab.syntech.spectra.SpectraPackage"
+			genModel = "model/generated/Spectra.genmodel" />
+	</extension>
+</plugin>

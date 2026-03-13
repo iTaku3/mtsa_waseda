@@ -1,0 +1,92 @@
+set PlaneC = {takeoff, go_next, land,restart_mission}
+set PlaneU = {initial_config, arrived, takeoff_ended, landed}
+set PlaneA = {PlaneC,PlaneU}
+
+set IteratorC = {has_next,reset_iterator,remove_next}
+set IteratorU = {yes_next, no_next}
+set IteratorA = {IteratorC,IteratorU}
+
+////////////////////////////////////////
+//Cambiado
+////////////////////////////////////////
+const Sensores = 3 //change to enlarge test
+range AllSensors = 0..Sensores-1
+def NextSensor(s) = (s + 1) % Sensores
+
+set SensorsC = {has_next[s:AllSensors]}
+set SensorsU = {yes_next[s:AllSensors], no_next[s:AllSensors]}
+set Sensors = {SensorsC,SensorsU}
+
+Plane = (initial_config -> ConfigDone),
+ConfigDone = (	takeoff -> takeoff_ended -> TakeoffEnded),
+TakeoffEnded = (	{IteratorC,SensorsC} -> TakeoffEnded | 
+					go_next -> GoTo |
+					land -> landed -> Landed),
+Landed = (restart_mission -> Plane),
+GoTo = (arrived -> TakeoffEnded).
+
+Iterator = (has_next -> (yes_next -> YesNext | no_next -> NoNext)),
+YesNext = (remove_next -> Iterator),
+NoNext = (reset_iterator -> Iterator).
+
+GoNext = (yes_next -> (go_next -> ({remove_next} -> GoNext) 
+		| {remove_next} -> GoNext)).
+
+////////////////////////////////////////
+//Cambiado
+////////////////////////////////////////
+NextQuestions = ({remove_next} -> NextQuestions | yes_next -> NQYes),
+NQYes = ({remove_next} -> NextQuestions | has_next[s:AllSensors] -> NQYes).
+
+Sensor(S=0) = (has_next[S] -> (yes_next[S] -> Sensor | no_next[S] -> Sensor)).
+
+Missions = Mission[0],
+Mission[s:AllSensors] = ({yes_next[s]} -> Mission[s] |  patrol[NextSensor(s)] -> Mission[NextSensor(s)]).
+set MissionActions = {patrol[s:AllSensors]}
+
+set Alphabet = {IteratorA,PlaneA,Sensors,MissionActions}
+set Controlables = {IteratorC,PlaneC,SensorsC,MissionActions}
+||Environment = (Plane || Iterator || NextQuestions || GoNext || forall [s:AllSensors] Sensor(s) || Missions || forall [s:1..Sensores-1] L_PatrolCond(s) || L_PatrolCond0 || forall [s:1..Sensores-1] L_PatrolStart(s) || L_PatrolStart0 || forall [s:AllSensors] L_GoneCondition(s)). //forall [s:AllSensors] L_ArrivedCondition(s) ||
+
+////////////False and True
+fluent True = <Alphabet,Alphabet\Alphabet> initially 1
+fluent False = <Alphabet\Alphabet,Alphabet> initially 0
+
+////////////LIVENESS
+fluent F_has_next = <has_next,Alphabet\{has_next}> initially 0
+assert A_HasNext = (F_has_next)
+
+////////////SAFETY
+fluent F_Patrol[s:AllSensors] = <patrol[s],patrol[NextSensor(s)]> initially (s==0)
+fluent F_Arrived = <arrived,has_next> initially 0
+fluent F_Gone = <go_next,{has_next}> initially 0
+
+ltl_property L_PatrolCond0 = [](patrol[0] -> (F_Arrived && F_YesNext[Sensores-1]))
+ltl_property L_PatrolCond(S=1) = [](patrol[S] -> (F_Arrived && F_YesNext[S-1]))
+
+ltl_property L_PatrolStart0 = []((arrived && F_Patrol[Sensores-1]) -> (!has_next W patrol[0]))
+ltl_property L_PatrolStart(S=1) = []((arrived && F_Patrol[S-1]) -> (!has_next W patrol[S]))
+
+fluent F_YesNext[s:AllSensors] = <yes_next[s],has_next>
+fluent F_NoNext[s:AllSensors] = <no_next[s],has_next>
+assert RespondedNext(S=0) = (F_YesNext[S] || F_NoNext[S])
+//assert Done = True
+assert GoneCondition(S=0) = ((F_YesNext[S] <-> F_Gone) && RespondedNext(S))
+//assert Achieve_ArriveCondition = (!{IteratorC} W Done)
+assert Achieve_GoneCondition(S=0) = (!{IteratorC} W GoneCondition(S))
+//ltl_property L_ArrivedCondition(S=0) = [](arrived && F_Patrol[S] -> Achieve_ArriveCondition)
+ltl_property L_GoneCondition(S=0) = [](yes_next && F_Patrol[S] -> Achieve_GoneCondition(S))
+
+ltl_property L_Land = [](land -> False)
+
+controllerSpec Controller_Req = {
+        safety = {L_Land}
+        assumption = {}
+        liveness = {A_HasNext}
+        controllable = {Controlables}
+}
+
+assert Check = ([]<>A_HasNext)
+
+heuristic ||Controller = (Environment)~{Controller_Req}.
+minimal ||TestController = (Controller || Environment).

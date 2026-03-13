@@ -1,0 +1,18 @@
+Ejemplo = I,
+I = (a -> Main1 | b -> Main2Marked),
+Main1 = (c -> Loop1 | g -> OutOfCCC),
+Main2Marked = (e -> Loop2 | k -> OutOfCCC),
+Loop1 = (d -> Main1),
+Loop2 = (f -> Main2Marked),
+OutOfCCC = (h -> Livelock | j -> Main1 | l -> Main2Marked),
+Livelock = (i -> Livelock).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {g,k}
+  marking = {b,l,f}
+  nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

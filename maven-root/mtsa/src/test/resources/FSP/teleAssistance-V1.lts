@@ -1,0 +1,20 @@
+set AlphaPatient = {start, stop, vital, panic, noChange, notify, attend} //Patient actions
+
+set Controllable = {start, stop, vital, panic}
+
+PATIENT = (start->STARTED),
+STARTED = (stop->PATIENT | vital->VITAL | panic->PANIC),
+PANIC = (attend->PATIENT),
+VITAL  = (notify->PATIENT | attend->PATIENT | noChange->PATIENT | panic->VITAL).
+
+TELEASSISTANCE_SinBug = (start->STARTED),
+STARTED = (stop->TELEASSISTANCE_SinBug | panic->PANIC | vital->VITAL), 
+PANIC = (panic->PANIC | alarm->ALARM),
+VITAL = (alarm->ALARM | panic->PANIC | analyse->ANALISE),
+ALARM = (panic->ALARM | callAmbulance->CALL),
+CALL = (panic->CALL | attend->TELEASSISTANCE_SinBug), 
+ANALISE = (panic->PANIC | alarm->ALARM 
+			| noChange->TELEASSISTANCE_SinBug 
+			| notify->TELEASSISTANCE_SinBug).
+
+||ENV = (TELEASSISTANCE_SinBug || PATIENT).

@@ -1,0 +1,86 @@
+const N = 2
+range ElemSet = 1..N
+range A = 1..N/2
+range B = N/2+1..N
+set Toolset = {drill,oven,press}
+set BlankAlpha = {[ElemSet].{start, ready, exit, end}}
+set ArmAlpha = { [ElemSet].{ready, exit}, {begin,end}.Toolset.[ElemSet] }
+set ToolsAlpha  = { {begin,putdown,process,pickup,end}.Toolset.[ElemSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+
+set ControllableActions = {[ElemSet].ready, {putdown,pickup}.Toolset.[ElemSet]}
+
+INIT_ELEM(C=1) = ([C].start -> [C].ready -> END  | [C].idle -> INIT_ELEM).
+
+TRY_TOOL(T='any, C=1) = (putdown[T][C] -> 
+							(pickup[T][C] -> END 
+							| pickupAborted[T][C] -> TRY_TOOL)
+						).
+
+FINISH_ELEM(C=1) = ([C].exit -> [C].end -> END).
+
+ELEM_A(C=1)= INIT_ELEM(C);
+				TRY_TOOL('press,C);
+				TRY_TOOL('oven,C);
+				TRY_TOOL('drill,C);
+				FINISH_ELEM(C);
+				ELEM_A.
+
+ELEM_B(C=1)= INIT_ELEM(C);
+				TRY_TOOL('oven,C);
+				TRY_TOOL('drill,C);
+				TRY_TOOL('press,C);
+				FINISH_ELEM(C);
+				ELEM_B.
+||ELEMS = (forall[b:B] ELEM_B(b) || forall[a:A] ELEM_A(a)).
+
+TOOL(T='any) = (putdown[T][id:ElemSet] -> begin[T][id] -> 
+		process[T][id] -> PROCESS_RESULT[id]),
+PROCESS_RESULT[id:ElemSet] = (end[T][id] -> pickup[T][id] -> TOOL
+				  | pickupAborted[T][id] -> TOOL). 
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([id:ElemSet].ready -> PICKED_UP[id]
+		| pickup[t:Toolset][id:ElemSet] -> PICKED_UP[id]
+		| pickupAborted[t:Toolset][id:ElemSet] -> PICKED_UP[id]), //For now, the arm does not distinguishes between the abort and the end
+PICKED_UP[id:ElemSet] = (putdown[t:Toolset][id] -> IDLE
+               | [id].exit -> IDLE).
+||AARM = ARM.
+
+||Plant = (
+		ELEMS ||
+		TOOLS || 
+		ARM
+).
+
+//controllerSpec tryouts
+fluent ENDED[e:ElemSet] = <[e].end, Alphabet\{[e].end}> initially 1
+fluent IN_PROD[e:ElemSet] = <[e].start, Alphabet\{[e].start}>
+fluent PROCESSING[t:Toolset][e:ElemSet] = <begin[t][e], end[t][e]>
+fluent Fail[t:Toolset][e:ElemSet] = <abort[t][e], Alphabet\{abort[t][e]}>
+
+assert A_1 = IN_PROD[1]
+assert A_2 = IN_PROD[2]
+
+assert G1_3 = ENDED[1]
+assert G2_3 = ENDED[2]
+
+ltl_property S1 = [](! exists[e1:ElemSet][e2:ElemSet] (PROCESSING['drill][e1] && PROCESSING['press][e2]))
+
+assert F = exists[t:Toolset][e:ElemSet] (Fail[t][e])
+
+controller ||C = (Plant)~{Objective}.
+
+||Comp = (C||Plant).
+
+controllerSpec Objective = {
+safety = {S1}
+failure = {F}
+assumption = {A_1, A_2}
+liveness = {G1_3, G2_3}
+controllable = {ControllableActions}
+}
+
+assert TEST_EMPTYNESS = !([]<>[1].start && []<>[2].start)
+assert SS1 = [](! exists[e1:ElemSet][e2:ElemSet] (PROCESSING['drill][e1] && PROCESSING['press][e2]))

@@ -1,0 +1,50 @@
+set User = {request,eSend,ack}
+set Producer = {eInfoR}
+set Shipper = {eShipR}
+set PyS = {sShipR, sInfoR, sSend}
+set FinishActions = {ack}
+set Controllable = {PyS}
+set Alphabet = {User, Producer, Shipper, PyS, FinishActions}
+
+PRODUCER = (sInfoR -> PROCESSING_REQ), 
+PROCESSING_REQ = (eInfoR -> PRODUCER).
+
+USER = (request -> WAITING), 
+WAITING = (sSend -> RCV_REQ),
+RCV_REQ = (eSend -> FINISH_REQ), 
+FINISH_REQ = (ack -> USER).
+
+SHIPPER = (sShipR -> PROCESSING_REQ), 
+PROCESSING_REQ = (eShipR -> SHIPPER).
+
+
+fluent F_SHIPMENT = <sShipR, eShipR>
+fluent F_INFO = <sInfoR, eInfoR>
+
+fluent REQ_RCV = <request,ack>
+fluent S_INFO = <eShipR,ack>
+fluent I_INFO = <eInfoR,ack>
+fluent GOAL = <FinishActions, Alphabet\FinishActions>
+ltl_property DONT_ASK = []((sShipR || sInfoR) -> REQ_RCV)
+ltl_property SEND_WITH_INFO = [] (sSend -> (S_INFO && I_INFO))
+
+assert SHIPMENT = F_SHIPMENT
+assert INFO = F_INFO
+
+||ENV = (USER || SHIPPER || PRODUCER).
+
+
+controller ||C = (ENV)~{G}.
+
+controllerSpec G = {
+	safety = {DONT_ASK,SEND_WITH_INFO}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={SHIPMENT, INFO}
+	//lazyness=1
+	non_transient
+	controllable = {Controllable}
+}
+
+||CC = (C).

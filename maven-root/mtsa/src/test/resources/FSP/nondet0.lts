@@ -1,0 +1,33 @@
+set Alpha = {a, b}
+set Cont = {a,b}
+//NUnrealisable problem
+NoDet = (a->A | a->B),
+B = (b->A),
+A = (a->B).
+
+controller ||C = NoDet~{G1}.
+
+fluent A = <a,b>
+fluent B = <b,a>
+
+controllerSpec G1 = {
+	liveness = {A,B}
+	nonblocking 
+	controllable = {Cont}
+}
+
+
+
+NoDet2 = (a->A | a->AB),
+B = (b->B),
+AB = (b->B),
+A = (a->A).
+
+assert G = (A || B)
+controller ||C2 = NoDet2~{G2}.
+
+controllerSpec G2 = {
+	liveness = {G}
+	nonblocking 
+	controllable = {Cont}
+}

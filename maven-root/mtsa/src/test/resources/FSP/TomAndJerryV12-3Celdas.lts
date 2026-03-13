@@ -1,0 +1,53 @@
+range Rooms = 0..2
+set CatFlaps = {c01,c12,c20,c02,c21,c10}
+set MouseFlaps = {m01,m12,m20,m02,m21,m10}
+set Controllable = {CatFlaps, MouseFlaps}
+
+CAT(Init=0) = (start->cat_in[Init]->CAT[Init]),
+CAT[0] = (c01 -> ECAT[1] | c02 -> ECAT[2]),
+CAT[1] = (c12 -> ECAT[2] | c10 -> ECAT[0]),
+CAT[2] = (c20 -> ECAT[0] | c21 -> ECAT[1]),
+ECAT[room:Rooms] = (cat_in[room]->CAT[room]).
+
+MOUSE(Init=1) = (start->mouse_in[Init]->MOUSE[Init]),
+MOUSE[0] = (m01 -> EMOUSE[1] | m02 -> EMOUSE[2]),
+MOUSE[1] = (m12 -> EMOUSE[2] | m10 -> EMOUSE[0]),
+MOUSE[2] = (m20 -> EMOUSE[0] | m21 -> EMOUSE[1]),
+EMOUSE[room:Rooms] = (mouse_in[room]->MOUSE[room]).
+
+fluent CATROOM[room:Rooms] = <cat_in[room],{cat_in[Rooms]}\{cat_in[room]}>
+fluent MOUSEROOM[room:Rooms] = <mouse_in[room],{mouse_in[Rooms]}\{mouse_in[room]}>
+
+assert MOUSE_IN_0 = MOUSEROOM[0]
+assert MOUSE_IN_1 = MOUSEROOM[1]
+assert CAT_IN_0 = CATROOM[0]
+assert CAT_IN_1 = CATROOM[1]
+
+assert TRUE = (MOUSE_IN_0 && !MOUSE_IN_0)
+
+ltl_property SAFE = []( !exists[i:Rooms] (CATROOM[i] && MOUSEROOM[i]))
+
+controllerSpec G1 = {
+safety = {SAFE}
+assumption = {} 
+liveness = {MOUSE_IN_0, MOUSE_IN_1, CAT_IN_0, CAT_IN_1}
+controllable = {Controllable}
+}
+
+||Tom_Jerry = (CAT || MOUSE).
+controller	||C = (Tom_Jerry)~{G1}.
+||RUNLiveAndSafe = C.
+||Analysed_Env = (Tom_Jerry || SAFE).
+
+animation MAZElAs = "xml/catmousemaze.xml" target RUNLiveAndSafe  
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+					forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[Rooms]/end,
+                    mouse_in[Rooms]/mend,
+                    start/start
+                 }
+
+

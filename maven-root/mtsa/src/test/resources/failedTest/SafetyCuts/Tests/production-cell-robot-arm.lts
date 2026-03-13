@@ -1,0 +1,43 @@
+//ACTION SETS
+set Colours = {y, r}
+set Tools = {drill}
+set GetLocations = {drill, paint, in}
+set PutLocations = {drill, paint, out}
+set PutGetLocations = {drill, paint}
+set Locations = {PutLocations, GetLocations}
+set PutsGets = {{put,get}.Locations.Colours}
+set A = {PutsGets, {suc,fail}.PutsGets}
+set CA = {PutsGets}
+
+//Domain Model
+PAINT = (put['paint][Colours]->ready->get['paint]['r]->PAINT).
+TOOL(T='any) = (put[T][c:Colours]->ready[T][c]->get[T][c]->TOOL). 
+||TOOLS = (forall[t:Tools] TOOL(t)).
+
+ARM = (get[GetLocations][c:Colours]->GET_RESULT), 
+GET_RESULT = (suc.get.[GetLocations][c:Colours]->PICKED_UP[c] 
+				| fail.get.[GetLocations][c:Colours]->ARM),
+PICKED_UP[c:Colours] = (put[l:PutLocations][c] -> ARM).
+
+||DM = ( PAINT || TOOLS || ARM).
+
+PROCESS_ORDER(C='y) = (suc.get.['in][C]->GOT_IT[C]),
+GOT_IT[c:Colours] = (put['out][c]->PROCESS_ORDER 
+		| put[t:PutGetLocations][c]->suc.get.[t][c2:Colours]->GOT_IT[c2]).
+
+
+//DEFINED FLUENTS 
+//The ending action needs to be getInTray, so the controller can't postpone an element indefinitely
+fluent F_COLOUR_PUT[l:PutLocations][c:Colours] = <put[l][c], A\{put[l][c]}>
+
+assert RED_OUT = F_COLOUR_PUT['out]['r]
+
+//DEFINED CONTROLLERS
+controller ||C = (DM)~{Objective}.
+
+//DEFINED GOALS 
+controllerSpec Objective = {
+	safety = {PROCESS_ORDER}
+	controllable = {CA}
+}
+

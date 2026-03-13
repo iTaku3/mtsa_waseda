@@ -1,0 +1,71 @@
+const N = 2
+range IDService = 1..N
+set Uncontrollable = {{searchService, bookingService, payingService}.[IDService]}
+set Controllable = {getSearchService, getBookingService, getPayingService, 
+					{searchFares, retrieveFaresList, bookATicket, releaseSearchService, 
+						payTicket, releaseSearchService, releaseBookingService, 
+						releasePayingService}.[IDService] }
+set Faults = {searchServiceNotFound, bookingServiceNotFound, payingServiceNotFound, paymentError}
+set A = {Controllable, Uncontrollable, Faults}
+
+//ENVIRONMENT MODEL
+SearchService(ID=1) = (searchService[ID]->searchFares[ID]->retrieveFaresList[ID]->releaseSearchService[ID]->END).
+SearchS(ID=1) = SearchService(ID);SearchS.
+BookingService(ID=1) = (bookingService[ID]->bookATicket[ID]->releaseBookingService[ID]->END).
+BookingS(ID=1) = BookingService(ID);BookingS.
+PayingService(ID=1) = (payingService[ID]->payTicket[ID]->releasePayingService[ID]->END).
+PayingS(ID=1) = PayingService(ID); PayingS.
+
+||Services = (forall [id:IDService] SearchS(id) || forall [id:IDService] BookingS(id) || forall [id:IDService] PayingS(id)).
+
+//TEngo que poner una variable que sea la cantidad de servicios en el pool, 
+//de modo que cada vez que entregas un servicio se decrementa y cada vez que 
+//haces retrieve se incrementa. Y no se puede pedir un servicio si no hay servicios disponibles. 
+SearchServicePool = (getSearchService->T),
+T = (searchService[id:IDService]->releaseSearchService[id]->SearchServicePool
+	 | searchServiceNotFound->SearchServicePool).
+BookingServicePool = (getBookingService->T1), 
+T1 = (bookingServiceNotFound->BookingServicePool
+	  | bookingService[id:IDService]->releaseBookingService[id]->T12). 
+T12 = (getPayingService->T2), 
+T2 = (payingService[id:IDService]->T3[id]
+	| payingServiceNotFound->T12),
+T3[id:IDService] = (paymentOk->R[id] | paymentError->R[id]),
+R[id:IDService] = (releasePayingService[id]->BookingServicePool).
+
+||ServicePools = (SearchServicePool || BookingServicePool).// || PayingServicePool).
+
+||ENV = (Services || ServicePools).
+
+//SAFETY conditions
+//BookingProcess = SearchServices; BookingServices; PayingServices; BookingProcess.
+/*
+BookingProcess = (getSearchService->searchService[id:IDService]->searchFares[id]->retrieveFaresList[id]->releaseSearchService[id]-> 
+				  getBookingService->bookingService[id2:IDService]->bookATicket[id2]->releaseBookingService[id2]->
+				  getPayingService->payingService[id3:IDService]->payTicket[id3]->releasePayingService[id3]->BookingProcess).
+*/
+BookingProcess = (searchFares[IDService]->bookATicket[IDService]->payTicket[IDService]->BookingProcess).
+
+//fluent definitions 
+fluent F_Pay[id:IDService] = <payTicket[id],{A\{payTicket[id]}}>
+fluent F_Failures = <Faults, A\{Faults}>
+
+//assertion definitions
+assert Pay = exists[id:IDService]F_Pay[id]
+assert Failures = F_Failures
+
+//Goals definition
+controllerSpec Goal = {
+	safety = {BookingProcess}
+	failure = {Failures}
+	assumption = {} 
+	liveness = {Pay}
+	controllable = {Controllable}
+}
+
+//controllers definition
+controller ||C = ENV~{Goal}.
+
+//Test
+||PLANT = (ENV || BookingProcess).
+checkCompatibility ||Compatibility = ENV~{Goal}.

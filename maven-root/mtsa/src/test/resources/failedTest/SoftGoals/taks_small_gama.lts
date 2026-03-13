@@ -1,0 +1,52 @@
+const CantTask = 2
+range Tasks = 1..CantTask
+const Limit = 3
+range Memory = 0..Limit
+
+
+set Controllable = {s.[a:Tasks],g}
+set NotControllable = {e.[a:Tasks]}
+set Alphabet = {Controllable,NotControllable}
+
+
+TASK(ID=1) = (s.[ID] -> e.[ID] -> g -> REACH), 
+REACH = (g->REACH).
+
+
+MEM = RAM[0],
+RAM[u:Memory] = (s.[a:Tasks] -> RAM[a+u] | e.[a:Tasks] -> RAM[u-a]).
+
+||Plant = (forall[t:Tasks] TASK(t) || MEM).
+
+fluent PROCESSING[i:Tasks] = <s.[i],e.[i]>
+assert KEEP_WORKING = forall[i:Tasks] PROCESSING[i]
+fluent GOAL= <g, Alphabet\{g}>
+
+fluent START[i:Tasks] = <s.[i],g>
+fluent FINISH[i:Tasks] = <e.[i],g>
+fluent JSTART[i:Tasks] = <s.[i],Alphabet\{s.[i]}>
+
+ltl_property S2AftF1 = [] (START[2] -> FINISH[1])
+ltl_property S1AftS4orS3 = [] (START[1] -> START[3] || START[4])
+ltl_property S2AftS3 = [] (START[2] -> START[3])
+
+ltl_property Restrict = [] (JSTART[1] -> !PROCESSING[2])
+
+
+
+
+controller ||C = (Plant)~{G1}.
+checkCompatibility ||Compatible = (Plant)~{G1}.
+
+|| K = (C || C).
+
+controllerSpec G1 = {
+	safety = {/*S2AftF1/*,S1AftS4orS3,*/Restrict}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={KEEP_WORKING}
+	//lazyness=1
+	non_transient
+	controllable = {Controllable}
+}

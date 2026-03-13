@@ -1,0 +1,145 @@
+//ACTION SETS
+const N = 1
+range ProductCount = 1..N
+set ProductTypes = {a, b}
+set Toolset = {oven}//drill,oven,press}
+set ProductsTypeA = {{a}.[ProductCount]}
+set ProductsTypeB = {{b}.[ProductCount]}
+set ProductTypesSet = {ProductsTypeA, ProductsTypeB}
+set BlankAlpha = {[ProductTypesSet].{idle, inTray, getInTray, putOutTray}, {put}.Toolset.[ProductTypesSet]}
+set ArmAlpha = { [ProductTypesSet].{getInTray, putOutTray}, {put, get}.Toolset.[ProductTypesSet] }
+set ToolsAlpha  = { {put,/*process,*/get}.Toolset.[ProductTypesSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+set ControllableActions = {[ProductTypesSet].{getInTray,putOutTray}, {put,get}.Toolset.[ProductTypesSet]}
+set UncontrollableActions = {Alphabet\ControllableActions}
+set PriorityActions = {UncontrollableActions\{[ProductTypesSet].{idle}}}
+//DEFINED FLUENTS 
+//The ending action needs to be getInTray, so the controller can't postpone an element indefinitely
+fluent ADDED_TO_INTRAY[e:ProductTypesSet] = <[e].inTray, [e].getInTray>
+fluent ADDED_TO_OUTTRAY[e:ProductTypesSet] = <[e].putOutTray, Alphabet\{[e].putOutTray}>
+fluent BEING_PROCESSED[e:ProductTypesSet] = <[e].getInTray, [e].putOutTray>
+
+//DEFINED ASSERTIONS
+assert ASSUME_ON_A1 = (ADDED_TO_INTRAY['a[1]] || BEING_PROCESSED['a[1]])
+assert ASSUME_ON_B1 = (ADDED_TO_INTRAY['b[1]] || BEING_PROCESSED['b[1]])
+assert ASSUME_ON_A2 = (ADDED_TO_INTRAY['a[2]] || BEING_PROCESSED['a[2]])
+assert ASSUME_ON_B2 = (ADDED_TO_INTRAY['b[2]] || BEING_PROCESSED['b[2]])
+assert GOAL_FOR_A = exists[e:ProductsTypeA] ADDED_TO_OUTTRAY[e]
+assert GOAL_FOR_B = exists[e:ProductsTypeB] ADDED_TO_OUTTRAY[e]
+assert ASSUME_ON_A = exists[e:ProductsTypeA] (ADDED_TO_INTRAY[e] || BEING_PROCESSED[e])
+assert ASSUME_ON_B = exists[e:ProductsTypeB] (ADDED_TO_INTRAY[e] || BEING_PROCESSED[e])
+
+
+//DEFINED CONTROLLERS
+controller ||C = (ENV)~{Objective}.
+checkCompatibility ||Compatible = (ENV)~{Objective}.
+
+//DEFINED GOALS 
+controllerSpec Objective = {
+	safety = {PRODUCT_PROCESS}
+	assumption = {ASSUME_ON_A1, ASSUME_ON_B1}//ASSUME_ON_A1, ASSUME_ON_B1, ASSUME_ON_A2, ASSUME_ON_B2}
+	liveness = {GOAL_FOR_A, GOAL_FOR_B}
+	controllable = {ControllableActions}
+}
+
+//ENVIRONMENT MODEL
+INIT_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> END).
+TRY_TOOL(T='any, C=1) = (put[T][C] -> END).
+FINISH_PRODUCT(C=1) = ([C].putOutTray -> END).
+
+PRODUCT_A(C=1)= INIT_PRODUCT(C);
+				TRY_TOOL('oven,C);
+//				TRY_TOOL('drill,C);
+//				TRY_TOOL('press,C);
+				FINISH_PRODUCT(C);
+				PRODUCT_A.
+
+PRODUCT_B(C=N/2+1)= INIT_PRODUCT(C);
+//					TRY_TOOL('drill,C);
+//					TRY_TOOL('press,C);
+					TRY_TOOL('oven,C);
+					FINISH_PRODUCT(C);
+					PRODUCT_B.
+
+compose ||PRODUCT_PROCESS = (forall[a:ProductsTypeA] PRODUCT_A(a) || forall[b:ProductsTypeB] PRODUCT_B(b)).
+
+RAW_PRODUCT(C=1) = ([C].inTray -> [C].getInTray -> TOOLS_AVAIL 
+					| [C].idle -> RAW_PRODUCT),
+TOOLS_AVAIL = (put[t:Toolset][C] -> get[t].[C] -> TOOLS_AVAIL 
+				| [C].putOutTray -> RAW_PRODUCT).
+
+||RAW_PRODUCTS = forall[p:ProductTypesSet] RAW_PRODUCT(p).
+
+TOOL(T='any) = (put[T][e:ProductTypesSet] -> /*process[T][e] -> #*/get[T][e] -> TOOL). 
+
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([e:ProductTypesSet].getInTray -> PICKED_UP[e]
+		| get[t:Toolset][e:ProductTypesSet] -> PICKED_UP[e]),
+PICKED_UP[e:ProductTypesSet] = (put[t:Toolset][e] -> IDLE
+               | [e].putOutTray -> IDLE).
+
+||ENV = ( RAW_PRODUCTS || TOOLS || ARM).
+
+EXP = Q0,
+	Q0	= ({a, b}[1].idle -> Q0
+		  |a[1].inTray -> Q12
+		  |b[1].inTray -> Q18),
+	Q1	= (a[1].idle -> Q1
+		  |a[1].inTray -> Q4
+		  |put.oven.b[1] -> Q19),
+	Q2	= (b[1].getInTray -> Q1
+		  |a[1].idle -> Q2
+		  |a[1].inTray -> Q5),
+	Q3	= (b[1].getInTray -> Q1
+		  |a[1].idle -> Q2
+		  |a[1].inTray -> Q5),
+	Q4	= (put.oven.b[1] -> Q13),
+	Q5	= (b[1].getInTray -> Q4),
+	Q6	= (b[1].inTray -> Q2
+		  |{a, b}[1].idle -> Q6
+		  |a[1].inTray -> Q23),
+	Q7	= (b[1].idle -> Q7
+		  |b[1].inTray -> Q17
+		  |get.oven.a[1] -> Q22),
+	Q8	= (a[1].putOutTray -> Q3),
+	Q9	= (b[1].inTray -> Q2
+		  |{a, b}[1].idle -> Q6
+		  |a[1].inTray -> Q23),
+	Q10	= (b[1].putOutTray -> Q21),
+	Q11	= (a[1].getInTray -> Q16),
+	Q12	= (b[1].inTray -> Q11
+		  |b[1].idle -> Q12
+		  |a[1].getInTray -> Q20),
+	Q13	= (get.oven.b[1] -> Q10),
+	Q14	= ({a, b}[1].idle -> Q0
+		  |a[1].inTray -> Q12
+		  |b[1].inTray -> Q18),
+	Q15	= (a[1].inTray -> Q10
+		  |b[1].putOutTray -> Q14
+		  |a[1].idle -> Q15),
+	Q16	= (put.oven.a[1] -> Q17),
+	Q17	= (get.oven.a[1] -> Q8),
+	Q18	= (a[1].inTray -> Q11
+		  |a[1].idle -> Q18),
+	Q19	= (a[1].inTray -> Q13
+		  |get.oven.b[1] -> Q15
+		  |a[1].idle -> Q19),
+	Q20	= (put.oven.a[1] -> Q7
+		  |b[1].inTray -> Q16
+		  |b[1].idle -> Q20),
+	Q21	= (b[1].inTray -> Q11
+		  |b[1].idle -> Q12
+		  |a[1].getInTray -> Q20),
+	Q22	= (b[1].inTray -> Q8
+		  |a[1].putOutTray -> Q9
+		  |b[1].idle -> Q22),
+	Q23	= (b[1].inTray -> Q5
+		  |b[1].idle -> Q23).
+
+
+
+
+
+

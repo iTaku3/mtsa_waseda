@@ -1,0 +1,25 @@
+
+SLOWER = Q0,
+	Q0	= (item -> Q1),
+	Q1	= (tick -> Q2),
+	Q2	= (tick -> Q3),
+	Q3	= (tick -> Q0).
+
+
+CONSUMER(Tc=3) =
+  (item -> DELAY[1] | tick -> CONSUMER),
+DELAY[t:1..Tc] = 
+  (when(t==Tc) tick -> CONSUMER
+  |when(t<Tc)  tick -> DELAY[t+1]
+  ).
+
+PRODUCER(Tp=3) = 
+  (item -> DELAY[1]),
+DELAY[t:1..Tp] = 
+  (when(t==Tp) tick -> PRODUCER
+  |when(t<Tp)  tick -> DELAY[t+1]
+  ).
+
+||ExpectedC = SLOWER.
+
+||C = (PRODUCER(3) || CONSUMER(2)).

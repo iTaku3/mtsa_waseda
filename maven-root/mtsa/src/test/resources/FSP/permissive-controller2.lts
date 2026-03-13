@@ -1,0 +1,32 @@
+set Controllable = {g,c}
+set A = {Controllable, a}
+
+M = (g->g->G | c->a->M),
+G = (g->G).
+
+fluent F_G = <g, A\{g}>
+fluent F_A = <a, A\{a}>
+
+assert Assumption = F_A
+assert Guarantee = F_G
+
+assert Permissive_Check = []<> F_G 
+
+
+controller ||PERMISSIVE = M~{G}.
+controller ||C = M~{G2}.
+
+controllerSpec G = {
+	permissive
+	assumption = {Assumption}
+    liveness = {Guarantee}
+    controllable = {Controllable}
+}
+
+controllerSpec G2 = {
+	assumption = {Assumption}
+    liveness = {Guarantee}
+    controllable = {Controllable}
+}
+
+

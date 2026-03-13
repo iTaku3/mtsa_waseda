@@ -1,0 +1,137 @@
+///// Begin Config
+
+// Board diagram
+//// B = Brick
+//// F = FinalPos
+//// O = Obstacle
+// 1234
+//1----
+//2-BOF
+//3-FB-
+//4O---
+
+
+
+//Size of Board
+const MaxRow = 4
+const MaxCol = 4
+const MinRow = 1			// Do not change
+range Rows = MinRow..MaxRow	// Do not change
+const MinCol = 1			// Do not change
+range Cols = MinCol..MaxCol	// Do not change
+
+
+//Starting position
+const MinPiece = 0			// Do not change
+const P = MinPiece			// Do not change
+||Player = [P]:Piece(1,1).
+
+//Bricks
+const MaxBrick = 2
+||B1 = [1]:Piece(3,3).
+||B2 = [2]:Piece(2,2).
+//||B3 = [3]:Piece(4,4).
+//||B4 = [4]:Piece(6,1).
+//||B5 = [5]:Piece(6,2).
+||Game = (  B1 || B2  || // B3  || // B4 ||
+			Dispatcher || Player  || CheckLive || CheckSafe || CheckLive || IllegalPosition).
+const MinBrick = 1  				// Do not change
+const MaxPiece = MaxBrick			// Do not change
+range Bricks = MinBrick..MaxBrick	// Do not change
+range Pieces = P..MaxPiece			// Do not change
+
+//Obstacles
+set Obstacles  = {	setPos[2][3],setPos[4][1]   }
+
+
+
+//Winning condition  (where to put the bricks)
+// CHANGE ONLY THE IF CONDITION
+CheckLive = NotLiveChecking,
+NotLiveChecking = ([p:Pieces].getPos[r:Rows][c:Cols] -> NotLiveChecking | startLiveCheck -> CheckWinPos[1]),
+														//Change here. Assumes number of rows and cols are less than 10.
+CheckWinPos[b:Bricks] = ([b].getPos[r:Rows][c:Cols] ->  if ((r==3 && c == 2) || (r == 2 && c == 4)
+				//									    || (r == 4 &&  c == 1) //|| (r == 5 && c == 4)
+				//										||  (r == 6 &&  c == 3) || (r == 6 && c == 5)
+				//										|| 	(r == 7 &&  c == 3)
+														) then CheckWinPos[b+1] else EndCheck),
+														////////////////
+CheckWinPos[MaxBrick+1] = Win,
+EndCheck = (checkLiveDone -> CheckLive),
+Win = (win -> Win).
+
+
+//// End Config
+set OutOfBoard = {setPos[MinRow-1][c:Cols], setPos[MaxRow+1][c:Cols], setPos[r:Rows][MinCol-1], setPos[r:Rows][MaxCol+1]}
+set Sets = {setPos[r:Rows][c:Cols]}
+set Gets = {getPos[r:Rows][c:Cols]}
+set SafePositions = {Sets\{Obstacles,OutOfBoard}}
+fluent PosPiece[p:Pieces][r:Rows][c:Cols] = <[p].getPos[r][c],[p].Gets\{getPos[r][c]}>
+set Checks = {checkLiveDone, checkSafeOk, startLiveCheck, startSafeCheck,win}
+set Moves = {down,left,right,up}
+set Controllable = {[p:Pieces].{Sets,Gets},Moves,Checks}
+
+set Alphabet = {Controllable, [b:Bricks].{Sets,Gets}}
+
+assert LIVE = <>(win)
+assert Witness = !LIVE
+fluent Win_no_asterisk = <win,Alphabet\{win}> initially 0
+assert LIVERank = Win_no_asterisk
+
+Piece(R=MinRow, C=MinCol) = Pos[R][C],
+Pos[r:Rows][c:Cols] = (
+								setPos[nr:Rows][nc:Cols]->Pos[nr][nc] |
+								getPos[r][c] -> Pos[r][c]
+								) + {Gets, Sets}.
+
+CheckSafe = NotSafeChecking,
+NotSafeChecking = ([p:Pieces].getPos[r:Rows][c:Cols] -> NotSafeChecking | startSafeCheck -> CheckPiece[MinPiece]),
+//For every piece p
+	CheckPiece[p:MinPiece..MaxPiece-1] = CheckTwoPieces[p][p+1],
+//For every piece q
+//Check if the have same location
+CheckTwoPieces[p:Pieces][q:Pieces] = ([p].getPos[r:Rows][c:Cols] -> [q].getPos[r2:Rows][c2:Cols] -> if (r2 == r && c2 == c) then Lose else CheckTwoPieces[p][q+1]),
+CheckTwoPieces[p:Pieces][MaxPiece+1] = CheckPiece[p+1],
+CheckPiece[MaxPiece] = (checkSafeOk -> CheckSafe),
+Lose = STOP.
+
+
+//[p:Pieces].OutOfBoard -> IP |
+IllegalPosition = ([p:Pieces].Obstacles -> IP | [p:Pieces].SafePositions -> IllegalPosition),
+IP = (illegalPosition -> IP).
+IP = STOP.
+
+Dispatcher = (startSafeCheck -> SafeChecking),
+SafeChecking =  ([p:Pieces].getPos[r:Rows][c:Cols] -> SafeChecking | checkSafeOk-> startLiveCheck -> LiveChecking),
+LiveChecking =  ([p:Pieces].getPos[r:Rows][c:Cols] -> LiveChecking | checkLiveDone->Play),
+Play = (
+// 	[p:Pieces].getPos[r:Rows][c:Cols] -> Dispatcher |
+	right -> [P].getPos[r:Rows][c:Cols] -> (when (c<MaxCol-1) [b:Bricks].getPos[r][c+1] -> [b].setPos[r][c+2] -> [P].setPos[r][c+1] -> Dispatcher | when (c<MaxCol) [P].setPos[r][c+1] -> Dispatcher) |
+	left -> [P].getPos[r:Rows][c:Cols]  -> (when (c>MinCol+1) [b:Bricks].getPos[r][c-1] -> [b].setPos[r][c-2] -> [P].setPos[r][c-1] -> Dispatcher | when (c>MinCol) [P].setPos[r][c-1] -> Dispatcher) |
+	down -> [P].getPos[r:Rows][c:Cols]  -> (when (r<MaxRow-1) [b:Bricks].getPos[r+1][c] -> [b].setPos[r+2][c] -> [P].setPos[r+1][c] -> Dispatcher | when (r<MaxRow)[P].setPos[r+1][c] -> Dispatcher) |
+	up -> [P].getPos[r:Rows][c:Cols]  -> (when (r>MinRow+1) [b:Bricks].getPos[r-1][c] -> [b].setPos[r-2][c] -> [P].setPos[r-1][c] -> Dispatcher | when (r>MinRow) [P].setPos[r-1][c] -> Dispatcher)
+) + {[p:Pieces].Gets,[p:Pieces].Sets}.
+
+
+
+
+
+controllerSpec GoalDCS = {
+controllable = Controllable
+marking = {win}
+nonblocking
+}
+
+controllerSpec GoalRank = {
+controllable = {Controllable}
+liveness = {LIVERank}
+}
+assert Check = ([]<>LIVERank)
+
+heuristic ||CDCS= Game~{GoalDCS}.
+
+heuristic ||CRank = Game~{GoalRank}.
+minimal ||TestCRank = (CRank || Game).
+
+deterministic ||Test = CDCS@{Moves,win}.
+

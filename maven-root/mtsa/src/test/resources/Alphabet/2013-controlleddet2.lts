@@ -1,0 +1,33 @@
+/*
+Environment model that is controllable with Parallel IA semantics
+*/
+
+set Controllable = {n}//,s,e,w}
+set Alphabet = {Controllable, pressed}
+
+ROBOT = ({n,s,e,w}->ROBOT). 
+
+ROOM = E, 
+E = (n->NW | n->NP),
+NW = (n->NP),
+NP = (n->NP | pressed->NW).
+
+
+||PNOPS = NOPS.
+NOPS = ({n,s,e,w}->NOPS | pressed->e->NOPS).
+
+||ENV = (ROOM).
+
+fluent F_E = <e, Controllable\{e}>
+fluent F_P = <pressed, Alphabet\{pressed}>
+
+assert PRESSED = F_P
+assert EAST = F_E
+
+controlled_det ||C = ENV~{G}.
+
+controllerSpec G = {
+	safety = {NOPS}
+    liveness = {PRESSED}
+    controllable = {Controllable}
+}

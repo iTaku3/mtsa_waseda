@@ -1,0 +1,4 @@
+\begin{tabular}{ | c | c c c c c c c | c c c c c | c c c c c | c c c c c | }\
+\rot{test name}&\rot{$c'=c$}&\rot{$c'<c$}&\rot{$c'>c$}&\rot{$|As|$}&\rot{$|G|$}&\rot{$|F|$}&\rot{ass.Comp.}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}&|\rot{cut name}&\rot{$|Long\_0|$}&\rot{$|Long\_f|$&ot{$|S_d|$}&ot{$\exists C$}&\rot{$T_d$}\
+section-3.83-bookstore&N&N&N&1&1&0&Y&GR&40&30&-10&T&0&GR+CUT&40&30&-10&F&0&GR.only&40&30&-10&T&0\
+\end{tabular}\

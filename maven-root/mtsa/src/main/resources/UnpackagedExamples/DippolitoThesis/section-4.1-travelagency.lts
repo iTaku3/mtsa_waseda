@@ -1,0 +1,106 @@
+set AvailableServices = {car, flight}//, hotel}
+set Agency = {agency.req, agency.resp}
+set ControllableC1 = {AvailableServices.{buy, query, reserve, reset}}
+set Controllable = {{ControllableC1}, agency.resp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail}}
+//set FailureSet = {FailureSetPrime\{car.queryFail}}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess}}
+set A = {Controllable, Uncontrollable, Agency}
+
+
+//Environment model
+SERVICE(SRV='car) = IDLE,
+IDLE = ([SRV].query -> ( [SRV].queryFail -> IDLE | [SRV].querySuccess -> RESULTSET) ),
+RESULTSET = ([SRV].reset -> IDLE | [SRV].reserve -> ([SRV].reserveFail -> IDLE | [SRV].reserveSuccess -> RESERVED)),
+RESERVED = ([SRV].buy -> ([SRV].buyFail -> IDLE | [SRV].buySuccess -> IDLE) ).
+
+||SERVICES = (forall[srv:AvailableServices] SERVICE(srv)).
+
+AGENCY = (agency.idle-> AGENCY | agency.req->agency.resp->AGENCY).
+
+||ENV = (forall[srv:AvailableServices] SERVICE(srv) || AGENCY || NETWORK).
+
+
+NETWORK = YES, 
+YES = ({Controllable,Uncontrollable} -> YES | noNetwork -> NO),
+NO = (yesNetwork -> NOP), 
+NOP = ({Controllable,Uncontrollable} -> YES).
+
+
+//fluent definitions
+fluent F_UsrReq = <agency.req, A\{agency.req}>
+fluent F_AgencyReq = <agency.resp, A\{agency.resp}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+//DESDE ACA 
+fluent F_Reserved[srv:AvailableServices] = <[srv].reserveSuccess, {[srv].buySuccess, [srv].buyFail}> //{agency.req, [srv].buyFail}
+fluent F_BuySuccessfully[srv:AvailableServices] = <[srv].buySuccess, A\{[srv].buySuccess}>
+fluent F_Query[srv:AvailableServices] = <[srv].query, A\{[srv].query}>
+fluent F_BoughtSuccessfully[srv:AvailableServices] = <[srv].buySuccess, agency.req>
+fluent F_TryToBuy[srv:AvailableServices] = <[srv].buy, A\{[srv].buy}>
+fluent F_PendingReq = <agency.req, agency.resp>
+fluent F_SuccessfullyFound[srv:AvailableServices] = <[srv].querySuccess, {[srv].{reserveFail, buyFail, reset}}>
+fluent F_TryToReserve[srv:AvailableServices] = <[srv].reserve, A\{[srv].reserve}>
+
+
+fluent F_NETWORK = <yesNetwork, noNetwork>
+assert A_NETWORK = F_NETWORK
+
+//assertions
+assert Failures = F_Failures
+assert UsrResp = F_AgencyReq
+assert AssumptionOnRequests = F_PendingReq
+assert AllBought = forall[srv:AvailableServices](F_BoughtSuccessfully[srv])
+assert SomeQuery =  exists[srv:AvailableServices] F_Query[srv]
+
+
+assert AllReserved = forall[srv:AvailableServices](F_Reserved[srv])
+
+//if a service fails querying, the others have to be reset.
+ltl_property ResetImpliesQueryingFailure = [] (forall[srv:AvailableServices]exists[srv2:AvailableServices] 
+										(F_Reset[srv] -> F_QueryFailed[srv2]))
+
+ltl_property SuccessfulyFoundBeforeReserve = [] (forall[srv:AvailableServices][srv2:AvailableServices] 
+										(F_TryToReserve[srv] -> (F_SuccessfullyFound[srv2]) ))
+
+
+//Safety definition
+ltl_property ReserveBeforeBuy = [] (forall[srv:AvailableServices][srv2:AvailableServices] 
+									(F_TryToBuy[srv] -> (F_BoughtSuccessfully[srv2] || F_Reserved[srv2])))
+ltl_property ServiceQueryImpliesUsrReq = [](SomeQuery -> F_PendingReq)
+ltl_property UsrRspImpliesAllBought = [](F_AgencyReq -> AllBought)
+ltl_property QueryImpliesNotBought = [](forall[srv:AvailableServices] 
+										(F_Query[srv] -> (!F_BoughtSuccessfully[srv])))
+
+fluent F_Reset[srv:AvailableServices] = <[srv].reset, A\{[srv].reset}>
+fluent F_QueryFailed[srv:AvailableServices] = <[srv].queryFail, [srv].query>
+fluent F_Querying[srv:AvailableServices] = <[srv].query, {[srv].{queryFail,reset,reserve}}>
+fluent F_Resetting[srv:AvailableServices] = <{{{AvailableServices}.{queryFail}}\{[srv].queryFail}}, {[srv].{reset, queryFail}}>//, queryFail
+fluent F_Queried[srv:AvailableServices] = <[srv].query, agency.req>
+fluent F_SomethingFailed[srv:AvailableServices] = <[srv].{queryFail, reserveFail, buyFail}, agency.req>
+
+assert Resetting = exists[srv1:AvailableServices][srv2:AvailableServices] (F_QueryFailed[srv1] && F_Querying[srv2])
+
+
+ltl_property QueryImpliesNoResetting = [](forall[srv:AvailableServices]
+										(F_Query[srv] -> (!Resetting)))
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {ReserveBeforeBuy, UsrRspImpliesAllBought, 
+				ServiceQueryImpliesUsrReq, QueryImpliesNotBought,
+				SuccessfulyFoundBeforeReserve, ResetImpliesQueryingFailure, 
+				QueryImpliesNoResetting}
+       failure = {Failures}
+       assumption = {AssumptionOnRequests, A_NETWORK}
+       liveness = {UsrResp}
+       controllable = {Controllable}
+}
+
+||System = (C || ENV).
+||Plant = (ENV||ReserveBeforeBuy || UsrRspImpliesAllBought||ServiceQueryImpliesUsrReq||QueryImpliesNotBought||
+ResetImpliesQueryingFailure||QueryImpliesNoResetting).
+

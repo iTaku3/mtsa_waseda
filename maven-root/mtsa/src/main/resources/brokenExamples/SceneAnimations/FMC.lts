@@ -1,0 +1,164 @@
+/* 
+* Flexible Manufacturing Cell
+* j.n.magee may 1999
+*/
+
+range X = 0..4
+range Y = 0..4
+set B = {a,b,c}
+
+LOCK  = (acquire -> release -> LOCK).
+
+MOVE(I=0,J=0) 
+  = (move[I][J]->end->END)+{move[X][Y]}.
+
+MAGNET(Action='on,Blank='null) 
+  = (magnet[Action][Blank]->end[Blank]->END).
+
+CRANE = (pickup.input[p:B] -> MOVE(0,2);MAGNET('on,p);CRANE
+        |pickup.drill[p:B] -> MOVE(2,1);MAGNET('on,p);CRANE
+        |pickup.oven[p:B] ->  MOVE(2,3);MAGNET('on,p);CRANE
+        |putdown.output[p:B] -> MOVE(4,2);MAGNET('off,p);CRANE
+        |putdown.drill[p:B] -> MOVE(2,1);MAGNET('off,p);CRANE
+        |putdown.oven[p:B] ->  MOVE(2,3);MAGNET('off,p);CRANE
+        ).
+
+INPUT1 = (start[p:B] -> [p].wait[1] -> INPUT1).
+INPUT2 = ([p:B].wait[1] -> [p].wait[2] -> INPUT2).
+INPUT3 = ([p:B].wait[2] -> [p].ready -> [p].removed->INPUT3).
+
+||CONVEYOR = (INPUT1 || INPUT2 || INPUT3).
+
+BLANK(P='p)
+         = (start[P] -> [P].ready 
+            -> [P].exit -> [P].end -> BLANK).
+
+DRILL  = (drill.begin[p:B] -> drill.end[p] -> DRILL).
+
+OVEN   = (oven.begin[p:B] -> oven.end[p] -> OVEN).
+
+set LockAlpha = { {oven,drill,crane}.{acquire,release}}
+set CraneAlpha = { {pickup,putdown}.{input,output,drill,oven}}
+set ToolAlpha  = {{drill,oven}.{begin,end}}
+
+INPUT_MACH_MOVE(M='any,P='any) 
+       = ([P].ready -> [P][M].acquire -> [P].crane.acquire
+          -> pickup.input[P] -> end[P] -> [P].removed
+          -> putdown.[M][P] -> end[P] 
+          -> [P].crane.release
+          ->END).
+
+MACHINE_BLANK(M='any,P='any)
+       =([M].begin[P] -> [M].end[P] -> END).
+
+MACH_MACH_MOVE(From='any,To='any,P='any) 
+	  =  ( [P].[To].acquire -> [P].crane.acquire -> [P].[From].release
+          -> pickup.[From][P] -> end[P]
+          -> putdown.[To][P] -> end[P] 
+          -> [P].crane.release
+          -> END). 
+
+MACH_EXIT_MOVE(M='any,P='any) 
+       = ([P].crane.acquire -> [P].[M].release
+          -> pickup.[M][P] -> end[P] 
+          -> putdown.output[P] -> end[P]
+          -> [P].crane.release
+          -> [P].exit
+          -> END).
+
+PROGRAM1(M='any,P='p) //oven only
+       = INPUT_MACH_MOVE(M,P);
+         MACHINE_BLANK(M,P);
+         MACH_EXIT_MOVE(M,P);
+         PROGRAM1
+         + {[P].LockAlpha,CraneAlpha[P],ToolAlpha[P]}.
+
+PROGRAM2(M1='any,M2='any,P='p)  // oven then drill
+       = INPUT_MACH_MOVE(M1,P);
+         MACHINE_BLANK(M1,P);
+         MACH_MACH_MOVE(M1,M2,P);
+         MACHINE_BLANK(M2,P);
+         MACH_EXIT_MOVE(M2,P);
+         PROGRAM2
+         + {[P].LockAlpha,CraneAlpha[P],[P].ToolAlpha}.
+
+||FMC = (forall[p:B] BLANK(p) || CONVEYOR || CRANE || DRILL || OVEN 
+        || PROGRAM2('drill,'oven,'a) || PROGRAM1('drill,'b) || PROGRAM1('oven,'c)
+        || B::{crane,drill,oven}:LOCK
+        )>>{      end,
+                  start[b:B],
+                  [B].ready,
+                  [B].wait[i:1..2],
+                  [B].end,
+                  drill.end[B],
+                  oven.end[B]
+            }.
+
+||PIPELINE = (forall[p:B] BLANK(p) || CONVEYOR || CRANE || DRILL || OVEN 
+        || PROGRAM2('drill,'oven,'a) || PROGRAM2('drill,'oven,'b) || PROGRAM2('drill,'oven,'c)
+        || B::{crane,drill,oven}:LOCK
+        )>>{      end,
+                  start[b:B],
+                  [B].ready,
+                  [B].wait[i:1..2],
+                  [B].end,
+                  drill.end[B],
+                  oven.end[B]
+            }.
+
+
+||FMC123 = (forall[p:B] BLANK(p) || CONVEYOR || CRANE || DRILL || OVEN 
+        || PROGRAM2('drill,'oven,'a) || PROGRAM2('oven,'drill,'b) || PROGRAM1('oven,'c)
+        || B::{crane,drill,oven}:LOCK
+        )>>{      end,
+                  start[b:B],
+                  [B].ready,
+                  [B].wait[i:1..2],
+                  [B].end,
+                  drill.end[B],
+                  oven.end[B]
+            }.
+
+
+menu RUN = {start[B]}
+
+
+animation FMC = "xml/fmc.xml" target FMC
+                actions {
+                  move[x:X][y:Y]/{gantry.go[x],head.go[y]},
+                  magnet[i:{off[B],on[B]}]/magnet[i],
+                  start[b:B]/seg[1][b].begin,
+                  [b:B].wait[i:1..2]/seg[i+1][b].begin,
+                  [b:B].exit/seg[4][b].begin,
+                  drill.begin[B]/drill.begin,
+                  oven.begin[B]/oven.begin
+                }
+                controls {
+                  end/{gantry.end,head.end},
+                  start[b:B]/[b],
+                  [B].ready/seg[3].end,
+                  [B].wait[i:1..2]/seg[i].end,
+                  [B].end/seg[4].end,
+                  drill.end[B]/drill.end,
+                  oven.end[B]/oven.end       
+                }
+
+animation REPLAY = "xml/fmc.xml" target FMC123
+                actions {
+                  move[x:X][y:Y]/{gantry.go[x],head.go[y]},
+                  magnet[i:{off[B],on[B]}]/magnet[i],
+                  start[b:B]/seg[1][b].begin,
+                  [b:B].wait[i:1..2]/seg[i+1][b].begin,
+                  [b:B].exit/seg[4][b].begin,
+                  drill.begin[B]/drill.begin,
+                  oven.begin[B]/oven.begin
+                }
+                controls {
+                  end/{gantry.end,head.end},
+                  [B].ready/seg[3].end,
+                  [B].wait[i:1..2]/seg[i].end,
+                  [B].end/seg[4].end,
+                  drill.end[B]/drill.end,
+                  oven.end[B]/oven.end       
+                }
+

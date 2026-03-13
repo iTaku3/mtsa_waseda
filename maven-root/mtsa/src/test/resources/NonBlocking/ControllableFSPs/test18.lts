@@ -1,0 +1,24 @@
+Ejemplo = A2,
+A2 = (c2m -> Malo | c2b -> Bueno),
+Malo = (mll -> Livelock),
+Livelock = (lll -> Livelock),
+Bueno = (ub2 -> A2 | umbueno -> Bueno).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {c2m, c2b}
+  marking = {umbueno}
+  nonblocking
+}
+
+heuristic ||C = Plant~{Goal}.
+
+||ExpectedC = Expected.
+
+Expected = Q0,
+    Q0	= (c2b -> Q1),
+    Q1	= (ub2 -> Q0
+          |umbueno -> Q2),
+    Q2	= (ub2 -> Q0
+          |umbueno -> Q2).

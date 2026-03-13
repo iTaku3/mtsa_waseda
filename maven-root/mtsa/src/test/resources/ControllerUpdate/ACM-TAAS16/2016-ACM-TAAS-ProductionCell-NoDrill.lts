@@ -1,0 +1,224 @@
+// -----------------------------COMMENTS-------------------------------
+
+// - To execute the solution for update controllers select in the dropdown menu 
+// the "UPDATE_CONTROLLER" label, and then press the compose button.
+// - In the section of UPDATING CONTROLLER SPEC, in this file, you can spec
+// different transition requeriments presented in the paper.
+// - You can animate the controller obtained pressing the blue A in the top bar
+// - After composing, you can validate that the controller obtained satisfy 
+// each updating controller controllerSpec formula by modelchecking.
+// In the top menu go to Check >> LTL property >> TEST_FORMULA1/2/3
+
+// ---------------------------ENVIRONMENTS-----------------------------
+
+const A = 1
+range A_IDs = 1..A
+const B = 2
+range B_IDs = (A+1)..B
+range ID = 1..B
+
+//ACTION SETS
+/*
+set ControllableActions = {glossy.paint[ID], dry[ID], out[ID], in[ID]}
+set OldAlphabet = {ControllableActions, glossy.paintOk[ID], glossy.paintNOk[ID], dryOk[ID], dryNOk[ID], reset[ID]}
+set NewControllableActions = {matt.paint[ID], dry[ID], varnish[ID], out[ID], in[ID]}
+set NewAlphabet = {NewControllableActions, varnishOk[ID], varnishNOk[ID], matt.paintOk[ID], matt.paintNOk[ID], dryOk[ID], dryNOk[ID], reset[ID]}
+*/
+
+set ControllableActions = {glossy.paint[1], /*dry[1],*/ out[1]}
+set OldAlphabet = {ControllableActions, in[1], glossy.paintOk[1], glossy.paintNOk[1], /*dryOk[1], dryNOk[1],*/ reset[1]}
+set NewControllableActions = {matt.paint[1], /*dry[1], varnish[1],*/ out[1]}
+set NewAlphabet = {NewControllableActions, varnishOk[1], varnishNOk[1], matt.paintOk[1], matt.paintNOk[1], /*dryOk[1], dryNOk[1],*/ reset[1], in[1]}
+
+
+//Domain Old Model
+	PRODUCTION_CELL_OLD2 = PRODUCTION_CELL_OLD,
+	PRODUCTION_CELL_OLD = (in[2] -> ARM),
+	ARM = ( glossy.paint[2] -> PAINTED
+		| dry[2] -> DRIED
+		| out[2] -> reset[2] -> PRODUCTION_CELL_OLD),
+	PAINTED = ({glossy.paintOk[2],glossy.paintNOk[2]} -> ARM),
+	DRIED = ({dryOk[2],dryNOk[2]} -> ARM).
+
+	PRODUCTION_CELL_OLD1 = PRODUCTION_CELL_OLD,
+	PRODUCTION_CELL_OLD = (in[1] -> ARM),
+	ARM = ( glossy.paint[1] -> PAINTED
+//		| dry[1] -> DRIED
+		| out[1] -> reset[1] -> PRODUCTION_CELL_OLD),
+	PAINTED = ({glossy.paintOk[1],glossy.paintNOk[1]} -> ARM).
+//	DRIED = ({dryOk[1],dryNOk[1]} -> ARM).
+
+//Domain New Model
+	PRODUCTION_CELL_NEW1 = PRODUCTION_CELL_NEW,
+	PRODUCTION_CELL_NEW = (in[1] -> ARM),
+	ARM = ( matt.paint[1] -> PAINTED 
+//		| dry[1] -> DRIED
+		| varnish[1] -> VARNISHED
+		| out[1] -> reset[1] -> PRODUCTION_CELL_NEW),
+	PAINTED = ({matt.paintOk[1],matt.paintNOk[1]} -> ARM),
+//	DRIED = ({dryOk[1],dryNOk[1]} -> ARM),
+	VARNISHED = ({varnishOk[1], varnishNOk[1]} -> ARM).
+
+	PRODUCTION_CELL_NEW2 = PRODUCTION_CELL_NEW,
+	PRODUCTION_CELL_NEW = (in[2] -> ARM),
+	ARM = ( matt.paint[2] -> PAINTED 
+		| dry[2] -> DRIED
+		| varnish[2] -> VARNISHED
+		| out[2] -> reset[2] -> PRODUCTION_CELL_NEW),
+	PAINTED = ({matt.paintOk[2],matt.paintNOk[2]} -> ARM),
+	DRIED = ({dryOk[2],dryNOk[2]} -> ARM),
+	VARNISHED = ({varnishOk[2], varnishNOk[2]} -> ARM).
+
+	UPDATE_ENV = PRODUCTION_CELL_OLD,
+	PRODUCTION_CELL_OLD = (in[1] -> ARM_OLD | reconfigure -> PRODUCTION_CELL_NEW),
+	ARM_OLD = ( glossy.paint[1] -> PAINTED_OLD
+		| reconfigure -> ARM_NEW
+		| out[1] -> OUT_OLD),
+	OUT_OLD = (reset[1] -> PRODUCTION_CELL_OLD | reconfigure -> OUT_NEW),
+	PAINTED_OLD = ({glossy.paintOk[1],glossy.paintNOk[1]} -> ARM_OLD | reconfigure -> ARM_NEW),
+
+	PRODUCTION_CELL_NEW = (in[1] -> ARM_NEW),
+	ARM_NEW = ( matt.paint[1] -> PAINTED_NEW 
+		| varnish[1] -> VARNISHED
+		| out[1] -> OUT_NEW),
+	OUT_NEW = (reset[1] -> PRODUCTION_CELL_NEW),
+	PAINTED_NEW = ({matt.paintOk[1],matt.paintNOk[1]} -> ARM_NEW),
+	VARNISHED = ({varnishOk[1], varnishNOk[1]} -> ARM_NEW).
+
+	GLOSSY = ({glossy.paint[1],glossy.paintOk[1], glossy.paintNOk[1]} -> GLOSSY).
+
+||OLD_ENV = (PRODUCTION_CELL_OLD1).// || PRODUCTION_CELL_OLD2).
+||NEW_ENV = (PRODUCTION_CELL_NEW1 || GLOSSY).// || PRODUCTION_CELL_NEW2).
+||MAPPING_ENV = UPDATE_ENV.
+
+
+//DEFINED FLUENTS 
+//fluent Dried1 = <dryOk[1],reset[1]>
+//fluent Dried2 = <dryOk[2],reset[2]>
+//fluent DryPending1 = <dry[1],{dryOk[1],dryNOk[1]}>
+//fluent DryPending2 = <dry[2],{dryOk[2],dryNOk[2]}>
+fluent GlossyPainted1 = <glossy.paintOk[1],reset[1]>
+//fluent GlossyPainted2 = <glossy.paintOk[2],reset[2]>
+fluent GlossyPaintPending1 = <glossy.paint[1],{glossy.paintOk[1],glossy.paintNOk[1]}>
+//fluent GlossyPaintPending2 = <glossy.paint[2],{glossy.paintOk[2],glossy.paintNOk[2]}>
+
+// new fluents
+fluent MattPainted1 = <matt.paintOk[1],reset[1]>
+//fluent MattPainted2 = <matt.paintOk[2],reset[2]>
+fluent MattPaintPending1 = <matt.paint[1],{matt.paintOk[1],matt.paintNOk[1]}>
+//fluent MattPaintPending2 = <matt.paint[2],{matt.paintOk[2],matt.paintNOk[2]}>
+fluent Varnished1 = <varnishOk[1],reset[1]>
+//fluent Varnished2 = <varnishOk[2],reset[2]>
+fluent VarnishPending1 = <varnish[1],{varnishOk[1],varnishNOk[1]}>
+//fluent VarnishPending2 = <varnish[2],{varnishOk[2],varnishNOk[2]}>
+
+fluent Processing1 = <in[1],reset[1]>
+//fluent Processing2 = <in[2],reset[2]>
+
+fluent Out1 = <out[1],reset[1]>
+//fluent Out2 = <out[2],reset[2]>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+//assert OLD_TOOL_ORDER1 = ((dry[1] -> GlossyPainted1))
+assert OLD_OUT_IF_FINISHED1 = (out[1]-> (GlossyPainted1))// && Dried1))
+//assert DRY_ONCE1 = ( dry[1] -> !Dried1 )
+assert OLD_PAINT_ONCE1 = ( glossy.paint[1] -> !GlossyPainted1 )
+/*
+assert OLD_TOOL_ORDER2 = ((dry[2] -> GlossyPainted2))
+assert OLD_OUT_IF_FINISHED2 = (out[2]-> (GlossyPainted2 && Dried2))
+assert DRY_ONCE2 = ( dry[2] -> !Dried2 )
+assert OLD_PAINT_ONCE2 = ( glossy.paint[2] -> !GlossyPainted2 )
+*/
+//ltl_property P_OLD_TOOL_ORDER1 = []OLD_TOOL_ORDER1
+ltl_property P_OLD_OUT_IF_FINISHED1 = []OLD_OUT_IF_FINISHED1
+//ltl_property P_DRY_ONCE1 = []DRY_ONCE1
+ltl_property P_OLD_PAINT_ONCE1 = []OLD_PAINT_ONCE1
+/*
+ltl_property P_OLD_TOOL_ORDER2 = []OLD_TOOL_ORDER2
+ltl_property P_OLD_OUT_IF_FINISHED2 = []OLD_OUT_IF_FINISHED2
+ltl_property P_DRY_ONCE2 = []DRY_ONCE2
+ltl_property P_OLD_PAINT_ONCE2 = []OLD_PAINT_ONCE2
+*/
+controllerSpec PAINT_DRY = {
+	safety = {/*P_OLD_TOOL_ORDER1,*/ P_OLD_OUT_IF_FINISHED1,
+			/*P_DRY_ONCE1,*/ P_OLD_PAINT_ONCE1}//,
+
+//			P_OLD_TOOL_ORDER2, P_OLD_OUT_IF_FINISHED2,
+//			P_DRY_ONCE2, P_OLD_PAINT_ONCE2}
+	controllable = {ControllableActions}
+}
+controller ||C_PAINT_DRY = (OLD_ENV)~{PAINT_DRY}.
+||PaintDry = (C_PAINT_DRY|| OLD_ENV).
+
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert NEW_TOOL_ORDER1 = (/*(dry[1] -> MattPainted1) && */(varnish[1] -> MattPainted1))
+assert NEW_OUT_IF_FINISHED1 = (out[1] -> (MattPainted1 /*&& Dried1*/ && Varnished1))
+assert NEW_PAINT_ONCE1 =   ( matt.paint[1] -> !MattPainted1)
+assert VARNISH_ONCE1 = (varnish[1] -> !Varnished1)
+/*
+assert NEW_TOOL_ORDER2 = ((dry[2] -> MattPainted2) && (varnish[2] -> MattPainted2))
+assert NEW_OUT_IF_FINISHED2 = (out[2] -> (MattPainted2 && Dried2 && Varnished2))
+assert NEW_PAINT_ONCE2 =   ( matt.paint[2] -> !MattPainted2 )
+assert VARNISH_ONCE2 = (varnish[2] -> !Varnished2)
+*/
+ltl_property P_NEW_TOOL_ORDER1 = []NEW_TOOL_ORDER1
+ltl_property P_NEW_OUT_IF_FINISHED1 = []NEW_OUT_IF_FINISHED1
+ltl_property P_NEW_PAINT_ONCE1 = []NEW_PAINT_ONCE1
+ltl_property P_VARNISH_ONCE1 = []VARNISH_ONCE1
+/*
+ltl_property P_NEW_TOOL_ORDER2 = []NEW_TOOL_ORDER2
+ltl_property P_NEW_OUT_IF_FINISHED2 = []NEW_OUT_IF_FINISHED2
+ltl_property P_NEW_PAINT_ONCE2 = []NEW_PAINT_ONCE2
+ltl_property P_VARNISH_ONCE2 = []VARNISH_ONCE2
+*/
+
+controllerSpec VARNISH = {
+	safety = {P_NEW_TOOL_ORDER1, P_NEW_OUT_IF_FINISHED1,
+			/*P_DRY_ONCE1,*/ P_NEW_PAINT_ONCE1, P_VARNISH_ONCE1}//,
+			
+
+//			P_NEW_TOOL_ORDER2, P_NEW_OUT_IF_FINISHED2,
+//			P_DRY_ONCE2, P_NEW_PAINT_ONCE2, P_VARNISH_ONCE2}
+	controllable = {NewControllableActions}
+}
+controller ||C_VARNISH = (NEW_ENV)~{VARNISH}.
+||Varnish = (C_VARNISH || NEW_ENV).
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//ltl_property T_UPDATE_WHILE_EMPTY = ((Processing1 && Processing2) -> (!stopOldSpec && !startNewSpec)) // should give no controller because in is uncontrollable
+//ltl_property T_NOT_A_ELEMENTS = (!startNewSpec ->  )
+ltl_property T_ = ((StartNewSpec -> !GlossyPainted1))// && (GlossyPainted2 -> !StartNewSpec))
+ltl_property T__ = (!StopOldSpec -> !MattPainted1)
+
+updatingController UpdCont = {
+    oldController = PaintDry,
+	mapping = MAPPING_ENV,
+    updateFluents = {Processing1, MattPainted1, Out1, Varnished1, GlossyPainted1}
+    oldGoal = PAINT_DRY,
+    newGoal = VARNISH,
+//    transition = T_NOT_A_ELEMENTS,
+//	transition = T_,
+//	transition = T__,
+    nonblocking
+
+
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+// ---------------------------TEST AND RESULTS-----------------------------
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec = <startNewSpec,beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+assert S_OLD = (/*OLD_TOOL_ORDER1  &&*/ OLD_OUT_IF_FINISHED1 && OLD_PAINT_ONCE1 /*&& DRY_ONCE1*/)// &&
+//				OLD_TOOL_ORDER2  && OLD_OUT_IF_FINISHED2 && OLD_PAINT_ONCE2 && DRY_ONCE2)
+assert S_NEW = (NEW_TOOL_ORDER1 && NEW_OUT_IF_FINISHED1 && NEW_PAINT_ONCE1 /*&& DRY_ONCE1*/ && VARNISH_ONCE1)// &&
+//				NEW_TOOL_ORDER2 && NEW_OUT_IF_FINISHED2 && NEW_PAINT_ONCE2 && DRY_ONCE2 && VARNISH_ONCE2)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert T_ = ((StartNewSpec -> !GlossyPainted1))

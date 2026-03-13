@@ -1,0 +1,1802 @@
+MODULE main
+DOMAINNAME DirectedController
+PROBLEMNAME Goal
+IVAR
+  c: {
+    lambda,
+    "committed_1",
+    "query_2",
+    "query_fail_0",
+    "query_fail_1",
+    "committed_0",
+    "query_0",
+    "agency_request",
+    "query_1",
+    "steps_0_1",
+    "steps_2_0",
+    "steps_0_2",
+    "steps_2_1",
+    "steps_0_3",
+    "steps_2_2",
+    "steps_0_4",
+    "query_fail_2",
+    "steps_0_0",
+    "steps_2_3",
+    "cancel_0",
+    "steps_0_5",
+    "cancel_1",
+    "steps_2_4",
+    "steps_2_5",
+    "cancel_2",
+    "purchase_0",
+    "select_1",
+    "select_0",
+    "agency_succ",
+    "purchase_2",
+    "purchase_1",
+    "purchase_fail_0",
+    "available_0",
+    "purchase_fail_2",
+    "purchase_fail_1",
+    "select_2",
+    "available_1",
+    "available_2",
+    "steps_1_0",
+    "steps_1_1",
+    "steps_1_2",
+    "steps_1_3",
+    "unavailable_1",
+    "unavailable_0",
+    "steps_1_4",
+    "steps_1_5",
+    "unavailable_2",
+    "agency_fail",
+    "query_succ_2",
+    "purchase_succ_2",
+    "purchase_succ_1",
+    "purchase_succ_0",
+    "query_succ_0",
+    "query_succ_1",
+    "uncommitted_1",
+    "uncommitted_2",
+    "uncommitted_0",
+    "committed_2"
+  };
+VAR
+  "AgencyMonitor":-1..3;
+  "Agency":0..1;
+  "Service_1":0..21;
+  "Service_2":0..19;
+  "ServiceMonitor_2":-1..5;
+  "ServiceMonitor_1":-1..5;
+  "ServiceMonitor_0":-1..5;
+  "Service_0":0..21;
+  u: {
+    lambda,
+    "committed_1",
+    "query_2",
+    "query_fail_0",
+    "query_fail_1",
+    "committed_0",
+    "query_0",
+    "agency_request",
+    "query_1",
+    "steps_0_1",
+    "steps_2_0",
+    "steps_0_2",
+    "steps_2_1",
+    "steps_0_3",
+    "steps_2_2",
+    "steps_0_4",
+    "query_fail_2",
+    "steps_0_0",
+    "steps_2_3",
+    "steps_0_5",
+    "steps_2_4",
+    "steps_2_5",
+    "select_1",
+    "select_0",
+    "purchase_fail_0",
+    "available_0",
+    "purchase_fail_2",
+    "purchase_fail_1",
+    "select_2",
+    "available_1",
+    "available_2",
+    "steps_1_0",
+    "steps_1_1",
+    "steps_1_2",
+    "steps_1_3",
+    "unavailable_1",
+    "unavailable_0",
+    "steps_1_4",
+    "steps_1_5",
+    "unavailable_2",
+    "query_succ_2",
+    "purchase_succ_2",
+    "purchase_succ_1",
+    "purchase_succ_0",
+    "query_succ_0",
+    "query_succ_1",
+    "uncommitted_1",
+    "uncommitted_2",
+    "uncommitted_0",
+    "committed_2"
+  };
+  violation:0..1;
+INIT (
+  "AgencyMonitor"=0&
+  "Agency"=0&
+  "Service_1"=0&
+  "Service_2"=0&
+  "ServiceMonitor_2"=0&
+  "ServiceMonitor_1"=0&
+  "ServiceMonitor_0"=0&
+  "Service_0"=0
+)
+TRANS
+  (violation=1 -> next(violation)=1) &
+  (c=lambda -> violation=1)
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((u="query_fail_0" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_0") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  ((u="query_fail_1" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_1") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((u="query_fail_2" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_2") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((c="agency_succ") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=0) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=0) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((u="purchase_fail_0" & !("AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="purchase_fail_0") -> ("AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((u="purchase_fail_2" & !("AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="purchase_fail_2") -> ("AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  ((u="purchase_fail_1" & !("AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="purchase_fail_1") -> ("AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((c="agency_fail") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=-1) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=0) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=-1) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) &
+  ((u="uncommitted_1" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="uncommitted_1") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=2) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  ((u="uncommitted_2" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="uncommitted_2") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=2) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  ((u="uncommitted_0" & !("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) -> (next(violation)=1)) &
+  ((c="uncommitted_0") -> ("AgencyMonitor"=0 | "AgencyMonitor"=1 | "AgencyMonitor"=2)) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    ("AgencyMonitor"=0 -> next("AgencyMonitor")=2) &
+    ("AgencyMonitor"=1 -> next("AgencyMonitor")=1) &
+    ("AgencyMonitor"=2 -> next("AgencyMonitor")=1) 
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("AgencyMonitor")="AgencyMonitor"
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  ((u="query_2" & !("Agency"=1)) -> (next(violation)=1)) &
+  ((c="query_2") -> ("Agency"=1)) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    ("Agency"=1 -> next("Agency")=1) 
+  )) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  ((u="query_0" & !("Agency"=1)) -> (next(violation)=1)) &
+  ((c="query_0") -> ("Agency"=1)) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    ("Agency"=1 -> next("Agency")=1) 
+  )) &
+  ((u="agency_request" & !("Agency"=0)) -> (next(violation)=1)) &
+  ((c="agency_request") -> ("Agency"=0)) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    ("Agency"=0 -> next("Agency")=1) 
+  )) &
+  ((u="query_1" & !("Agency"=1)) -> (next(violation)=1)) &
+  ((c="query_1") -> ("Agency"=1)) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    ("Agency"=1 -> next("Agency")=1) 
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  ((c="agency_succ") -> ("Agency"=1)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("Agency"=1 -> next("Agency")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  ((c="agency_fail") -> ("Agency"=1)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("Agency"=1 -> next("Agency")=0) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("Agency")="Agency"
+  )) 
+TRANS
+  ((u="committed_1" & !("Service_1"=10)) -> (next(violation)=1)) &
+  ((c="committed_1") -> ("Service_1"=10)) &
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    ("Service_1"=10 -> next("Service_1")=14) 
+  )) &
+  ((u="query_2" & !("Service_1"=11 | "Service_1"=14)) -> (next(violation)=1)) &
+  ((c="query_2") -> ("Service_1"=11 | "Service_1"=14)) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    ("Service_1"=11 -> next("Service_1")=12) &
+    ("Service_1"=14 -> next("Service_1")=15) 
+  )) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="query_fail_1" & !("Service_1"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_1") -> ("Service_1"=2)) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    ("Service_1"=2 -> next("Service_1")=0) 
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="query_1" & !("Service_1"=0)) -> (next(violation)=1)) &
+  ((c="query_1") -> ("Service_1"=0)) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    ("Service_1"=0 -> next("Service_1")=1) 
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((c="cancel_1") -> ("Service_1"=12 | "Service_1"=15)) &
+  (((c="cancel_1" & u=lambda)) -> (
+    ("Service_1"=12 -> next("Service_1")=0) &
+    ("Service_1"=15 -> next("Service_1")=0) 
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="select_1" & !("Service_1"=5 | "Service_1"=6 | "Service_1"=7 | "Service_1"=8 | "Service_1"=9)) -> (next(violation)=1)) &
+  ((c="select_1") -> ("Service_1"=5 | "Service_1"=6 | "Service_1"=7 | "Service_1"=8 | "Service_1"=9)) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    ("Service_1"=5 -> next("Service_1")=6) &
+    ("Service_1"=6 -> next("Service_1")=7) &
+    ("Service_1"=7 -> next("Service_1")=8) &
+    ("Service_1"=8 -> next("Service_1")=9) &
+    ("Service_1"=9 -> next("Service_1")=10) 
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((c="agency_succ") -> ("Service_1"=0 | "Service_1"=12 | "Service_1"=15)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("Service_1"=0 -> next("Service_1")=0) &
+    ("Service_1"=12 -> next("Service_1")=0) &
+    ("Service_1"=15 -> next("Service_1")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((c="purchase_1") -> ("Service_1"=12 | "Service_1"=15)) &
+  (((c="purchase_1" & u=lambda)) -> (
+    ("Service_1"=12 -> next("Service_1")=13) &
+    ("Service_1"=15 -> next("Service_1")=16) 
+  )) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="purchase_fail_1" & !("Service_1"=13)) -> (next(violation)=1)) &
+  ((c="purchase_fail_1") -> ("Service_1"=13)) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    ("Service_1"=13 -> next("Service_1")=0) 
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="available_1" & !("Service_1"=1)) -> (next(violation)=1)) &
+  ((c="available_1") -> ("Service_1"=1)) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    ("Service_1"=1 -> next("Service_1")=3) 
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="steps_1_0" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_0") -> ("Service_1"=3)) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=21) 
+  )) &
+  ((u="steps_1_1" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_1") -> ("Service_1"=3)) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=20) 
+  )) &
+  ((u="steps_1_2" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_2") -> ("Service_1"=3)) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=19) 
+  )) &
+  ((u="steps_1_3" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_3") -> ("Service_1"=3)) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=18) 
+  )) &
+  ((u="unavailable_1" & !("Service_1"=1)) -> (next(violation)=1)) &
+  ((c="unavailable_1") -> ("Service_1"=1)) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    ("Service_1"=1 -> next("Service_1")=2) 
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="steps_1_4" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_4") -> ("Service_1"=3)) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=17) 
+  )) &
+  ((u="steps_1_5" & !("Service_1"=3)) -> (next(violation)=1)) &
+  ((c="steps_1_5") -> ("Service_1"=3)) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    ("Service_1"=3 -> next("Service_1")=4) 
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((c="agency_fail") -> ("Service_1"=0 | "Service_1"=12 | "Service_1"=15)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("Service_1"=0 -> next("Service_1")=0) &
+    ("Service_1"=12 -> next("Service_1")=0) &
+    ("Service_1"=15 -> next("Service_1")=0) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="purchase_succ_1" & !("Service_1"=13 | "Service_1"=16)) -> (next(violation)=1)) &
+  ((c="purchase_succ_1") -> ("Service_1"=13 | "Service_1"=16)) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    ("Service_1"=13 -> next("Service_1")=0) &
+    ("Service_1"=16 -> next("Service_1")=0) 
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  ((u="query_succ_1" & !("Service_1"=4 | "Service_1"=17 | "Service_1"=18 | "Service_1"=19 | "Service_1"=20 | "Service_1"=21)) -> (next(violation)=1)) &
+  ((c="query_succ_1") -> ("Service_1"=4 | "Service_1"=17 | "Service_1"=18 | "Service_1"=19 | "Service_1"=20 | "Service_1"=21)) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    ("Service_1"=4 -> next("Service_1")=5) &
+    ("Service_1"=17 -> next("Service_1")=6) &
+    ("Service_1"=18 -> next("Service_1")=7) &
+    ("Service_1"=19 -> next("Service_1")=8) &
+    ("Service_1"=20 -> next("Service_1")=9) &
+    ("Service_1"=21 -> next("Service_1")=10) 
+  )) &
+  ((u="uncommitted_1" & !("Service_1"=10)) -> (next(violation)=1)) &
+  ((c="uncommitted_1") -> ("Service_1"=10)) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    ("Service_1"=10 -> next("Service_1")=11) 
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("Service_1")="Service_1"
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="query_2" & !("Service_2"=0)) -> (next(violation)=1)) &
+  ((c="query_2") -> ("Service_2"=0)) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    ("Service_2"=0 -> next("Service_2")=1) 
+  )) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="steps_2_0" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_0") -> ("Service_2"=3)) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=19) 
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="steps_2_1" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_1") -> ("Service_2"=3)) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=18) 
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="steps_2_2" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_2") -> ("Service_2"=3)) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=17) 
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="query_fail_2" & !("Service_2"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_2") -> ("Service_2"=2)) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    ("Service_2"=2 -> next("Service_2")=0) 
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="steps_2_3" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_3") -> ("Service_2"=3)) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=16) 
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="steps_2_4" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_4") -> ("Service_2"=3)) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=15) 
+  )) &
+  ((u="steps_2_5" & !("Service_2"=3)) -> (next(violation)=1)) &
+  ((c="steps_2_5") -> ("Service_2"=3)) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    ("Service_2"=3 -> next("Service_2")=4) 
+  )) &
+  ((c="cancel_2") -> ("Service_2"=11 | "Service_2"=13)) &
+  (((c="cancel_2" & u=lambda)) -> (
+    ("Service_2"=11 -> next("Service_2")=0) &
+    ("Service_2"=13 -> next("Service_2")=0) 
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((c="agency_succ") -> ("Service_2"=0 | "Service_2"=11 | "Service_2"=13)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("Service_2"=0 -> next("Service_2")=0) &
+    ("Service_2"=11 -> next("Service_2")=0) &
+    ("Service_2"=13 -> next("Service_2")=0) 
+  )) &
+  ((c="purchase_2") -> ("Service_2"=11 | "Service_2"=13)) &
+  (((c="purchase_2" & u=lambda)) -> (
+    ("Service_2"=11 -> next("Service_2")=12) &
+    ("Service_2"=13 -> next("Service_2")=14) 
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="purchase_fail_2" & !("Service_2"=14)) -> (next(violation)=1)) &
+  ((c="purchase_fail_2") -> ("Service_2"=14)) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    ("Service_2"=14 -> next("Service_2")=0) 
+  )) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="select_2" & !("Service_2"=5 | "Service_2"=6 | "Service_2"=7 | "Service_2"=8 | "Service_2"=9)) -> (next(violation)=1)) &
+  ((c="select_2") -> ("Service_2"=5 | "Service_2"=6 | "Service_2"=7 | "Service_2"=8 | "Service_2"=9)) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    ("Service_2"=5 -> next("Service_2")=6) &
+    ("Service_2"=6 -> next("Service_2")=7) &
+    ("Service_2"=7 -> next("Service_2")=8) &
+    ("Service_2"=8 -> next("Service_2")=9) &
+    ("Service_2"=9 -> next("Service_2")=10) 
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="available_2" & !("Service_2"=1)) -> (next(violation)=1)) &
+  ((c="available_2") -> ("Service_2"=1)) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    ("Service_2"=1 -> next("Service_2")=3) 
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="unavailable_2" & !("Service_2"=1)) -> (next(violation)=1)) &
+  ((c="unavailable_2") -> ("Service_2"=1)) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    ("Service_2"=1 -> next("Service_2")=2) 
+  )) &
+  ((c="agency_fail") -> ("Service_2"=0 | "Service_2"=11 | "Service_2"=13)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("Service_2"=0 -> next("Service_2")=0) &
+    ("Service_2"=11 -> next("Service_2")=0) &
+    ("Service_2"=13 -> next("Service_2")=0) 
+  )) &
+  ((u="query_succ_2" & !("Service_2"=4 | "Service_2"=15 | "Service_2"=16 | "Service_2"=17 | "Service_2"=18 | "Service_2"=19)) -> (next(violation)=1)) &
+  ((c="query_succ_2") -> ("Service_2"=4 | "Service_2"=15 | "Service_2"=16 | "Service_2"=17 | "Service_2"=18 | "Service_2"=19)) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    ("Service_2"=4 -> next("Service_2")=5) &
+    ("Service_2"=15 -> next("Service_2")=6) &
+    ("Service_2"=16 -> next("Service_2")=7) &
+    ("Service_2"=17 -> next("Service_2")=8) &
+    ("Service_2"=18 -> next("Service_2")=9) &
+    ("Service_2"=19 -> next("Service_2")=10) 
+  )) &
+  ((u="purchase_succ_2" & !("Service_2"=12 | "Service_2"=14)) -> (next(violation)=1)) &
+  ((c="purchase_succ_2") -> ("Service_2"=12 | "Service_2"=14)) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    ("Service_2"=12 -> next("Service_2")=0) &
+    ("Service_2"=14 -> next("Service_2")=0) 
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="uncommitted_2" & !("Service_2"=10)) -> (next(violation)=1)) &
+  ((c="uncommitted_2") -> ("Service_2"=10)) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    ("Service_2"=10 -> next("Service_2")=13) 
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("Service_2")="Service_2"
+  )) &
+  ((u="committed_2" & !("Service_2"=10)) -> (next(violation)=1)) &
+  ((c="committed_2") -> ("Service_2"=10)) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    ("Service_2"=10 -> next("Service_2")=11) 
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((u="query_2" & !("ServiceMonitor_2"=0)) -> (next(violation)=1)) &
+  ((c="query_2") -> ("ServiceMonitor_2"=0)) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=0 -> next("ServiceMonitor_2")=1) 
+  )) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((u="query_fail_2" & !("ServiceMonitor_2"=1)) -> (next(violation)=1)) &
+  ((c="query_fail_2") -> ("ServiceMonitor_2"=1)) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=1 -> next("ServiceMonitor_2")=2) 
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((c="cancel_2") -> ("ServiceMonitor_2"=3)) &
+  (((c="cancel_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=3 -> next("ServiceMonitor_2")=2) 
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((c="agency_succ") -> ("ServiceMonitor_2"=0 | "ServiceMonitor_2"=1 | "ServiceMonitor_2"=2 | "ServiceMonitor_2"=3 | "ServiceMonitor_2"=4)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("ServiceMonitor_2"=0 -> next("ServiceMonitor_2")=-1) &
+    ("ServiceMonitor_2"=1 -> next("ServiceMonitor_2")=-1) &
+    ("ServiceMonitor_2"=2 -> next("ServiceMonitor_2")=-1) &
+    ("ServiceMonitor_2"=3 -> next("ServiceMonitor_2")=-1) &
+    ("ServiceMonitor_2"=4 -> next("ServiceMonitor_2")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((u="purchase_fail_2" & !("ServiceMonitor_2"=3)) -> (next(violation)=1)) &
+  ((c="purchase_fail_2") -> ("ServiceMonitor_2"=3)) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=3 -> next("ServiceMonitor_2")=2) 
+  )) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  ((c="agency_fail") -> ("ServiceMonitor_2"=0 | "ServiceMonitor_2"=1 | "ServiceMonitor_2"=2 | "ServiceMonitor_2"=3 | "ServiceMonitor_2"=4)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("ServiceMonitor_2"=0 -> next("ServiceMonitor_2")=0) &
+    ("ServiceMonitor_2"=1 -> next("ServiceMonitor_2")=0) &
+    ("ServiceMonitor_2"=2 -> next("ServiceMonitor_2")=0) &
+    ("ServiceMonitor_2"=3 -> next("ServiceMonitor_2")=0) &
+    ("ServiceMonitor_2"=4 -> next("ServiceMonitor_2")=0) 
+  )) &
+  ((u="query_succ_2" & !("ServiceMonitor_2"=1)) -> (next(violation)=1)) &
+  ((c="query_succ_2") -> ("ServiceMonitor_2"=1)) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=1 -> next("ServiceMonitor_2")=3) 
+  )) &
+  ((u="purchase_succ_2" & !("ServiceMonitor_2"=3)) -> (next(violation)=1)) &
+  ((c="purchase_succ_2") -> ("ServiceMonitor_2"=3)) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    ("ServiceMonitor_2"=3 -> next("ServiceMonitor_2")=4) 
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("ServiceMonitor_2")="ServiceMonitor_2"
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((u="query_fail_1" & !("ServiceMonitor_1"=1)) -> (next(violation)=1)) &
+  ((c="query_fail_1") -> ("ServiceMonitor_1"=1)) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=1 -> next("ServiceMonitor_1")=3) 
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((u="query_1" & !("ServiceMonitor_1"=0)) -> (next(violation)=1)) &
+  ((c="query_1") -> ("ServiceMonitor_1"=0)) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=0 -> next("ServiceMonitor_1")=1) 
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((c="cancel_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((c="cancel_1") -> ("ServiceMonitor_1"=2)) &
+  (((c="cancel_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=2 -> next("ServiceMonitor_1")=3) 
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((c="agency_succ") -> ("ServiceMonitor_1"=0 | "ServiceMonitor_1"=1 | "ServiceMonitor_1"=2 | "ServiceMonitor_1"=3 | "ServiceMonitor_1"=4)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("ServiceMonitor_1"=0 -> next("ServiceMonitor_1")=-1) &
+    ("ServiceMonitor_1"=1 -> next("ServiceMonitor_1")=-1) &
+    ("ServiceMonitor_1"=2 -> next("ServiceMonitor_1")=-1) &
+    ("ServiceMonitor_1"=3 -> next("ServiceMonitor_1")=-1) &
+    ("ServiceMonitor_1"=4 -> next("ServiceMonitor_1")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((u="purchase_fail_1" & !("ServiceMonitor_1"=2)) -> (next(violation)=1)) &
+  ((c="purchase_fail_1") -> ("ServiceMonitor_1"=2)) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=2 -> next("ServiceMonitor_1")=3) 
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((c="agency_fail") -> ("ServiceMonitor_1"=0 | "ServiceMonitor_1"=1 | "ServiceMonitor_1"=2 | "ServiceMonitor_1"=3 | "ServiceMonitor_1"=4)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("ServiceMonitor_1"=0 -> next("ServiceMonitor_1")=0) &
+    ("ServiceMonitor_1"=1 -> next("ServiceMonitor_1")=0) &
+    ("ServiceMonitor_1"=2 -> next("ServiceMonitor_1")=0) &
+    ("ServiceMonitor_1"=3 -> next("ServiceMonitor_1")=0) &
+    ("ServiceMonitor_1"=4 -> next("ServiceMonitor_1")=0) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((u="purchase_succ_1" & !("ServiceMonitor_1"=2)) -> (next(violation)=1)) &
+  ((c="purchase_succ_1") -> ("ServiceMonitor_1"=2)) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=2 -> next("ServiceMonitor_1")=4) 
+  )) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  ((u="query_succ_1" & !("ServiceMonitor_1"=1)) -> (next(violation)=1)) &
+  ((c="query_succ_1") -> ("ServiceMonitor_1"=1)) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    ("ServiceMonitor_1"=1 -> next("ServiceMonitor_1")=2) 
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("ServiceMonitor_1")="ServiceMonitor_1"
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((u="query_fail_0" & !("ServiceMonitor_0"=1)) -> (next(violation)=1)) &
+  ((c="query_fail_0") -> ("ServiceMonitor_0"=1)) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=1 -> next("ServiceMonitor_0")=3) 
+  )) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((u="query_0" & !("ServiceMonitor_0"=0)) -> (next(violation)=1)) &
+  ((c="query_0") -> ("ServiceMonitor_0"=0)) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=0 -> next("ServiceMonitor_0")=1) 
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((c="cancel_0") -> ("ServiceMonitor_0"=2)) &
+  (((c="cancel_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=2 -> next("ServiceMonitor_0")=3) 
+  )) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((c="purchase_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((c="agency_succ") -> ("ServiceMonitor_0"=0 | "ServiceMonitor_0"=1 | "ServiceMonitor_0"=2 | "ServiceMonitor_0"=3 | "ServiceMonitor_0"=4)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("ServiceMonitor_0"=0 -> next("ServiceMonitor_0")=-1) &
+    ("ServiceMonitor_0"=1 -> next("ServiceMonitor_0")=-1) &
+    ("ServiceMonitor_0"=2 -> next("ServiceMonitor_0")=-1) &
+    ("ServiceMonitor_0"=3 -> next("ServiceMonitor_0")=-1) &
+    ("ServiceMonitor_0"=4 -> next("ServiceMonitor_0")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((u="purchase_fail_0" & !("ServiceMonitor_0"=2)) -> (next(violation)=1)) &
+  ((c="purchase_fail_0") -> ("ServiceMonitor_0"=2)) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=2 -> next("ServiceMonitor_0")=3) 
+  )) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((c="agency_fail") -> ("ServiceMonitor_0"=0 | "ServiceMonitor_0"=1 | "ServiceMonitor_0"=2 | "ServiceMonitor_0"=3 | "ServiceMonitor_0"=4)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("ServiceMonitor_0"=0 -> next("ServiceMonitor_0")=0) &
+    ("ServiceMonitor_0"=1 -> next("ServiceMonitor_0")=0) &
+    ("ServiceMonitor_0"=2 -> next("ServiceMonitor_0")=0) &
+    ("ServiceMonitor_0"=3 -> next("ServiceMonitor_0")=0) &
+    ("ServiceMonitor_0"=4 -> next("ServiceMonitor_0")=0) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  ((u="purchase_succ_0" & !("ServiceMonitor_0"=2)) -> (next(violation)=1)) &
+  ((c="purchase_succ_0") -> ("ServiceMonitor_0"=2)) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=2 -> next("ServiceMonitor_0")=4) 
+  )) &
+  ((u="query_succ_0" & !("ServiceMonitor_0"=1)) -> (next(violation)=1)) &
+  ((c="query_succ_0") -> ("ServiceMonitor_0"=1)) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    ("ServiceMonitor_0"=1 -> next("ServiceMonitor_0")=2) 
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("ServiceMonitor_0")="ServiceMonitor_0"
+  )) 
+TRANS
+  (((u="committed_1") | (c="committed_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="query_2") | (c="query_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="query_fail_0" & !("Service_0"=2)) -> (next(violation)=1)) &
+  ((c="query_fail_0") -> ("Service_0"=2)) &
+  (((u="query_fail_0") | (c="query_fail_0" & u=lambda)) -> (
+    ("Service_0"=2 -> next("Service_0")=0) 
+  )) &
+  (((u="query_fail_1") | (c="query_fail_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="committed_0" & !("Service_0"=10)) -> (next(violation)=1)) &
+  ((c="committed_0") -> ("Service_0"=10)) &
+  (((u="committed_0") | (c="committed_0" & u=lambda)) -> (
+    ("Service_0"=10 -> next("Service_0")=14) 
+  )) &
+  ((u="query_0" & !("Service_0"=0)) -> (next(violation)=1)) &
+  ((c="query_0") -> ("Service_0"=0)) &
+  (((u="query_0") | (c="query_0" & u=lambda)) -> (
+    ("Service_0"=0 -> next("Service_0")=1) 
+  )) &
+  (((u="agency_request") | (c="agency_request" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="query_1" & !("Service_0"=11 | "Service_0"=14)) -> (next(violation)=1)) &
+  ((c="query_1") -> ("Service_0"=11 | "Service_0"=14)) &
+  (((u="query_1") | (c="query_1" & u=lambda)) -> (
+    ("Service_0"=11 -> next("Service_0")=12) &
+    ("Service_0"=14 -> next("Service_0")=15) 
+  )) &
+  ((u="steps_0_1" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_1") -> ("Service_0"=3)) &
+  (((u="steps_0_1") | (c="steps_0_1" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=21) 
+  )) &
+  (((u="steps_2_0") | (c="steps_2_0" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="steps_0_2" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_2") -> ("Service_0"=3)) &
+  (((u="steps_0_2") | (c="steps_0_2" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=20) 
+  )) &
+  (((u="steps_2_1") | (c="steps_2_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="steps_0_3" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_3") -> ("Service_0"=3)) &
+  (((u="steps_0_3") | (c="steps_0_3" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=19) 
+  )) &
+  (((u="steps_2_2") | (c="steps_2_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="steps_0_4" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_4") -> ("Service_0"=3)) &
+  (((u="steps_0_4") | (c="steps_0_4" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=18) 
+  )) &
+  (((u="query_fail_2") | (c="query_fail_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="steps_0_0" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_0") -> ("Service_0"=3)) &
+  (((u="steps_0_0") | (c="steps_0_0" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=17) 
+  )) &
+  (((u="steps_2_3") | (c="steps_2_3" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((c="cancel_0") -> ("Service_0"=12 | "Service_0"=15)) &
+  (((c="cancel_0" & u=lambda)) -> (
+    ("Service_0"=12 -> next("Service_0")=0) &
+    ("Service_0"=15 -> next("Service_0")=0) 
+  )) &
+  ((u="steps_0_5" & !("Service_0"=3)) -> (next(violation)=1)) &
+  ((c="steps_0_5") -> ("Service_0"=3)) &
+  (((u="steps_0_5") | (c="steps_0_5" & u=lambda)) -> (
+    ("Service_0"=3 -> next("Service_0")=4) 
+  )) &
+  (((c="cancel_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_2_4") | (c="steps_2_4" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_2_5") | (c="steps_2_5" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((c="cancel_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((c="purchase_0") -> ("Service_0"=12 | "Service_0"=15)) &
+  (((c="purchase_0" & u=lambda)) -> (
+    ("Service_0"=12 -> next("Service_0")=13) &
+    ("Service_0"=15 -> next("Service_0")=16) 
+  )) &
+  (((u="select_1") | (c="select_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="select_0" & !("Service_0"=5 | "Service_0"=6 | "Service_0"=7 | "Service_0"=8 | "Service_0"=9)) -> (next(violation)=1)) &
+  ((c="select_0") -> ("Service_0"=5 | "Service_0"=6 | "Service_0"=7 | "Service_0"=8 | "Service_0"=9)) &
+  (((u="select_0") | (c="select_0" & u=lambda)) -> (
+    ("Service_0"=5 -> next("Service_0")=6) &
+    ("Service_0"=6 -> next("Service_0")=7) &
+    ("Service_0"=7 -> next("Service_0")=8) &
+    ("Service_0"=8 -> next("Service_0")=9) &
+    ("Service_0"=9 -> next("Service_0")=10) 
+  )) &
+  ((c="agency_succ") -> ("Service_0"=0 | "Service_0"=12 | "Service_0"=15)) &
+  (((c="agency_succ" & u=lambda)) -> (
+    ("Service_0"=0 -> next("Service_0")=0) &
+    ("Service_0"=12 -> next("Service_0")=0) &
+    ("Service_0"=15 -> next("Service_0")=0) 
+  )) &
+  (((c="purchase_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((c="purchase_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="purchase_fail_0" & !("Service_0"=13)) -> (next(violation)=1)) &
+  ((c="purchase_fail_0") -> ("Service_0"=13)) &
+  (((u="purchase_fail_0") | (c="purchase_fail_0" & u=lambda)) -> (
+    ("Service_0"=13 -> next("Service_0")=0) 
+  )) &
+  ((u="available_0" & !("Service_0"=1)) -> (next(violation)=1)) &
+  ((c="available_0") -> ("Service_0"=1)) &
+  (((u="available_0") | (c="available_0" & u=lambda)) -> (
+    ("Service_0"=1 -> next("Service_0")=3) 
+  )) &
+  (((u="purchase_fail_2") | (c="purchase_fail_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="purchase_fail_1") | (c="purchase_fail_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="select_2") | (c="select_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="available_1") | (c="available_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="available_2") | (c="available_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_1_0") | (c="steps_1_0" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_1_1") | (c="steps_1_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_1_2") | (c="steps_1_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_1_3") | (c="steps_1_3" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="unavailable_1") | (c="unavailable_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="unavailable_0" & !("Service_0"=1)) -> (next(violation)=1)) &
+  ((c="unavailable_0") -> ("Service_0"=1)) &
+  (((u="unavailable_0") | (c="unavailable_0" & u=lambda)) -> (
+    ("Service_0"=1 -> next("Service_0")=2) 
+  )) &
+  (((u="steps_1_4") | (c="steps_1_4" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="steps_1_5") | (c="steps_1_5" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="unavailable_2") | (c="unavailable_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((c="agency_fail") -> ("Service_0"=0 | "Service_0"=12 | "Service_0"=15)) &
+  (((c="agency_fail" & u=lambda)) -> (
+    ("Service_0"=0 -> next("Service_0")=0) &
+    ("Service_0"=12 -> next("Service_0")=0) &
+    ("Service_0"=15 -> next("Service_0")=0) 
+  )) &
+  (((u="query_succ_2") | (c="query_succ_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="purchase_succ_2") | (c="purchase_succ_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="purchase_succ_1") | (c="purchase_succ_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="purchase_succ_0" & !("Service_0"=13 | "Service_0"=16)) -> (next(violation)=1)) &
+  ((c="purchase_succ_0") -> ("Service_0"=13 | "Service_0"=16)) &
+  (((u="purchase_succ_0") | (c="purchase_succ_0" & u=lambda)) -> (
+    ("Service_0"=13 -> next("Service_0")=0) &
+    ("Service_0"=16 -> next("Service_0")=0) 
+  )) &
+  ((u="query_succ_0" & !("Service_0"=4 | "Service_0"=17 | "Service_0"=18 | "Service_0"=19 | "Service_0"=20 | "Service_0"=21)) -> (next(violation)=1)) &
+  ((c="query_succ_0") -> ("Service_0"=4 | "Service_0"=17 | "Service_0"=18 | "Service_0"=19 | "Service_0"=20 | "Service_0"=21)) &
+  (((u="query_succ_0") | (c="query_succ_0" & u=lambda)) -> (
+    ("Service_0"=4 -> next("Service_0")=5) &
+    ("Service_0"=17 -> next("Service_0")=10) &
+    ("Service_0"=18 -> next("Service_0")=6) &
+    ("Service_0"=19 -> next("Service_0")=7) &
+    ("Service_0"=20 -> next("Service_0")=8) &
+    ("Service_0"=21 -> next("Service_0")=9) 
+  )) &
+  (((u="query_succ_1") | (c="query_succ_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="uncommitted_1") | (c="uncommitted_1" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  (((u="uncommitted_2") | (c="uncommitted_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) &
+  ((u="uncommitted_0" & !("Service_0"=10)) -> (next(violation)=1)) &
+  ((c="uncommitted_0") -> ("Service_0"=10)) &
+  (((u="uncommitted_0") | (c="uncommitted_0" & u=lambda)) -> (
+    ("Service_0"=10 -> next("Service_0")=11) 
+  )) &
+  (((u="committed_2") | (c="committed_2" & u=lambda)) -> (
+    next("Service_0")="Service_0"
+  )) 
+FULL_OBS_CTL_GOAL
+  AG(EF(
+    violation | (
+      ("AgencyMonitor"=-1 | "AgencyMonitor"=0) &
+      ("Agency"=0) &
+      ("Service_1"=0) &
+      ("Service_2"=0) &
+      ("ServiceMonitor_2"=0 | "ServiceMonitor_2"=-1) &
+      ("ServiceMonitor_1"=0 | "ServiceMonitor_1"=-1) &
+      ("ServiceMonitor_0"=0 | "ServiceMonitor_0"=-1) &
+      ("Service_0"=0) 
+    )
+  ))

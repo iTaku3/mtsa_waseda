@@ -1,0 +1,32 @@
+const N = 2
+range Ovens = 1..N
+
+set A = {[Ovens].{cook, finishedCooking, overheated}}
+set Controllable = {[Ovens].{cook}}
+
+OVENS = ([oid:Ovens].cook?->COOKING[oid]),
+COOKING[oid:Ovens]=([oid].finishedCooking->OVENS | [oid].overheated?->OVERHEATED[oid]),
+OVERHEATED[oid:Ovens] = ([oid].overheated->OVERHEATED[oid]).
+
+||ENV = (OVENS /*|| ARM*/).
+fluent F_Cooking[oid:Ovens] = <[oid].cook, [oid].finishedCooking>
+fluent F_OverHeated[oid:Ovens] = <[oid].overheated, A\{[oid].overheated}> 
+
+assert TRUE = (F_OverHeated[1] || !F_OverHeated[1])
+
+assert NotCooking = !F_Cooking
+
+SUCCESSFULLY_COOKED_TWICE = (cook->cook->moveToBelt->SUCCESSFULLY_COOKED_TWICE). 
+ltl_property NotOverHeated = forall[oid:Ovens] ([] (!F_OverHeated[oid]))
+
+//controllers
+controller ||C = (ENV)~{G1}.
+starenv ||Star = (ENV).// || NotOverHeated).
+
+//Goals
+controllerSpec G1 = {
+       safety = {NotOverHeated}
+       assumption = {TRUE}
+       liveness = {TRUE}
+       controllable = {Controllable}
+}

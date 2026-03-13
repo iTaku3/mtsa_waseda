@@ -1,0 +1,24 @@
+Ejemplo = A0,
+A0 = (u01 -> A1 | u02 -> A2),
+A1 = (u10 -> A0),
+A2 = (c2b -> Malo1 | c2m -> Bueno1   ),
+Bueno1 = (ub12 -> Bueno2),
+Bueno2 = (ub23 -> Bueno3),
+Bueno3 = (ub34 -> Bueno4),
+Bueno4 = (ub45 -> Bueno5 | ub42 -> Bueno2), /*se le puede cambiar este loop ub42*/
+Bueno5 = (ub56 -> Bueno6),
+Bueno6 = (um3a -> A2),
+Malo1 = (um12 -> Malo2),
+Malo2 = (um23 -> Malo3 | um2d -> Deadlock),
+Deadlock = (udd -> Deadlock),
+Malo3 = (ub6a -> A2).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {c2m, c2b}
+  marking = {um3a, ub6a}
+  nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

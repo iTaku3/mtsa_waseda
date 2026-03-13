@@ -1,0 +1,32 @@
+/*
+Environment model that is controllable with Non Blocking Controllers
+*/
+set Controllable = {n,s,e,w}
+set Alphabet = {Controllable, pressed}
+
+ROBOT = ({n,s,e,w}->ROBOT). 
+
+ROOM = E, 
+E = (w->NW | w->SW | e->STOP),
+SW = (e->E | s->SP | w->STOP),
+NW = (e->E | n->NP | w->STOP),
+NP = (pressed->NW),
+SP = (pressed->SW)+{Alphabet}.
+
+||ENV = (ROOM || ROBOT).
+
+fluent F_E = <e, Controllable\{e}>
+fluent F_P = <pressed, Alphabet\{pressed}>
+
+assert PRESSED = F_P
+assert EAST = F_E
+
+controller ||C = ENV~{G}.
+minimal ||Min_Controller = C.
+controlled_det ||DET = ENV~{G}.
+
+controllerSpec G = {
+    liveness = {PRESSED, EAST}
+	nonblocking
+    controllable = {Controllable}
+}

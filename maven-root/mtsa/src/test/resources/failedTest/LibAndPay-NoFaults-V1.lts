@@ -1,0 +1,74 @@
+set AlphaLib = {lib.{login, logout, search, order}}
+set AlphaPay = {pay.{login, logout, pay}}
+set AlphaCWS = {cws.{login, logout, getBook, gotBook}}
+
+set Controllable = {alphaLib, alphaPay, cws.gotBook}
+set A = {AlphaLib, AlphaPay, AlphaCWS}
+
+//environment 
+L = (login->LOGGED_IN),
+LOGGED_IN = (logout->L | search->order->LOGGED_IN).
+||LIB = (lib:L).
+
+P = (login->LOGGED_IN),
+LOGGED_IN = (logout->P | pay->LOGGED_IN).
+||PAY = (pay:P).
+
+C = (login->loggedIn->C | logout->loggedOut->C | getBook->gotBook->C).
+||CWS = (cws:C).
+
+||ENV = (PAY || LIB || CWS).
+
+//fluents 
+fluent F_BothLogin = <{{lib, pay}.{login}}, A\{{lib, pay}.{login}}>
+fluent F_CWS_LoggedIn = <cws.login, cws.logout>
+
+fluent F_BothLogout = <{{lib, pay}.{logout}}, A\{{lib, pay}.{logout}}>
+fluent F_CWS_LoggedOut = <cws.logout, cws.login>
+
+fluent F_GetBook = <cws.getBook, A\{cws.getBook}>
+fluent F_ProsessingGetBook = <cws.getBook, cws.gotBook>
+fluent F_Pay = <pay.pay, A\{pay.pay}>
+fluent F_Ordered = <lib.order, {lib.{search, logout}}>
+
+fluent F_Search = <lib.search, A\{lib.search}>
+fluent F_LibLoggedIn = <lib.login, lib.logout>
+fluent F_PayLoggedIn = <pay.login, pay.logout>
+
+//safety
+ltl_property Logins = [](F_BothLogin -> F_CWS_LoggedIn)
+ltl_property Logouts = [](F_BothLogout -> F_CWS_LoggedOut)
+ltl_property PayIfOrdered = [](F_Pay -> F_Ordered)
+ltl_property SearchIfLoggedIn = [](F_Search -> (F_LibLoggedIn && F_PayLoggedIn))
+ltl_property GetBookProcess = [](F_Search-> F_ProsessingGetBook)
+ltl_property GotBookOnlyIfPaid = [](F_GotBook -> F_Paid)
+//asserts
+
+ltl_property GetOnlyIfLoggedIn = [](F_CWSGetBook -> F_CWSLoggedIn)
+fluent F_CWSGetBook = <cws.getBook, A\{cws.getBook}>
+fluent F_CWSLoggedIn = <cws.login, cws.logout>
+
+fluent F_Paid = <pay.pay, cws.gotBook>//{pay.search, pay.logout}>
+fluent F_GotBook = <cws.gotBook, A\{cws.gotBook}>
+assert GotBook = F_GotBook
+assert GetBook = F_GetBook
+
+//controllers
+controller ||C = (ENV)~{G1}.
+
+//controllerSpecs
+controllerSpec G1 = {
+       safety = {Logins, Logouts, PayIfOrdered, SearchIfLoggedIn, 
+				GetBookProcess, GotBookOnlyIfPaid, GetOnlyIfLoggedIn}
+//       failure = {Failures}
+       assumption = {GetBook}
+       liveness = {GotBook}
+       controllable = {Controllable}
+}
+
+//testing
+||PROPS = (Logins || Logouts || PayIfOrdered || SearchIfLoggedIn 
+			|| GetBookProcess || GotBookOnlyIfPaid).
+
+||AnalysedEnv = (PAY || LIB || CWS || Logins || Logouts || PayIfOrdered || SearchIfLoggedIn 
+			|| GetBookProcess || GotBookOnlyIfPaid || GetOnlyIfLoggedIn).

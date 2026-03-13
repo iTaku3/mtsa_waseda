@@ -1,0 +1,971 @@
+// ============================================================================
+// Define constants and ranges
+const False = 0
+const True = 1
+range Boolean = False..True
+
+const Open = 0
+const Mated = 1
+const Indeterminate = 2
+const ClosedButUnmated = 3
+range LatchState = Open..ClosedButUnmated
+
+const None = 0
+const Poor = 1
+const Good = 2
+range Quality = None..Good
+range Fuel = Poor..Good
+range Time = Poor..Good
+range ThrustExists = False..True
+range StateEstimation = Poor..Good
+
+// number of sensors that are able to provide particular attribute
+const AvailableSensorsPosition = 3
+const AvailableSensorsVelocity = 3
+const AvailableSensorsAttitude = 2
+
+
+// Main Model
+
+// PRELIMINARIES
+// ============================================================================
+// Basic Timer
+Timer = (timer.start -> Countdown | timer.readExpired[False] -> Timer),
+Countdown = (timer.expired -> Expired | {timer.readExpired[False], timer.start} -> Countdown | timer.stop -> Timer),
+Expired = (timer.readExpired[True] -> Expired | timer.start -> Countdown | timer.stop -> Timer). 
+
+// ============================================================================
+// MODES
+
+// ============================================================================
+// 1. STUBBED MODES
+// ============================================================================
+// ApproachOrbit
+ApproachOrbitMode = (start -> enterApproachOrbitMode -> Start),
+	Start = (orbitalState.enableNavigation -> orbitalState.refresh -> readOrbitalState[s:Quality] -> Action),
+  Action = (orbitalState.refresh -> readOrbitalState[s:Quality] -> Action
+			| succeeded -> enterProximityOperationsMode -> Restart
+            | failed -> enterCollisionAvoidanceManeuverMode -> Restart),
+  Restart = (collisionAvoidance.enterApproachOrbitMode -> Action).
+
+
+
+|| ApproachOrbit = (approachOrbit:ApproachOrbitMode)
+  / {enterApproachOrbitMode / approachOrbit.enterApproachOrbitMode,
+        enterProximityOperationsMode / approachOrbit.enterProximityOperationsMode,
+        collisionAvoidance.enterApproachOrbitMode / approachOrbit.collisionAvoidance.enterApproachOrbitMode}.
+
+// ============================================================================
+// ProximityOperations
+ProximityOperationsMode = (enterProximityOperationsMode -> orbitalState.refresh -> readOrbitalState[s:Quality] -> Action),
+  Action = (orbitalState.refresh -> readOrbitalState[s:Quality] -> Action
+			| succeeded -> enterFarApproachMode -> ProximityOperationsMode 
+            | failed -> enterCollisionAvoidanceManeuverMode -> ProximityOperationsMode).
+
+
+|| ProximityOperations = (proximityOperations:ProximityOperationsMode)
+  / {enterProximityOperationsMode / proximityOperations.enterProximityOperationsMode,
+        enterFarApproachMode / proximityOperations.enterFarApproachMode}.
+
+
+
+// ============================================================================
+// FarApproach
+FarApproachMode = (enterFarApproachMode -> orbitalState.refresh -> readOrbitalState[s:Quality] -> Action),
+  Action = (orbitalState.refresh -> readOrbitalState[s:Quality] -> Action
+			| succeeded -> enterCaptureApproachMode -> FarApproachMode
+            | failed -> enterCollisionAvoidanceManeuverMode -> FarApproachMode).
+
+
+
+|| FarApproach = (farApproach:FarApproachMode)
+  / {enterFarApproachMode / farApproach.enterFarApproachMode,
+        enterCaptureApproachMode / farApproach.enterCaptureApproachMode}.
+
+
+// ============================================================================
+// CollisionAvoidance
+CollisionAvoidanceMode = (enterCollisionAvoidanceManeuverMode -> (failedApproach -> Failed | safeToApproach -> Restart)),
+Failed = (failedARD -> Failed),
+Restart = (enterApproachOrbitMode -> CollisionAvoidanceMode).  
+
+
+
+|| CollisionAvoidanceManeuver = (collisionAvoidance:CollisionAvoidanceMode)
+  / { enterCaptureApproachMode / collisionAvoidance.enterCaptureApproachMode,
+        {captureApproach, 
+        jointStabilize, 
+        proximityOperations, 
+        approachOrbit, 
+        farApproach}.enterCollisionAvoidanceManeuverMode / collisionAvoidance.enterCollisionAvoidanceManeuverMode}.
+
+
+
+// ============================================================================
+
+// JointStabilize
+JointStabilizeMode = (enterJointStabilizeMode -> Stabilize),
+  Stabilize = (noerror -> missionCompleted -> Done 
+			  | caution_xxxxx_ERROR_OCCURRED_xxxxx  -> missionCompleted -> Done
+              | latchLost -> disengage -> enterCollisionAvoidanceManeuverMode -> JointStabilizeMode),
+  Done = (missionCompleted -> Done).
+
+
+
+|| JointStabilize = (jointStabilize:JointStabilizeMode)
+  / {enterJointStabilizeMode / jointStabilize.enterJointStabilizeMode,
+		missionCompleted / jointStabilize.missionCompleted,
+	caution_xxxxx_ERROR_OCCURRED_xxxxx  / jointStabilize.caution_xxxxx_ERROR_OCCURRED_xxxxx }.
+
+
+RunToCompletion = (missionCompleted -> ERROR).
+
+
+
+// ============================================================================
+// 2. ELABORATED MODES
+// ============================================================================
+
+// if you lose two of your sensors while you are trying capture approach, you should not proceed to the next mode
+
+property ModAvoidCollision = (gps.failed -> FailedGPS
+                           | enterCaptureApproachMode -> Sink
+                           | starPlanetTracker.failed -> FailedSPT
+                           | enterDockingApproachMode -> AvoidCollision),
+FailedGPS  = (starPlanetTracker.failed -> FailedBoth
+              | enterCaptureApproachMode -> Sink
+              | enterDockingApproachMode -> FailedGPS),
+FailedSPT  = (gps.failed -> FailedBoth
+             | enterCaptureApproachMode -> Sink
+             | enterDockingApproachMode ->  FailedSPT),
+FailedBoth  = (enterCaptureApproachMode -> FailedBoth),
+Sink = ({gps.failed, starPlanetTracker.failed, enterCaptureApproachMode, enterDockingApproachMode} -> Sink).
+ 
+
+AvoidCollision = Q0,
+	Q0	= (enterDockingApproachMode -> Q0
+		  |starPlanetTracker.failed -> Q1
+		  |enterCaptureApproachMode -> Q2
+		  |gps.failed -> Q4
+		  | noerror -> Q0),
+	Q1	= (starPlanetTracker.failed -> ERR
+		  |enterDockingApproachMode -> Q1
+		  |enterCaptureApproachMode -> Q2
+		  |gps.failed -> Q3
+			 | noeeror -> Q1),
+	Q2	= ({{enterCaptureApproachMode, enterDockingApproachMode}, {gps, starPlanetTracker}.failed, noerror} -> Q2),
+	Q3	= ({enterDockingApproachMode, {gps, starPlanetTracker}.failed} -> ERR
+		  |enterCaptureApproachMode -> Q3
+			| noerror -> Q3),
+	Q4	= (gps.failed -> ERR
+		  |enterCaptureApproachMode -> Q2
+		  |starPlanetTracker.failed -> Q3
+		  |enterDockingApproachMode -> Q4),
+ERR = (caution_xxxxx_ERROR_OCCURRED_xxxxx -> Finish),
+Finish = ({ enterCaptureApproachMode,
+	  enterDockingApproachMode,
+	  gps.failed,
+	  starPlanetTracker.failed} -> Finish).
+
+ 
+// CaptureApproachMode
+CaptureApproachMode = (enterCaptureApproachMode -> timer.start -> StartApproach),
+                      /* (orbitalState.enableNavigation -> StartApproach
+                        | timerExpired -> CaptureApproachFailed)), */
+// you have not started maneuvers towards your target yet, trying to acquire sensor readings 
+  StartApproach = (orbitalState.refresh -> readOrbitalState[s:Quality] -> if (s == None)
+                                            then StartApproach
+                                            else CheckOrbitalState
+                   | timerExpired -> CaptureApproachFailed),
+// you have started maneuvers so if your sensor readings are not good, you need to do collision avoidance
+  CheckOrbitalState = (orbitalState.refresh -> readOrbitalState[s:Quality] -> if (s == None)
+                                                then CaptureApproachFailed
+                                                else ComputeMissionState
+                              | timerExpired -> CaptureApproachFailed),
+  ComputeMissionState = (captureMissionState[p:Quality] ->
+                                        if (p == Good) then ReadyForDockingApproach else ComputeThrust
+                         | timerExpired -> CaptureApproachFailed),
+  ReadyForDockingApproach = (succeeded -> (orbitalState.disableNavigation -> orbitalState.continue -> enterDockingApproachMode -> ModeEnd[False] 
+                                                      | timerExpired -> CaptureApproachFailed)
+                         | timerExpired -> CaptureApproachFailed),
+  ComputeThrust = (computeThrust[t:ThrustExists][f:Fuel] -> if (t == False || f == Poor) then CaptureApproachFailed 
+                                                            else (activateThrust -> CheckOrbitalState 
+                                                                  | timerExpired -> CaptureApproachFailed)
+                  | timerExpired -> CaptureApproachFailed),
+  ModeEnd[e:False..True] = (returnToCaptureApproach -> if (e == True) // True means timer has expired.  
+                                                       then CaptureApproachFailed
+                                                       // else latch failed, retry, as long as timer doesn't expire.
+                                                       else (orbitalState.enableNavigation -> CheckOrbitalState
+                                                             | timerExpired -> CaptureApproachFailed)
+                            | timerExpired -> ModeEnd[True]
+                            // listen for latch capture success; stop timer and reset.
+                            | latchCapture.succeeded -> timer.stop -> CaptureApproachMode), 
+  CaptureApproachFailed = (failed -> orbitalState.disableNavigation -> orbitalState.continue -> timer.stop -> enterCollisionAvoidanceManeuverMode -> CaptureApproachMode).
+
+
+
+// timer support needed.  Should talk about what makes sense.  Could
+// work with simpler model if necessary - how far down do we propagate
+// the timers?
+set CaptureApproachRelevantAlpha =      
+  { orbitalState.enableNavigation,
+    readOrbitalState[Quality],
+    captureMissionState[Quality],
+    enterDockingApproachMode,
+    computeThrust[ThrustExists][Fuel],
+    activateThrust,
+    returnToCaptureApproach}
+
+
+
+CATimerChecker = TimerChecker,
+  TimerChecker = (timer.start -> StartCheckTimer
+                                 | timer.stop -> TimerChecker
+                  | CaptureApproachRelevantAlpha -> TimerChecker),
+  StartCheckTimer = (CaptureApproachRelevantAlpha -> StartCheckTimer
+                     | timer.stop -> TimerChecker
+                     | timer.readExpired[t:Boolean] -> 
+                     if (t == True) then Expired else StartCheckTimer),
+  Expired = (timerExpired -> TimerChecker  
+             | timer.stop -> TimerChecker).    
+
+
+
+|| CaptureTimer = (captureApproach:Timer )
+  / { {captureApproach.timer.readExpired, latchCapture.capture.timer.readExpired, dockingApproach.capture.timer.readExpired} // want independent reads
+      / captureApproach.timer.readExpired
+  }.
+
+
+
+|| CaptureApproach = (captureApproach:(CaptureApproachMode || CATimerChecker) || CaptureTimer) 
+  / {enterCaptureApproachMode / captureApproach.enterCaptureApproachMode,
+         enterDockingApproachMode / captureApproach.enterDockingApproachMode,
+         returnToCaptureApproach / captureApproach.returnToCaptureApproach,
+         latchCapture.succeeded / captureApproach.latchCapture.succeeded,
+     orbitalState.disableNavigation / captureApproach.orbitalState.disableNavigation,
+     orbitalState.continue / captureApproach.orbitalState.continue		
+        }.
+
+
+
+// ****** MODE RELATED PROPERTIES
+// @property Each mode shall terminate with either success or failure.
+// The combination of properties ensures termination for EACH round of
+// the mode.  Liveness is ensured with strong fairness
+/*
+assert CaptureApproachTerminationLive = [] ({enterCaptureApproachMode, returnToCaptureApproach}
+                                            -> <> (captureApproach.{failed,succeeded}))
+property CaptureApproachTerminationSafe = ({enterCaptureApproachMode, returnToCaptureApproach}
+                                           -> captureApproach.{failed, succeeded} -> CaptureApproachTerminationSafe).
+
+
+
+|| CheckCaptureApproach = (CaptureApproach || CaptureApproachTerminationSafe).
+*/
+
+
+
+// ============================================================================
+// DockingApproach
+
+
+
+// docking Sensor
+Sensor = (enable -> Acquiring),
+Acquiring = (readSensor[None] -> Acquiring
+                        | enable -> Acquiring
+                        |  checkDockVisibility[dv:Quality] ->checkOpticsAvailable[oa:Boolean] -> 
+                          if (dv != None && oa == True) then (timer.start -> Poor) else Acquiring), 
+Poor =  (readSensor[Poor] -> Poor
+                        | enable -> Acquiring                   
+                        |  checkDockVisibility[dv:Quality] -> checkOpticsAvailable[oa:Boolean] -> checkSunBright[s:Boolean] -> timer.readExpired[te:Boolean] -> 
+                          if (te == True && dv == Good && oa == True && s == False) then Good
+                          else if (te == False && (dv == None || oa == False)) then Acquiring
+                          else (timer.start -> Poor)), 
+Good = (readSensor[Good] -> Good
+                        | enable -> Acquiring
+                        |  checkDockVisibility[dv:Quality] -> checkOpticsAvailable[oa:Boolean] -> checkSunBright[s:Boolean] -> 
+                          if (dv == Good && oa == True && s == False) then Good
+                          else (timer.start -> Poor)) + {timer.stop}.
+
+
+
+
+|| DockingSensor = (dockingSensor:Sensor || dockingSensor:Timer).
+
+
+
+
+
+DockingApproachMode = (enterDockingApproachMode -> timer.start -> 
+                       (dockingSensor.enable -> StartApproach 
+                        | timerExpired -> DockingApproachFailed)),
+  StartApproach = (dockingSensor.readSensor[s:Quality] -> if (s == None)
+                                            then StartApproach
+                                            else CheckTargetRelativeState
+                   | timerExpired -> DockingApproachFailed),
+  CheckTargetRelativeState = (dockingSensor.readSensor[s:Quality] -> if (s == None)
+                                                       then DockingApproachFailed
+                                                       else ComputeMissionState
+                              | timerExpired -> DockingApproachFailed),
+  ComputeMissionState = (computeMissionState[p:StateEstimation] ->
+                         if (p == Good) then ReadyToDock else ComputeThrust
+                         | timerExpired -> DockingApproachFailed),
+  ReadyToDock = (succeeded -> (enterLatchMode -> ModeEnd[False] | timerExpired -> DockingApproachFailed)
+                 | timerExpired -> DockingApproachFailed),
+  ComputeThrust = (computeThrust[t:ThrustExists][f:Fuel] -> if (t == False || f == Poor) then DockingApproachFailed   
+                                                          else (activateThrust -> CheckTargetRelativeState 
+                                                                  | timerExpired -> DockingApproachFailed)
+                   | timerExpired -> DockingApproachFailed),
+
+
+
+  // ModeEnd permits DockingApproach timer to continue until either it
+  // expires OR LatchCapture is successful.  If LatchCapture is
+  // successful, DockingApproach can be restarted.
+  ModeEnd[e:False..True] = (returnToDockingApproach -> if (e == True) // True means timer has expired.  
+                                                       then DockingApproachFailed
+                                                       // else latch failed, retry, as long as timer doesn't expire.
+                                                       else CheckTargetRelativeState
+                            | timerExpired -> ModeEnd[True]
+                            // listen for latch capture success; stop timer and reset.
+                            | latchCapture.succeeded -> timer.stop -> DockingApproachMode), 
+  DockingApproachFailed = (failed -> timer.stop -> returnToCaptureApproach -> DockingApproachMode). 
+
+
+
+// assert TC1 = [](! dockingApproach.computeThrust[False][Poor])
+
+
+
+set DockingApproachRelevantAlpha =      
+  { dockingSensor.enable,
+    dockingSensor.readSensor[Quality],
+    computeMissionState[StateEstimation],
+    enterLatchMode,
+    computeThrust[ThrustExists][Fuel],
+    activateThrust,
+    returnToDockingApproach,
+    returnToCaptureApproach,
+        latchCapture.succeeded}
+
+
+
+DATimerChecker = TimerChecker,
+  TimerChecker = (timer.start -> StartCheckTimer
+                                  | timer.stop -> TimerChecker
+                  | DockingApproachRelevantAlpha -> TimerChecker),
+  StartCheckTimer = (DockingApproachRelevantAlpha -> StartCheckTimer
+                     | timer.stop -> TimerChecker
+                     | timer.readExpired[t:Boolean] -> if (t == True) then Expired else StartCheckTimer
+                                         | capture.timer.readExpired[t:Boolean] -> if (t == True) then Expired else StartCheckTimer),
+  Expired = (timerExpired -> TimerChecker  
+             | timer.stop -> TimerChecker).    
+
+
+
+|| DockTimer = (dockingApproach:Timer )
+  / { {dockingApproach.timer.readExpired, latchCapture.docking.timer.readExpired} // want independent reads
+      / dockingApproach.timer.readExpired
+  }.
+
+
+
+|| DockingApproach = (dockingApproach:(DockingApproachMode || DATimerChecker) || DockTimer /* || DockingSensor */) 
+  / { enterLatchMode / dockingApproach.enterLatchMode,
+      enterDockingApproachMode / dockingApproach.enterDockingApproachMode,
+          returnToDockingApproach / dockingApproach.returnToDockingApproach,
+          returnToCaptureApproach / dockingApproach.returnToCaptureApproach,
+          latchCapture.succeeded / dockingApproach.latchCapture.succeeded,
+          dockingSensor/ dockingApproach.dockingSensor}.
+
+
+
+
+// ****** MODE RELATED PROPERTIES
+// @property Each mode shall terminate with either success or failure.
+// The combination of properties ensures termination for EACH round of
+// the mode.  Liveness is ensured with strong fairness
+/*
+assert DockingApproachTerminationLive = [] ({enterDockingApproachMode, returnToDockingApproach}
+                                            -> <> (dockingApproach.{failed,succeeded}))
+property DockingApproachTerminationSafe = ({enterDockingApproachMode, returnToDockingApproach}
+                                           -> dockingApproach.{failed, succeeded} -> DockingApproachTerminationSafe).
+
+
+
+|| CheckDockingApproach = (DockingApproach || DockingApproachTerminationSafe).
+*/
+// ============================================================================
+// Latchcapture
+LatchCaptureMode = (enterLatchMode -> timer.start -> (dock_latch.open -> CheckLatchOpen 
+                                                      | timerExpired -> FailedLatch)),
+  CheckLatchOpen = ( dock_latch.read[latch:LatchState] -> if (latch==Open)
+                                                          then CloseLatch
+                                                          else CheckLatchOpen
+                     | timerExpired -> FailedLatch),
+  CloseLatch = (dock_latch.close -> CheckLatchMated
+                | timerExpired -> FailedLatch),
+  CheckLatchMated = (dock_latch.read[latch:LatchState] -> if (latch == Mated)
+                                                          then Docked
+                                                          else if (latch == ClosedButUnmated)
+                                                               then FailedLatch
+                                                               else CheckLatchMated
+                     | timerExpired -> FailedLatch),
+  FailedLatch = (failed ->  timer.stop -> returnToDockingApproach -> LatchCaptureMode),
+  Docked = (succeeded -> timer.stop -> enterJointStabilizeMode -> LatchCaptureMode).
+
+
+
+set LatchCaptureRelevantAlpha = { dock_latch.{close, open}, dock_latch.read[LatchState]}
+
+
+
+// the docking approach mode timer is still active, so you have to also monitor that one
+LCTimerChecker = TimerChecker,
+TimerChecker = (timer.start -> StartCheckTimer 
+                // this timer may ony have started if the docking approach one is also active
+                                | timer.stop -> TimerChecker
+                | {LatchCaptureRelevantAlpha, failed} -> TimerChecker),
+  StartCheckTimer = (LatchCaptureRelevantAlpha -> StartCheckTimer
+                     | {failed, succeeded} -> TimerChecker
+                     | timer.readExpired[t:Boolean] -> if (t == True) then Expired else StartCheckTimer
+                     | docking.timer.readExpired[t:Boolean] -> if (t == True) then Expired else StartCheckTimer
+                                         | capture.timer.readExpired[t:Boolean] -> if (t == True) then Expired else StartCheckTimer),
+  Expired = ({timerExpired, failed, succeeded} -> TimerChecker).  
+
+
+
+|| LatchCapture = (latchCapture:(LatchCaptureMode || LCTimerChecker) || latchCapture:Timer || Docking_Latch)
+  / {enterLatchMode / latchCapture.enterLatchMode,
+         returnToDockingApproach / latchCapture.returnToDockingApproach,
+         enterJointStabilizeMode / latchCapture.enterJointStabilizeMode,
+         dock_latch/latchCapture.dock_latch}.
+
+
+
+
+// ****** MODE RELATED PROPERTIES
+// @property Each mode shall terminate with either success or failure.
+// The combination of properties ensures termination for EACH round of
+// the mode.  Liveness is ensured with strong fairness
+/*
+assert LatchTerminationLive = [] (enterLatchMode -> <> (latchCapture.failed || latchCapture.succeeded))
+property LatchTerminationSafe = (enterLatchMode -> latchCapture.{failed, succeeded} -> LatchTerminationSafe).
+
+
+
+|| CheckLatchCapture = (LatchCapture || LatchTerminationSafe).
+*/
+
+
+
+// ============================================================================
+// Latch
+//
+// Presume a latch that can be commanded open or closed.  The transition
+// takes finite time, so there is an indeterminate position that is
+// neither open nor closed.  Moreover, once closed, it may have captured
+// its mate, in which case the state is mated.  If it failed to capture,
+// the state is closed but unmated.
+//
+// Note that the UML 'openLatch' command is 'open' here.  Not to be
+// confused with the 'Open' state.  Similarly for 'closeLatch'
+// shortened to 'close.'
+Latch = Latch[Indeterminate],
+  Latch[s:LatchState] = ( read[s] -> Latch[s]
+                          | open -> if (s == Open)
+                                    then Latch[s]
+                                    else Opening
+                          | close -> if (s == Mated || s == ClosedButUnmated)
+                                     then Latch[s]
+                                     else Closing),
+  Opening = ( read[Indeterminate] -> Opening
+              | close -> Closing
+              | done_opening -> Latch[Open]),
+  Closing = ( read[Indeterminate] -> Closing
+              | open -> Opening
+              | mated -> done_closing -> Latch[Mated]
+              | closed_but_unmated -> done_closing ->  Latch[ClosedButUnmated]).
+
+
+
+|| Docking_Latch = (dock_latch:Latch).
+  
+// Latch Properties:
+
+
+
+// - The latch shall require a latch close command to close for
+//   mating.
+// - Latch closure without mating capture shall be a failure.
+// - Failure to successfully mate on first attempt shall result in
+//   reversion to Docking Approach
+//
+// @property - The latch shall be open before it can be commanded to
+// close for mating.
+property 
+CloseOnlyOpenLatch = Closed,
+Closed = (dock_latch.done_opening -> dock_latch.close -> Closed).   
+
+
+
+// ==========================  Assemblies attempted  ==========================
+
+
+
+|| CheckLatchProperty = (LatchCapture || CloseOnlyOpenLatch).
+
+
+
+// set high/low priorities so the timer expiration is always noted.
+// Only low/high priorities permitted
+|| ARDDocking_Monolithic = ( ApproachOrbit
+            || ProximityOperations
+            || FarApproach 
+            || CaptureApproach
+            || DockingApproach
+            || LatchCapture
+            || JointStabilize
+            || CollisionAvoidanceManeuver
+            || OrbitalStateWithSensors
+            || AvoidCollision
+			|| RunToCompletion
+			|| Counterexample
+)
+  << {{latchCapture, dockingApproach, dockingApproach.capture, latchCapture.{docking, capture}, captureApproach}.timer.readExpired[1], caution_xxxxx_ERROR_OCCURRED_xxxxx}.
+ // @ {orbitalState, gps, inertialNavigation, starPlanetTracker}.
+
+
+|| ARDDocking_Compositional = ( ApproachOrbit
+            || ProximityOperations
+            || FarApproach 
+            || CaptureApproach
+            || DockingApproach
+            || LatchCapture
+            || JointStabilize
+            || CollisionAvoidanceManeuver
+//                      || OrbitalStateWithSensors
+            || AvoidCollision)
+  << {{latchCapture, dockingApproach, dockingApproach.capture, latchCapture.{docking, capture}, captureApproach}.timer.readExpired[1]}
+  @ {orbitalState, gps, inertialNavigation, starPlanetTracker, farApproach.readOrbitalState, captureApproach.readOrbitalState,
+	 farApproach.orbitalState.refresh, captureApproach.orbitalState.refresh}.
+
+
+
+
+|| ENVIRONMENT = (OrbitalStateWithSensors).
+
+
+
+// ============================================================================
+// Do we similarly model range?  Attitude?  Position?  Then we'd be
+// building an environmental simulator.  That seems twisted.
+
+
+
+// Otherwise, which sensor model?  Does each mode use its own sensor?
+// Not terribly modular.  Another approach is sensors that are mode
+// specific; which provide values to an absolute and/or relative
+// attitude, position, velocity, and state module, with associated
+// errors.  Mode uses could request value within particular error; system
+// provides if value is available.
+
+
+
+
+// ============================================================================
+
+
+
+//----------------------------------------------------------------------
+// Desired System Properties
+//----------------------------------------------------------------------
+// - Deadlock-free
+// - The previous mode or an error recovery mode shall be invoked if the
+//   time spent within a mode exceeds that of its specified allowable
+//   limit.
+// - The previous mode or an error recovery mode shall be invoked if
+//   sensors do not provide state information (i.e., state value NONE on
+//   sensors) once maneuvers have begun (i.e., thrust.command)
+// - Good orbital position, velocity, and attitude determination shall
+//   require two or more good sensor values.
+// - Progressing to subsequent modes shall require good orbital
+//   position, velocity, and attitude determination
+// - Use of sensor components shall require initialization,
+//   enablement, or commanded actions.
+// - Determination of good relative state [as expressed in
+//   MissionState] shall require good relative position, velocity, and
+//   attitude information.
+// - Docking shall require the target to be in sight, proximity,
+//   correctly oriented, and ready to dock.
+// - Latch mating attempt shall occur only when relative state [as
+//   expressed in MissionState] is good
+// - Timed regions shall cover all actions within a region (e.g., all
+//   actions within a mode, where the mode has a time limit).
+//----------------------------------------------------------------------
+
+
+
+// @property The system final states shall either be failure or success
+/*
+assert Result = []<> (jointStabilize.failedARD
+                      || jointStabilize.successARD
+                      || captureApproach.failedARD
+                      || captureApproach.successARD) 
+
+
+
+progress Res = {{jointStabilize, captureApproach}.{failedARD, successARD}}
+*/
+
+
+
+
+
+//===============================
+// ADDITIONAL STUFF
+
+
+
+// ============================================================================
+// RealTimeClock
+// clock that needs to be set every now and again.
+//RealTimeClock = (enable -> Callibrate),
+//  Callibrate = (time[POOR]
+//                -> GPS.readAbsoluteTime[timeGPS:Quality]  //DG Can these be reads in order like this?
+//                -> StarPlanetTracker.readAbsoluteTime[timeSPT:Quality]
+//                -> if ((timeGPS == GOOD) || (timeSPT == GOOD)) then Time else Drifted
+//                | setTime -> Time), // can explicitly set clock, eg., from ground
+//  Time = (time[GOOD] -> Time
+//          | drift -> Drifted),  // drift sufficient to need reset is presumably a long time.  How to model?
+//  Drifted = (time[POOR] -> Drifted
+//             | callibrate -> Callibrate).
+//
+//|| RealTimeClock = (realTimeClock:RealTimeClock)
+//  / {callibrateRealTimeClock / realTimeClock.callibrate}.
+
+
+
+// ============================================================================
+// OrbitalState
+//
+OrbitalState = (enableNavigation -> gps.enable -> starPlanetTracker.enable -> 
+										inertialNavigation.enable -> Acquiring
+                                | disableNavigation -> OrbitalState),
+Acquiring = (read[None] -> Acquiring    //  now collect the individual sensor readings
+             | disableNavigation -> gps.disable -> starPlanetTracker.disable -> 
+										inertialNavigation.disable -> continue -> OrbitalState
+             |  refresh -> gps.readPosition[positionGPS:Quality] -> gps.readVelocity[velocityGPS:Quality]
+//               -> groundTrack.readPosition[positionGT:Quality] -> groundTrack.readVelocity[velocityGT:Quality]
+//                we're not collecting attitude at this point - not useful if only one reading (?) wait until other sensors in.
+               -> starPlanetTracker.readPosition[positionSPT:Quality] -> starPlanetTracker.readVelocity[velocitySPT:Quality]
+//                check if at least one of each type of reading is != None.  If so, we can start providing state
+// note that None=0, Poor=1, Good=2
+               -> if ( (positionGPS + positionSPT > None)
+                       && (velocityGPS + velocitySPT > None))
+                  then OrbitalState[Poor]
+                  else Acquiring),
+// still not collecting attitude at this point - not useful if only one reading (?) wait until other sensors in.
+  OrbitalState[os:Poor..Good] = (read[os] -> OrbitalState[os]    // now collect the individual sensor readings
+                      | disableNavigation -> gps.disable -> starPlanetTracker.disable -> 
+										inertialNavigation.disable -> continue -> OrbitalState
+					  // reset counters before reading
+                      | refresh -> positionCount.reset -> velocityCount.reset -> attitudeCount.reset -> UpdateState), 
+  UpdateState = (gps.readPosition[positionGPS:Quality] -> gps.readVelocity[velocityGPS:Quality] // read GPS
+					// read starPlanetTracker
+                     -> starPlanetTracker.readPosition[positionSPT:Quality] -> starPlanetTracker.readVelocity[velocitySPT:Quality] 
+                                                        -> starPlanetTracker.readAttitude[attitudeSPT:Quality]
+    				// read inertialNavigation
+                      -> inertialNavigation.readPosition[positionIN:Quality] -> inertialNavigation.readVelocity[velocityIN:Quality] 
+                                                        -> inertialNavigation.readAttitude[attitudeIN:Quality]
+// comment the following line when you fix the error
+					-> ReadCounters),
+
+// this is the portion that you need to uncomment in order to fix the error
+/*							-> if ((positionGPS + positionSPT == None) || (velocityGPS + velocitySPT == None))
+							then Acquiring
+							else ReadCounters),
+*/
+
+
+
+  ReadCounters = (// now read collected values
+                      positionCount.read[p:0..AvailableSensorsPosition] -> velocityCount.read[v:0..AvailableSensorsVelocity]
+					  -> attitudeCount.read[a:0..AvailableSensorsAttitude] ->
+							if (p >=2 || v >=2 && a >=1) 
+                                then (orbitalStateisGood -> OrbitalState[Good])
+                                else (orbitalStateisPoor -> OrbitalState[Poor]))
+                      + {gps.readAttitude[Quality]}.
+
+
+
+
+Counter (Max = 1) = Count[0],
+Count[i:0..Max] = (when (i<Max) increment -> Count[i+1]
+				  | read[i] -> Count[i]
+				  | reset -> Count[0]).
+
+|| NumberOfGoodReadingsForPosition = (positionCount:Counter(AvailableSensorsPosition))
+  / {{starPlanetTracker, inertialNavigation, gps}.readPosition[Good] / positionCount.increment}.
+
+|| NumberOfGoodReadingsForVelocity = (velocityCount:Counter(AvailableSensorsVelocity))
+  / {{starPlanetTracker, inertialNavigation, gps}.readVelocity[Good] / velocityCount.increment}.
+
+|| NumberOfGoodReadingsForAttitude = (attitudeCount:Counter(AvailableSensorsAttitude))
+  / {{starPlanetTracker, inertialNavigation}.readAttitude[Good] / attitudeCount.increment}.
+
+|| OrbitalStateWithCounters = (OrbitalState
+                               || NumberOfGoodReadingsForPosition
+                               || NumberOfGoodReadingsForVelocity
+                               || NumberOfGoodReadingsForAttitude). 
+
+// SensorsStub = STOP + {{gps, starPlanetTracker, inertialNavigation}.{readPosition, readVelocity, readAttitude}[Good]}.
+
+
+
+
+SensorStub = ({{readPosition, readVelocity, readAttitude}[None], 
+                                {readPosition, readVelocity, readAttitude}[Poor], 
+                                {readPosition, readVelocity, readAttitude}[Good]} -> SensorStub 
+                        | failed -> FailedSensor
+						| {disable, enable} -> SensorStub),
+FailedSensor = ({readPosition, readVelocity, readAttitude}[None] -> FailedSensor 
+				| sensorIsDead -> FailedSensor
+				| disable -> FailedSensor)
+                                + {{readPosition, readVelocity, readAttitude}[Good]}.
+
+
+
+
+|| OrbitalStateWithSensors = (orbitalState:OrbitalStateWithCounters || gps:SensorStub || inertialNavigation:SensorStub || starPlanetTracker:SensorStub)
+                            / {gps/orbitalState.gps, 
+								inertialNavigation/orbitalState.inertialNavigation, 
+								starPlanetTracker/orbitalState.starPlanetTracker,
+								{{farApproach, captureApproach, approachOrbit, proximityOperations}.readOrbitalState} /orbitalState.read,
+								{{farApproach, captureApproach, approachOrbit, proximityOperations}.orbitalState.refresh} /orbitalState.refresh,
+								{{captureApproach, approachOrbit}.orbitalState.enableNavigation} /orbitalState.enableNavigation}.
+
+
+T1 = (orbitalStateisGood -> ERROR).
+T2 = (orbitalStateisPoor -> ERROR).
+
+|| TestCase1 = ( ApproachOrbit
+            || ProximityOperations
+            || FarApproach 
+            || CaptureApproach
+            || DockingApproach
+            || LatchCapture
+            || JointStabilize
+            || CollisionAvoidanceManeuver
+            || OrbitalStateWithSensors
+            || orbitalState:T1)
+  << {{latchCapture, dockingApproach, dockingApproach.capture, latchCapture.{docking, capture}, captureApproach}.timer.readExpired[1]}.
+
+
+|| TestCase2 = ( ApproachOrbit
+            || ProximityOperations
+            || FarApproach 
+            || CaptureApproach
+            || DockingApproach
+            || LatchCapture
+            || JointStabilize
+            || CollisionAvoidanceManeuver
+            || OrbitalStateWithSensors
+            || orbitalState:T2)
+  << {{latchCapture, dockingApproach, dockingApproach.capture, latchCapture.{docking, capture}, captureApproach}.timer.readExpired[1]}.
+ 
+
+
+
+// ============================================================================
+// GPS
+GPSDevice = (enable -> Acquiring),
+Acquiring = ({readPosition[None], readVelocity[None]} -> Acquiring
+                        | enable -> Acquiring
+                        |  checkSatelliteVisibility[sv:Quality] ->checkReceiverAvailable[ra:Boolean] -> 
+                          if (sv != None && ra == True) then (timer.start -> Poor) else Acquiring), 
+Poor =  ({readPosition[Poor], readVelocity[Poor]} -> Poor
+                        | enable -> Acquiring                   
+                        |  checkSatelliteVisibility[sv:Quality] ->checkReceiverAvailable[ra:Boolean] 
+                          -> checkSunBright[s:Boolean] -> timer.readExpired[te:Boolean] -> 
+                          if (te == True && sv == Good && ra == True && s == False) then Good
+                          else if (te == True && (sv == None || ra == False)) then Acquiring
+                          else (timer.start -> Poor)), 
+Good = ({readPosition[Good], readVelocity[Good]} -> Good
+                        | enable -> Acquiring
+                        | checkSatelliteVisibility[sv:Quality] ->checkReceiverAvailable[ra:Boolean] -> checkSunBright[s:Boolean] ->
+                          if (sv == Good && ra == True && s == False) then Good else (timer.start -> Poor)) 
+                                                + {timer.stop, {readPosition, readVelocity}[Good]}.
+
+
+
+
+|| GPS = (gps:GPSDevice || gps:Timer).
+
+
+
+
+// ============================================================================
+// StarPlanetTrackerDevice
+StarPlanetTrackerDevice = (enable -> Acquiring),
+Acquiring = ({readPosition[None], readVelocity[None], readAttitude[None]} -> Acquiring
+                        | enable -> Acquiring
+                        |  checkPlanetVisibility[pv:Quality] ->checkOpticsAvailable[oa:Boolean] -> checkStarVisibility[sv:Quality] ->  
+                          if (pv != None && sv != None && oa== True) then (timer.start -> Poor) else Acquiring), 
+Poor =  ({readPosition[Poor], readVelocity[Poor], readAttitude[Poor]} -> Poor
+                        | enable -> Acquiring                   
+                        |  checkPlanetVisibility[pv:Quality] ->checkOpticsAvailable[oa:Boolean] -> checkStarVisibility[sv:Quality]  
+                          -> checkSunBright[s:Boolean] -> timer.readExpired[te:Boolean] -> 
+                          if (te == True && pv == Good && sv == Good && oa == True && s == False) then Good
+                          else if (te == True && (sv == None || oa == False || sv == None)) then Acquiring
+                          else (timer.start -> Poor)), 
+Good = ({readPosition[Good], readVelocity[Good], readAttitude[Good]} -> Good
+                        | enable -> Acquiring
+                        | checkPlanetVisibility[pv:Quality] ->checkOpticsAvailable[oa:Boolean] -> checkStarVisibility[sv:Quality]
+                          -> checkSunBright[s:Boolean] -> 
+                          if (sv == Good && pv == Good && oa == True && s == False) then Good else (timer.start -> Poor)) 
++ {timer.stop, {readPosition, readVelocity, readAttitude}[Good]}.
+
+
+
+
+|| StarPlanetTracker = (starPlanetTracker:StarPlanetTrackerDevice || starPlanetTracker:Timer).
+
+
+
+
+// ============================================================================
+// InertialNavigationDevice
+InertialNavigationDevice = (enable -> Acquiring),
+Acquiring = ({readPosition[None], readVelocity[None], readAttitude[None]} -> Acquiring
+              | enable -> Acquiring
+              |  calibrate -> timer.start -> Good), 
+Poor =  ({readPosition[Poor], readVelocity[Poor], readAttitude[Poor]} -> Poor
+        | enable -> Acquiring                   
+        |  timer.readExpired[te:Boolean] -> checkTime[t:Time] -> 
+                                if (t == Poor) then Acquiring
+                else if (te == True) then Poor else Good), 
+Good = ({readPosition[Good], readVelocity[Good], readAttitude[Good]} -> Good
+          | enable -> Acquiring                   
+        |  checkTime[t:Time] -> 
+                        if (t == Poor) then Acquiring
+            else (calibrate -> Good)) + {timer.stop, {readPosition, readVelocity, readAttitude}[Good]}.
+
+
+
+
+|| InertialNavigation = (inertialNav:InertialNavigationDevice || inertialNav:Timer).
+
+
+Counterexample = (approachOrbit.start
+->enterApproachOrbitMode
+->approachOrbit.orbitalState.enableNavigation
+->gps.enable
+->starPlanetTracker.enable
+->inertialNavigation.enable
+->approachOrbit.orbitalState.refresh
+->gps.readPosition[0]
+->gps.readVelocity[0]
+->starPlanetTracker.readPosition[0]
+->starPlanetTracker.readVelocity[0]
+->approachOrbit.readOrbitalState[0]
+->approachOrbit.succeeded
+->enterProximityOperationsMode
+->proximityOperations.orbitalState.refresh
+->gps.readPosition[0]
+->gps.readVelocity[0]
+->starPlanetTracker.readPosition[0]
+->starPlanetTracker.readVelocity[0]
+->proximityOperations.readOrbitalState[0]
+->proximityOperations.succeeded
+->enterFarApproachMode
+->farApproach.orbitalState.refresh
+->gps.readPosition[0]
+->gps.readVelocity[0]
+->starPlanetTracker.readPosition[1]
+->starPlanetTracker.readVelocity[1]
+->farApproach.readOrbitalState[1]
+->farApproach.succeeded
+->gps.failed
+->starPlanetTracker.failed
+->enterCaptureApproachMode
+->captureApproach.timer.start
+->captureApproach.orbitalState.refresh
+->orbitalState.positionCount.reset
+->orbitalState.velocityCount.reset
+->orbitalState.attitudeCount.reset
+->gps.readPosition[0]
+->gps.readVelocity[0]
+->starPlanetTracker.readPosition[0]
+->starPlanetTracker.readVelocity[0]
+->starPlanetTracker.readAttitude[0]
+->inertialNavigation.readPosition[0]
+->inertialNavigation.readVelocity[0]
+->inertialNavigation.readAttitude[0]
+->orbitalState.positionCount.read[0]
+->orbitalState.velocityCount.read[0]
+->orbitalState.attitudeCount.read[0]
+->orbitalState.orbitalStateisPoor
+->captureApproach.readOrbitalState[1]
+->captureApproach.orbitalState.refresh
+->orbitalState.positionCount.reset
+->orbitalState.velocityCount.reset
+->orbitalState.attitudeCount.reset
+->gps.readPosition[0]
+->gps.readVelocity[0]
+->starPlanetTracker.readPosition[0]
+->starPlanetTracker.readVelocity[0]
+->starPlanetTracker.readAttitude[0]
+->inertialNavigation.readPosition[0]
+->inertialNavigation.readVelocity[0]
+->inertialNavigation.readAttitude[0]
+->orbitalState.positionCount.read[0]
+->orbitalState.velocityCount.read[0]
+->orbitalState.attitudeCount.read[0]
+->orbitalState.orbitalStateisPoor
+->captureApproach.readOrbitalState[1]
+->captureApproach.captureMissionState[2]
+->captureApproach.succeeded
+->orbitalState.disableNavigation
+->gps.disable
+->starPlanetTracker.disable
+->inertialNavigation.disable
+->orbitalState.continue
+->enterDockingApproachMode -> END).
+
+
+animation ISS = "xml/isstest-latest.xml" 
+              actions {
+				enterApproachOrbitMode / approachOrbitCom,
+				enterProximityOperationsMode / proximityOpsCom,
+                enterFarApproachMode / farApproachCom,
+				enterCaptureApproachMode / flight1.start,
+				enterDockingApproachMode / flight2.start,
+				enterLatchMode / latchCaptureCom,
+				enterJointStabilizeMode / jointStabilizeCom,
+				gps.enable/button[0].enabled.begin,
+				gps.disable/button[0].disabled.begin,
+				starPlanetTracker.enable/button[1].enabled.begin,
+				starPlanetTracker.disable/button[1].disabled.begin,
+				inertialNavigation.enable/button[2].enabled.begin,
+				inertialNavigation.disable/button[2].disabled.begin,
+     			gps.failed/button[0].failed.begin,
+    			starPlanetTracker.failed/button[1].failed.begin,
+				inertialNavigation.failed/button[2].failed.begin,
+    			dockingSensor.failed/button[3].failed.begin,
+				dockingSensor.enable / button[3].enabled.begin,
+				caution_xxxxx_ERROR_OCCURRED_xxxxx /explosion.begin
+
+}
+controls{
+              approachOrbit.start/start,
+			  approachOrbit.succeeded / approachOrbit.finished,
+			  proximityOperations.succeeded / proximityOperations.finished,
+			  farApproach.succeeded / farApproach.finished,
+			  captureApproach.succeeded / flight1.landed,
+			  dockingApproach.succeeded / flight2.landed
+} 
+
+

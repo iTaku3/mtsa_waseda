@@ -1,0 +1,10 @@
+M = (a.1.inTray -> E_10 | a.1.idle -> M | b.1.inTray -> E_2 | b.1.idle -> M),
+E_2 = (a.1.inTray -> E_7 | b.1.getInTray -> E_3 | a.1.idle -> E_2),
+E_3 = (a.1.inTray -> E_6 | b.1.putOutTray -> M | put.oven.b.1 -> E_4 | a.1.idle -> E_3),
+E_4 = (a.1.inTray -> E_5 | get.oven.b.1 -> E_3 | a.1.idle -> E_4),
+E_5 = (get.oven.b.1 -> E_6),
+E_6 = (b.1.putOutTray -> E_10),
+E_7 = (b.1.getInTray -> E_6 | a.1.getInTray -> E_8),
+E_8 = (a.1.putOutTray -> E_2),
+E_9 = (a.1.putOutTray -> M | b.1.inTray -> E_8 | b.1.idle -> E_9),
+E_10 = (b.1.inTray -> E_7 | b.1.idle -> E_10 | a.1.getInTray -> E_9).

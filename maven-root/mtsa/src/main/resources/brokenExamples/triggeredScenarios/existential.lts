@@ -1,0 +1,50 @@
+fluent PumpOn = <switchOn, switchOff> initially False
+fluent MethanePresent = <methAppears, methLeaves> initially False
+fluent AtHighWater = <highWater, {lowWater, medWater}> initially False
+fluent AtLowWater = <lowWater, {medWater, highWater}> initially True
+
+set A = {switchOn, switchOff, methAppears, methLeaves, highWater, lowWater, medWater, tick}
+
+const False = 0
+const True = 1
+
+eTS ExistentialScenario1 = {
+	instances {Controller Pump WaterSensor}
+	condition Phi_1 = (AtHighWater && !PumpOn && !MethanePresent)
+	prechart {
+		Phi_1[Controller Pump WaterSensor]
+	}
+	mainchart {
+		Controller -> switchOn -> Pump
+		WaterSensor -> medWater -> Controller
+		WaterSensor -> lowWater -> Controller
+		Controller -> switchOff -> Pump
+	}
+}
+
+eTS ExistentialScenario2 = {
+	instances {Controller Pump MethaneSensor}
+	condition Phi_1 = (MethanePresent && PumpOn)
+	prechart {
+		Phi_1[Controller Pump]
+	}
+	mainchart {
+		Controller -> switchOff -> Pump
+		MethaneSensor -> methLeaves -> Controller
+		Controller -> switchOn -> Pump
+	}
+}
+
+eTS ExistentialScenario3 = {
+	instances {Controller Pump WaterSensor}
+	condition Phi_1 = (AtLowWater && PumpOn)
+	prechart {
+		Phi_1[Controller Pump WaterSensor]
+	}
+	mainchart {
+		Controller -> switchOff -> Pump
+		WaterSensor -> medWater -> Controller
+		WaterSensor -> highWater -> Controller
+		Controller -> switchOn -> Pump
+	}
+}

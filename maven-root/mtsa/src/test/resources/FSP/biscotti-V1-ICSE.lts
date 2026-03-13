@@ -1,0 +1,44 @@
+set A = {idle, cook, cooking, finishedCooking, fix, moveToBelt, broken, notBroken}
+set Controllable = {idle, cook, moveToBelt}
+set FailureSet = {broken}
+
+BISCOTTI = (idle->BISCOTTI | cook->COOKING), 
+COOKING = (cooking->COOKING | finishedCooking->STATUS), 
+STATUS = (broken->BROKEN | notBroken->NOT_BROKEN), 
+BROKEN = (moveToBelt->BISCOTTI | fix->cook->COOKING),
+NOT_BROKEN = (moveToBelt->BISCOTTI | cook->COOKING).
+
+fluent F_Cooking = <cook, finishedCooking>
+fluent F_Cooked = <finishedCooking, cook>
+fluent F_MoveToBelt = <moveToBelt, A\{moveToBelt}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+
+assert MoveToBelt = F_MoveToBelt
+assert SuccessfullyCookedTwice = MoveToBelt
+
+assert FinishCooking = !F_Cooking
+assert Failures = F_Failures
+//assert CookedTwice = 
+//assert SuccessfullyCookedTwice = 
+
+
+SUCCESSFULLY_COOKED_TWICE = (notBroken->SUCCESSFULLY_COOKED_ONCE | broken->SUCCESSFULLY_COOKED_TWICE), 
+SUCCESSFULLY_COOKED_ONCE = (notBroken->moveToBelt->SUCCESSFULLY_COOKED_TWICE | broken->SUCCESSFULLY_COOKED_TWICE). //broken->SUCCESSFULLY_COOKED_ONCE).
+
+
+||TT = (SUCCESSFULLY_COOKED_TWICE || BISCOTTI).
+||ENV = BISCOTTI. 
+
+//controllers
+controller ||C = (BISCOTTI)~{G1}.
+checkCompatibility ||Comp = (BISCOTTI)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {SUCCESSFULLY_COOKED_TWICE}
+       failure = {Failures}
+       assumption = {FinishCooking}
+       liveness = {SuccessfullyCookedTwice}
+       controllable = {Controllable}
+}
+

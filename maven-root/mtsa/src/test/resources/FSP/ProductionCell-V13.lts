@@ -1,0 +1,74 @@
+const N = 2
+range ElemCount = 1..N
+set ElemTypes = {a, b}
+set Toolset = {drill,oven,press}
+set ElemsTypeA = {{a}.[ElemCount]}
+set ElemsTypeB = {{b}.[ElemCount]}
+set ElemTypesSet = {ElemsTypeA, ElemsTypeB}
+set BlankAlpha = {[ElemTypesSet].{inTray, pickInTray, putOutTray}, {put}.Toolset.[ElemTypesSet]}
+set ArmAlpha = { [ElemTypesSet].{pickInTray, putOutTray}, {put, get}.Toolset.[ElemTypesSet] }
+set ToolsAlpha  = { {put,process,get}.Toolset.[ElemTypesSet] }
+set Alphabet = {ArmAlpha, ToolsAlpha, BlankAlpha}
+
+set ControllableActions = {[ElemTypesSet].{pickInTray,putOutTray}, {put,get}.Toolset.[ElemTypesSet]}
+
+INIT_ELEM(C=1) = ([C].inTray -> [C].pickInTray -> END | [C].idle -> INIT_ELEM).
+TRY_TOOL(T='any, C=1) = (put[T][C] -> END).
+FINISH_ELEM(C=1) = ([C].putOutTray -> END).
+
+ELEM_A(C=1)= INIT_ELEM(C);
+				TRY_TOOL('oven,C);
+				TRY_TOOL('drill,C);
+				TRY_TOOL('press,C);
+				FINISH_ELEM(C);
+				ELEM_A.
+
+ELEM_B(C=N/2+1)= 	INIT_ELEM(C);
+					TRY_TOOL('drill,C);
+					TRY_TOOL('press,C);
+					TRY_TOOL('oven,C);
+					FINISH_ELEM(C);
+					ELEM_B.
+
+||ELEMS = (forall[a:ElemsTypeA] ELEM_A(a) || forall[b:ElemsTypeB] ELEM_B(b)).
+
+TOOL(T='any) = (put[T][e:ElemTypesSet] -> process[T][e] -> get[T][e] -> TOOL). 
+
+||TOOLS = (forall[t:Toolset] TOOL(t)).
+
+ARM = IDLE,
+IDLE = ([e:ElemTypesSet].pickInTray -> PICKED_UP[e]
+		| get[t:Toolset][e:ElemTypesSet] -> PICKED_UP[e]),
+PICKED_UP[e:ElemTypesSet] = (put[t:Toolset][e] -> IDLE
+               | [e].putOutTray -> IDLE).
+||A = ARM.
+
+||Plant = (
+		ELEMS ||
+		TOOLS || 
+		ARM).
+
+ltl_property Safety1 = [](! exists[a:ElemTypesSet][b:ElemTypesSet] (TOOL_PROCESS[a]['drill] && TOOL_PROCESS[b]['press]))
+
+fluent WAITING_FOR_PROCESSING[e:ElemTypesSet] = <[e].inTray, [e].pickInTray>
+fluent ADDED_TO_OUTTRAY[e:ElemTypesSet] = <[e].putOutTray, Alphabet\{[e].putOutTray}>
+fluent TOOL_PROCESS[e:ElemTypesSet][t:Toolset] = <put[t][e], get[t][e]>
+fluent IN_FACTORY[e:ElemTypesSet] = <[e].pickInTray, [e].putOutTray>
+fluent ADDED_TO_INTRAY[e:ElemTypesSet] = <[e].inTray, Alphabet\{[e].inTray}>
+
+assert ASSUME_ON_A = exists[e:ElemsTypeA] ADDED_TO_INTRAY[e]
+assert ASSUME_ON_B = exists[e:ElemsTypeB] ADDED_TO_INTRAY[e]
+
+assert GA = exists[e:ElemsTypeA] ADDED_TO_OUTTRAY[e]
+assert GB = exists[e:ElemsTypeB] ADDED_TO_OUTTRAY[e]
+
+controller ||C = (Plant)~{Objective}.
+
+||Comp = (C||Plant).
+
+controllerSpec Objective = {
+safety = {Safety1}
+assumption = {ASSUME_ON_A, ASSUME_ON_B}
+liveness = {GA, GB}
+controllable = {ControllableActions}
+}

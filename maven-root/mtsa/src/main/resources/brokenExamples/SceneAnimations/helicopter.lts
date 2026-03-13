@@ -1,0 +1,16 @@
+HELICOPTER = (takeoff -> FLYING),
+FLYING     = (hover -> HOVERING | land -> HELICOPTER),
+HOVERING   = (resume -> FLYING).
+
+animation HELICOPTER = "xml\iss.xml" 
+              actions {
+                takeoff/flight.start,
+                hover/flight.hover,
+                resume/flight.resume
+              }
+              controls{
+                land /flight.landed,
+                takeoff/takeoff,
+                hover/hover,
+                resume/resume
+              }

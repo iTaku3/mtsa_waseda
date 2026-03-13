@@ -1,0 +1,132 @@
+/*
+This version extends the previous one only by adding the possibility
+of cancelling a ship or prod requests if the other has failed. 
+*/
+set User = {usrReq, offerRcvd, notAvail, usrAck, usrNack, respOk, respFail}
+set Producer = {prodInfoReq, infoRcvd, prodNotAvail, prodReq, prodCancel, prodOk, prodFail}
+set Shipper = {shipInfoReq, costAndTime, shipNotAvail, shipReq, shipCancel, shipOk, shipFail}
+set Controllable = {prodInfoReq, prodReq, prodCancel, shipInfoReq, shipReq, shipCancel, respOk, respFail, offerRcvd, notAvail}
+set FailureSet = {prodNotAvail, prodFail, shipNotAvail, shipFail}
+set A = {User, Producer, Shipper}
+
+PRODUCER = (prodInfoReq->REQUESTED), 
+REQUESTED = (infoRcvd->ORDER_PENDING | prodNotAvail->PRODUCER),
+ORDER_PENDING = (prodReq->PRODUCING | prodCancel->PRODUCER),
+PRODUCING = (prodOk->PRODUCER | prodFail->PRODUCER).
+
+SHIPPER = (shipInfoReq->REQUESTED), 
+REQUESTED = (costAndTime->SHIPPING_PENDING | shipNotAvail->SHIPPER),
+SHIPPING_PENDING = (shipReq->SHIPPING | shipCancel->SHIPPER),
+SHIPPING = (shipOk->SHIPPER | shipFail->SHIPPER).
+
+USER = (usrReq->REQUESTED), 
+REQUESTED = (offerRcvd->ACK_NACK | notAvail->USER),
+ACK_NACK = (usrAck->ORDER | usrNack->USER), 
+ORDER = (respOk->USER | respFail->USER).
+
+||ENV = (USER || SHIPPER || PRODUCER).//>>{FailureSet}.
+
+//fluents definition
+fluent F_ShipInfoReq = <shipInfoReq, A\{shipInfoReq}>
+fluent F_ProdInfoReq = <prodInfoReq, A\{prodInfoReq}>
+fluent F_UsrReq = <usrReq, {offerRcvd, notAvail}>
+fluent F_OfferRcvd = <offerRcvd, A\{offerRcvd}>
+fluent F_CostAndTime = <costAndTime, {shipReq, shipCancel}>
+fluent F_InfoRcvd = <infoRcvd, {prodReq, prodCancel}>
+fluent F_ShipReq = <shipReq, A\{shipReq}>
+fluent F_ProdReq = <prodReq, A\{prodReq}>
+fluent F_UsrAckPending = <usrAck, usrReq>//{respOk, respFail}> 
+fluent F_UsrAck = <usrAck, A\{usrAck}> 
+fluent F_UsrNack = <usrNack, usrReq> 
+fluent F_NotAvail = <notAvail, A\{notAvail}> 
+fluent F_ProdNotAvail = <prodNotAvail, usrReq>//prodInfoReq> //
+fluent F_ShipNotAvail = <shipNotAvail, usrReq>//shipInfoReq> //
+fluent F_ShipCancel = <shipCancel, A\{shipCancel}>
+fluent F_ProdCancel = <prodCancel, A\{prodCancel}> 
+fluent F_RespOk = <respOk, A\{respOk}>
+fluent F_ShipOk = <shipOk, usrReq> //shipInfoReq>
+fluent F_ProdOk = <prodOk, usrReq> //prodInfoReq>
+fluent F_RespFail = <respFail, A\{respFail}>
+fluent F_ShipFailed = <shipFail, usrReq>//shipInfoReq>
+fluent F_ProdFailed = <prodFail, usrReq>//prodInfoReq>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Processing = <usrReq, {usrNack, notAvail, respFail, respOk}>
+fluent F_ShipFinished = <{shipOk, shipFail}, shipInfoReq>
+fluent F_ProdFinished = <{prodOk, prodFail}, prodInfoReq>
+fluent F_ShipInfoRequested = <shipInfoReq, usrReq>
+fluent F_ProdInfoRequested = <prodInfoReq, usrReq>
+fluent F_ShipProdInfoReqFailed = <{prodNotAvail, shipNotAvail}, usrReq>
+fluent F_ShipProdReqFailed = <{prodFail, shipFail}, usrReq>
+fluent F_ShipInfoReqAnswered = <{costAndTime, shipNotAvail}, usrReq>
+fluent F_ProdInfoReqAnswered = <{infoRcvd, prodNotAvail}, usrReq>
+fluent F_ShipCancelled = <shipCancel, shipInfoReq>
+fluent F_ProdCancelled = <prodCancel, prodInfoReq> 
+fluent F_ShipRequested = <shipReq, shipInfoReq>
+fluent F_ProdRequested = <prodReq, prodInfoReq>
+
+assert ProdInfoReqFulfilled = (F_ProdInfoRequested -> (F_ProdNotAvail || F_ProdCancelled))
+assert ShipInfoReqFulfilled = (F_ShipInfoRequested -> (F_ShipNotAvail || F_ShipCancelled))
+
+assert ProdReqFulfilled = (F_ProdCancelled || (F_ProdRequested -> (F_ProdFailed || F_ProdOk)))
+assert ShipReqFulfilled = (F_ShipCancelled || (F_ShipRequested -> (F_ShipFailed || F_ShipOk)))
+
+fluent NackAndNoShipCancel = <usrNack, shipCancel>
+fluent NackAndNoProdCancel = <usrNack, prodCancel>
+assert A2 = (!NackAndNoProdCancel && !NackAndNoShipCancel)
+
+//Safety requirements
+ltl_property NoInfoReqBeforeUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> F_UsrReq)
+ltl_property OnlyOneInfoReqPerUsrReq = []( (F_ShipInfoReq || F_ProdInfoReq) -> !F_ShipProdInfoReqFailed)
+
+ltl_property OfferRcvdImpliesInfoAvailable = [](F_OfferRcvd -> (F_CostAndTime && F_InfoRcvd))
+
+ltl_property ProdCancelRestrictions = [](F_ProdCancel -> (F_UsrNack || F_ShipNotAvail))
+ltl_property ShipCancelRestrictions = [](F_ShipCancel -> (F_UsrNack || F_ProdNotAvail || F_ProdFailed))
+
+ltl_property NotAvailImpliesSomeInfoNotAvail = [] (F_NotAvail -> (F_ProdNotAvail || F_ShipNotAvail))
+ltl_property NotAvailImpliesInfoReqFulfilled = [] (F_NotAvail -> (ProdInfoReqFulfilled && ShipInfoReqFulfilled))
+
+ltl_property ProdReqImpliesACK = [](F_ProdReq -> F_UsrAckPending)
+ltl_property ShipReqImpliesProdReq= [](F_ShipReq -> F_ProdOk)
+
+ltl_property RespOkImpliesShipAndProdOk = [](F_RespOk -> (F_ProdOk && F_ShipOk))
+
+ltl_property ShipReqIfProdFailed = [](F_ShipReq -> F_ProdOk)
+
+ltl_property RespFailImpliesShipFailedOrCancelled = [](F_RespFail -> (F_ShipCancelled || F_ShipFailed))
+
+ltl_property ShipAndProdReqDidntFail = [](F_ShipProdReqFailed -> (!F_ShipInfoReq && !F_ProdInfoReq))
+
+//assertions
+assert UsrRespOk = F_RespOk
+assert Failures = F_Failures
+assert AssumptionOnRequests = F_Processing
+assert AssumptionOnUser = F_UsrAckPending
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+fluent F_CAT = <costAndTime, A\{costAndTime}>
+fluent F_InfoR = <infoRcvd, A\{infoRcvd}>
+fluent F_SOk = <shipOk, A\{shipOk}>
+fluent F_POk = <prodOk, A\{prodOk}>
+
+assert Successful = (([]<> AssumptionOnRequests) && ([]<> AssumptionOnUser) &&
+					(([]<> F_ProdInfoReq) -> ([]<>(F_InfoR && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ShipInfoReq) -> ([]<>(F_CAT && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ProdReq) -> ([]<>(F_POk && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))) &&
+					(([]<> F_ShipReq) -> ([]<>(F_SOk && (!F_Failures W AssumptionOnUser) && (!F_Failures W AssumptionOnRequests)))))
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {NoInfoReqBeforeUsrReq, OfferRcvdImpliesInfoAvailable, NotAvailImpliesSomeInfoNotAvail, 
+				RespOkImpliesShipAndProdOk, OnlyOneInfoReqPerUsrReq, ShipAndProdReqDidntFail,
+				ShipCancelRestrictions, ProdCancelRestrictions, RespFailImpliesShipFailedOrCancelled,
+				ProdReqImpliesACK, ShipReqImpliesProdReq, ShipReqIfProdFailed,
+				NotAvailImpliesInfoReqFulfilled}
+       failure = {Failures}
+       assumption = {AssumptionOnUser}
+       liveness = {UsrRespOk}
+       controllable = {Controllable}
+}

@@ -1,0 +1,6 @@
+P = (a->b->P)\{a}.
+property ||C = P.
+
+
+||ExpectedC = Q0.
+Q0 = (b -> Q0).

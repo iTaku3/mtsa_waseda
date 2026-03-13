@@ -1,0 +1,36 @@
+//ROBOTS
+set RobotSenses = {eMove,eSend}
+set RobotControl = {sMove,sSend}
+
+||ROBOT = (COMUNICATION || MOVEMENT).
+
+COMUNICATION = (sSend -> eSend -> COMUNICATION).
+MOVEMENT = (sMove -> eMove -> MOVEMENT).
+
+//ENVIROMENT
+|| ENV = (ROBOT).
+
+fluent Moving = <sMove, eMove>
+fluent Sending = <sSend, eSend>
+
+fluent LocSent = <eSend, sSend>
+fluent Moved = <eMove, sMove>
+
+assert Goal = (LocSent && Moved)
+assert AMoving = Moving
+assert ASending = Sending
+
+ltl_property SLOW_START = [] (sMove -> !Sending)
+
+// DEFINED CONTROLLER
+controller ||CONTROLLER = (ENV)~{G}.
+
+||TEST = (CONTROLLER||CONTROLLER).
+
+//DEFINED GOALS
+controllerSpec G = {
+	safety = {SLOW_START}
+	liveness = {Goal}
+	concurrencyFluents={AMoving,ASending}
+	controllable = {RobotControl}
+}	

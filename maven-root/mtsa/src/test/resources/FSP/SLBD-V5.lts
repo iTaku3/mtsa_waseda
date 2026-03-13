@@ -1,0 +1,72 @@
+/** Concurrency: State Models and Java Programs
+ *             Jeff Magee and Jeff Kramer
+ *  
+ */
+
+/* Revised Single Lane bridge
+*/
+
+const N = 2// number of each type of car
+range T = 0..N // type of car count
+range ID= 1..N // car identities
+
+const True = 1
+const False = 0
+range B = False..True
+
+set Controllable = {red[ID].request, blue[ID].request}
+set ControllableV2 = {red[ID].enter, blue[ID].enter}
+
+//Involved fluents
+fluent RedPass[i:ID] = <red[i].enter, red[i].exit>
+fluent BluePass[i:ID] = <blue[i].enter, blue[i].exit>
+fluent Fault1 = <crash, {red[ID].request, blue[ID].request, red[ID].enter, blue[ID].enter, red[ID].exit, blue[ID].exit}>
+
+//Real assertions
+assert SEBluePass = ([]<>BluePass[2])
+assert SERedPass = ([]<>RedPass[2])
+assert AllPass = (([]<>BluePass[2]) &&  ([]<>RedPass[2]))
+
+//Goal assertions
+assert ABluePass = BluePass[2]
+assert ARedPass = RedPass[2]
+assert F1 = Fault1
+
+ltl_property AONEWAY = []( !exists[i:1..N] (RedPass[i] && BluePass[i]))
+
+
+//Goal definition
+controllerSpec G1 = {
+safety = {AONEWAY}
+failure = {F1}
+assumption = {} 
+liveness = {ABluePass, ARedPass}
+controllable = {ControllableV2}
+}
+
+controller ||CSLB = SingleLaneBridge~{G1}.
+
+/*****************************************************************************
+La idea con este modelo seria modelar choques. 
+Lo bueno de los choques es que nos permitirian jugar con fallas que te vuelven a esperar otro 
+req o sea de alguna forma el crash aborta. Tal vez es una buena forma de necesitar la
+asuncion de requests sobre red y blue. No creo que sea el caso, pero tal vez algo pasa.
+******************************************************************************/
+
+
+BR = ({request, enter, exit} -> BR).
+||BRIDGE = (red[ID]:BR || blue[ID]:BR).
+
+CAR = (request->enter->exit->CAR).
+
+/* cars may not overtake each other */
+NOPASS1   = C[1],
+C[i:ID]   = ([i].enter -> C[i%N+1]).
+
+NOPASS2   = C[1],
+C[i:ID]   = ([i].exit -> C[i%N+1]).
+
+||CONVOY = ([ID]:CAR || NOPASS1 || NOPASS2).
+
+||SingleLaneBridge = (red:CONVOY||blue:CONVOY|| BRIDGE).
+

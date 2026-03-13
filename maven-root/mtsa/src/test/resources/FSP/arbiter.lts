@@ -1,0 +1,31 @@
+const N = 2
+range ID = 1..N
+
+PROC = (request -> grant -> release -> PROC).
+||PROCS = (p[ID]:PROC).
+
+set Controls = {p[ID].grant}
+set EnvActions = {p[ID].{request,release}}
+set AllActions = {Controls,EnvActions}
+fluent REQ[i:ID] = <p[i].request, p[i].grant>
+fluent HOLDS[i:ID] = <p[i].grant, p[i].release>
+
+assert REQ1 = REQ[1]
+assert REQ2 = REQ[2]
+assert HOLD1 = HOLDS[1]
+assert HOLD2 = HOLDS[2]
+
+//[]<> req1 /\ []<> req2 -> ([]<> holds1 /\ []<> holds2)
+
+ltl_property MUTEX = []!(exists[i:1..N-1] (HOLDS[i] && HOLDS[i+1..N]))
+
+controllerSpec PETERSON = {
+	safety = {MUTEX}
+	assumption = {REQ1, REQ2}
+	liveness = {HOLD1, HOLD2}
+	controllable = {Controls}
+}
+controller ||C = (PROCS)~{PETERSON}.
+checkCompatibility ||Comp = (PROCS)~{PETERSON}.
+
+

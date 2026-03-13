@@ -1,0 +1,21 @@
+set A = {a, b, c, d, e, p}
+
+fluent P_a = <p, A\{p}>
+fluent RUNNING = <a, e>
+
+
+ltl_property TuVieja1 = (P_a -> RUNNING)
+ltl_property TuVieja2 = (p -> RUNNING)
+
+||A1 = TuVieja1.
+||A2 = TuVieja2.
+
+
+// El problema de esto es que la técnica de update procesa las propiedades de safety utilizando en código objetos MTS
+// Mientras que la composición en paralelo utiliza en código objetos CompositeState.
+// La primera no soporta eventos sino que solamente fluents
+
+// Problemas:
+// Si voy por el lado de Fluents mi limitación es que tengo que saber cual es A para cada fluent y no siempre es trivial
+// Si pongo eventos de mas en A cuando se embebe los fluents para interpretar la formula incorporo al model eventos de más.
+// Si pongo eventos de menos puedo tener el problema de NO sincronizar los eventos correctamente

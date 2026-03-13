@@ -1,0 +1,67 @@
+set ControllableActions = {c1, c2}
+set ControllableActions2 = {c1, c2, c3}
+set Alphabet = {c1, c2, c3, u1, u2}
+
+ENV_OLD = (c1 -> ENV_OLD | c2 -> ENV_OLD_),
+ENV_OLD_ = (u1 -> ENV_OLD).
+
+ENV_NEW = (c1 -> ENV_NEW | c2 -> ENV_NEW_ | c3 -> ENV_NEW__),
+ENV_NEW_ = (u1 -> ENV_NEW),
+ENV_NEW__ = (u2 -> ENV_NEW).
+
+ENV_HAT = (c1 -> ENV_HAT | c2 -> ENV_HAT_),
+ENV_HAT_ = (u1 -> ENV_HAT).
+
+assert NOT_C2 = !c2
+assert NOT_C3 = !c3
+ltl_property ALWAYS_NOT_C2 = [](NOT_C2)
+ltl_property ALWAYS_NOT_C3 = [](NOT_C3)
+
+||OldEnvironment = (ENV_OLD).
+||NewEnvironment = (ENV_NEW).
+
+controllerSpec OldSpec = {
+	safety = {ALWAYS_NOT_C2}
+	controllable = {ControllableActions}
+}
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec NewSpec = {
+	safety = {ALWAYS_NOT_C2, ALWAYS_NOT_C3}
+	controllable = {ControllableActions2}
+}
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+fluent C1 = <c1,{c2,c3}>
+fluent C2 = <c2,{c1,c3}>
+fluent C3 = <c3,{c1,c2}>
+fluent U1 = <u1,{c1,c2,c3}>
+fluent U2 = <u2,{c1,c2,c3}>
+
+updatingController UpdCont = {
+	oldController = EnvironmentAndController,
+	oldEnvironment = OldEnvironment,
+	newEnvironment = NewEnvironment,
+	oldGoal = OldSpec,
+	newGoal = NewSpec,
+	nonblocking,
+	oldPropositions = {C1, C2, C3, U1, U2}
+	newPropositions = {C1, C2, C3, U1, U2}
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+||HIDING = UPDATE_CONTROLLER\{stopOldSpec,startNewSpec,reconfigure}.
+
+/*TESTS*/
+assert S_OLD = NOT_C2
+assert S_NEW = (NOT_C3 && NOT_C2)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FORMULA4 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))
+
+fluent StopOldSpec = <stopOldSpec,beginUpdate>
+fluent StartNewSpec = <startNewSpec,beginUpdate>

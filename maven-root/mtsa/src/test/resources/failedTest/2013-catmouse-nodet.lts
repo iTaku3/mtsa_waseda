@@ -1,0 +1,75 @@
+const MAX_TURNS = 10
+range Turns = 1..MAX_TURNS
+
+set CatFlaps = {c1,c2,c3,c4,c5,c6,c7a,c7b}
+set MouseFlaps = {m1,m2,m3,m4,m5,m6}
+set ObsMouseFlaps = {m}
+set Controllable = {CatFlaps}
+set A = {CatFlaps, ObsMouseFlaps}
+
+CAT(Init=2) = (start->cat_in[Init]->CAT[Init]),
+CAT[0] = (c1 -> ECAT[1] | c4 -> ECAT[3]),
+CAT[1] = (c2 -> ECAT[2] | c7b -> ECAT[3]),
+CAT[2] = (c3 -> ECAT[0] ),
+CAT[3] = (c5 -> ECAT[4] | c7a -> ECAT[1]),
+CAT[4] = (c6 -> ECAT[0] ),
+ECAT[room:0..4] = (cat_in[room]->CAT[room]).
+
+MOUSE(Init=4) = (start->mouse_in[Init]->MOUSE[Init]),
+MOUSE[0] = (m1 -> EMOUSE[2] | m4 -> EMOUSE[4] 
+		   |m3 -> EMOUSE[1] | m6 -> EMOUSE[3]),
+MOUSE[1] = (m3 -> EMOUSE[0] | m2 -> EMOUSE[0]),
+MOUSE[2] = (m2 -> EMOUSE[1] | m1 -> EMOUSE[0]),
+MOUSE[3] = (m6 -> EMOUSE[0] | m5 -> EMOUSE[4]),
+MOUSE[4] = (m5 -> EMOUSE[3] | m4 -> EMOUSE[0]),
+EMOUSE[room:0..4] = (mouse_in[room]->MOUSE[room])/{m/{MouseFlaps}}.//, mouse_moved/{mouse_in[0..4]}}.
+
+TURN(C_TURNS=1, M_TURNS=1) = 
+		(when (C_TURNS>1) {CatFlaps}->CAT[C_TURNS-1] 
+		|when (C_TURNS==1) {CatFlaps}->MOUSE[M_TURNS]
+		|when (M_TURNS>1) {ObsMouseFlaps}->MOUSE[M_TURNS-1]
+		|when (M_TURNS==1) {ObsMouseFlaps}->CAT[C_TURNS]),
+MOUSE[mt:Turns] = 
+		(when(mt==1){ObsMouseFlaps}->CAT[C_TURNS]
+		|when(mt>1) {ObsMouseFlaps}->MOUSE[mt-1]),
+CAT[ct:Turns] = 
+		(when(ct==1){CatFlaps}->MOUSE[M_TURNS]
+		|when(ct>1) {CatFlaps}->CAT[ct-1]).
+
+ATE = ATE[2][4],
+ATE[cin:0..4][min:0..4] = 
+			({CatFlaps,ObsMouseFlaps}->ATE[cin][min]
+			|when (cin==min) eat->EATEN 
+			|when (cin!=min) mouse_in[room:0..4]->ATE[cin][room]
+			|when (cin!=min) cat_in[room:0..4]->ATE[room][min]),
+EATEN = (ate->EATEN).
+
+||ENV1 = (CAT || MOUSE || TURN(3,1) || ATE).
+||ENV = ENV1/{mouse/mouse_in[0..4]}.
+
+controller	||C = (ENV)~{G}.
+//||C = C1>>{ate}.
+||RUNLiveAndSafe = C.
+
+fluent CATROOM[room:0..4] = <cat_in[room],{cat_in[0..4]}\{cat_in[room]}>
+fluent MOUSEROOM[room:0..4] = <mouse_in[room],{mouse_in[0..4]}\{mouse_in[room]}>
+fluent F_ATE = <ate, A\{ate}>//exists[i:0..4] (CATROOM[i] && MOUSEROOM[i]))
+assert EATEN = F_ATE
+ 
+controllerSpec G = {
+	liveness = {EATEN} 
+	controllable = {Controllable}
+}
+
+animation MAZElAs = "xml/catmousemaze.xml" target RUNLiveAndSafe  
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+					forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    start/start
+                 }
+
+

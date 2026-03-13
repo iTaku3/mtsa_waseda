@@ -1,0 +1,62 @@
+set ControllableActions = {c1, c2, c3}
+
+ENV_OLD = (c1 -> ENV_OLD | c2 -> ENV_OLD_ | c3 -> ENV_OLD__),
+ENV_OLD_ = (u1 -> ENV_OLD),
+ENV_OLD__ = (u2 -> ENV_OLD).
+
+ENV_NEW = (c1 -> ENV_NEW | c2 -> ENV_NEW_),
+ENV_NEW_ = (u1 -> ENV_NEW).
+
+assert NOT_C2 = (!c2)
+assert NOT_C3 = (!c3)
+
+assert S_OLD = (NOT_C3 && NOT_C2)
+assert S_NEW = NOT_C2
+
+ltl_property ALWAYS_C2_C3 = [](!c3 && !c2)
+ltl_property ALWAYS_C2 = [](!c2)
+
+||OldEnvironment = (ENV_OLD).
+||HatEnvironment = ENV_OLD.
+||NewEnvironment = (ENV_NEW).
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+	safety = {ALWAYS_C2_C3}
+	controllable = {ControllableActions}
+}
+
+||O = (OldController||OldEnvironment).
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec = {
+	safety = {ALWAYS_C2}
+	controllable = {ControllableActions}
+}
+
+fluent C1 = <c1,{c2,c3}>
+fluent C2 = <c2,{c1,c3}>
+fluent C3 = <c3, {c1,c2}>
+fluent U1 = <u1, {c1,c2,c3}>
+fluent U2 = <u2, {c1,c2,c3}>
+
+updatingController UpdCont = {
+	oldController = EnvironmentAndController,
+	oldEnvironment = OldEnvironment,
+	hatEnvironment = HatEnvironment,
+	newEnvironment = NewEnvironment,
+	oldGoal = OldSpec,
+	newGoal = NewSpec,
+	// transition = T,
+	nonblocking,
+	updateFluents = {C1, C2, U1, U2}
+}
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FORMULA4 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))

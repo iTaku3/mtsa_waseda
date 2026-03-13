@@ -1,0 +1,46 @@
+const CantTask = 2
+range Tasks = 1..CantTask
+set Drillers = {[1]}
+set Pressers = {[2]}
+
+set Controllable = {[a:Tasks].sOven,[s:Drillers].sDrill, [p:Pressers].sPress,g}
+set NotControllable = {[a:Tasks].eOven,[s:Drillers].eDrill, [p:Pressers].ePress}
+set Alphabet = {Controllable}
+
+OVEN(ID=1) = FREE, 
+FREE = ([a:Tasks].sOven -> LOCKED[a]), 
+LOCKED[a:Tasks] = ([Tasks].eOven -> FREE).
+
+PROCESS_A(ID=1) = ([ID].sOven -> [ID].eOven -> [ID].sDrill -> [ID].eDrill -> g  -> REACH ),
+REACH = (g->REACH).
+
+PROCESS_B(ID=1) = ([ID].sOven -> OVEN | [ID].sPress -> PRESS),
+OVEN = ([ID].eOven -> [ID].sPress -> [ID].ePress -> g  -> REACH), 
+PRESS = ([ID].ePress -> [ID].sOven -> [ID].eOven -> g  -> REACH ),
+REACH = (g->REACH).
+
+|| Plant = (PROCESS_A(1) || PROCESS_B(2) || OVEN).
+
+
+fluent OVENING[i:Tasks] = <[i].sOven ,[i].eOven> 
+fluent DRILLING[i:Tasks] = <[i].sDrill ,[i].eDrill> 
+fluent PRESSING[i:Tasks] = <[i].sPress ,[i].ePress> 
+
+assert KEEP_WORKING = (OVENING[1] && OVENING[2] && DRILLING[1] && PRESSING[2])
+
+fluent GOAL= <g, Alphabet\{g}>
+
+controller ||C = (Plant)~{G1}.
+checkCompatibility ||Compatible = (Plant)~{G1}.
+
+|| K = (C || C).
+
+controllerSpec G1 = {
+	// safety = {S2AftF1,S1AftS4orS3,Restrict}
+	//	failure = {}
+	//	assumption = {}
+	liveness = {GOAL}
+	//concurrencyFluents={KEEP_WORKING}
+	//lazyness=1
+	controllable = {Controllable}
+}

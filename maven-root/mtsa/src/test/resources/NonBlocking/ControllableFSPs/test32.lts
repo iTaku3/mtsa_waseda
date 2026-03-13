@@ -1,0 +1,16 @@
+Ejemplo = A0, //A es el 1er loop
+A0 = (c01 -> A1 | c02 -> A2),
+A1 = (u12 -> A2 | c1g -> G1),
+A2 = (u21 -> A1 | c2g -> G2),
+G1 = (um12 -> G2),
+G2 = (ug21 -> G1).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+  controllable = {c01, c02, c1g, c2g}
+  marking = {um12}
+  nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

@@ -1,0 +1,37 @@
+set A = {cook, finishedCooking, cooking, moveToBelt, overHeated}
+set Controllable = {idle, cook, moveToBelt}
+
+const N = 2
+range Ovens = 1..N
+
+ARM = (idle->ARM | cook[oid:Ovens]->finishedCooking[oid]->ARM | moveToBelt[oid:Ovens]->ARM).
+
+OVENS = ([oid:Ovens].cook->COOKING[oid]),
+COOKING[oid:Ovens]=([oid].finishedCooking->OVENS | [oid].overheated?->OVERHEATED[oid]),
+OVERHEATED[oid:Ovens] = ([oid].overheated->OVERHEATED[oid]).
+
+||ENV = (ARM || OVENS).
+fluent F_Cooking[oid:Ovens] = <[oid].cook, [oid].finishedCooking>
+fluent F_MoveToBelt[oid:Ovens] = <[oid].moveToBelt, A\{[oid].moveToBelt}>
+fluent F_OverHeated[oid:Ovens] = <[oid].overHeated, A\{[oid].overHeated}> 
+
+//assert MoveToBelt = F_MoveToBelt
+assert MOVE_TO_BELT = forall[oid:Ovens] F_MoveToBelt[oid]
+assert TRUE = (F_MoveToBelt[1] || !F_MoveToBelt[1])
+
+assert NotCooking = !F_Cooking
+
+SUCCESSFULLY_COOKED_TWICE = (cook->cook->moveToBelt->SUCCESSFULLY_COOKED_TWICE). 
+ltl_property NotOverHeated = [] (!(F_OverHeated[1] || F_OverHeated[2] ))+{A}
+
+//controllers
+controller ||C = (ENV)~{G1}.
+//checkCompatibility ||Comp = (BISCOTTI)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {SUCCESSFULLY_COOKED_TWICE, NotOverHeated}
+       assumption = {NotCooking}
+       liveness = {MOVE_TO_BELT}
+       controllable = {Controllable}
+}

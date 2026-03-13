@@ -1,0 +1,56 @@
+/** Concurrency: State Models and Java Programs
+ *             Jeff Magee and Jeff Kramer
+ *  
+ */
+const N = 5
+
+PHIL = (think->right.get->left.get
+          ->eat->left.put->right.put
+          ->PHIL).
+
+||PHILOS = phil[0..N-1]:PHIL.
+
+FORK = (get -> put -> FORK).
+
+||FORKS = fork[0..N-1]:FORK.
+
+||DINERS = (PHILOS || FORKS) /{
+              forall [i:0..N-1] {
+                  {phil[i].left,phil[((i-1)+N)%N].right}/fork[i]
+              }
+            }.//>>{phil[0..N-1].{left,right}.{put,get}}.
+
+/*  ------------ Animation Mappings -------- */
+
+animation FORKS = "xml/diners.xml" target FORKS
+      actions {
+        forall[i:{fork[0..N-1].{put,get}}] {
+           [i]/[i]}
+        }
+
+animation PHILOS = "xml/diners.xml" target PHILOS
+       actions{
+          forall[i:0..N-1] {
+          	phil[i].think/phil[i].thinking.begin,
+          	phil[i].right.get/phil[i].rightfork,
+          	phil[i].left.get/phil[i].leftfork,
+          	phil[i].eat/phil[i].eating.begin
+         }
+       }
+       controls{
+         forall[i:0..N-1] {
+         	phil[i].{right,left}.get/phil[i].thinking.end,
+         	phil[i].{right,left}.put/phil[i].eating.end
+         }
+       }
+
+animation DINERS = "xml/diners.xml" target DINERS
+          compose {
+               PHILOS||
+               FORKS/{
+                      forall [i:0..N-1] 
+                        {{phil[i].left,phil[((i-1)+N)%N].right}/fork[i]}
+                     }
+               }
+
+           

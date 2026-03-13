@@ -1,0 +1,437 @@
+//ColorSortLTL2_621_ColorSort_fixed automatically_translated 
+
+set ControlledActions = {vermot.move, vermot.sleep, hormot.move, hormot.sleep, botmot.right, botmot.left, botmot.stop, botmot.initpos, spec_allsleep, not_spec_allsleep, motspeed.level1, motspeed.level2, motspeed.level3, reduce_num_of_cubes.reduce, reduce_num_of_cubes.notreduce, spec_state.s0, spec_state.s1, spec_state.s2, spec_currentcolor.red, spec_currentcolor.green, spec_currentcolor.blue, spec_currentcolor.black, spec_currentcolor.yellow, spec_currentcolor.white, spec_stage.wait, spec_stage.kick, spec_stage.toangleright, spec_stage.toangleleft, spec_stage.drop, spec_stage.fromangle, spec_finished_cycle, not_spec_finished_cycle, spec_speedbuttonvalidpressed, not_spec_speedbuttonvalidpressed, spec_haltbuttonvalidpressed, not_spec_haltbuttonvalidpressed, spec_pausing.pause, spec_pausing.go, tick, sys_constraint[1179].respondsto.responded, not_sys_constraint[1179].respondsto.responded, env_constraint[1212].respondsto.responded, not_env_constraint[1212].respondsto.responded, env_constraint[1213].respondsto.responded, not_env_constraint[1213].respondsto.responded, env_constraint[1215].respondsto.responded, not_env_constraint[1215].respondsto.responded, prev_1176_99, not_prev_1176_99, prev_1201_100, not_prev_1201_100, prev_1202_101, not_prev_1202_101, prev_1205_102, not_prev_1205_102, prev_1206_103, not_prev_1206_103, prev_1207_104, not_prev_1207_104, prev_1208_105, not_prev_1208_105}
+set UncontrolledActions = {color.red, color.green, color.blue, color.black, color.yellow, color.white, detect.red, detect.green, detect.blue, detect.black, detect.yellow, detect.white, ack_ver_hor.move, ack_ver_hor.sleep, ack_bot.move, ack_bot.sleep, atedge.noedge, atedge.edge, num_of_cubes.zero, num_of_cubes.notzero, haltbutton.press, haltbutton.release, speedbutton.press, speedbutton.release, tock}
+set AllActions = {ControlledActions, UncontrolledActions}
+
+
+set Color_Actions = {color.red, color.green, color.blue, color.black, color.yellow, color.white}
+fluent COLOR_RED = <color.red, Color_Actions\{color.red}>
+fluent COLOR_GREEN = <color.green, Color_Actions\{color.green}>
+fluent COLOR_BLUE = <color.blue, Color_Actions\{color.blue}>
+fluent COLOR_BLACK = <color.black, Color_Actions\{color.black}>
+fluent COLOR_YELLOW = <color.yellow, Color_Actions\{color.yellow}>
+fluent COLOR_WHITE = <color.white, Color_Actions\{color.white}>
+
+set Detect_Actions = {detect.red, detect.green, detect.blue, detect.black, detect.yellow, detect.white}
+fluent DETECT_RED = <detect.red, Detect_Actions\{detect.red}>
+fluent DETECT_GREEN = <detect.green, Detect_Actions\{detect.green}>
+fluent DETECT_BLUE = <detect.blue, Detect_Actions\{detect.blue}>
+fluent DETECT_BLACK = <detect.black, Detect_Actions\{detect.black}>
+fluent DETECT_YELLOW = <detect.yellow, Detect_Actions\{detect.yellow}>
+fluent DETECT_WHITE = <detect.white, Detect_Actions\{detect.white}>
+
+set Ack_ver_hor_Actions = {ack_ver_hor.move, ack_ver_hor.sleep}
+fluent ACK_VER_HOR_MOVE = <ack_ver_hor.move, Ack_ver_hor_Actions\{ack_ver_hor.move}>
+fluent ACK_VER_HOR_SLEEP = <ack_ver_hor.sleep, Ack_ver_hor_Actions\{ack_ver_hor.sleep}>
+
+set Ack_bot_Actions = {ack_bot.move, ack_bot.sleep}
+fluent ACK_BOT_MOVE = <ack_bot.move, Ack_bot_Actions\{ack_bot.move}>
+fluent ACK_BOT_SLEEP = <ack_bot.sleep, Ack_bot_Actions\{ack_bot.sleep}>
+
+set AtEdge_Actions = {atedge.noedge, atedge.edge}
+fluent ATEDGE_NOEDGE = <atedge.noedge, AtEdge_Actions\{atedge.noedge}>
+fluent ATEDGE_EDGE = <atedge.edge, AtEdge_Actions\{atedge.edge}>
+
+set Num_of_cubes_Actions = {num_of_cubes.zero, num_of_cubes.notzero}
+fluent NUM_OF_CUBES_ZERO = <num_of_cubes.zero, Num_of_cubes_Actions\{num_of_cubes.zero}>
+fluent NUM_OF_CUBES_NOTZERO = <num_of_cubes.notzero, Num_of_cubes_Actions\{num_of_cubes.notzero}>
+
+set HaltButton_Actions = {haltbutton.press, haltbutton.release}
+fluent HALTBUTTON_PRESS = <haltbutton.press, HaltButton_Actions\{haltbutton.press}>
+fluent HALTBUTTON_RELEASE = <haltbutton.release, HaltButton_Actions\{haltbutton.release}>
+
+set SpeedButton_Actions = {speedbutton.press, speedbutton.release}
+fluent SPEEDBUTTON_PRESS = <speedbutton.press, SpeedButton_Actions\{speedbutton.press}>
+fluent SPEEDBUTTON_RELEASE = <speedbutton.release, SpeedButton_Actions\{speedbutton.release}>
+
+set VerMot_Actions = {vermot.move, vermot.sleep}
+fluent VERMOT_MOVE = <vermot.move, VerMot_Actions\{vermot.move}>
+fluent VERMOT_SLEEP = <vermot.sleep, VerMot_Actions\{vermot.sleep}>
+
+set HorMot_Actions = {hormot.move, hormot.sleep}
+fluent HORMOT_MOVE = <hormot.move, HorMot_Actions\{hormot.move}>
+fluent HORMOT_SLEEP = <hormot.sleep, HorMot_Actions\{hormot.sleep}>
+
+set BotMot_Actions = {botmot.right, botmot.left, botmot.stop, botmot.initpos}
+fluent BOTMOT_RIGHT = <botmot.right, BotMot_Actions\{botmot.right}>
+fluent BOTMOT_LEFT = <botmot.left, BotMot_Actions\{botmot.left}>
+fluent BOTMOT_STOP = <botmot.stop, BotMot_Actions\{botmot.stop}>
+fluent BOTMOT_INITPOS = <botmot.initpos, BotMot_Actions\{botmot.initpos}>
+
+set Spec_allsleep_Actions = {spec_allsleep, not_spec_allsleep}
+fluent SPEC_ALLSLEEP = <spec_allsleep, Spec_allsleep_Actions\{spec_allsleep}>
+
+set MotSpeed_Actions = {motspeed.level1, motspeed.level2, motspeed.level3}
+fluent MOTSPEED_LEVEL1 = <motspeed.level1, MotSpeed_Actions\{motspeed.level1}>
+fluent MOTSPEED_LEVEL2 = <motspeed.level2, MotSpeed_Actions\{motspeed.level2}>
+fluent MOTSPEED_LEVEL3 = <motspeed.level3, MotSpeed_Actions\{motspeed.level3}>
+
+set Reduce_num_of_cubes_Actions = {reduce_num_of_cubes.reduce, reduce_num_of_cubes.notreduce}
+fluent REDUCE_NUM_OF_CUBES_REDUCE = <reduce_num_of_cubes.reduce, Reduce_num_of_cubes_Actions\{reduce_num_of_cubes.reduce}>
+fluent REDUCE_NUM_OF_CUBES_NOTREDUCE = <reduce_num_of_cubes.notreduce, Reduce_num_of_cubes_Actions\{reduce_num_of_cubes.notreduce}>
+
+set Spec_state_Actions = {spec_state.s0, spec_state.s1, spec_state.s2}
+fluent SPEC_STATE_S0 = <spec_state.s0, Spec_state_Actions\{spec_state.s0}>
+fluent SPEC_STATE_S1 = <spec_state.s1, Spec_state_Actions\{spec_state.s1}>
+fluent SPEC_STATE_S2 = <spec_state.s2, Spec_state_Actions\{spec_state.s2}>
+
+set Spec_currentColor_Actions = {spec_currentcolor.red, spec_currentcolor.green, spec_currentcolor.blue, spec_currentcolor.black, spec_currentcolor.yellow, spec_currentcolor.white}
+fluent SPEC_CURRENTCOLOR_RED = <spec_currentcolor.red, Spec_currentColor_Actions\{spec_currentcolor.red}>
+fluent SPEC_CURRENTCOLOR_GREEN = <spec_currentcolor.green, Spec_currentColor_Actions\{spec_currentcolor.green}>
+fluent SPEC_CURRENTCOLOR_BLUE = <spec_currentcolor.blue, Spec_currentColor_Actions\{spec_currentcolor.blue}>
+fluent SPEC_CURRENTCOLOR_BLACK = <spec_currentcolor.black, Spec_currentColor_Actions\{spec_currentcolor.black}>
+fluent SPEC_CURRENTCOLOR_YELLOW = <spec_currentcolor.yellow, Spec_currentColor_Actions\{spec_currentcolor.yellow}>
+fluent SPEC_CURRENTCOLOR_WHITE = <spec_currentcolor.white, Spec_currentColor_Actions\{spec_currentcolor.white}>
+
+set Spec_stage_Actions = {spec_stage.wait, spec_stage.kick, spec_stage.toangleright, spec_stage.toangleleft, spec_stage.drop, spec_stage.fromangle}
+fluent SPEC_STAGE_WAIT = <spec_stage.wait, Spec_stage_Actions\{spec_stage.wait}>
+fluent SPEC_STAGE_KICK = <spec_stage.kick, Spec_stage_Actions\{spec_stage.kick}>
+fluent SPEC_STAGE_TOANGLERIGHT = <spec_stage.toangleright, Spec_stage_Actions\{spec_stage.toangleright}>
+fluent SPEC_STAGE_TOANGLELEFT = <spec_stage.toangleleft, Spec_stage_Actions\{spec_stage.toangleleft}>
+fluent SPEC_STAGE_DROP = <spec_stage.drop, Spec_stage_Actions\{spec_stage.drop}>
+fluent SPEC_STAGE_FROMANGLE = <spec_stage.fromangle, Spec_stage_Actions\{spec_stage.fromangle}>
+
+set Spec_finished_cycle_Actions = {spec_finished_cycle, not_spec_finished_cycle}
+fluent SPEC_FINISHED_CYCLE = <spec_finished_cycle, Spec_finished_cycle_Actions\{spec_finished_cycle}>
+
+set Spec_speedButtonValidPressed_Actions = {spec_speedbuttonvalidpressed, not_spec_speedbuttonvalidpressed}
+fluent SPEC_SPEEDBUTTONVALIDPRESSED = <spec_speedbuttonvalidpressed, Spec_speedButtonValidPressed_Actions\{spec_speedbuttonvalidpressed}>
+
+set Spec_haltButtonValidPressed_Actions = {spec_haltbuttonvalidpressed, not_spec_haltbuttonvalidpressed}
+fluent SPEC_HALTBUTTONVALIDPRESSED = <spec_haltbuttonvalidpressed, Spec_haltButtonValidPressed_Actions\{spec_haltbuttonvalidpressed}>
+
+set Spec_pausing_Actions = {spec_pausing.pause, spec_pausing.go}
+fluent SPEC_PAUSING_PAUSE = <spec_pausing.pause, Spec_pausing_Actions\{spec_pausing.pause}>
+fluent SPEC_PAUSING_GO = <spec_pausing.go, Spec_pausing_Actions\{spec_pausing.go}>
+
+set SYS_CONSTRAINT_1179_respondsTo_responded_Actions = {sys_constraint[1179].respondsto.responded, not_sys_constraint[1179].respondsto.responded}
+fluent SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED = <sys_constraint[1179].respondsto.responded, SYS_CONSTRAINT_1179_respondsTo_responded_Actions\{sys_constraint[1179].respondsto.responded}>
+
+set ENV_CONSTRAINT_1212_respondsTo_responded_Actions = {env_constraint[1212].respondsto.responded, not_env_constraint[1212].respondsto.responded}
+fluent ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED = <env_constraint[1212].respondsto.responded, ENV_CONSTRAINT_1212_respondsTo_responded_Actions\{env_constraint[1212].respondsto.responded}>
+
+set ENV_CONSTRAINT_1213_respondsTo_responded_Actions = {env_constraint[1213].respondsto.responded, not_env_constraint[1213].respondsto.responded}
+fluent ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED = <env_constraint[1213].respondsto.responded, ENV_CONSTRAINT_1213_respondsTo_responded_Actions\{env_constraint[1213].respondsto.responded}>
+
+set ENV_CONSTRAINT_1215_respondsTo_responded_Actions = {env_constraint[1215].respondsto.responded, not_env_constraint[1215].respondsto.responded}
+fluent ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED = <env_constraint[1215].respondsto.responded, ENV_CONSTRAINT_1215_respondsTo_responded_Actions\{env_constraint[1215].respondsto.responded}>
+
+set PREV_1176_99_Actions = {prev_1176_99, not_prev_1176_99}
+fluent PREV_1176_99 = <prev_1176_99, PREV_1176_99_Actions\{prev_1176_99}>
+
+set PREV_1201_100_Actions = {prev_1201_100, not_prev_1201_100}
+fluent PREV_1201_100 = <prev_1201_100, PREV_1201_100_Actions\{prev_1201_100}>
+
+set PREV_1202_101_Actions = {prev_1202_101, not_prev_1202_101}
+fluent PREV_1202_101 = <prev_1202_101, PREV_1202_101_Actions\{prev_1202_101}>
+
+set PREV_1205_102_Actions = {prev_1205_102, not_prev_1205_102}
+fluent PREV_1205_102 = <prev_1205_102, PREV_1205_102_Actions\{prev_1205_102}>
+
+set PREV_1206_103_Actions = {prev_1206_103, not_prev_1206_103}
+fluent PREV_1206_103 = <prev_1206_103, PREV_1206_103_Actions\{prev_1206_103}>
+
+set PREV_1207_104_Actions = {prev_1207_104, not_prev_1207_104}
+fluent PREV_1207_104 = <prev_1207_104, PREV_1207_104_Actions\{prev_1207_104}>
+
+set PREV_1208_105_Actions = {prev_1208_105, not_prev_1208_105}
+fluent PREV_1208_105 = <prev_1208_105, PREV_1208_105_Actions\{prev_1208_105}>
+
+
+// move from synchronous play to asynchronous representation
+Clock = Env_turn,
+Env_turn = (tock -> Sys_turn | {UncontrolledActions}\{tock} -> Env_turn),
+Sys_turn = (tick -> Env_turn | {ControlledActions}\{tick} -> Sys_turn).
+
+Turns(N=1) = Controller[N],
+Controller[i:1..N] = ({ControlledActions}\{tick} -> Controller[i-1] | tick -> Controller[N]),
+Controller[0] = (tick -> Controller[N]).
+
+||Full_Clock = (Clock || Turns(#ControlledActions)).//|| UTurns(#UncontrolledActions+2)).
+
+//fluent Tick = <tick, AllActions\{tick}>
+
+//assumption, env eventually gives control to sys
+fluent Tock = <tock, tick>
+assert A_clock = (Tock)
+
+//==================LTL Properties=============================
+
+//property divided into 1 subproperties.
+ltl_property Initial_0 = (!tick W (tick && SPEC_STATE_S0))
+minimal || Initial_0_min =  Initial_0.
+//property divided into 1 subproperties.
+ltl_property Initial_1 = (!tick W (tick && ((MOTSPEED_LEVEL1 && SPEC_STAGE_WAIT) && SPEC_PAUSING_GO)))
+minimal || Initial_1_min =  Initial_1.
+//property divided into 1 subproperties.
+ltl_property Initial_2 = (!tick W (tick && SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED))
+minimal || Initial_2_min =  Initial_2.
+//property divided into 1 subproperties.
+ltl_property Initial_3 = (!tick W (tick && ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED))
+minimal || Initial_3_min =  Initial_3.
+//property divided into 1 subproperties.
+ltl_property Initial_4 = (!tick W (tick && ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED))
+minimal || Initial_4_min =  Initial_4.
+//property divided into 1 subproperties.
+ltl_property Initial_5 = (!tick W (tick && ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED))
+minimal || Initial_5_min =  Initial_5.
+//property divided into 1 subproperties.
+ltl_property Initial_6 = (!tick W (tick && !PREV_1176_99))
+minimal || Initial_6_min =  Initial_6.
+//property divided into 1 subproperties.
+ltl_property Initial_7 = (!tick W (tick && !PREV_1201_100))
+minimal || Initial_7_min =  Initial_7.
+//property divided into 1 subproperties.
+ltl_property Initial_8 = (!tick W (tick && !PREV_1202_101))
+minimal || Initial_8_min =  Initial_8.
+//property divided into 1 subproperties.
+ltl_property Initial_9 = (!tick W (tick && !PREV_1205_102))
+minimal || Initial_9_min =  Initial_9.
+//property divided into 1 subproperties.
+ltl_property Initial_10 = (!tick W (tick && !PREV_1206_103))
+minimal || Initial_10_min =  Initial_10.
+//property divided into 1 subproperties.
+ltl_property Initial_11 = (!tick W (tick && !PREV_1207_104))
+minimal || Initial_11_min =  Initial_11.
+//property divided into 1 subproperties.
+ltl_property Initial_12 = (!tick W (tick && !PREV_1208_105))
+minimal || Initial_12_min =  Initial_12.
+//=======Starting values=======
+||Initial_Values = ( Initial_0_min ||  Initial_1_min ||  Initial_2_min ||  Initial_3_min ||  Initial_4_min ||  Initial_5_min ||  Initial_6_min ||  Initial_7_min ||  Initial_8_min ||  Initial_9_min ||  Initial_10_min ||  Initial_11_min ||  Initial_12_min).
+
+
+
+//property divided into 1 subproperties.
+ltl_property G0 = [](tick -> (((((((SPEC_STATE_S0 && ((((!((ACK_VER_HOR_SLEEP && SPEC_STAGE_KICK) && SPEC_PAUSING_GO) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))) || (((ACK_VER_HOR_SLEEP && SPEC_STAGE_KICK) && SPEC_PAUSING_GO) && (ACK_VER_HOR_MOVE && SPEC_STAGE_DROP))) || (!(ACK_VER_HOR_MOVE && SPEC_STAGE_DROP) && ((DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) && (DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) && (DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) && (DETECT_RED <-> SPEC_CURRENTCOLOR_RED) && (DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) && (DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW)))) || ((!((ACK_VER_HOR_SLEEP && SPEC_STAGE_KICK) && SPEC_PAUSING_GO) && (ACK_VER_HOR_MOVE && SPEC_STAGE_DROP)) && ((DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) && (DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) && (DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) && (DETECT_RED <-> SPEC_CURRENTCOLOR_RED) && (DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) && (DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))))) && X(!tick W (tick && SPEC_STATE_S0))) || ((SPEC_STATE_S0 && ((((ACK_VER_HOR_SLEEP && SPEC_STAGE_KICK) && SPEC_PAUSING_GO) && !(ACK_VER_HOR_MOVE && SPEC_STAGE_DROP)) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW)))) && X(!tick W (tick && SPEC_STATE_S1)))) || ((SPEC_STATE_S1 && (!(ACK_VER_HOR_MOVE && SPEC_STAGE_DROP) && ((DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) && (DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) && (DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) && (DETECT_RED <-> SPEC_CURRENTCOLOR_RED) && (DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) && (DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW)))) && X(!tick W (tick && SPEC_STATE_S0)))) || ((SPEC_STATE_S1 && (!(ACK_VER_HOR_MOVE && SPEC_STAGE_DROP) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW)))) && X(!tick W (tick && SPEC_STATE_S1)))) || ((SPEC_STATE_S1 && (ACK_VER_HOR_MOVE && SPEC_STAGE_DROP)) && X(!tick W (tick && SPEC_STATE_S2)))) || (SPEC_STATE_S2 && X(!tick W (tick && SPEC_STATE_S2)))))
+minimal ||G0_min = G0.
+
+//property divided into 1 subproperties.
+assert G_l0 = (tick && (SPEC_STATE_S0 || SPEC_STATE_S1))
+
+//property divided into 1 subproperties.
+ltl_property G1 = [](tick -> ((HALTBUTTON_PRESS && PREV_1176_99) <-> SPEC_HALTBUTTONVALIDPRESSED))
+minimal ||G1_min = G1.
+
+//property divided into 1 subproperties.
+ltl_property G2 = [](tick -> (((SPEC_HALTBUTTONVALIDPRESSED && SPEC_PAUSING_GO) || (SPEC_HALTBUTTONVALIDPRESSED && SPEC_PAUSING_PAUSE)) -> X(!tick W (tick && SPEC_PAUSING_PAUSE))))
+minimal ||G2_min = G2.
+
+//property divided into 1 subproperties.
+ltl_property G3 = [](tick -> (((SPEC_HALTBUTTONVALIDPRESSED && SPEC_PAUSING_GO) || (SPEC_HALTBUTTONVALIDPRESSED && SPEC_PAUSING_PAUSE)) -> X(!tick W (tick && SPEC_PAUSING_GO))))
+minimal ||G3_min = G3.
+
+//property divided into 1 subproperties.
+ltl_property G4 = [](tick -> ((!SPEC_PAUSING_PAUSE && !ACK_VER_HOR_MOVE) || (SPEC_ALLSLEEP && (((X(!tick W (tick && (!SPEC_STAGE_DROP))) || SPEC_STAGE_DROP) && (!SPEC_STAGE_DROP || X(!tick W (tick && (SPEC_STAGE_DROP))))) && ((X(!tick W (tick && (!SPEC_STAGE_FROMANGLE))) || SPEC_STAGE_FROMANGLE) && (!SPEC_STAGE_FROMANGLE || X(!tick W (tick && (SPEC_STAGE_FROMANGLE))))) && ((X(!tick W (tick && (!SPEC_STAGE_KICK))) || SPEC_STAGE_KICK) && (!SPEC_STAGE_KICK || X(!tick W (tick && (SPEC_STAGE_KICK))))) && ((X(!tick W (tick && (!SPEC_STAGE_TOANGLELEFT))) || SPEC_STAGE_TOANGLELEFT) && (!SPEC_STAGE_TOANGLELEFT || X(!tick W (tick && (SPEC_STAGE_TOANGLELEFT))))) && ((X(!tick W (tick && (!SPEC_STAGE_TOANGLERIGHT))) || SPEC_STAGE_TOANGLERIGHT) && (!SPEC_STAGE_TOANGLERIGHT || X(!tick W (tick && (SPEC_STAGE_TOANGLERIGHT))))) && ((X(!tick W (tick && (!SPEC_STAGE_WAIT))) || SPEC_STAGE_WAIT) && (!SPEC_STAGE_WAIT || X(!tick W (tick && (SPEC_STAGE_WAIT)))))))))
+minimal ||G4_min = G4.
+
+//property divided into 1 subproperties.
+ltl_property G5 = [](tick -> (SPEC_STAGE_WAIT || (((X(!tick W (tick && (!SPEC_CURRENTCOLOR_BLACK))) || SPEC_CURRENTCOLOR_BLACK) && (!SPEC_CURRENTCOLOR_BLACK || X(!tick W (tick && (SPEC_CURRENTCOLOR_BLACK))))) && ((X(!tick W (tick && (!SPEC_CURRENTCOLOR_BLUE))) || SPEC_CURRENTCOLOR_BLUE) && (!SPEC_CURRENTCOLOR_BLUE || X(!tick W (tick && (SPEC_CURRENTCOLOR_BLUE))))) && ((X(!tick W (tick && (!SPEC_CURRENTCOLOR_GREEN))) || SPEC_CURRENTCOLOR_GREEN) && (!SPEC_CURRENTCOLOR_GREEN || X(!tick W (tick && (SPEC_CURRENTCOLOR_GREEN))))) && ((X(!tick W (tick && (!SPEC_CURRENTCOLOR_RED))) || SPEC_CURRENTCOLOR_RED) && (!SPEC_CURRENTCOLOR_RED || X(!tick W (tick && (SPEC_CURRENTCOLOR_RED))))) && ((X(!tick W (tick && (!SPEC_CURRENTCOLOR_WHITE))) || SPEC_CURRENTCOLOR_WHITE) && (!SPEC_CURRENTCOLOR_WHITE || X(!tick W (tick && (SPEC_CURRENTCOLOR_WHITE))))) && ((X(!tick W (tick && (!SPEC_CURRENTCOLOR_YELLOW))) || SPEC_CURRENTCOLOR_YELLOW) && (!SPEC_CURRENTCOLOR_YELLOW || X(!tick W (tick && (SPEC_CURRENTCOLOR_YELLOW))))))))
+minimal ||G5_min = G5.
+
+//property divided into 1 subproperties.
+ltl_property G6 = [](tick -> (VERMOT_MOVE -> (BOTMOT_STOP && HORMOT_SLEEP)))
+minimal ||G6_min = G6.
+
+//property divided into 1 subproperties.
+ltl_property G7 = [](tick -> (HORMOT_MOVE -> (BOTMOT_STOP && VERMOT_SLEEP)))
+minimal ||G7_min = G7.
+
+//property divided into 1 subproperties.
+ltl_property G8 = [](tick -> (!BOTMOT_STOP -> (VERMOT_SLEEP && HORMOT_SLEEP)))
+minimal ||G8_min = G8.
+
+//property divided into 1 subproperties.
+ltl_property G9 = [](tick -> (SPEC_ALLSLEEP <-> ((VERMOT_SLEEP && HORMOT_SLEEP) && BOTMOT_STOP)))
+minimal ||G9_min = G9.
+
+
+//property divided into 1 subproperties.
+ltl_property G10 = [](tick -> (((COLOR_BLACK || NUM_OF_CUBES_ZERO) && SPEC_STAGE_WAIT) -> (SPEC_ALLSLEEP && X(!tick W (tick && SPEC_STAGE_WAIT)))))
+minimal ||G10_min = G10.
+
+//property divided into 1 subproperties.
+ltl_property G11 = [](tick -> ((((COLOR_BLACK || NUM_OF_CUBES_ZERO) || !SPEC_STAGE_WAIT) || !SPEC_PAUSING_GO) || ((VERMOT_MOVE && (((!COLOR_BLACK || X(!tick W (tick && (SPEC_CURRENTCOLOR_BLACK)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_BLACK))) || COLOR_BLACK)) && ((!COLOR_BLUE || X(!tick W (tick && (SPEC_CURRENTCOLOR_BLUE)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_BLUE))) || COLOR_BLUE)) && ((!COLOR_GREEN || X(!tick W (tick && (SPEC_CURRENTCOLOR_GREEN)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_GREEN))) || COLOR_GREEN)) && ((!COLOR_RED || X(!tick W (tick && (SPEC_CURRENTCOLOR_RED)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_RED))) || COLOR_RED)) && ((!COLOR_WHITE || X(!tick W (tick && (SPEC_CURRENTCOLOR_WHITE)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_WHITE))) || COLOR_WHITE)) && ((!COLOR_YELLOW || X(!tick W (tick && (SPEC_CURRENTCOLOR_YELLOW)))) && (X(!tick W (tick && (!SPEC_CURRENTCOLOR_YELLOW))) || COLOR_YELLOW)))) && X(!tick W (tick && SPEC_STAGE_KICK)))))
+minimal ||G11_min = G11.
+
+//property divided into 1 subproperties.
+ltl_property G12 = [](tick -> (((ACK_VER_HOR_SLEEP && SPEC_STAGE_KICK) && SPEC_PAUSING_GO) -> (BOTMOT_RIGHT && X(!tick W (tick && SPEC_STAGE_TOANGLERIGHT)))))
+minimal ||G12_min = G12.
+
+//property divided into 1 subproperties.
+ltl_property G13 = [](tick -> ((((!ATEDGE_EDGE && SPEC_STAGE_TOANGLERIGHT) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))) && SPEC_PAUSING_GO) -> (BOTMOT_RIGHT && X(!tick W (tick && SPEC_STAGE_TOANGLERIGHT)))))
+minimal ||G13_min = G13.
+
+//property divided into 1 subproperties.
+ltl_property G14 = [](tick -> ((((ATEDGE_EDGE && SPEC_STAGE_TOANGLERIGHT) && SPEC_PAUSING_GO) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))) -> (BOTMOT_LEFT && X(!tick W (tick && SPEC_STAGE_TOANGLELEFT)))))
+minimal ||G14_min = G14.
+
+//property divided into 1 subproperties.
+ltl_property G15 = [](tick -> (((SPEC_STAGE_TOANGLELEFT && SPEC_PAUSING_GO) && (!(DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) || !(DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) || !(DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) || !(DETECT_RED <-> SPEC_CURRENTCOLOR_RED) || !(DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) || !(DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))) -> (BOTMOT_LEFT && X(!tick W (tick && SPEC_STAGE_TOANGLELEFT)))))
+minimal ||G15_min = G15.
+
+//property divided into 1 subproperties.
+ltl_property G16 = [](tick -> ((((SPEC_STAGE_TOANGLERIGHT || SPEC_STAGE_TOANGLELEFT) && SPEC_PAUSING_GO) && ((DETECT_BLACK <-> SPEC_CURRENTCOLOR_BLACK) && (DETECT_BLUE <-> SPEC_CURRENTCOLOR_BLUE) && (DETECT_GREEN <-> SPEC_CURRENTCOLOR_GREEN) && (DETECT_RED <-> SPEC_CURRENTCOLOR_RED) && (DETECT_WHITE <-> SPEC_CURRENTCOLOR_WHITE) && (DETECT_YELLOW <-> SPEC_CURRENTCOLOR_YELLOW))) -> (((VERMOT_SLEEP && HORMOT_MOVE) && BOTMOT_STOP) && X(!tick W (tick && SPEC_STAGE_DROP)))))
+minimal ||G16_min = G16.
+
+//property divided into 1 subproperties.
+ltl_property G17 = [](tick -> ((((ACK_VER_HOR_SLEEP && SPEC_STAGE_DROP) || ((ACK_BOT_MOVE || (ACK_BOT_SLEEP && PREV_1201_100)) && SPEC_STAGE_FROMANGLE)) && SPEC_PAUSING_GO) -> (BOTMOT_INITPOS && X(!tick W (tick && SPEC_STAGE_FROMANGLE)))))
+minimal ||G17_min = G17.
+
+//property divided into 1 subproperties.
+ltl_property G18 = [](tick -> (SPEC_FINISHED_CYCLE <-> (((ACK_BOT_SLEEP && PREV_1202_101) && SPEC_STAGE_FROMANGLE) && SPEC_PAUSING_GO)))
+minimal ||G18_min = G18.
+
+//property divided into 1 subproperties.
+ltl_property G19 = [](tick -> (SPEC_FINISHED_CYCLE -> (SPEC_ALLSLEEP && X(!tick W (tick && SPEC_STAGE_WAIT)))))
+minimal ||G19_min = G19.
+
+//property divided into 1 subproperties.
+ltl_property G20 = [](tick -> (SPEC_FINISHED_CYCLE <-> REDUCE_NUM_OF_CUBES_REDUCE))
+minimal ||G20_min = G20.
+
+//property divided into 1 subproperties.
+ltl_property G21 = [](tick -> ((SPEEDBUTTON_PRESS && PREV_1205_102) <-> SPEC_SPEEDBUTTONVALIDPRESSED))
+minimal ||G21_min = G21.
+
+//property divided into 1 subproperties.
+ltl_property G22 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1206_103) -> MOTSPEED_LEVEL2))
+minimal ||G22_min = G22.
+
+//property divided into 1 subproperties.
+ltl_property G23 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1207_104) -> MOTSPEED_LEVEL3))
+minimal ||G23_min = G23.
+
+//property divided into 1 subproperties.
+ltl_property G24 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1208_105) -> MOTSPEED_LEVEL1))
+minimal ||G24_min = G24.
+
+//property divided into 1 subproperties.
+ltl_property G25 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1206_103) -> MOTSPEED_LEVEL1))
+minimal ||G25_min = G25.
+
+//property divided into 1 subproperties.
+ltl_property G26 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1207_104) -> MOTSPEED_LEVEL2))
+minimal ||G26_min = G26.
+
+//property divided into 1 subproperties.
+ltl_property G27 = [](tick -> ((SPEC_SPEEDBUTTONVALIDPRESSED && PREV_1208_105) -> MOTSPEED_LEVEL3))
+minimal ||G27_min = G27.
+
+//property divided into 1 subproperties.
+assert G_l1 = (tick && SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED)
+
+
+//property divided into 2 subproperties.
+ltl_property G28 = [](tick -> (X(!tick W (tick && !SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED)) || (SPEC_HALTBUTTONVALIDPRESSED || (SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED && (!SPEC_HALTBUTTONVALIDPRESSED || !SPEC_PAUSING_GO)))))
+minimal ||G28_min = G28.
+ltl_property G29 = [](tick -> ((!SPEC_HALTBUTTONVALIDPRESSED && (!SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED || (SPEC_HALTBUTTONVALIDPRESSED && SPEC_PAUSING_GO))) || X(!tick W (tick && SYS_CONSTRAINT_1179_RESPONDSTO_RESPONDED))))
+minimal ||G29_min = G29.
+
+
+//property divided into 2 subproperties.
+ltl_property G30 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED)) || (ACK_VER_HOR_SLEEP || (ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED && !ACK_VER_HOR_MOVE))))
+minimal ||G30_min = G30.
+ltl_property G31 = [](tick -> ((!ACK_VER_HOR_SLEEP && (!ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED || ACK_VER_HOR_MOVE)) || X(!tick W (tick && ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED))))
+minimal ||G31_min = G31.
+
+
+//property divided into 2 subproperties.
+ltl_property G32 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED)) || (ACK_BOT_SLEEP || (ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED && !ACK_BOT_MOVE))))
+minimal ||G32_min = G32.
+ltl_property G33 = [](tick -> ((!ACK_BOT_SLEEP && (!ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED || ACK_BOT_MOVE)) || X(!tick W (tick && ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED))))
+minimal ||G33_min = G33.
+
+
+//property divided into 2 subproperties.
+ltl_property G34 = [](tick -> (X(!tick W (tick && !ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED)) || (NUM_OF_CUBES_ZERO || (ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED && NUM_OF_CUBES_ZERO))))
+minimal ||G34_min = G34.
+ltl_property G35 = [](tick -> ((!NUM_OF_CUBES_ZERO && (!ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED || !NUM_OF_CUBES_ZERO)) || X(!tick W (tick && ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED))))
+minimal ||G35_min = G35.
+
+
+//property divided into 2 subproperties.
+ltl_property G36 = [](tick -> (X(!tick W (tick && !PREV_1176_99)) || HALTBUTTON_RELEASE))
+minimal ||G36_min = G36.
+ltl_property G37 = [](tick -> (!HALTBUTTON_RELEASE || X(!tick W (tick && PREV_1176_99))))
+minimal ||G37_min = G37.
+
+
+//property divided into 2 subproperties.
+ltl_property G38 = [](tick -> (X(!tick W (tick && !PREV_1201_100)) || SPEC_PAUSING_PAUSE))
+minimal ||G38_min = G38.
+ltl_property G39 = [](tick -> (!SPEC_PAUSING_PAUSE || X(!tick W (tick && PREV_1201_100))))
+minimal ||G39_min = G39.
+
+
+//property divided into 2 subproperties.
+ltl_property G40 = [](tick -> (X(!tick W (tick && !PREV_1202_101)) || SPEC_PAUSING_GO))
+minimal ||G40_min = G40.
+ltl_property G41 = [](tick -> (!SPEC_PAUSING_GO || X(!tick W (tick && PREV_1202_101))))
+minimal ||G41_min = G41.
+
+
+//property divided into 2 subproperties.
+ltl_property G42 = [](tick -> (X(!tick W (tick && !PREV_1205_102)) || SPEEDBUTTON_RELEASE))
+minimal ||G42_min = G42.
+ltl_property G43 = [](tick -> (!SPEEDBUTTON_RELEASE || X(!tick W (tick && PREV_1205_102))))
+minimal ||G43_min = G43.
+
+
+//property divided into 2 subproperties.
+ltl_property G44 = [](tick -> (X(!tick W (tick && !PREV_1206_103)) || MOTSPEED_LEVEL1))
+minimal ||G44_min = G44.
+ltl_property G45 = [](tick -> (!MOTSPEED_LEVEL1 || X(!tick W (tick && PREV_1206_103))))
+minimal ||G45_min = G45.
+
+
+//property divided into 2 subproperties.
+ltl_property G46 = [](tick -> (X(!tick W (tick && !PREV_1207_104)) || MOTSPEED_LEVEL2))
+minimal ||G46_min = G46.
+ltl_property G47 = [](tick -> (!MOTSPEED_LEVEL2 || X(!tick W (tick && PREV_1207_104))))
+minimal ||G47_min = G47.
+
+
+//property divided into 2 subproperties.
+ltl_property G48 = [](tick -> (X(!tick W (tick && !PREV_1208_105)) || MOTSPEED_LEVEL3))
+minimal ||G48_min = G48.
+ltl_property G49 = [](tick -> (!MOTSPEED_LEVEL3 || X(!tick W (tick && PREV_1208_105))))
+minimal ||G49_min = G49.
+
+//property divided into 1 subproperties.
+constraint A0 = [](tock -> ((!SPEC_STAGE_KICK && !SPEC_STAGE_DROP) -> ACK_VER_HOR_SLEEP))
+minimal ||A0_min = A0.
+
+//property divided into 1 subproperties.
+assert A_l0 = (tock && !COLOR_BLACK)
+
+//property divided into 1 subproperties.
+assert A_l1 = (tock && ENV_CONSTRAINT_1212_RESPONDSTO_RESPONDED)
+
+//property divided into 1 subproperties.
+assert A_l2 = (tock && ENV_CONSTRAINT_1213_RESPONDSTO_RESPONDED)
+
+//property divided into 1 subproperties.
+assert A_l3 = (tock && ENV_CONSTRAINT_1215_RESPONDSTO_RESPONDED)
+
+
+
+||Domain_independent = (Full_Clock).
+||Env = (Domain_independent || Initial_Values ||
+		A0_min || G0_min || G1_min || G2_min || G3_min || G4_min || G5_min || G6_min || G7_min || G8_min || G9_min || G10_min || G11_min || G12_min || G13_min || G14_min || G15_min || G16_min || G17_min || G18_min || G19_min || G20_min || G21_min || G22_min || G23_min || G24_min || G25_min || G26_min || G27_min || G28_min || G29_min || G30_min || G31_min || G32_min || G33_min || G34_min || G35_min || G36_min || G37_min || G38_min || G39_min || G40_min || G41_min || G42_min || G43_min || G44_min || G45_min || G46_min || G47_min || G48_min || G49_min). //safety assumptions and guarantees
+
+controllerSpec Goal = {
+       assumption = {A_l0, A_l1, A_l2, A_l3, A_clock}  //user liveness assumptions + A_clock
+       liveness = {G_l0, G_l1}  //user liveeness guarantees
+       controllable = {ControlledActions}
+}
+
+heuristic ||Control = (Env)~{Goal}.
+checkCompatibility ||CheckControl = (Env)~{Goal}.
+
+||System = (Control || Env).
+
+assert Check = (([]<>A_l0 && []<>A_l1 && []<>A_l2 && []<>A_l3 && A_clock) -> ([]<>G_l0 && []<>G_l1))
+assert ASM =   ([]<>A_l0 && []<>A_l1 && []<>A_l2 && []<>A_l3 && A_clock)
+assert GNT = ([]<>G_l0 && []<>G_l1)
+progress Time  = {tick}

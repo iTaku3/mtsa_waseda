@@ -1,0 +1,68 @@
+const SRVsCount = 1
+const ClientsCount = 2
+range IDServices = 1..SRVsCount
+range Clients = 1..ClientsCount
+
+set AvailableServices = {car, flight, hotel}
+set User = {usrReq, usrResp}
+set ControllableC1 = {AvailableServices.{buy, query, reserve/*, cancelReservation*/}.[IDServices]}
+set Controllable = {{ControllableC1}, usrResp}
+set FailureSet = {AvailableServices.{queryFail, reserveFail, buyFail, notFound}.[IDServices]}
+set Uncontrollable = {FailureSet, AvailableServices.{querySuccess, reserveSuccess, buySuccess, found}.[IDServices]}
+set A = {Controllable, Uncontrollable, User}
+
+
+//Environment model
+SERVICE(SRV='car, ID=1) = IDLE,
+IDLE = ([SRV].query[ID] -> ( [SRV].queryFail[ID] -> IDLE | [SRV].querySuccess[ID] -> QUERIED) /*| [SRV].cancelReservation[ID] -> IDLE*/),
+QUERIED = ([SRV].found[ID] -> RESULTSET | [SRV].notFound[ID] -> IDLE),
+RESULTSET = ([SRV].reserve[ID] -> ([SRV].reserveFail[ID] -> IDLE | [SRV].reserveSuccess[ID] -> RESERVED)),
+RESERVED = ([SRV].buy[ID] -> ([SRV].buyFail[ID] -> IDLE | [SRV].buySuccess[ID] -> IDLE)).
+
+||SERVICES = (forall[srv:AvailableServices][id:IDServices] SERVICE(srv, id)).
+
+USR = (usrReq->usrResp->USR).
+
+||ENV = (SERVICES || USR).
+
+//fluent definitions
+fluent F_UsrReq = <usrReq, A\{usrReq}>
+fluent F_UsrResp = <usrResp, A\{usrResp}>
+fluent F_Failures = <FailureSet, A\{FailureSet}>
+fluent F_Reserved[srv:AvailableServices][id:IDServices] = <[srv].reserveSuccess[id], {[srv].buySuccess[id], [srv].buyFail[id]}>
+fluent F_BuySuccessfully[srv:AvailableServices][id:IDServices] = <[srv].buySuccess[id], A\{[srv].buySuccess[id]}>
+fluent F_Query[srv:AvailableServices][id:IDServices] = <[srv].query[id], A\{[srv].query[id]}>
+fluent F_BoughtSuccessfully[srv:AvailableServices][id:IDServices] = <[srv].buySuccess[id], usrReq>
+fluent F_TryToBuy[srv:AvailableServices][id:IDServices] = <[srv].buy[id], A\{[srv].buy[id]}>
+fluent F_Processing = <usrReq, usrResp>
+
+//assertions
+assert Failures = F_Failures
+assert UsrResp = F_UsrResp
+assert AssumptionOnRequests = F_Processing
+assert AllBought = forall[srv:AvailableServices]exists[id:IDServices] (F_BoughtSuccessfully[srv][id])
+assert Query =  exists[srv:AvailableServices][id:IDServices] F_Query[srv][id]
+
+
+//Safety definition
+ltl_property ReserveBeforeBuy = [] (forall[srv:AvailableServices][srv2:AvailableServices][id:IDServices] 
+									(F_TryToBuy[srv][id] -> (F_BoughtSuccessfully[srv2][id] || F_Reserved[srv2][id])))
+ltl_property UsrReqImpliesQuery = [](Query -> F_Processing)
+ltl_property UsrRspImpliesAllBought = [](F_UsrResp -> AllBought)
+
+//Controller specifications
+controller ||C = ENV~{G1}.
+checkCompatibility ||Compatible = ENV~{G1}.
+
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {ReserveBeforeBuy, UsrRspImpliesAllBought, UsrReqImpliesQuery}
+       failure = {Failures}
+       assumption = {AssumptionOnRequests}
+       liveness = {UsrResp}
+       controllable = {Controllable}
+}
+||PLANT = (ENV || ReserveBeforeBuy || UsrRspImpliesAllBought || UsrReqImpliesQuery).
+
+
+||System = (C || ENV).

@@ -1,0 +1,12 @@
+Ejemplo = A1,
+A1 = (a -> A1).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {a}
+marking = {a}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

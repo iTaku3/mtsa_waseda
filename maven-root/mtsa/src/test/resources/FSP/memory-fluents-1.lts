@@ -1,0 +1,35 @@
+const N = 3
+range IDs = 1..N
+set Controlled = {start_action[IDs]}
+set A = {Controlled, sensed_event}
+
+DOMAIN = (start_action[1] -> ACTION_1 | start_action[2] -> FINISH),
+ACTION_1 = (sensed_event -> FINISH),
+FINISH = (start_action[3] -> restart -> DOMAIN).
+//fluent STARTED1 = <start_action1, start_action3> //not useful
+//fluent STARTED = <{start_action1,start_action2}, start_action3>
+fluent STARTED2 = <start_action2, start_action3>
+fluent SENSED = <sensed_event, start_action3>
+
+fluent F_START[id:IDs] = <start_action[id], restart>
+
+assert START = F_START[3]
+
+//controllers
+controller ||C = (DOMAIN)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       liveness = {START}
+       controllable = {Controlled}
+}
+
+/*
+controller:- 
+ SENSED -> start_action3
+ STARTED2 -> start_action3 -> {start_action1, start_action2}
+*/
+
+
+
+

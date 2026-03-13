@@ -1,0 +1,29 @@
+set A={req, resp1, resp2, ping}
+set Controllable = {resp1, resp2}
+
+E = (req->REQ | ping?->E),
+REQ = ({resp1,resp2}->E | ping?->REQ).
+
+E_All = (req->REQ),
+REQ = ({resp1,resp2}->E_All | req?->REQ).
+
+E_None = (req?->STOP).
+
+fluent F_RESP1 = <req, resp1> 
+fluent F_RESP2 = <req, resp2> 
+
+assert RESP1 = F_RESP1
+assert RESP2 = F_RESP2
+assert TRUE = (F_RESP1 || !F_RESP1)
+
+//controllers
+controller ||C_Some = E~{G1}.
+controller ||C_All = E_All~{G1}.
+controller ||C_None = E_None~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       liveness = {RESP1, RESP2}
+       controllable = {Controllable}
+}
+

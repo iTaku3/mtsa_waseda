@@ -1,0 +1,13 @@
+const N=2
+DOOR = (openDoor->tick->closeDoor->DOOR).
+
+BUBBLE = (blowBubble->TRY), 
+TRY = (blowOk->BLOW_OK[0] | blowFailed->BUBBLE), 
+BLOW_OK[tick:0..N] = (when (tick<N) tick->BLOW_OK[tick+1]
+					  | when (tick>=N) bubbleBurst->BUBBLE
+					  | when (tick<N) releaseBubble->repositioning->BUBBLE).
+
+
+ROBOT = (mn->ROBOT | ms->ROBOT | me->ROBOT | mw->ROBOT).
+
+||AB = (BUBBLE || DOOR).

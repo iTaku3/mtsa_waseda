@@ -1,0 +1,69 @@
+//ROBOTS
+const CantArms = 1
+range RangeArms = 1..CantArms
+set Arms = {[RangeArms]}
+
+set ArmControl = {sBuildBox,sPutInBox,sCooking}
+set ArmSenses = {eBuildBox, eCooking, ePutInBox}
+set ControllableActions = {[Arms].ArmControl,g}
+set UncontrollableActions = {[Arms].ArmSenses}
+
+set Alphabet = {ControllableActions,UncontrollableActions}
+
+G = (g->G).
+
+OVEN = FREE, 
+FREE = ([id:RangeArms].sCooking -> IN_OVEN), 
+IN_OVEN = ([id:RangeArms].eCooking ->   FREE).
+
+PIZZA_PROCESS = IN_TRAY,
+IN_TRAY =  ([id:RangeArms].sGetPizzaInTray ->  PIZZA_GETTED),
+PIZZA_GETTED = ([id:RangeArms].sCooking -> IN_OVEN), 
+IN_OVEN = ([id:RangeArms].eCooking ->   READY),
+READY = ([id:RangeArms].sGetPizzaFromOven -> IN_TRAY).
+
+DOUBLE_ARM(C=1) = IDLE, 
+IDLE  = ([C].sCooking -> IDLE | [C].sBuildBox -> BUILDING | [C].sPutInBox -> PUTTING), 
+BUILDING = ([C].eBuildBox -> IDLE), 
+PUTTING = ( [C].ePutInBox -> IDLE).
+
+fluent COOKING[id:RangeArms] = <[id].sCooking,[id].eCooking>
+fluent BUILDING_BOX[id:RangeArms] = <[id].sBuildBox, [id].eBuildBox>
+
+assert ACOOKING = COOKING[1]
+assert ABUILDING = BUILDING_BOX[1]
+
+fluent COOKED[id:RangeArms]  = <[id].eCooking, [id].ePutInBox>
+fluent BOX_BUILDED[id:RangeArms]  =  <[id].eBuildBox, [id].ePutInBox>
+fluent PUT_INTO_BOX[id:RangeArms] = <[id].ePutInBox, Alphabet\{[id].ePutInBox,g}>
+assert PUT_INTO_BOX = PUT_INTO_BOX[1]
+
+fluent GOL = <g, Alphabet\{g}>
+
+ltl_property PIZZA_AND_BOX_READY =  forall[id:RangeArms][] ([id].sPutInBox -> (COOKED[id] && BOX_BUILDED[id]))
+
+ltl_property DONT_MAKE_EXTRA_BOXES =  forall[id:RangeArms][] ([id].sBuildBox -> !BOX_BUILDED[id])
+
+ltl_property GOL_SOLO_SI = [] (GOL -> PUT_INTO_BOX[1])
+
+
+assert PUT_PIZZA_COOKED_OUT_INTO_BOX = (COOKED[1] && OUT[1] && BOX_BUILDED[1])
+
+
+
+|| ENV = (forall[a:Arms] DOUBLE_ARM(a) || OVEN || G/*|| PIZZA_PROCESS*/).
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CONT = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	safety={PIZZA_AND_BOX_READY,GOL_SOLO_SI/*,DONT_MAKE_EXTRA_BOXES*/}
+	liveness = {GOL}
+	//concurrencyFluents={ACOOKING,ABUILDING}
+	//lazyness= 1
+	non_transient
+	controllable = {ControllableActions}
+}

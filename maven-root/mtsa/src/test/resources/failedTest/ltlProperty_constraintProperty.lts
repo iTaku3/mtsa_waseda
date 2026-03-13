@@ -1,0 +1,7 @@
+assert F = [](p -> X q)
+ltl_property FLTLP = F
+||ExpectedC = FLTLP.
+
+constraint FCONS = F
+||P_FCONS = FCONS.
+property ||C = P_FCONS.

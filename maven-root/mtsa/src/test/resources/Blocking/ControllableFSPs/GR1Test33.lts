@@ -1,0 +1,25 @@
+Reloj = A0,
+A0 = (a -> A1),
+A1 = ({b,c} -> A2),
+A2 = (d -> A0).
+
+Alternador = B0,
+B0 = (b -> B1),
+B1 = (c -> B0).
+
+||Plant = (Reloj || Alternador).
+set All = {a, b, c, d}
+fluent FB = <b,All\{b}>
+fluent F1 = <d,c>
+
+assert S1 = FB
+assert S2 = !F1
+
+controllerSpec Goal = {
+        liveness = {S1, S2}
+        controllable = {a}
+}
+
+heuristic ||DirectedController = Plant~{Goal}.
+assert Check = ([]<>S1 && []<>S2)
+||Sys = (DirectedController || Plant).

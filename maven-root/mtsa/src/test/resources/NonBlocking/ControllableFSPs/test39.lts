@@ -1,0 +1,20 @@
+Ejemplo = Inic,
+Inic = (bcNoExplorado -> NoExp | auLoopInic -> Inic2),
+Inic2 = (cuLoopInic -> Inic | dcOtraRama -> Rama1),
+Rama1 = (eu -> Rama2),
+Rama2 = (fcE -> Error1),
+NoExp = (gcE -> Error1 | jcG -> Goal1),
+Error1 = (huE -> Error2),
+Error2 = (iuE -> Error1),
+Goal1 = (kuG -> Goal2),
+Goal2 = (luG -> Goal1).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {bcNoExplorado, dcOtraRama, fcE, gcE, jcG}
+marking = {kuG}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

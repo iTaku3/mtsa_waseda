@@ -1,0 +1,78 @@
+set ControllableActions = {c1, c2, c3}
+set UncontrollableActions = {u}
+set UpdatingControllableActions = {ControllableActions, startNewSpec, stopOldSpec}
+set All = {UpdatingControllableActions, UncontrollableActions}
+
+ENV   = (c1 -> ENV | c2 -> ENV_ | c3 -> ENV__),
+ENV_  = (u -> ENV),
+ENV__ = (u -> ENV).
+
+assert NOT_C2 = !c2
+assert NOT_C3 = !c3
+
+assert S_OLD = NOT_C3
+assert S_NEW = (NOT_C3 && NOT_C2)
+
+ltl_property ALWAYS_C = [](NOT_C3)
+
+||Environment = (ENV).
+
+controller ||OldController = Environment~{OldSpec}.
+||EnvironmentAndController = (Environment || OldController).
+
+controllerSpec OldSpec = {
+	safety = {ALWAYS_C}
+	controllable = {ControllableActions}
+}
+
+fluent C1 = <c1, {c2,c3}>
+fluent C2 = <c2, {c1,c3}>
+fluent C3 = <c3, {c1,c2}>
+fluent Uncontrollable = <{u}, {c1,c2,c3}>
+
+fluent StartNewSpec = <startNewSpec, beginUpdate>
+
+ltl_property T = [](stopOldSpec -> StartNewSpec)
+
+updatingController UpdCont = {
+	oldController = EnvironmentAndController,
+	oldEnvironment = Environment,
+	newEnvironment = Environment,
+	safety = {S_OLD, S_NEW, T},
+	//withLiveness, 
+	// When liveness is setted, the controller tries to do stopOldSpec even though is not needed.
+	nonblocking,
+	controllable = {UpdatingControllableActions},
+	updateFluents = {
+		{C1, C1},
+		{C2, C2},
+		{C3, C3},
+		{Uncontrollable, Uncontrollable}
+	}
+}
+
+assert TEST_FORMULA1 = (S_OLD W stopOldSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA3 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FINAL_FORMULA = ((S_OLD W stopOldSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))
+
+||UPD_CONT_ENVIRONMENT = UPD_CONT_ENVIRONMENT.
+
+	UPD_CONT_ENVIRONMENT = Q0,
+	Q0	= (c1.old -> Q0
+		  |beginUpdate -> Q1
+		  |c2.old -> Q3),
+	Q1	= ({c1, stopOldSpec} -> Q1
+		  |{c2, c3} -> Q2
+		  |startNewSpec -> Q4),
+	Q2	= (u -> Q1
+		  |stopOldSpec -> Q2
+		  |startNewSpec -> Q5),
+	Q3	= (u -> Q0
+		  |beginUpdate -> Q2),
+	Q4	= ({c1, stopOldSpec} -> Q4
+		  |{c2, c3} -> Q5),
+	Q5	= (u -> Q4
+		  |stopOldSpec -> Q5).
+
+

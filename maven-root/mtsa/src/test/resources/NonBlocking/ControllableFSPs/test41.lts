@@ -1,0 +1,15 @@
+Ejemplo = A1Inic,
+A1Inic = (a00u12 -> A2),
+A2 = (a01u24Goal -> A4Goal | a03u23 -> A3),
+A3 = (a04c31 -> A1Inic),
+A4Goal = (a02uGoal -> A4Goal).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {a04c31}
+marking = {a02uGoal, a01u24Goal}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

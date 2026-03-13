@@ -1,0 +1,121 @@
+const MAX = 2
+range R = 0..MAX
+const MAXBATTERY = 4
+
+set UpdatingControllableActions = {takeoff, land, blink, read, charge, stopOldSpec, startNewSpec}
+set ControllableActions = {takeoff, land, blink, read}
+set NewControllableActions = {takeoff, land, blink, read, charge}
+set A = {UpdatingControllableActions, read.val[R], lowBattery, beginUpdate}
+
+fluent LowBattery = <{lowBattery}, {charge}>
+fluent ValueReaded = <{read.val[0..2]},{land}>
+fluent IN_AIR = <{takeoff},{land}>
+fluent Read = <{read}, {A\{read}}>
+
+ltl_property UPD_OLD = (S_OLD W startNewSpec)
+ltl_property UPD_NEW = [](startNewSpec -> []S_NEW)
+ltl_property DONT_DROP_TWICE = [](stopOldSpec -> X(!stopOldSpec))
+
+assert S_OLD = (BLINK_ONLY_WITH_ONES && 
+				ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR  && BLINK_AFTER_READING_VALUE )
+assert S_NEW = (BLINK_ONLY_WITH_TWOS && DONT_READ_IF_LOW_BATTERY &&
+				 ONLY_READ_IN_AIR && ONLY_BLINK_IN_AIR  && BLINK_AFTER_READING_VALUE)
+
+
+assert BLINK_ONLY_WITH_TWOS = ((read.val[2] -> PROCESS_VALUE) && ((read.val[0] || read.val[1]) -> (!blink W read)))
+assert DONT_READ_IF_LOW_BATTERY = (read -> !LowBattery)
+ltl_property P_BLINK_ONLY_WITH_TWOS  = []BLINK_ONLY_WITH_TWOS 
+ltl_property P_DONT_READ_IF_LOW_BATTERY = []DONT_READ_IF_LOW_BATTERY
+
+// upd controller fluents
+fluent StopOldSpec = <stopOldSpec, beginUpdate> 
+fluent StartNewSpec = <startNewSpec, beginUpdate> // HACK! beingUpdate is livenessd to not happen
+fluent BeginUpdate = <beginUpdate, land.old> // HACK! land.old is livenessd to not happen
+assert A_BeginUpdate = BeginUpdate
+fluent InTransition = <stopOldSpec, startNewSpec>
+
+
+		// Old Environment
+        E0     = (blink -> E0
+                     |read -> E1
+                     |takeoff -> E2),
+        E1     = (read.val[0..2] -> E0),
+        E2     = (land -> E0
+                     |blink -> E2
+                     |read -> E3),
+        E3     = (read.val[0..2] -> E2).
+		
+		// New Environment
+        E0_N   = (blink -> E0_N
+                     |read -> E1_N
+                     |takeoff -> E2_N
+                     |charge->E0_N),
+        E1_N   = (read.val[0..2] -> E0_N),
+        E2_N   = (land -> E0_N
+                     |blink -> E2_N
+                     |read -> E3_N
+                     |lowBattery -> E2_N),
+        E3_N   = (read.val[0..2] -> E2_N).
+
+        BATTERY_COUNTER(N=MAXBATTERY) = BAT[N],
+        BAT[i:0..N]= (  when (i==2) lowBattery -> BAT[i-1] |
+                                when (i!=2) {read, takeoff, land} -> BAT[i-1] |
+                                charge -> BAT[N]
+                         ).
+
+||NewEnvironment = (E0_N || BATTERY_COUNTER).
+||OldEnvironment = (E0).
+
+// properties for old Controller
+assert BLINK_ONLY_WITH_ONES = ((read.val[1] -> PROCESS_VALUE) && ((read.val[0] || read.val[2]) -> (!blink W read)))
+assert ONLY_READ_IN_AIR = (read -> IN_AIR)
+assert ONLY_BLINK_IN_AIR = (blink -> IN_AIR)
+assert BLINK_AFTER_READING_VALUE = (blink -> ValueReaded)
+ltl_property P_BLINK_ONLY_WITH_ONES = []BLINK_ONLY_WITH_ONES 
+ltl_property P_ONLY_READ_IN_AIR  = []ONLY_READ_IN_AIR 
+ltl_property P_ONLY_BLINK_IN_AIR  = []ONLY_BLINK_IN_AIR 
+ltl_property P_BLINK_AFTER_READING_VALUE = []BLINK_AFTER_READING_VALUE 
+assert PROCESS_VALUE = ((!read && !land) W blink)
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+        safety = {P_BLINK_ONLY_WITH_ONES, P_ONLY_READ_IN_AIR, P_ONLY_BLINK_IN_AIR,
+			 P_BLINK_AFTER_READING_VALUE}
+        controllable = {ControllableActions}
+}
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec = {
+        safety = {P_BLINK_ONLY_WITH_TWOS, P_DONT_READ_IF_LOW_BATTERY,
+				 P_ONLY_READ_IN_AIR, P_ONLY_BLINK_IN_AIR, P_BLINK_AFTER_READING_VALUE}
+        controllable = {NewControllableActions}
+}
+controllerSpec UpdSpec = {
+        safety = {UPD_OLD,UPD_NEW,DONT_DROP_TWICE,TNEW_GOALS_BEFORE_OLD}
+        assumption = {A_BeginUpdate}
+        liveness = {StopOldSpec, StartNewSpec}
+		nonblocking
+        controllable = {UpdatingControllableActions}
+}
+
+fluent INAIR = <takeoff, land>
+fluent READING = <read, read.val[0..2]>
+fluent LOWBATTERYSTATE = <lowBattery, charge>
+fluent ALREADYREAD = <read.val[0..2],land>
+
+updatingController UpdCont = {
+	oldController = EnvironmentAndController,
+	oldEnvironment = OldEnvironment,
+	newEnvironment = NewEnvironment,
+	newGoal = UpdSpec, 
+	updateFluents = {{INAIR,INAIR},{READING,READING},{FALSE,LOWBATTERYSTATE}}
+}
+
+assert TEST_FORMULA1 = (S_OLD W startNewSpec)
+assert TEST_FORMULA2 = [](startNewSpec -> []S_NEW)
+assert TEST_FORMULA4 = [](stopOldSpec -> X(!stopOldSpec))
+assert TEST_FINAL_FORMULA = ((S_OLD W startNewSpec) && [](startNewSpec -> []S_NEW) && [](stopOldSpec -> X(!stopOldSpec)))
+

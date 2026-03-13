@@ -1,0 +1,29 @@
+const Max = 2
+range LR = 0..2
+range Int =0..Max
+
+RAT(I=0)    = (mov[I] -> RATAT[I]),
+RATAT[i:LR] = (mov[j:LR] -> RATAT[j]).
+
+COUNT = TICK[0],
+TICK[i:Int] =(mov[LR] -> tick[i]-> TICK[i+1]),
+TICK[Max+1] =(ended -> reset -> COUNT).
+
+set CA = {mov[LR]}
+
+fluent BEEN[i:LR] = <mov[i], reset> initially 0
+fluent AT[i:LR]   = <mov[i], {mov[LR]}\{mov[i]}>
+fluent CLOCK[t:Int] = <tick[t],{tick[Int],reset}\{tick[t]}>
+fluent ENDED      = <ended, reset>
+
+ltl_property SAFE = [](ENDED -> forall[i:LR] BEEN[i])
+
+minimal ||DOMAIN = (RAT || COUNT || SAFE).
+
+//safe ||CONTROLLER = (DOMAIN)@{mov[LR],reset}.
+controller ||C = (DOMAIN)~{Objective}.
+//DEFINED GOALS 
+controllerSpec Objective = {
+	safety = {SAFE}
+	controllable = {CA}
+}

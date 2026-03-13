@@ -1,0 +1,108 @@
+const N = 5
+range Illness = 1..N 
+range Medicine = 1..N
+set High = {[1],[3],[5]}
+set Normal = {[2],[4]}
+set Stain1 = {[3],[4]}
+set Stain2 = {[1],[2]}
+set Stain3 = {[5]}
+set Stain = {[1],[2],[3]}
+const OK = 1
+const H = 2
+const NO_RES = 0
+set Cells = {[OK],[H]}
+set StainPlus = {Stain,[NO_RES]}
+set CellsPlus = {Cells,[NO_RES]}
+
+
+set Medicate = {medicate.[m:Medicine]}
+set PersonResult = {cured, dead}
+set Reset = {cured,dead}
+set Controllable = {sStain, inspect, analyseBlood, sCountCells, Medicate}
+set Uncontrollable = {eStain, resultS.Stain, bloodResult.Cells, eCountCells, PersonResult, leave, enter, cured}
+set Alphabet = {Controllable, Uncontrollable}
+
+def Illness1(s,c) = (s==2 && c==H)
+def Illness2(s,c) = (s==2 && c==OK)
+def Illness3(s,c) = (s==1 && c==H)
+def Illness4(s,c) = (s==1 && c==OK)
+def Illness5(s,c) = (s==3 && c!=OK)
+def Uncertainty(s,c) = !(Illness1(s,c) || Illness2(s,c) || Illness3(s,c) || Illness4(s,c) || Illness5(s,c))
+
+MEDICATE = (enter -> RESULTS[NO_RES][NO_RES]),
+RESULTS[s:StainPlus][c:CellsPlus] = (when Illness1(s,c) medicate.[m:Medicine] -> CERTAINTY[m][1] |
+									 when Illness2(s,c) medicate.[m:Medicine] -> CERTAINTY[m][2] |
+									 when Illness3(s,c) medicate.[m:Medicine] -> CERTAINTY[m][3] |
+									 when Illness4(s,c) medicate.[m:Medicine] -> CERTAINTY[m][4] |
+									 when Illness5(s,c) medicate.[m:Medicine] -> CERTAINTY[m][5] |
+									 when Uncertainty(s,c) medicate.[m:Medicine] -> UNCERTAINTY  |
+									 bloodResult.[rc:Cells] -> RESULTS[s][rc] |
+									 resultS.[rs:Stain] -> RESULTS[rs][c]),
+CERTAINTY[m:Medicine][i:Illness] =  (when (i!=m) dead -> MEDICATE |
+									 when (i==m) cured -> leave-> MEDICATE),
+UNCERTAINTY = (cured -> leave -> MEDICATE | dead -> MEDICATE).
+
+
+PACIENT = (enter -> IN), 
+IN = (cured -> HEALTHY | dead -> PACIENT), 
+HEALTHY = (leave -> PACIENT).
+
+TEST_STAIN = (sStain -> PROCESSING), 
+PROCESSING = (eStain -> TEST_STAIN).
+
+TEST_CELLS = (sCountCells -> PROCESSING), 
+PROCESSING = (eCountCells -> TEST_CELLS).
+
+DOCTOR_STAIN = (inspect -> INSPECTING | sStain -> DOCTOR_STAIN),
+INSPECTING = (resultS.[j:Stain] -> STAIN[j] | sStain -> DOCTOR_STAIN), 
+STAIN[i:Stain] = (inspect -> resultS.[i] -> STAIN[i] | sStain -> DOCTOR_STAIN). 
+
+DOCTOR_CELLS = (analyseBlood -> INSPECTING | sCountCells -> DOCTOR_CELLS),
+INSPECTING = (bloodResult.[j:Cells] -> BLOOD[j] | sCountCells -> DOCTOR_CELLS), 
+BLOOD[i:Cells] = (analyseBlood -> bloodResult.[i] -> BLOOD[i] | sCountCells -> DOCTOR_CELLS). 
+
+
+|| CELLS = (DOCTOR_CELLS || TEST_CELLS).
+
+|| STAIN = (DOCTOR_STAIN || TEST_STAIN).
+
+||Game = (MEDICATE||STAIN||CELLS||PACIENT).
+
+fluent Cured = <cured, Alphabet\{cured}>
+
+fluent FStain = <sStain, eStain>
+fluent FCountCells = <sCountCells, eCountCells>
+fluent FInspect = <inspect, resultS.Stain>
+fluent FAnalyseBlood = <analyseBlood, bloodResult.Cells>
+fluent FStainResult[i:Stain] = <resultS.[i], sStain>
+fluent FBloodResult[i:Cells] = <bloodResult.[i], sCountCells>
+fluent FMedicate[i:Medicine] = <medicate.[i], Reset>
+fluent FMedicates = <Medicate, cured>
+fluent EndStain = <eStain, Reset>
+fluent EndCountCells = <eCountCells, Reset>
+fluent Pacient = <enter, Reset> 
+fluent Work = <Controllable, Reset> 
+
+ltl_property ANALYSE_AFTER_TEST = [](analyseBlood -> EndCountCells)
+ltl_property INSPECT_AFTER_TEST = [](inspect -> EndStain)
+ltl_property WORK_FOR_PACIENT = [](Work -> Pacient)
+
+assert Stain  = FStain
+assert CountCells = FCountCells
+assert Inspect  = FInspect
+assert AnalyseBlood = FAnalyseBlood
+assert Medicate = FMedicates
+
+controllerSpec Goal = {
+	safety = {ANALYSE_AFTER_TEST,INSPECT_AFTER_TEST, WORK_FOR_PACIENT}
+	liveness = {Cured}
+  controllable = {Controllable}
+}
+
+assert TESTGOAL = ([]<>Cured)
+
+controller ||C = Game~{Goal}.
+
+minimal ||M = C.
+
+||CC  = C.

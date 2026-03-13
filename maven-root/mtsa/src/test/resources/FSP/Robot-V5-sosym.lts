@@ -1,0 +1,71 @@
+set Positions = {pos1, pos2, pos3, pos4}
+set Controlled = {mn, ms, getBall, putBall}
+set Uncontrolled = {Positions, getBallFailed, getBallOk, openDoor, closeDoor}
+set A = {Controlled, Uncontrolled}
+
+fluent F_Pos1 = <pos1, Positions\{pos1}>
+fluent F_Pos4 = <pos4, Positions\{pos4}>
+fluent F_GetBallOk = <getBallOk, A\{getBallOk}>
+fluent F_BallLoaded = <getBallOk, putBall>
+fluent F_DoorOpen = <openDoor, closeDoor>
+
+assert Pos1AndNotBallLoaded = (F_Pos1 && !F_BallLoaded)
+assert Pos4AndBallLoaded = (F_Pos4 && F_BallLoaded)
+assert GetBallOk = F_GetBallOk
+assert BallLoaded = F_BallLoaded
+assert DoorOpen = F_DoorOpen
+
+controllerSpec G1 = {
+safety = {}
+assumption = {GetBallOk, DoorOpen}
+liveness = {Pos1AndNotBallLoaded, Pos4AndBallLoaded}
+controllable = {Controlled}
+}
+controller ||C = (ROBOT_DOOR)~{G1}.
+
+assert FALSE = (DoorOpen && !DoorOpen)
+
+controllerSpec LAZINESS_CHECK = {
+	safety = {}
+	assumption = {GetBallOk, DoorOpen}
+	liveness = {FALSE}
+	controllable = {Controlled}
+}
+controller ||LAZY = ROBOT_DOOR~{LAZINESS_CHECK}.
+||ROBOT_DOOR = (ROBOT|| DOOR).
+
+DOOR = (openDoor->closeDoor->DOOR).
+
+ROBOT = (pos1->ROBOT_D[1][0]),
+ROBOT_D[pos:1..4][doorOpen:0..1] = (
+	openDoor -> ROBOT_D[pos][1]
+	| when(pos==1) getBall->TRY_GET_BALL[pos][doorOpen]
+	| when(pos==2)ms->pos1->ROBOT_D[1][doorOpen]
+	| when(pos==2)&&(doorOpen==1)mn->pos3->closeDoor->ROBOT_D[3][0]
+	| when(pos==2)&&(doorOpen==0)mn->pos2->ROBOT_D[pos][doorOpen]
+	| when(pos==3)mn->pos4->ROBOT_D[4][doorOpen]
+	| when(pos==3)&&(doorOpen==1)ms->pos2->closeDoor->ROBOT_D[2][0]
+	| when(pos==3)&&(doorOpen==0)ms->pos3->ROBOT_D[pos][doorOpen]
+	| when(pos==4) putBall->ms->pos4->ROBOT_D[2][doorOpen]), 
+TRY_GET_BALL[pos:1..4][doorOpen:0..1] = 
+	(getBallOk->mn->pos2->ROBOT_D[2][doorOpen] 
+	| getBallFailed->pos1->ROBOT_D[1][doorOpen]). 
+
+/*
+ROBOT = ROBOT_D[0],
+ROBOT_D[doorOpen:0..1] = (pos1 -> POS_1[doorOpen] | openDoor -> ROBOT_D[1]), 
+POS_1[doorOpen:0..1] = (getBall->TRY[doorOpen] | openDoor -> POS_1[1]),
+TRY[doorOpen:0..1] = (getBallFailed->POS_1[doorOpen] 
+	   | getBallOk->TO_NORTH_WITH_BALL[doorOpen]), 
+TO_NORTH_WITH_BALL[doorOpen:0..1] = (mn->pos2->POS_2[doorOpen]),
+POS_2[doorOpen:0..1] = (mn->TRY_NORTH[doorOpen] 
+		| ms->pos1->POS_1[doorOpen] | openDoor -> POS_2[1]),
+TRY_NORTH[doorOpen:0..1] = (when(doorOpen==1)pos3->closeDoor->POS_3[0]
+			| when(doorOpen==0)pos2->POS_2[doorOpen]), 
+POS_3[doorOpen:0..1] = (mn->TRY_SOUTH[doorOpen] 
+		| ms->pos2->POS_2[doorOpen] | openDoor -> POS_3[1]),
+TRY_SOUTH[doorOpen:0..1] = (when(doorOpen==1)pos4->closeDoor->POS_4[0] 
+			| when(doorOpen==0)pos3->POS_3[doorOpen]),
+POS_4[doorOpen:0..1] = (putBall->ms->pos3->POS_3[doorOpen]| openDoor -> POS_4[1]).
+
+*/

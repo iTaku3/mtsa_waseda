@@ -1,0 +1,28 @@
+const N = 3
+range IDs = 1..N
+set ControlledActions = {c[IDs], g}
+set UnControlledActions = {u[IDs]}
+set A = {ControlledActions, UnControlledActions, g}
+
+DOMAIN = (c[3]->STOP 
+		| c[1] -> u[1] -> G 
+		| c[2] -> G),
+G = (g -> G).
+
+DOMAIN2 = (c[1] -> u[1] -> DOMAIN2
+		| c[2] -> g -> DOMAIN2).
+
+//SENSED STATES
+fluent F_G = <g, {c[1],c[2],u[1]}>
+
+//Goal in terms of sensed state
+assert MyGoal = F_G
+
+controllerSpec G1 = {
+       liveness = {MyGoal}
+       controllable = {ControlledActions}
+}
+
+//controllers
+controller ||C = (DOMAIN)~{G1}.
+controller ||C2 = (DOMAIN2)~{G1}.

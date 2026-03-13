@@ -1,0 +1,18 @@
+Ejemplo = Inic,
+Inic = (xuG -> G1 | aue -> E1),
+G1 = (yuG -> G2),
+G2 = (zuG -> G1),
+E1 = (buLoop -> E2 | dcError -> E3),
+E2 = (cuLoop -> E1),
+E3 = (euError -> E4),
+E4 = (fuError -> E3).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {dcError}
+marking = {yuG}
+nonblocking
+}
+
+heuristic ||DirectedController = Plant~{Goal}.

@@ -1,0 +1,47 @@
+/*
+In this example we have a set of tasks CantTaks that have to be executed and each of 
+them requires an amount of memory that for that is currently what is used as id. 
+There are also some safety restrictions that define when the tasks should start. 
+The number of activities and the memory can be easily chaged, but the safety restrictions
+must be manually added. 
+*/
+
+const CantTask = 4
+const Limit = 5
+range Tasks = 1..CantTask
+range Memory = 0..Limit
+
+set Controllable = {s.[Tasks],g}
+set NotControllable = {e.[Tasks]}
+set Alphabet = {Controllable}
+
+
+TASK(MEM=1) = (s.[MEM]-> e.[MEM] -> g -> REACH), 
+REACH = (g->REACH).
+
+MEM = RAM[0],
+RAM[u:Memory] = (s.[id:Tasks] -> RAM[u+id] | e.[id:Tasks] -> RAM[u-id]).
+
+||Plant = (forall[t:Tasks] TASK(t) || MEM).
+
+fluent START[i:Tasks] = <s.[i],g>
+fluent FINISH[i:Tasks] = <e.[i],g>
+fluent PROCESSING[i:Tasks] = <s.[i],e.[i]>
+
+fluent GOAL= <g, Alphabet\{g}>
+
+
+ltl_property S2AftF1 = [] (START[2] -> FINISH[1])
+ltl_property S1AftS4orS3 = [] (START[1] -> START[3] || START[4])
+
+controller ||C = (Plant)~{G1}.
+checkCompatibility ||Compatible = (Plant)~{G1}.
+
+controllerSpec G1 = {
+	safety = {S2AftF1,S1AftS4orS3}
+	liveness = {GOAL}
+	controllable = {Controllable}
+}
+
+assert TESTGOAL = <> forall[i:1..CantTask] FINISH[i]
+

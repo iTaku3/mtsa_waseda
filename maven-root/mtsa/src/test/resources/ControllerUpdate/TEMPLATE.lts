@@ -1,0 +1,78 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {a,b}
+set NewControllableActions = {a,b}
+set OldA = {OldControllableActions, c}
+set NewA = {NewControllableActions, c}
+
+//Environments
+
+//FSP
+
+//||OldEnvironment = ().
+//||NewEnvironment = ().
+
+//Fluents declaration
+fluent f = <a,b>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert PHI= ()
+
+ltl_property P_PHI = []PHI
+
+
+controller ||OldController = OldEnvironment~{OldSpec}.
+||EnvironmentAndController = (OldEnvironment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_PHI}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert PHI_ = ()
+
+ltl_property P_PHI_ = []PHI_
+
+
+
+controller ||NewController = NewEnvironment~{NewSpec}.
+
+controllerSpec NewSpec= {
+    safety = {P_PHI_}
+    controllable = {NewControllableActions}
+}
+
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+ltl_property T = ()
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+    oldEnvironment = OldEnvironment,
+    hatEnvironment = OldEnvironment,
+    newEnvironment = NewEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+    // T = True is executed if no transition requirement is set
+	//transition = T,
+	nonblocking,
+    updateFluents = {}
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = ()
+assert S_NEW = ()
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))

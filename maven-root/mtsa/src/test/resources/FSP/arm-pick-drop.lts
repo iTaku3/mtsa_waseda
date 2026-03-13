@@ -1,0 +1,24 @@
+set A = {pick,pick_fail,pick_success,drop,put}
+set Controllable = {pick,drop,put}
+
+ARM = (pick->PICKING_UP | drop->ARM | put->ARM),
+PICKING_UP = ({pick_success,pick_fail}->ARM).
+
+fluent F_PICK = <pick_success,A\{pick_success}>
+fluent F_DROP = <drop,A\{drop}>
+fluent F_FAIL = <pick_fail,A\{pick_fail}>
+
+assert PICK = F_PICK
+assert DROP = F_DROP
+assert FAIL = F_FAIL
+
+controller ||C = (ARM)~{G}.
+
+controllerSpec G = {
+	failure = {FAIL}
+	liveness = {PICK, DROP}
+	controllable = {Controllable}
+}
+
+
+

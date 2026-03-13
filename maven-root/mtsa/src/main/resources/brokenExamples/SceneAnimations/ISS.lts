@@ -1,0 +1,65 @@
+
+set Sensors = {gps, spt, in, ds}
+
+HELICOPTER = (takeoff -> explode -> FLYING),
+FLYING     = (hover -> HOVERING | land -> HELICOPTER),
+HOVERING   = (resume -> FLYING).
+
+
+ISS = ([sensor:Sensors].enabled.begin -> [sensor].enabled.end -> ISS
+  | [sensor:Sensors].disabled.begin -> [sensor].disabled.end -> ISS
+  | [sensor:Sensors].failed.begin -> [sensor].failed.end -> ISS).
+
+
+
+animation ISS = "xml\isstest1.xml" 
+              actions {
+                takeoff/flight.start,
+                hover/flight.hover,
+                resume/flight.resume,
+                gps.enabled.begin/button[0].enabled.begin,
+    gps.disabled.begin/button[0].disabled.begin,
+    gps.failed.begin/button[0].failed.begin,
+spt.enabled.begin/button[1].enabled.begin,
+    spt.disabled.begin/button[1].disabled.begin,
+    spt.failed.begin/button[1].failed.begin,
+in.enabled.begin/button[2].enabled.begin,
+    in.disabled.begin/button[2].disabled.begin,
+    in.failed.begin/button[2].failed.begin,
+ds.enabled.begin/button[3].enabled.begin,
+    ds.disabled.begin/button[3].disabled.begin,
+    ds.failed.begin/button[3].failed.begin,
+explode/explosion.begin
+
+}
+controls{
+              takeoff/takeoff,
+                hover/hover,
+                resume/resume,
+               gps.enabled.end/button[0].enabled.end,
+    gps.disabled.end/button[0].disabled.end,
+    gps.failed.end/button[0].failed.end,
+spt.enabled.end/button[1].enabled.end,
+    spt.disabled.end/button[1].disabled.end,
+    spt.failed.end/button[1].failed.end,
+in.enabled.end/button[2].enabled.end,
+    in.disabled.end/button[2].disabled.end,
+    in.failed.end/button[2].failed.end,
+ds.enabled.end/button[3].enabled.end,
+    ds.disabled.end/button[3].disabled.end,
+    ds.failed.end/button[3].failed.end,
+                   gps.enabled.begin/gps.enable,
+    gps.disabled.begin/gps.disable,
+    gps.failed.begin/gps.fail,
+                spt.enabled.begin/spt.enable,
+    spt.disabled.begin/spt.disable,
+    spt.failed.begin/spt.fail,
+                in.enabled.begin/in.enable,
+    in.disabled.begin/in.disable,
+    in.failed.begin/in.fail,
+                ds.enabled.begin/ds.enable,
+    ds.disabled.begin/ds.disable,
+    ds.failed.begin/ds.fail,
+explode/explode
+} 
+

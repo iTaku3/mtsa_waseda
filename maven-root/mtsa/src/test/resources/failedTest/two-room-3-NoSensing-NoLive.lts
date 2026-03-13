@@ -1,0 +1,107 @@
+set Locations = {ww, we, ew, ee}
+set Direction = {w, e}
+
+set Room = {e,w}
+set Cont = {move[Direction], pickup, putdown}
+
+
+I_ROBOT = (arrive['ww]->ROBOT),
+ROBOT = (move[Direction] -> arrive[Locations] -> ROBOT 
+		| pickup -> (success -> ROBOT | fail -> ROBOT) 
+		| putdown -> ROBOT).
+
+GOOD_MAP = (arrive['ww] -> MAP['ww]),
+MAP['ww] = (move['e] -> arrive['ew] -> MAP['ew] | move['w] -> arrive['ww] -> MAP['ww] | putdown -> MAP['ww] | pickup -> fail -> MAP['ww]),
+MAP['ew] = (move['e] -> arrive['we] -> MAP['we] | move['w] -> arrive['ww] -> MAP['ww] | putdown -> MAP['ew] |pickup -> fail -> MAP['ew]),
+MAP['we] = (move['e] -> arrive['ee] -> MAP['ee] | move['w] -> arrive['ew] -> MAP['ew] | putdown -> MAP['we] |pickup -> fail -> MAP['we]),
+MAP['ee] = (move['e] -> arrive['ee] -> MAP['ee] | move['w] -> arrive['we] -> MAP['we] | putdown -> MAP['ee] |pickup -> success -> MAP['ee]).
+
+
+MAP = (arrive['ww] -> MAP['ww]),
+MAP['ww] = (move['e] -> (arrive['ew] -> MAP['ew] | arrive['ww]-> MAP['ww] )
+				| move['w] -> arrive['ww] -> MAP['ww] | putdown -> MAP['ww] |pickup -> fail -> MAP['ww]),
+MAP['ew] = (move['e] -> arrive['we] -> MAP['we] | move['w] -> arrive['ww] -> MAP['ww] | putdown -> MAP['ew] |pickup -> fail -> MAP['ew]),
+MAP['we] = (move['e] -> arrive['ee] -> MAP['ee] | move['w] -> arrive['ew] -> MAP['ew] | putdown -> MAP['we] |pickup -> fail -> MAP['we]),
+MAP['ee] = (move['e] -> arrive['ee] -> MAP['ee] | move['w] -> arrive['we] -> MAP['we] | putdown -> MAP['ee] |pickup -> success -> MAP['ee]).
+
+DOOR = (doorOpen -> doorClosed -> DOOR).
+
+||DOMAIN = (I_ROBOT||MAP||DOOR||I_FAST_ENOUGH||D_SLOW_ENOUGH).
+||GOOD_DOMAIN = (I_ROBOT||GOOD_MAP||DOOR||I_FAST_ENOUGH||D_SLOW_ENOUGH).
+
+set MOVES = {move[Direction]}
+set ARRIVES = {arrive[Locations]}
+set A = {MOVES, ARRIVES, pickup, putdown, doorOpen, doorClosed}
+
+I_FAST_ENOUGH = (arrive['ww]-> FAST_ENOUGH),
+FAST_ENOUGH = ({A\{MOVES}}->FAST_ENOUGH 
+				| MOVES->ARRIVES->FAST_ENOUGH).
+D_SLOW_ENOUGH = (arrive['ww]-> SLOW_ENOUGH),
+SLOW_ENOUGH = ({A\{doorOpen}}->SLOW_ENOUGH 
+				| doorOpen->Cont->SLOW_ENOUGH).
+
+
+//set NOTINITIALLOCATIONS = {Locations\{ww}}
+//set INITIALLOCATIONS = {ww}
+fluent DOOROPEN = <doorOpen, doorClosed>
+fluent AT[x:Locations] = <arrive[x], move[Direction]>
+//fluent ATI[x:INITIALLOCATIONS] = <arrive[x], move[Direction]> initially 1
+fluent PICKED = <success, putdown>
+
+ltl_property DOORSAFE = []( ((AT['ew] && !DOOROPEN) -> X!move['e]) 
+								&& ((AT['we] && !DOOROPEN) -> X!move['w]) )
+//ltl_property PICKUPLOCATION = [](pickup -> AT['ee])
+ltl_property PUTDOWNLOCATION = [](putdown -> AT['ww])
+ltl_property PICKONCE = [](PICKED -> X!pickup)
+ltl_property PUTONCE = [](!PICKED -> X!putdown)
+ltl_property BOMB_EE = [](AT['ee] -> X !move['e])
+
+||SAFETY = (DOORSAFE||PUTDOWNLOCATION //||PICKUPLOCATION
+			||PICKONCE||PUTONCE||BOMB_EE).
+||SAFEDOM = (DOMAIN||SAFETY).
+
+assert ASSUMEDOOROPENS = DOOROPEN
+//assert ASSUMEARRIVAL = forall[x:Locations] AT[x]
+fluent PICKING = <success, Cont\{success}>
+fluent PUTTING = <putdown, Cont\{putdown}>
+assert A_PUTTING = PUTTING
+assert A_PICKING = PICKING
+
+controllerSpec Goal = {
+	safety = {PICKONCE, PUTONCE}
+	assumption = {ASSUMEDOOROPENS}
+//	liveness = {A_PICKING, A_PUTTING}
+nonblocking 
+	controllable = {Cont}
+}
+
+controllerSpec Goal2 = {
+	safety = {PICKONCE, PUTONCE}
+	assumption = {ASSUMEDOOROPENS}
+	liveness = {A_PICKING, A_PUTTING}
+nonblocking 
+	controllable = {Cont}
+}
+
+checkCompatibility ||Compatible = (DOMAIN)~{Goal}.
+
+minimal ||Abs_DOMAIN = (DOMAIN //||PICKUPLOCATION
+					||PUTDOWNLOCATION||DOORSAFE||BOMB_EE)
+				\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+
+minimal ||GOOD_Abs_DOMAIN = (GOOD_DOMAIN //||PICKUPLOCATION
+					||PUTDOWNLOCATION||DOORSAFE||BOMB_EE)
+				\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+controller ||C = (Abs_DOMAIN)~{Goal}.
+
+minimal ||D2 = (C||GOOD_Abs_DOMAIN)\{arrive[Locations],arrive.ee?,arrive.ew?,arrive.we?,arrive.ww?}.
+
+controller ||C2 = (D2)~{Goal2}.
+
+||ROBUST = (DOMAIN || C2 || SAFETY).
+
+
+//NEVERCLOSE = STOP + {doorClosed}.
+//||FAST = (C||NEVERCLOSE).

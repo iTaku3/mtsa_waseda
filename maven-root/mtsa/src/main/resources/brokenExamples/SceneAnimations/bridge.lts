@@ -1,0 +1,51 @@
+const N = 2    // number of each type of car
+range T = 0..N // type of car count
+range Cars= 1..N // car identities
+
+BRIDGE = BRIDGE[0][0],  //initially empty
+BRIDGE[nr:T][nb:T] =    //nr is the red count, nb the blue count
+	(when (nb==0) 
+          red[Cars].enter  -> BRIDGE[nr+1][nb]
+        |red[Cars].exit    -> BRIDGE[nr-1][nb]
+        |when (nr==0) 
+          blue[Cars].enter -> BRIDGE[nr][nb+1]
+        |blue[Cars].exit   -> BRIDGE[nr][nb-1]
+	).
+
+
+CAR = (begin -> enter -> exit -> end -> CAR).
+
+property ONEWAY = (red[Cars].enter  -> RED[1] 
+		          |blue[Cars].enter -> BLUE[1]
+		          ),
+RED[i:Cars] = (red[Cars].enter -> RED[i+1]
+            |when(i==1)red[Cars].exit  -> ONEWAY
+            |when( i>1)red[Cars].exit  -> RED[i-1]
+            ),
+BLUE[i:Cars] = (blue[Cars].enter -> BLUE[i+1]
+             |when(i==1)blue[Cars].exit  -> ONEWAY
+             |when( i>1)blue[Cars].exit  -> BLUE[i-1]
+             ).
+
+||UNSAFE = (red[Cars]:CAR||blue[Cars]:CAR ||ONEWAY).
+
+||CARS = (red[Cars]:CAR||blue[Cars]:CAR ||BRIDGE||ONEWAY ).
+
+||CONGESTED = CARS>>{{red,blue}[Cars].exit}.
+
+animation CARS = "xml/bridge.xml"
+    actions{ red[i:Cars].begin/redcar[i].begin,
+             red[i:Cars].enter/redcar[i].resume,
+             red[i:Cars].exit/redcar[i].resume,
+             blue[i:Cars].begin/bluecar[i].begin,
+             blue[i:Cars].enter/bluecar[i].resume,
+             blue[i:Cars].exit/bluecar[i].resume
+           }
+    controls {
+        red[i:Cars].enter/redcar[i].enter,
+        red[i:Cars].exit/redcar[i].exit,
+        red[i:Cars].end/redcar[i].end,
+        blue[i:Cars].enter/bluecar[i].enter,
+        blue[i:Cars].exit/bluecar[i].exit,
+        blue[i:Cars].end/bluecar[i].end
+    }

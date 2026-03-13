@@ -1,0 +1,8 @@
+set A = {c, g, u}
+set Controllable = {c, g}
+
+START = (c?->BEGIN1 | c -> BEGIN2),
+BEGIN1 = (a->START),
+BEGIN2 = (b->START).
+
+||AA = (START).

@@ -1,0 +1,6 @@
+M = (startBelt -> E_2),
+E_2 = (cook -> E_3),
+E_3 = (finishedCooking -> E_4 | cooking -> E_3),
+E_4 = (cook -> E_5),
+E_5 = (finishedCooking -> E_6 | cooking -> E_5),
+E_6 = (moveToBelt -> E_2).

@@ -1,0 +1,37 @@
+fluent PumpOn = <switchOn, switchOff> initially False
+fluent MethanePresent = <methAppears, methLeaves> initially False
+fluent AtHighWater = <highWater, {lowWater, medWater}> initially False
+fluent AtLowWater = <lowWater, {medWater, highWater}> initially True
+
+set A = {switchOn, switchOff, methAppears, methLeaves, highWater, lowWater, medWater, tick}
+
+const False = 0
+const True = 1
+
+uTS UniversalScenario1 = {
+	instances{Controller Pump Clock}
+	condition Phi_1 = (AtHighWater && !MethanePresent && !PumpOn)
+	prechart{
+		Phi_1[Controller Pump]
+	}
+	mainchart{
+		Controller -> switchOn -> Pump
+	}
+	restricts{
+		Clock -> tick -> Clock
+	}
+}
+
+uTS UniversalScenario2 = {
+	instances {Controller Pump Clock}
+	condition Phi_1 = (MethanePresent && PumpOn)
+	prechart {
+		Phi_1[Controller Pump]
+	}
+	mainchart {
+		Controller -> switchOff -> Pump
+	}
+	restricts {
+		Clock -> tick -> Clock
+	}
+}

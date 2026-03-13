@@ -1,0 +1,81 @@
+//ROBOTS
+const CantRobots = 2
+range RangeRobots = 1..CantRobots
+set Robots = {{r}.[RangeRobots]}
+
+set RobotSenses = {eMove,eSendLoc}
+set RobotControl = {sMove,sSendLoc}
+set RobotAlphabet = {RobotSenses,RobotControl}
+set Alphabet = {[Robots].RobotAlphabet, done}
+
+set ControllableActions = {[Robots].RobotControl, done}
+
+||ROBOT(C=1) = (MOVEMENT(C) || COMUNICATION(C) || DONE(C)).
+
+COMUNICATION(C=1) = ([C].sSendLoc -> [C].eSendLoc -> COMUNICATION).
+MOVEMENT(C=1) = ([C].sMove -> [C].eMove -> MOVEMENT).
+DONE(C=1) = (done -> DONE).
+
+//ENVIROMENT
+|| ENV = (forall[id:Robots] ROBOT(id)).
+
+fluent Moving[id:RangeRobots] = <{r[id].sMove}, {r[id].eMove}>
+fluent Moved[id:RangeRobots] = <r[id].eMove, done>
+
+fluent Sending[id:RangeRobots] = <{r[id].sSendLoc}, {r[id].eSendLoc}>
+fluent LocationSent[id:RangeRobots] = <r[id].eSendLoc, done>
+fluent Done = <done, Alphabet\{done}>
+
+assert Moved1 = (Moved[1])
+assert Moved2 = (Moved[2])
+assert Moving1 = Moving[1]
+assert Moving2 = Moving[2]
+
+assert Sending1 = Sending[1]
+assert Sending2 = Sending[2]
+
+assert MoveAndSent2 = (LocationSent[2] && Moved[2])
+assert MoveAndSent1 = (LocationSent[1] && Moved[1])
+assert MoveAndSentBoth = (LocationSent[1] && Moved[1] && LocationSent[2] && Moved[2])
+assert DoneAll = Done
+
+assert AEG1 = []<> MoveAndSent1
+assert AEG2 = []<> MoveAndSent2
+
+ltl_property SLOW_START =  forall[id:RangeRobots] [](r[id].sMove -> !Sending[id])
+
+ltl_property DONE_AFTER =  forall[id:RangeRobots] [] ((Moved[id] && LocationSent[id]) -> X r[id].done)
+
+ltl_property DONE_AFTER2 =  [] ((Moved[1] && LocationSent[1] && Moved[2] && LocationSent[2]) -> X done)
+
+// DEFINED CONTROLLER
+controller ||CONTROLLER = (ENV)~{GoalFor3}.
+
+||KONTROLLER = (CONTROLLER||CONTROLLER).
+
+//DEFINED GOALS
+controllerSpec GoalFor2 = {
+	safety={SLOW_START, DONE_AFTER}
+	liveness = {MoveAndSent1,MoveAndSent2}
+	concurrencyFluents={Moving1,Moving2,Sending1,Sending2}
+	controllable = {ControllableActions}
+}		
+
+
+//DEFINED GOALS
+controllerSpec GoalFor1 = {
+	safety={SLOW_START,DONE_AFTER}
+	liveness = {MoveAndSent1}
+	concurrencyFluents={Moving1,Sending1}
+	controllable = {ControllableActions}
+}		
+
+//DEFINED GOALS
+controllerSpec GoalFor3 = {
+	safety={SLOW_START, DONE_AFTER2}
+	liveness = {MoveAndSentBoth}
+	concurrencyFluents={Moving1,Moving2,Sending1,Sending2}
+	controllable = {ControllableActions}
+}		
+
+

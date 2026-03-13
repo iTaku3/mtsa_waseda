@@ -1,0 +1,37 @@
+//1st line - FAIL OK; OK
+R0 = (t -> {0.3:R0A + 0.7:R0B}),
+R0A = (a -> STOP),
+R0B = (b -> STOP)@{a,b}.
+A0 = (t -> a -> STOP | t -> b -> STOP)@{a,b}.
+probabilistic mdp ||EG0=(R0||A0).
+
+//2nd line - OK OK; OK
+R1 = (e -> {0.45:R1A + 0.55:R1B} | e -> R1C),
+R1A = (a -> STOP),
+R1B = (b -> STOP),
+R1C = (c -> STOP).
+A1 = (e -> b -> STOP).
+probabilistic mdp ||EG1=(R1||A1).
+
+//3rd line - OK OK; OK
+R2 = (a -> STOP | e -> STOP).
+A2 = (a -> STOP)+{e}.
+probabilistic mdp ||EG2=(R2||A2).
+
+//4th line - OK OK; OK
+R3 = (e -> {0.3:R3B + 0.7:R3A}),
+R3A = (a -> STOP),
+R3B = (b -> STOP).
+A3 = (e -> a -> STOP).
+probabilistic mdp ||EG3=(R3||A3).
+
+//test for unsynced taus
+R4 = (t -> R4A),
+R4A = (a -> STOP | b -> STOP)@{a,b}.
+A4 = (a -> STOP | b -> STOP).
+probabilistic mdp ||EG4=(R4||A4).
+
+//long test
+R5 = (a -> b -> c -> R5).
+A5 = (e -> A5).
+probabilistic mdp ||EG5=(R5||A5).

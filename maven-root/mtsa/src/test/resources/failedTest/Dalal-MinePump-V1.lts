@@ -1,0 +1,139 @@
+// Mine Pump Control Model derived from Goals 
+// ==========================================
+
+
+// set definitions
+
+set WaterActions = {aboveHigh, belowHigh}
+set MethaneActions = {methaneAppears, methaneLeaves}
+set PumpControllerActions = {turnOn, turnOff}
+// raiseAlarm, stopAlarm, turnLightOn, turnLightOff}
+set AllDomainActions = {WaterActions, PumpControllerActions,MethaneActions,first} 
+set AllActions = {WaterActions, PumpControllerActions,MethaneActions} 
+
+
+
+// ========
+// 	DOMAIN PRECONDITION AND TRIGGER CONDITION
+
+constraint DomPre_aboveHigh = 
+	 	[] (  HighWater -> X (! aboveHigh))+AllDomainActions
+	
+constraint DomPre_belowHigh = 
+	 	[] (  !HighWater -> X (! belowHigh))+AllDomainActions
+	
+constraint DomPre_turnOn= 
+	 	[] (  PumpOn -> X (! turnOn))+AllDomainActions
+	
+constraint DomPre_turnOff = 
+	 	[] (  !PumpOn -> X (! turnOff))+AllDomainActions
+
+	
+constraint DomPre_methaneAppears= 
+	 	[] (  Methane -> X (! methaneAppears))+AllDomainActions
+	
+constraint DomPre_methaneLeaves = 
+	 	[] (  !Methane -> X (! methaneLeaves))+AllDomainActions
+
+constraint Trig_BelowHigh= 
+		[] ( HighWater  &&  PumpOn -> X ( belowHigh))+AllDomainActions
+
+// ========
+// 	PRECONDITIONS
+// ========
+
+constraint Avoid_Uneccessary_On = 
+	 	[] ( ! HighWater -> X (! turnOn ))+AllDomainActions
+	
+constraint Avoid_Uneccessary_On2 = 
+	 	[] ( Methane -> X (! turnOn ))+AllDomainActions
+	
+constraint Avoid_Uneccessary_off = 
+	 	[] ( (HighWater && ! Methane) -> X (! turnOff ))+AllDomainActions
+	
+
+// ========
+// 	TRIGGER CONDITIONS
+// ========
+
+constraint Trig_Off= 
+		[] ( !HighWater && PumpOn -> X ( turnOff))+AllDomainActions
+
+constraint Trig_Off2= 
+		[] ( Methane && PumpOn -> X ( turnOff))+AllDomainActions
+
+constraint Trig_On= 
+		[] ( HighWater && ! Methane&& !PumpOn -> X ( turnOn))+AllDomainActions
+
+
+
+
+// ============================
+// Fluents identified from Goals
+
+
+// Theses defs are derived automatically form the operation DOMAIN postconditions
+fluent PumpOn = <turnOn, turnOff>
+fluent HighWater = <aboveHigh, belowHigh>
+fluent Methane = <methaneAppears, methaneLeaves>
+
+Start =(first -> S0),
+S0 =(AllActions -> S0).
+
+|| GOALS_simple = (PumpOnWhenHighWater ). 
+
+//|| GOALS_ALL = (GOALS_simple || AlarmWhenMethane|| PumpLightOnIFFPumpOn). 
+
+
+||DOM = (  DomPre_aboveHigh || DomPre_belowHigh || DomPre_turnOn || DomPre_turnOff || DomPre_methaneAppears
+|| DomPre_methaneLeaves || Trig_BelowHigh).
+//||TRIG =(Trig_Off || Trig_Off2 || Trig_On). 
+//||PRE =( Avoid_Uneccessary_On || Avoid_Uneccessary_On2 ||Avoid_Uneccessary_off ).
+
+minimal ||SYSTEM  = (  DOM || Start )\{first}.
+
+// ============================
+// Safety requirements
+
+ltl_property PumpOnWhenHighWater
+	/* HighWater && ! Methane => X PumpOn */
+	= []((HighWater && ! Methane) -> X ( PumpOn)) +AllActions
+
+ltl_property PumpOffWhenLowWater 
+	/* LowWater => X ! PumpOn*/
+	= [](!HighWater -> X  ! PumpOn) +AllActions
+
+ltl_property PumpOffWhenMethane 
+	/* Methane => X ! PumpOn*/
+= [](Methane -> X  ! PumpOn)+AllActions
+
+assert TRUE = (PumpOn || !PumpOn)
+
+
+assert NOT_I = ( ! ( 
+					((HighWater && ! Methane) -> X ( PumpOn)) &&
+					(!HighWater -> X  ! PumpOn) && 
+					(Methane -> X  ! PumpOn)
+					)
+				) +AllActions
+
+//Controller specifications
+controller ||C = SYSTEM~{G1}.
+
+||Properties = (PumpOnWhenHighWater||PumpOffWhenLowWater||PumpOffWhenMethane).
+||ENV = (Properties||SYSTEM).
+
+
+set Controllable = {turnOn, turnOff}
+set C2 = {Controllable, WaterActions, MethaneActions}
+//Defined controllerSpecs
+controllerSpec G1 = {
+       safety = {PumpOnWhenHighWater, 
+				PumpOffWhenLowWater, 
+				PumpOffWhenMethane}
+       assumption = {}
+       liveness = {NOT_I}//TRUE}
+       controllable = {Controllable}
+}
+
+

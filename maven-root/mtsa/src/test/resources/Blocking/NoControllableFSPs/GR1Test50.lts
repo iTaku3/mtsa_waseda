@@ -1,0 +1,19 @@
+Ejemplo = Inicial,
+Inicial = (u1 -> A0 | u2 -> A1),
+A0 = (c1 -> A2),
+A1 = (c2 -> A1 | c3 -> A3),
+A2 = (win -> A2),
+A3 = (u3 -> A4 | u4 -> A5),
+A4 = (win -> A4).
+
+||Plant = Ejemplo.
+set All = {u1,u2,u3,u4,c1,c2,c3,win}
+fluent Fwin = <win,All\{win}>
+assert S1 = Fwin
+
+controllerSpec Goal = {
+        liveness = {S1}
+        controllable = {c1,c2,c3}
+}
+heuristic ||DirectedController = Plant~{Goal}.
+||Sys = (DirectedController || Plant).

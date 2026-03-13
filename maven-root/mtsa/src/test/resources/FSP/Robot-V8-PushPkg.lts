@@ -1,0 +1,121 @@
+//ACTION SETS
+set Moves = {n, s, q}
+const NORTH = 'n
+const SOUTH = 's
+const STOPPED = 'q
+
+set Positions = {pos1, pos2, pos3, pos4}
+set Controlled = {mn, ms, me, mw, getPkg, putPkg, pushPkgNorth, pushPkgSouth}
+set Uncontrolled = {Positions, getPkgFailed, getPkgOk, openDoor, closeDoor, pkgPushedSouthFail, pkgPushedNorthFail, pkgPushedNorthSuc, pkgPushedSouthSuc}
+set ControlledPlusFail = {{Controlled}, getPkgFailed, pkgPushedSouthFail, pkgPushedNorthFail}
+set A = {Controlled, Uncontrolled}
+
+//DEFINED FLUENTS 
+fluent F_Pos4 = <pos4, Positions\{pos4}>
+fluent F_DoorOpen = <openDoor, closeDoor>
+fluent F_putPkg = <putPkg, A\{putPkg}>
+fluent F_getPkgFailed = <getPkgFailed, A\{getPkgFailed}>
+fluent F_pushedNorthFailed = <pkgPushedNorthFail, A\{pkgPushedNorthFail}>
+fluent F_pushedSouthFailed = <pkgPushedSouthFail, A\{pkgPushedSouthFail}>
+
+//DEFINED ASSERTIONS
+assert AssumptionOnDoor = F_DoorOpen
+assert GetPkgFailed = F_getPkgFailed
+assert Pos4AndPackageUnloaded = (F_Pos4 && F_putPkg)
+assert PushedNorthFailed = F_pushedNorthFailed
+assert PushedSouthFailed = F_pushedSouthFailed
+
+//DEFINED CONTROLLERS
+controller ||C = (PLANT)~{G1}.
+
+//ASSUMPTIONS COMPATIBILITY CHECKS
+checkCompatibility ||C_G1_Compatible = (PLANT)~{G1}.
+checkCompatibility ||C_G2_CompatibleFailures = (PLANT)~{G2}.
+
+//DEFINED GOALS 
+controllerSpec G1 = {
+	safety = {PKG_RESTRICTION}
+	failure = {GetPkgFailed, PushedNorthFailed, PushedSouthFailed}
+	assumption = {AssumptionOnDoor}
+	liveness = {Pos4AndPackageUnloaded}
+	controllable = {Controlled}
+}
+controllerSpec G2 = {
+	safety = {PKG_RESTRICTION}
+	failure = {GetPkgFailed, PushedNorthFailed, PushedSouthFailed}
+	assumption = {AssumptionOnDoor}
+	liveness = {Pos4AndPackageUnloaded}
+	controllable = {ControlledPlusFail}
+}
+
+//MODELS FOR TESTING
+||ANALYSED_PLANT = (PLANT || PKG_RESTRICTION).
+
+//ENVIRONMENT MODEL.
+||PLANT = (DOOR || ARM || ROBOT || TOPOLOGY).
+
+DOOR = (openDoor->closeDoor->DOOR).
+ARM = (//pkgReady->
+		getPkg->TRY), TRY = (getPkgOk->putPkg->ARM | getPkgFailed->ARM).
+ROBOT = (mn->ROBOT | ms->ROBOT | me->ROBOT | mw->ROBOT).
+
+TOPOLOGY = (pos1->ENV_P[1][0][STOPPED][0]),
+ENV_P[pos:1..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (
+	  when(doorOpen==0)									openDoor->ENV_P[pos][1][moving][pkgOk] 
+	| when(moving==STOPPED)&&(pkgOk==0)					getPkg->TRY_PICK_PKG[pos][doorOpen][moving][pkgOk]
+	| when(moving==STOPPED)&&(pkgOk==1)					putPkg->ENV_P[pos][doorOpen][moving][0]
+	| when(moving==STOPPED)&&(pos!=4)&&(pkgOk==0)		mn->ENV_P[pos][doorOpen][NORTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=4)&&(pkgOk==1)		pushPkgNorth->PUSH_NORTH[pos][doorOpen][NORTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=1)&&(pkgOk==0)		ms->ENV_P[pos][doorOpen][SOUTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=1)&&(pkgOk==1)		pushPkgSouth->PUSH_SOUTH[pos][doorOpen][SOUTH][pkgOk]
+	| when(pos==1)&&(moving==NORTH)						pos2->ENV_P[2][doorOpen][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==SOUTH)						pos1->ENV_P[1][doorOpen][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==NORTH)&&(doorOpen==1)		pos3->closeDoor->ENV_P[3][0][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==NORTH)&&(doorOpen==0)		pos2->ENV_P[pos][doorOpen][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==NORTH)						pos4->ENV_P[4][doorOpen][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==SOUTH)&&(doorOpen==1)		pos2->closeDoor->ENV_P[2][0][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==SOUTH)&&(doorOpen==0)		pos3->ENV_P[pos][doorOpen][STOPPED][pkgOk]
+	| when(pos==4)&&(moving==SOUTH)						pos3->ENV_P[3][doorOpen][STOPPED][pkgOk]
+), 
+TRY_PICK_PKG[pos:1..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (getPkgOk->ENV_P[pos][doorOpen][moving][1] 
+											| getPkgFailed->ENV_P[pos][doorOpen][moving][0]
+), 
+PUSH_NORTH[pos:1..3][doorOpen:0..1][moving:Moves][pkgOk:0..1] = ( pkgPushedNorthSuc->ENV_P[pos][doorOpen][moving][1]
+											| pkgPushedNorthFail->ENV_P[pos][doorOpen][moving][0]
+), 
+PUSH_SOUTH[pos:2..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (pkgPushedSouthSuc->ENV_P[pos][doorOpen][moving][1]
+											| pkgPushedSouthFail->ENV_P[pos][doorOpen][moving][0]
+)+{me,mw}. 
+
+//SAFETY RESTRICCIONS
+//Cuando intenta agarrar el paquete, tiene que esperar a tener confirmacion de si lo agarro o puede moverse igual. 
+//Si no puede moverse no hay demasiado bardo, pero si puede moverse hay que ver donde recibe el resultado, deberia ser antes de 4
+//pero ademas sea donde sea deberia volver al ppio y tratar de agarrar la pelota de nuevo. Parece interesante. 
+PKG_RESTRICTION = (pos1->ENV_P[1][0][STOPPED][0]),
+ENV_P[pos:1..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (
+	  when(doorOpen==0)									openDoor->ENV_P[pos][1][moving][pkgOk] 
+	| when(moving==STOPPED)&&(pos==1)&&(pkgOk==0)		getPkg->TRY_PICK_PKG[pos][doorOpen][moving][pkgOk]
+	| when(moving==STOPPED)&&(pos==4)&&(pkgOk==1)		putPkg->ENV_P[pos][doorOpen][moving][0]
+	| when(moving==STOPPED)&&(pos!=4)&&(pkgOk==0)		mn->ENV_P[pos][doorOpen][NORTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=4)&&(pkgOk==1)		pushPkgNorth->PUSH_NORTH[pos][doorOpen][NORTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=1)&&(pkgOk==0)		ms->ENV_P[pos][doorOpen][SOUTH][pkgOk] 
+	| when(moving==STOPPED)&&(pos!=1)&&(pkgOk==1)		pushPkgSouth->PUSH_SOUTH[pos][doorOpen][SOUTH][pkgOk]
+	| when(pos==1)&&(moving==NORTH)						pos2->ENV_P[2][doorOpen][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==SOUTH)						pos1->ENV_P[1][doorOpen][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==NORTH)&&(doorOpen==1)		pos3->closeDoor->ENV_P[3][0][STOPPED][pkgOk]
+	| when(pos==2)&&(moving==NORTH)&&(doorOpen==0)		pos2->ENV_P[pos][doorOpen][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==NORTH)						pos4->ENV_P[4][doorOpen][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==SOUTH)&&(doorOpen==1)		pos2->closeDoor->ENV_P[2][0][STOPPED][pkgOk]
+	| when(pos==3)&&(moving==SOUTH)&&(doorOpen==0)		pos3->ENV_P[pos][doorOpen][STOPPED][pkgOk]
+	| when(pos==4)&&(moving==SOUTH)						pos3->ENV_P[3][doorOpen][STOPPED][pkgOk]
+), 
+TRY_PICK_PKG[pos:1..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (getPkgOk->ENV_P[pos][doorOpen][moving][1] 
+											| getPkgFailed->ENV_P[pos][doorOpen][moving][0]
+), 
+PUSH_NORTH[pos:1..3][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (pkgPushedNorthSuc->ENV_P[pos][doorOpen][moving][1]
+											| pkgPushedNorthFail->ENV_P[pos][doorOpen][moving][0]
+), 
+PUSH_SOUTH[pos:2..4][doorOpen:0..1][moving:Moves][pkgOk:0..1] = (pkgPushedSouthSuc->ENV_P[pos][doorOpen][moving][1]
+											| pkgPushedSouthFail->ENV_P[pos][doorOpen][moving][0]
+)+{me,mw}. 
+

@@ -1,0 +1,44 @@
+set CatFlaps = {c1,c2,c3,c4,c5,c6,c7a,c7b}
+set MouseFlaps = {m1,m2,m3,m4,m5,m6}
+
+CAT(Init=2) = (start->cat_in[Init]->CAT[Init]),
+CAT[0] = (c1 -> ECAT[1] | c4 -> ECAT[3]),
+CAT[1] = (c2 -> ECAT[2] | c7b -> ECAT[3]),
+CAT[2] = (c3 -> ECAT[0] ),
+CAT[3] = (c5 -> ECAT[4] | c7a -> ECAT[1]),
+CAT[4] = (c6 -> ECAT[0] ),
+ECAT[room:0..4] = (cat_in[room]->CAT[room]).
+
+MOUSE(Init=4) = (start->mouse_in[Init]->MOUSE[Init]),
+MOUSE[0] = (m1 -> EMOUSE[2] | m4 -> EMOUSE[4]),
+MOUSE[1] = (m3 -> EMOUSE[0] ),
+MOUSE[2] = (m2 -> EMOUSE[1] ),
+MOUSE[3] = (m6 -> EMOUSE[0] ),
+MOUSE[4] = (m5 -> EMOUSE[3] ),
+EMOUSE[room:0..4] = (mouse_in[room]->MOUSE[room]).
+
+MOVING = ({CatFlaps,MouseFlaps}->MOVING
+			|ended -> reset -> MOVING).
+
+fluent CATROOM[room:0..4] = <cat_in[room],{cat_in[0..4]}\{cat_in[room]}>
+fluent CATBEEN[room:0..4] = <cat_in[room],reset>
+fluent MOUSEROOM[room:0..4] = <mouse_in[room],{mouse_in[0..4]}\{mouse_in[room]}>
+fluent MOUSEBEEN[room:0..4] = <mouse_in[room],reset>
+fluent ENDED = <ended, reset>
+
+//the cat and the mouse never occupy the same room simultaneously 
+ltl_property SAFE = []( !exists[i:0..4] (CATROOM[i] && MOUSEROOM[i]))
+
+// the cat & MOUSE visit every room
+ltl_property TOUR = [](ENDED -> ((forall[i:0..4] CATBEEN[i]) && (forall[i:0..4] MOUSEBEEN[i])))
+minimal ||DOMAIN = (CAT || MOUSE || SAFE || MOVING || TOUR).
+
+controller	||CONTROLLER = (DOMAIN)~{G1}.
+
+set Controllable = {CatFlaps, MouseFlaps,ended}
+
+controllerSpec G1 = {
+	safety = {SAFE, TOUR}
+	controllable = {Controllable}
+}
+

@@ -1,0 +1,74 @@
+//ROBOTS
+const CantArms = 1
+range RangeArms = 1..CantArms
+set Arms = {[RangeArms]}
+
+set ArmControl = {sGetPizzaInTray,sGetPizzaFromOven,sBuildBox,sPutPizzaOutTray,sPutInBox,sCooking/*,g*/}
+set ArmSenses = {eBuildBox, eCooking, ePutInBox,eGetPizzaInTray,eGetPizzaFromOven,ePutPizzaOutTray}
+set ControllableActions = {[Arms].ArmControl}
+set UncontrollableActions = {[Arms].ArmSenses}
+
+set Alphabet = {ControllableActions,UncontrollableActions}
+
+
+GOAL = ([id:RangeArms].ePutInBox -> g -> GOAL). 
+
+
+OVEN = FREE, 
+READY = (eGetPizzaFromOven -> FREE),
+FREE = ([id:RangeArms].sCooking -> IN_OVEN), 
+IN_OVEN = ([id:RangeArms].eCooking ->   READY).
+
+PIZZA_PROCESS = IN_TRAY,
+IN_TRAY =  ([id:RangeArms].sGetPizzaInTray ->  PIZZA_GETTED),
+PIZZA_GETTED = ([id:RangeArms].sCooking -> IN_OVEN), 
+IN_OVEN = ([id:RangeArms].eCooking ->   READY),
+READY = ([id:RangeArms].sGetPizzaFromOven -> IN_TRAY).
+
+DOUBLE_ARM(C=1) = IDLE, 
+IDLE  = ([C].sGetPizzaInTray ->  GETTING_PIZZA | [C].sGetPizzaFromOven -> GETTING_PIZZA_OVEN | [C].sBuildBox -> BUILDING | [C].sPutInBox -> PUTTING), 
+GETTING_PIZZA_OVEN = ([C].eGetPizzaFromOven -> PIZZA_GETTED),
+GETTING_PIZZA = ([C].eGetPizzaInTray -> PIZZA_GETTED), 
+PIZZA_GETTED = ([C].sCooking -> IDLE | [C].sPutPizzaOutTray -> PUTTING_OUT), 
+PUTTING_OUT = ([C].ePutPizzaOutTray -> IDLE),
+BUILDING = ([C].eBuildBox -> IDLE), 
+PUTTING = ( [C].ePutInBox -> IDLE).
+
+fluent COOKING[id:RangeArms] = <[id].sCooking, /*[id].getPizzaFromOven*/ [id].eCooking>
+fluent BUILDING_BOX[id:RangeArms] = <[id].sBuildBox, [id].eBuildBox>
+
+assert ACOOKING = COOKING[1]
+assert ABUILDING = BUILDING_BOX[1]
+
+fluent COOKED[id:RangeArms]  = <[id].eCooking, [id].ePutInBox>
+fluent OUT[id:RangeArms]  =  <[id].ePutPizzaOutTray, [id].ePutInBox>
+fluent BOX_BUILDED[id:RangeArms]  =  <[id].eBuildBox, [id].ePutInBox>
+fluent PUT_INTO_BOX[id:RangeArms] = <[id].ePutInBox, Alphabet\{[id].ePutInBox}>
+assert PUT_INTO_BOX = PUT_INTO_BOX[1]
+
+
+ltl_property GET_PIZZA_IF_COOKED = forall[id:RangeArms][] ([id].sGetPizzaFromOven -> COOKED[id])
+
+ltl_property PIZZA_AND_BOX_READY =  forall[id:RangeArms][] ([id].sPutInBox -> (COOKED[id] && OUT[id] && BOX_BUILDED[id]))
+
+ltl_property DONT_MAKE_EXTRA_BOXES =  forall[id:RangeArms][] ([id].sBuildBox -> !BOX_BUILDED[id])
+ltl_property DONT_MAKE_EXTRA_PIZZAS =  forall[id:RangeArms][] ([id].sGetPizzaInTray -> !COOKED[id])
+
+assert PUT_PIZZA_COOKED_OUT_INTO_BOX = (COOKED[1] && OUT[1] && BOX_BUILDED[1])
+
+|| ENV = (forall[a:Arms] DOUBLE_ARM(a) || OVEN /*|| PIZZA_PROCESS*/).
+
+// DEFINED CONTROLLER
+controller ||C = (ENV)~{Goal}.
+
+||CC = (C||C).
+
+//DEFINED GOALS
+controllerSpec Goal = {
+	safety={PIZZA_AND_BOX_READY,DONT_MAKE_EXTRA_BOXES,DONT_MAKE_EXTRA_PIZZAS,GET_PIZZA_IF_COOKED}
+	liveness = {PUT_INTO_BOX}
+	//concurrencyFluents={ACOOKING,ABUILDING}
+	//lazyness= 1
+	//non_transient
+	controllable = {ControllableActions}
+}

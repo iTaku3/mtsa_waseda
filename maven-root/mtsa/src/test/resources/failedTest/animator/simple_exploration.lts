@@ -1,0 +1,13 @@
+
+SOUTH0 = (north -> NORTH0 | east -> SOUTH1),
+SOUTH1 = (west -> SOUTH0), // there is a wall to go north
+NORTH0 = (south -> SOUTH0 | east -> NORTH1),
+NORTH1 = (west -> NORTH0). // the same wall from SOUTH1
+
+MTS_SOUTH0 = (north? -> MTS_NORTH0 | east? -> MTS_SOUTH1),
+MTS_SOUTH1 = (north? -> MTS_NORTH1 | west? -> MTS_SOUTH0),
+MTS_NORTH0 = (south? -> MTS_SOUTH0 | east? -> MTS_NORTH1),
+MTS_NORTH1 = (south? -> MTS_SOUTH1 | west? -> MTS_NORTH0).
+
+||ROBOT = (SOUTH0 || MTS_SOUTH0).
+

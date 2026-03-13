@@ -1,0 +1,42 @@
+const XMin = 0
+const XMax = 3
+const YMin = 0
+const YMax = 3
+range X = XMin..XMax
+range Y = YMin..YMax
+
+
+set Controllable = {go.{n,e,s,w}, pos[x:X][y:Y]}
+set Uncontrollable = {arrive, obstacle}
+set Alphabet = {Controllable, Uncontrollable}
+
+
+DRONE = POS[XMin][YMin],
+POS[x:X][y:Y] = (pos[x][y] -> GO[x][y]),
+GO[x:X][y:Y] =
+  ( when (x>XMin) go.w -> (obstacle -> POS[x][y] | arrive -> POS[x-1][y])
+  | when (x<XMax) go.e -> (obstacle -> POS[x][y] | arrive -> POS[x+1][y])
+  | when (y>YMin) go.n -> (obstacle -> POS[x][y] | arrive -> POS[x][y-1])
+  | when (y<YMax) go.s -> (obstacle -> POS[x][y] | arrive -> POS[x][y+1])
+  ).
+
+||ENV = DRONE.
+
+
+ltl_property Safe = []( !pos[x:1..3][y:0..0] )
+
+fluent Pos[x:X][y:Y] = <{pos[x][y]}, Alphabet\{pos[x][y]}>
+assert Goal1 = Pos[1][3]
+assert Goal2 = Pos[3][1]
+
+fluent Obstacle = <{obstacle}, Alphabet\{obstacle}>
+assert Fail = Obstacle
+
+controllerSpec SPEC = {
+  safety = {Safe}
+  liveness = {Goal1, Goal2}
+  failure = {Fail}
+  controllable = {Controllable}
+}
+
+controller ||C = (ENV)~{SPEC}.

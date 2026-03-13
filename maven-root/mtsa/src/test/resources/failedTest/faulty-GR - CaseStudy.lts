@@ -1,0 +1,48 @@
+const N = 4 //number of each env
+range Env = 1..N //set of env
+range Clients= 1..2
+
+||Models   = (Handlers || Clients
+				||ME
+				).
+
+||Clients = (Client(1, 2, 1, 3, 4) || Client(2, 1, 2, 3, 4)).
+
+||Handlers = (Handler(1, 1) || Handler(1, 3)|| Handler(1, 4) //|| NotHandler(1,2)
+		|| Handler(2, 2)|| Handler(2, 3)|| Handler(2, 4)).
+
+NotHandler(C=1, E=2) = STOP+{{in, out}.c[C].{checkIn, checkOut}.{[E]}}.
+
+Handler(C=1, E=1) = H[C][E],
+H[C][E] = (in.c[C].checkOut.[E]->out.c[C].checkOut.[E]
+			->in.c[C].checkIn.[E]->out.c[C].checkIn.[E]->H[C][E]).
+
+Client(C1=1, C2=2, E1=1, E2=2, E3=3) = H[C1][C2][E1][E2][E3],
+H[C1][C2][E1][E2][E3] = (in.c[C1].checkOut.[E1]->in.c[C1].checkIn.[E1]->H[C1][C2][E1][E2][E3]
+			  |	in.c[C2].checkOut.[E2]->C2Tried),
+C2Tried = (in.c[C1].checkOut.[E3]->in.c[C2].checkIn.[E2]->C1GC2CI), 
+C1GC2CI = (in.c[C1].checkIn.[E3]->H[C1][C2][E1][E2][E3]). 
+
+fluent Locked[i:Env][cli:Clients] = <out.c[cli].checkOut.[i], out.c[cli].checkIn.[i]>
+assert CheckOutForC1 = (exists[e:Env] Locked[e][1])
+assert CheckOutForC2 = (exists[e:Env] Locked[e][2])
+
+
+ltl_property ME = [] (! exists[i:Env] (Locked[i][1] && Locked[i][2]) )
+
+
+//set Controllable = {{in, out}.c[Clients].{checkIn, checkOut}.{[Env]}} 
+set Controllable = { out.c[1].checkIn.{[1], [3], [4]},
+	  out.c[1].checkOut.{[1], [3], [4]},
+	  out.c[2].checkIn.{[2], [3], [4]},
+	  out.c[2].checkOut.{[2], [3], [4]}}
+
+//Goal definition
+controllerSpec G1 = {
+safety = {ME}
+assumptions = {}
+liveness = {CheckOutForC1, CheckOutForC2}
+controllable = {Controllable}
+}
+
+controller ||C = Models~{G1}. 

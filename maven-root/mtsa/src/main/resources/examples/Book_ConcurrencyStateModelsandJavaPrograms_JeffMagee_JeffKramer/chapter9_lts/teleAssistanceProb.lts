@@ -1,0 +1,75 @@
+probabilistic mdp
+TA0 = (startAssistant -> {1.0:TA1}),
+TA1 = (pButtonMsg -> {1.0:TA3} | vitalParamsMsg -> {1.0:TA4}),
+TA2 = (exit -> {1.0:TA2}),
+TA3 = (pButtonMsg -> {1.0:TA3} | alarm -> {1.0:TA5}),
+TA4 = (pButtonMsg -> {1.0:TA5} | analyseData -> {1.0:TA8}),
+TA5 = (pButtonMsg -> {1.0:TA5} | callFAS -> {1.0:TA6}),
+TA6 = (pButtonMsg -> {1.0:TA6} | attendToPA -> {1.0:TA1}),
+TA7 = (failedAlarm -> {1.0:TA7} | pButtonMsg -> {1.0:TA7}),
+TA8 = (noChange -> {1.0:TA1} | pButtonMsg -> {1.0:TA9} | failedAnalysis -> {1.0:TA10} | changeDrug -> {1.0:TA11} | changeDose -> {1.0:TA12} | alarm -> {1.0:TA5}),
+TA9 = (pButtonMsg -> {1.0:TA9} | failedAlarm -> {1.0:TA7}),
+TA10= (failedAnalysis -> {1.0:TA10} | pButtonMsg -> {1.0:TA10}),
+TA11= (pButtonMsg -> {1.0:TA9} | failedChangeDrug -> {1.0:TA13} | notifyPA -> {1.0:TA1}),
+TA12= (pButtonMsg -> {1.0:TA9} | failedChangeDose -> {1.0:TA14} | notifyPA -> {1.0:TA1}),
+TA13= (pButtonMsg -> {1.0:TA13} | failedChangeDrug -> {1.0:TA13}),
+TA14= (pButtonMsg -> {1.0:TA14} | failedChangeDose -> {1.0:TA14}).
+
+PA0 = (startAssistant -> {1.0:PA1}),
+PA1 = (internal -> {0.7:PA2 + 0.25:PA3 + 0.05:PA4}),
+PA2 = (vitalParamsMsg -> {1.0:PA5}),
+PA3 = (pButtonMsg -> {1.0:PA6}),
+PA4 = (stopMsg -> {1.0:PA7}),
+PA5 = (noChange -> {1.0:PA1} | attendToPA -> {1.0:PA1} | notifyPA -> {1.0:PA9} | internal -> {0.3:PA12 + 0.7:PA11}),
+PA6 = (attendToPA -> {1.0:PA1}),
+PA7 = (internal -> {1.0:PA7}),
+PA8 = (attendToPA -> {1.0:PA8} | notifyPA -> {1.0:PA8} | noChange -> {1.0:PA8}),
+PA9 = (internal -> {0.1:PA1 + 0.9:PA10}),
+PA10= (internal -> {0.15:PA2 + 0.85:PA3}),
+PA11= (pButtonMsg -> {1.0:PA5} | notifyPA -> {1.0:PA9} | noChange -> {1.0:PA1} | attendToPA -> {1.0:PA1}),
+PA12= (noChange -> {1.0:PA1} | attendToPA -> {1.0:PA1} | notifyPA -> {1.0:PA9}).
+
+// OBS - (vitalParamsMsg -> ),
+// [vitalParamsMsg] obsTime=0->(obsTime'=1);
+// [stopMsg] obsTime=0->(obsTime'=1);
+// [pButtonMsg] obsTime=0->(obsTime'=1);
+// 
+// [vitalParamsMsg] obsTime=1->(obsTime'=2);
+// [stopMsg] obsTime=1->(obsTime'=3);
+// [pButtonMsg] obsTime=1->(obsTime'=4);
+// 
+// [vitalParamsMsg] obsTime=2->(obsTime'=2);
+// [stopMsg] obsTime=2->(obsTime'=2);
+// [pButtonMsg] obsTime=2->(obsTime'=2);
+// 
+// [vitalParamsMsg] obsTime=3->(obsTime'=3);
+// [stopMsg] obsTime=3->(obsTime'=3);
+// [pButtonMsg] obsTime=3->(obsTime'=3);
+//
+// [vitalParamsMsg] obsTime=4->(obsTime'=4);
+// [stopMsg] obsTime=4->(obsTime'=4);
+// [pButtonMsg] obsTime=4->(obsTime'=4);
+// endmodule
+//
+// module observerPropertyPaper2 // proprty: fails next time after change of medication
+// obs:[0..3] init 0;
+// 
+// [vitalParamsMsg] obs=0->(obs'=1);
+// [pButtonMsg] obs=0->(obs'=1);
+// [stopMsg] obs=0->(obs'=1);
+// 
+// [pButtonMsg] obs=1->(obs'=1);
+// [notifyPA] obs=1->(obs'=2);
+// [attendToPA] obs=1->(obs'=2);
+// [noChange] obs=1->(obs'=2);
+// 
+// [vitalParamsMsg] obs=2->(obs'=3);
+// [pButtonMsg] obs=2->(obs'=3);
+// [stopMsg] obs=2->(obs'=3);
+// 
+// [pButtonMsg] obs=3->(obs'=3);
+// [notifyPA] obs=3->(obs'=0);
+// [attendToPA] obs=3->(obs'=0);
+// [noChange] obs=3->(obs'=0);
+// endmodule
+

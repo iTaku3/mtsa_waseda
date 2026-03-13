@@ -1,0 +1,152 @@
+/* Cat and Mouse example
+* from "The Control of Discrete Event Systems" Peter Ramadge & Murray Wonham
+* Proceedings of the IEEE, Vol 77, No.1 jan 1989, pp 81-98
+* j.n.magee 21-Nov-08
+*/
+
+set CatFlaps = {c1,c2,c3,c4,c5,c6,c7a,c7b}
+set MouseFlaps = {m0,m1,m2,m3,m4}
+
+CAT(Init=2) = (cat_in[Init]->start->CAT[Init]),
+CAT[0] = (c1 -> ECAT[1] | c4 -> ECAT[3]),
+CAT[1] = (c2 -> ECAT[2] | c7b -> ECAT[3]),
+CAT[2] = (c3 -> ECAT[0]),
+CAT[3] = (c5 -> ECAT[4] | c7a -> ECAT[1]),
+CAT[4] = (c6 -> ECAT[0] ),
+ECAT[room:0..4] = (cat_in[room]->CAT[room]).
+
+/*
+MOUSE(Init=4) = (mouse_in[Init]->start->MOUSE[Init]),
+MOUSE[0] = (m1 -> EMOUSE[2] | m4 -> EMOUSE[4]),
+MOUSE[1] = (m3 -> EMOUSE[0] ),
+MOUSE[2] = (m2 -> EMOUSE[1] ),
+MOUSE[3] = (m6 -> EMOUSE[0] ),
+MOUSE[4] = (m5 -> EMOUSE[3] ),
+EMOUSE[room:0..4] = (mouse_in[room]->MOUSE[room]).
+*/
+
+MOUSE(Init=0) = (mouse_in[Init]->start->MOUSEP),
+MOUSEP = (m1 -> EMOUSE[1] | m2 -> EMOUSE[2] | m3 -> EMOUSE[3] | m4 -> EMOUSE[4] | m0 -> EMOUSE[0]),
+EMOUSE[room:0..4] = (mouse_in[room]->MOUSEP).
+
+fluent CATROOM[room:0..4] = <cat_in[room],{cat_in[0..4]}\{cat_in[room]}>
+fluent MOUSEROOM[room:0..4] = <mouse_in[room],{mouse_in[0..4]}\{mouse_in[room]}>
+
+// a) the cat and the mouse never occupy the same room simultaneously
+ltl_property SAFE = []( !exists[i:0..4] (CATROOM[i] && MOUSEROOM[i]))
+
+minimal ||DOMAIN = (CAT || MOUSE || SAFE).
+
+assert CAT_AT_1 = CATROOM[1]
+assert CAT_AT_2 = CATROOM[2]
+assert CAT_AT_3 = CATROOM[3]
+assert CAT_AT_4 = CATROOM[4]
+assert MOUSE_AT_1 = MOUSEROOM[1]
+assert MOUSE_AT_2 = MOUSEROOM[2]
+assert MOUSE_AT_3 = MOUSEROOM[3]
+assert MOUSE_AT_4 = MOUSEROOM[4]
+
+
+||BOUNDEDDOMAIN = (DOMAIN || C4CLOSESC2FOREVER).
+
+controller	||CONTROLLER = (BOUNDEDDOMAIN)~{G1}.
+
+set Controllable = {CatFlaps, MouseFlaps}
+
+controllerSpec G1 = {
+	safety = {SAFE}
+	liveness = {CAT_AT_1, CAT_AT_2, CAT_AT_3, CAT_AT_4, 
+				MOUSE_AT_1, MOUSE_AT_2, MOUSE_AT_3, MOUSE_AT_4}
+	controllable = {Controllable}
+}
+
+
+||RUNSAFE = BOUNDEDCONTROLLER.
+
+
+C4CLOSESC2FOREVER = C2OPEN,
+C2OPEN = ({c1,c2,c3,c5,c6,c7a,c7b} -> C2OPEN |
+           c4 -> C2CLOSED),
+C2CLOSED = ({c1,c3,c4,c5,c6,c7a,c7b} -> C2CLOSED).
+
+/* 
+const Max = 13
+range Int = 0..Max
+COUNT = COUNT[0],
+COUNT[i:Int] = ({CatFlaps,MouseFlaps}->COUNT[i+1]
+               |ended -> reset -> COUNT),
+COUNT[Max+1]   = ERROR.
+*/
+
+animation MAZE = "xml/catmousemaze.xml" target RUNSAFE
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    start/start
+                 }
+
+animation DMAZE = "xml/catmousemaze.xml" target RUNSAFE
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    start/start,
+                                        ended/ended,
+                                        forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+
+                 }
+
+
+
+ animation CATMAZE = "xml/catmousemaze.xml" target RUNCAT
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    forall[i:CatFlaps] {[i]/[i]}
+                 }
+
+animation CATFREE = "xml/catmousemaze.xml" target RUNCAT
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                   start/start
+                 }
+
+
+animation MOUSEMAZE = "xml/catmousemaze.xml" target RUNMOUSE
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    forall[i:MouseFlaps] {[i]/[i]}
+                 }
+
+animation MOUSEFREE = "xml/catmousemaze.xml" target RUNMOUSE
+                 actions {
+                    forall[i:CatFlaps] {[i]/[i]},
+                                        forall[i:MouseFlaps] {[i]/[i]}
+                 }
+                 controls {
+                    cat_in[0..4]/end,
+                    mouse_in[0..4]/mend,
+                    start/start
+                 }

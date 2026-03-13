@@ -1,0 +1,24 @@
+set A = {c, u, c2}
+set Controllable = {c, c2}
+
+E = (c->C),
+C = (u->C | c2->C2), 
+C2 = (c2->C2).
+
+fluent F_C = <c, A\{c}>
+fluent F_C2 = <c2, A\{c2}>
+fluent F_U = <u, A\{u}>
+assert TRUE =  (F_C || !F_C)
+
+assert C = F_C
+assert G = (F_C2 || F_U)
+
+plant ||PLANT = (E)~{G1}.
+
+//Goals
+controllerSpec G1 = {
+       safety = {}
+       assumption = {C}
+       liveness = {G}
+       controllable = {Controllable}
+}

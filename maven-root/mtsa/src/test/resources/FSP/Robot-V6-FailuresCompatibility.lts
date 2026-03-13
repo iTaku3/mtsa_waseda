@@ -1,0 +1,90 @@
+//ACTION SETS
+set Moves = {n, s, q}
+const NORTH = 'n
+const SOUTH = 's
+const STOPPED = 'q
+
+set Positions = {pos1, pos2, pos3, pos4}
+set Controlled = {mn, ms, me, mw, getPackage, putPackage}
+set Uncontrolled = {Positions, getPackageFailed, getPackageOk, openDoor, closeDoor}
+set ControlledPlusFail = {{Controlled}, getPackageFailed}
+set A = {Controlled, Uncontrolled}
+
+//DEFINED FLUENTS 
+fluent F_Pos4 = <pos4, Positions\{pos4}>
+fluent F_DoorOpen = <openDoor, closeDoor>
+fluent F_PutPackage = <putPackage, A\{putPackage}>
+fluent F_GetPackageFailed = <getPackageFailed, A\{getPackageFailed}>
+
+//DEFINED ASSERTIONS
+assert AssumptionOnDoor = F_DoorOpen
+assert GetPackageFailed = F_GetPackageFailed
+assert Pos4AndPackageUnloaded = (F_Pos4 && F_PutPackage)
+
+//DEFINED CONTROLLERS
+controller ||C = (PLANT)~{G1}.
+
+//ASSUMPTIONS COMPATIBILITY CHECKS
+checkCompatibility ||C_G1_Compatible = (PLANT)~{G1}.
+checkCompatibility ||C_G2_CompatibleFailures = (PLANT)~{G2}.
+
+//DEFINED GOALS 
+controllerSpec G1 = {
+	safety = {PKG_RESTRICTION}
+	failure = {GetPackageFailed}
+	assumption = {AssumptionOnDoor}
+	liveness = {Pos4AndPackageUnloaded}
+	controllable = {Controlled}
+}
+controllerSpec G2 = {
+	safety = {PKG_RESTRICTION}
+	failure = {GetPackageFailed}
+	assumption = {AssumptionOnDoor}
+	liveness = {Pos4AndPackageUnloaded}
+	controllable = {ControlledPlusFail}
+}
+
+//MODELS FOR TESTING
+||ANALYSED_PLANT = (PLANT || PKG_RESTRICTION).
+
+//ENVIRONMENT MODEL.
+||PLANT = (DOOR || ARM || ROBOT || TOPOLOGY).
+
+DOOR = (openDoor->closeDoor->DOOR).
+ARM = (getPackage->TRY), TRY = (getPackageOk->putPackage->ARM | getPackageFailed->ARM).
+ROBOT = (mn->ROBOT | ms->ROBOT | me->ROBOT | mw->ROBOT).
+TOPOLOGY = (pos1->ENV_P[1][0][0][STOPPED]),
+ENV_P[pos:1..4][doorOpen:0..1][pkgOn:0..1][moving:Moves] = (
+	  when(doorOpen==0)									openDoor->ENV_P[pos][1][pkgOn][moving] 
+	| when(moving==STOPPED)&&(pos!=4)					mn -> ENV_P[pos][doorOpen][pkgOn][NORTH] 
+	| when(moving==STOPPED)&&(pos!=1)					ms->ENV_P[pos][doorOpen][pkgOn][SOUTH]
+	| when(pos==1)&&(moving==NORTH)						pos2->ENV_P[2][doorOpen][pkgOn][STOPPED]
+	| when(pos==2)&&(moving==SOUTH)						pos1->ENV_P[1][doorOpen][pkgOn][STOPPED]
+	| when(pos==2)&&(doorOpen==1)&&(moving==NORTH)		pos3->closeDoor->ENV_P[3][0][pkgOn][STOPPED]
+	| when(pos==2)&&(doorOpen==0)&&(moving==NORTH)		pos2->ENV_P[pos][doorOpen][pkgOn][STOPPED]
+	| when(pos==3)&&(moving==NORTH)						pos4->ENV_P[4][doorOpen][pkgOn][STOPPED]
+	| when(pos==3)&&(doorOpen==1)&&(moving==SOUTH)		pos2->closeDoor->ENV_P[2][0][pkgOn][STOPPED]
+	| when(pos==3)&&(doorOpen==0)&&(moving==SOUTH)		pos3->ENV_P[pos][doorOpen][pkgOn][STOPPED]
+	| when(pos==4)&&(moving==SOUTH)						pos3->ENV_P[3][doorOpen][pkgOn][STOPPED] 
+)+{me,mw}. 
+
+//SAFETY RESTRICCION.
+//Cuando intenta agarrar el paquete, tiene que esperar a tener confirmacion de si lo agarro o puede moverse igual. 
+//Si no puede moverse no hay demasiado bardo, pero si puede moverse hay que ver donde recibe el resultado, deberia ser antes de 4
+//pero ademas sea donde sea deberia volver al ppio y tratar de agarrar la pelota de nuevo. Parece interesante. 
+PKG_RESTRICTION = (pos1->P_P[1][0][STOPPED]),
+P_P[pos:1..4][pkgOn:0..1][moving:Moves] = (
+	 when(moving==STOPPED) 				mn->P_P[pos][pkgOn][NORTH]
+	|when(moving==STOPPED) 				ms->P_P[pos][pkgOn][SOUTH]
+	|when(moving!=STOPPED)				pos1->P_P[1][pkgOn][STOPPED]
+	|when(moving!=STOPPED)				pos2->P_P[2][pkgOn][STOPPED]
+	|when(moving!=STOPPED)				pos3->P_P[3][pkgOn][STOPPED]
+	|when(moving!=STOPPED)				pos4->P_P[4][pkgOn][STOPPED]
+	|when(moving==STOPPED)&&(pos==1)	getPackage->TRY_P[pos][pkgOn][moving]
+	|when(moving==STOPPED)&&(pos==4)	putPackage->P_P[pos][0][moving] 
+), 
+TRY_P[pos:1..4][pkgOn:0..1][moving:Moves] = (getPackageOk->P_P[pos][1][moving] 
+											| getPackageFailed->P_P[pos][0][moving]
+)+{me,mw}. 
+
+

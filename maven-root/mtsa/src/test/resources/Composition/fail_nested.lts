@@ -1,0 +1,8 @@
+set AC = {makeA}
+
+MAKE_A   = (makeA->ready->used->MAKE_A).
+MAKE_B   = (makeB->ready->used->MAKE_B).
+
+||A = (MAKE_B || C).
+||C = (MAKE_A || E).
+||E = (A ||MAKE_B).

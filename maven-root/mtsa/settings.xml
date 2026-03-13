@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+
+    <servers>
+        <server>
+            <id>freehep-releases</id>
+            <configuration>
+                <snapshots>
+                    <enabled>true</enabled>
+                    <updatePolicy>weekly</updatePolicy>
+                </snapshots>
+                <releases>
+                    <enabled>true</enabled>
+                    <updatePolicy>weekly</updatePolicy>
+                </releases>
+                <httpConfiguration>
+                    <put>
+                        <readTimeout>240000</readTimeout> <!-- milliseconds -->
+                    </put>
+                </httpConfiguration>
+            </configuration>
+        </server>
+
+        <server>
+            <id>central-main</id>
+            <configuration>
+                <snapshots>
+                    <enabled>true</enabled>
+                    <updatePolicy>weekly</updatePolicy>
+                </snapshots>
+                <releases>
+                    <enabled>true</enabled>
+                    <updatePolicy>weekly</updatePolicy>
+                </releases>
+                <httpConfiguration>
+                    <put>
+                        <readTimeout>240000</readTimeout> <!-- milliseconds -->
+                    </put>
+                </httpConfiguration>
+            </configuration>
+
+        </server>
+
+
+
+    </servers>
+
+
+</settings>

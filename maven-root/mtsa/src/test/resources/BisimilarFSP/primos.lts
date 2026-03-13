@@ -1,0 +1,32 @@
+
+const N = 4
+
+GEN = GEN[2],
+GEN[i:2..N] =  (when (i<N) gen[i]->GEN[i+1]
+                |when (i == N) eos->END) /{out/gen}.
+
+
+FILTER = (in[i:2..N-1]->print[i]->Filt[i]),
+Filt[i:2..N-1] = (in[j:2..N-1]-> ( when (j % i == 0) descartar-> Filt[i] |  when (j % i != 0) out[j]->Filt[i] )) .
+
+||FILTERS = (filter[i:2..3]:FILTER ).
+
+|| C = (filter[j:2..3]:FILTER || filter[1]:GEN)/{filter[i:1..N-2].out/filter[i+1].in}.
+
+
+
+||ExpectedC = CONTROLLER.
+
+	CONTROLLER = Q0,
+	Q0	= (filter[1].out[2] -> Q1),
+	Q1	= (filter[2].print[2] -> Q2),
+	Q2	= (filter[1].out[3] -> Q3),
+	Q3	= (filter[1].eos -> Q4
+		  |filter[2].out[3] -> Q7),
+	Q4	= (filter[2].out[3] -> Q5),
+	Q5	= (filter[3].print[3] -> Q6),
+	Q6	= STOP,
+	Q7	= (filter[1].eos -> Q5
+		  |filter[3].print[3] -> Q8),
+	Q8	= (filter[1].eos -> Q6)+{filter.{[1].{eos, out[2..3]}, [2..3].{descartar, {out, print}[2..3]}}}.
+

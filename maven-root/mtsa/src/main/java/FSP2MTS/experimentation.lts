@@ -1,0 +1,58 @@
+EXP_M_01 = (_tau? -> a -> STOP).
+EXP_N_01 = ( a? -> STOP).
+EXP_I_01_01 = STOP.
+EXP_I_01_02 = (_tau -> a -> _tau -> STOP).
+EXP_I_01_03 = (_tau -> ( a -> STOP | _tau -> a ->STOP )).
+
+EXP_M_02 = ( b? -> STOP | _tau? -> a -> STOP ).
+EXP_N_02 = ( b  -> STOP | a? -> STOP ).
+EXP_I_02 = ( a  -> STOP | b -> STOP).
+
+EXP_M_03 = ( _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_03 = ( a? -> STOP | b -> STOP).
+EXP_I_03 = ( b  -> STOP ).
+
+EXP_M_04 = ( b? -> STOP | _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_04 = ( a? -> STOP | b -> STOP).
+
+EXP_M_05 = ( b? -> STOP | _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_05 = ( a? -> STOP | b? -> STOP).
+EXP_I_05 = ( a  -> STOP ).
+
+EXP_M_06 = ( b? -> STOP | _tau -> _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_06 = ( a? -> STOP | b -> STOP).
+EXP_I_06 = ( a  -> STOP | b -> STOP).
+
+
+EXP_M_07 = ( _tau? -> EXP_M_07_1 ), EXP_M_07_1 = ( a -> EXP_M_07_1).
+EXP_N_07 = ( _tau -> EXP_N_07_1 ),  EXP_N_07_1 = ( a? -> EXP_N_07_1).
+EXP_I_07 = ( a -> STOP ).
+
+EXP_M_08 = ( _tau? -> EXP_M_08_1 ), EXP_M_08_1 = ( b -> STOP | a? -> EXP_M_08_1).
+EXP_N_08 = ( b -> STOP ).
+
+EXP_M_09 = ( _tau? -> _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_09 = ( a  -> STOP | b -> STOP).
+
+EXP_M_10 = ( b? -> STOP | _tau? -> _tau? -> (a -> STOP | b -> STOP)).
+EXP_N_10 = ( a? -> STOP | b -> STOP).
+
+EXP_M_11 = ( b? -> STOP | _tau? -> ( c -> STOP | _tau? -> (a -> STOP | b -> STOP))).
+EXP_N_11 = ( a? -> STOP | b -> STOP).
+EXP_I_11 = ( a  -> STOP | b -> STOP).
+
+EXP_M_12 = ( _tau? -> b -> STOP | _tau? -> ( _tau -> a -> STOP | _tau -> b -> STOP ) ) .
+EXP_N_12 = ( _tau -> a -> STOP | _tau -> b -> STOP ).
+
+EXP_M_13 = ( _tau? -> a -> STOP | _tau? -> b -> STOP ).
+EXP_N_13 = ( _tau? -> ( a -> STOP | b -> STOP)).
+EXP_I_13 = ( a -> STOP | b -> STOP).
+
+EXP_M_14 = ( _tau? -> a -> STOP | _tau? -> b -> STOP ).
+EXP_N_14 = ( _tau? -> ( _tau -> a -> STOP | _tau -> b -> STOP)).
+
+
+
+
+
+

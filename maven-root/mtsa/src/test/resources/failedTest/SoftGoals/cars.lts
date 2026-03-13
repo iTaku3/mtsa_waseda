@@ -1,0 +1,15 @@
+range RangeCars = 1..2
+range RangeBridges = 1..2
+range Positions = 0..1
+
+BRIDGE(C=1) = AVAILABLE, 
+AVAILABLE = (c[id:RangeCars].sCross.b[C].to[id:Positions] -> IN_USE[id]), 
+IN_USE[car:RangeCars] = (c[car].eCrooss.b[C].to[id:Positions] -> AVAILABLE).
+
+
+CAR(C=1, P=1) = IDLE[P], 
+IDLE[p:Positions] = (c[C].sCross.b[id:RangeBridges].to[((p + 1) % 2)] -> IN_USE[((p + 1) % 2)]/*[id]*/), 
+IN_USE[p:Positions]/*[c:RangeCars]*/ = (c[C].eCrooss.b[id:RangeBridges].to[p] -> IDLE[p]).
+
+
+||ENV = (forall[c:RangeCars] CAR(c,1) || forall[b:RangeBridges] BRIDGE(b)).

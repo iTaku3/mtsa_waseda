@@ -1,0 +1,131 @@
+// ---------------------------ENVIRONMENTS-----------------------------
+set ControllableActions = {validateTOR, validateDSD1, validateQA, validateGF1, reviewTOR, reviewDSD1, readyTOR,  readyDSD1}
+set A = {ControllableActions, receiveTOR, receiveDSD1, receiveGF1, torOk[0..1], dsd1Ok[0..1], qaOk[0..1], adjustGF1, approveGF1, cancelGF1}
+
+//Environments
+TOR = (receiveTOR -> RECEIVED),
+RECEIVED = (validateTOR -> RESPONSE),
+RESPONSE = (torOk[0] -> reviewTOR -> TOR | torOk[1] -> readyTOR -> TOR).
+
+DSD1 = (receiveDSD1 -> RECEIVED),
+RECEIVED = (validateDSD1 -> DSD1RESPONSE),
+DSD1RESPONSE = (dsd1Ok[0] -> reviewDSD1 -> DSD1 | dsd1Ok[1] -> validateQA -> QARESPONSE),
+QARESPONSE = (qaOk[0] -> reviewDSD1 -> DSD1 | qaOk[1] -> readyDSD1 -> DSD1).
+
+GATEFORM1 = (receiveGF1 -> RECEIVED),
+RECEIVED = (validateGF1 -> GF1RESPONSE),
+GF1RESPONSE = ({adjustGF1,approveGF1,cancelGF1} -> GATEFORM1).
+
+||Environment = (TOR || DSD1 || GATEFORM1).
+
+    //Mapping Environment
+	BEFORE_RECONF = (reconfigure -> AFTER_RECONF | A -> BEFORE_RECONF),
+	AFTER_RECONF = (A -> AFTER_RECONF).
+
+||MappingEnvironment = (BEFORE_RECONF || TOR || DSD1 || GATEFORM1).
+
+//Fluents declaration
+
+// TOR FLUENTS
+fluent TorReceived = <receiveTOR, {reviewTOR,readyTOR}>
+fluent ValidatingTOR = <validateTOR,torOk[0..1]>
+fluent TorDenied = <torOk[0],validateTOR>
+fluent ReviewingTOR = <reviewTOR,validateTOR>
+fluent TorAccepted = <torOk[1],validateTOR>
+fluent TORDone = <readyTOR,{approveGF1,cancelGF1}>
+fluent NewTORDone = <readyTOR,{approveGF1,adjustGF1,cancelGF1}>
+fluent NewTORDone_ = <readyTOR,{adjustGF1}>
+
+//DSD1 FLUENTS
+fluent Dsd1Received = <receiveDSD1, {reviewDSD1,readyDSD1}>
+fluent ValidatingDSD1 = <validateDSD1,{reviewDSD1,readyDSD1}>
+fluent Dsd1Denied = <dsd1Ok[0],{reviewDSD1,readyDSD1}>
+fluent ReviewingDSD1 = <reviewDSD1, validateDSD1>
+fluent Dsd1Accepted = <dsd1Ok[1],{reviewDSD1,readyDSD1}>
+fluent ValidatingQA = <validateQA,{reviewDSD1,readyDSD1}>
+fluent QADenied = <qaOk[0],{reviewDSD1,readyDSD1}>
+fluent QAAccepted = <qaOk[1],{reviewDSD1,readyDSD1}>
+fluent DSD1Done_ = <readyDSD1,dsd1Ok[0..1]>
+fluent DSD1Done = <readyDSD1,{approveGF1,adjustGF1,cancelGF1}>
+
+// GF1 FLUENTS
+fluent Gf1Received = <receiveGF1, {adjustGF1,approveGF1,cancelGF1}>
+fluent ValidatingGF1 = <validateGF1,{adjustGF1,approveGF1,cancelGF1}>
+fluent Finished = <{approveGF1,cancelGF1},{validateTOR,validateDSD1,validateGF1}>
+fluent Adjusting = <adjustGF1,validateGF1>
+
+// ---------------------------OLD CONTROLLER SPEC-----------------------------
+
+assert TOR_POLICY = ((validateDSD1 || validateGF1) -> TORDone)
+assert DSD1_POLICY = ((validateGF1 -> DSD1Done) && (DSD1Done -> !validateTOR))
+assert DO_NOT_SEND_TWICE = ((TORDone -> !validateTOR) && 
+							(DSD1Done -> !validateDSD1) && (Finished -> !validateGF1))
+
+ltl_property P_TOR_POLICY = []TOR_POLICY
+ltl_property P_DSD1_POLICY = []DSD1_POLICY
+ltl_property P_DO_NOT_SEND_TWICE = []DO_NOT_SEND_TWICE
+
+controller ||OldController = Environment~{OldSpec}.
+||EnvironmentAndController = (Environment || OldController).
+
+controllerSpec OldSpec = {
+    safety = {P_TOR_POLICY, P_DSD1_POLICY, P_DO_NOT_SEND_TWICE}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------NEW CONTROLLER SPEC-----------------------------
+
+assert NEW_TOR_POLICY = (validateGF1 -> NewTORDone)
+assert NEW_DSD1_POLICY = ((validateTOR || validateGF1 ) -> DSD1Done)
+assert NEW_DO_NOT_SEND_TWICE = ((NewTORDone -> !validateTOR) && 
+							(DSD1Done -> !validateDSD1) && (Finished -> !validateGF1))
+
+ltl_property P_NEW_TOR_POLICY = []NEW_TOR_POLICY
+ltl_property P_NEW_DSD1_POLICY = []NEW_DSD1_POLICY
+ltl_property P_NEW_DO_NOT_SEND_TWICE = []NEW_DO_NOT_SEND_TWICE
+
+controller ||NewController = Environment~{NewSpec}.
+||NewEnvironmentAndController = (Environment || NewController).
+
+controllerSpec NewSpec= {
+    safety = {P_NEW_TOR_POLICY, P_NEW_DSD1_POLICY, P_NEW_DO_NOT_SEND_TWICE}
+    controllable = {ControllableActions}
+}
+
+// ---------------------------UPDATING CONTROLLER SPEC-----------------------------
+//Updating controller fluents
+fluent InTransition = <stopOldSpec, startNewSpec> 
+fluent StopOldSpec = <stopOldSpec, beginUpdate>
+fluent StartNewSpec= <startNewSpec, beginUpdate>
+fluent Reconfigure = <reconfigure, beginUpdate>
+
+fluent StartN = <startNewSpec, adjustGF1>
+
+ltl_property T_Empty = ((StopOldSpec && !StartNewSpec) -> (!AnyAction))
+assert AnyAction = (validateTOR || validateDSD1 || validateQA || validateGF1 || reviewTOR || reviewDSD1 || readyTOR || readyDSD1)
+
+ltl_property T = ((StopOldSpec && TORDone) -> (!cancelGF1 && !approveGF1 && !startNewSpec))
+
+
+updatingController UpdCont = {
+    oldController = EnvironmentAndController,
+	mapping = MappingEnvironment,
+    oldGoal = OldSpec, 
+    newGoal = NewSpec,
+    // T = True is executed if no transition requirement is set
+//	transition = T_Empty,
+	transition = T,
+	nonblocking
+
+}
+
+||UPDATE_CONTROLLER = UpdCont.
+
+// ---------------------------TEST AND RESULTS-----------------------------
+assert S_OLD = (TOR_POLICY && DSD1_POLICY && DO_NOT_SEND_TWICE)
+assert S_NEW = (NEW_TOR_POLICY && NEW_DSD1_POLICY && NEW_DO_NOT_SEND_TWICE)
+
+assert TEST_FORMULA1 = [](!StopOldSpec -> S_OLD)
+assert TEST_FORMULA2 = [](StartNewSpec -> S_NEW)
+assert TEST_FORMULA3 = [](beginUpdate -> (<>stopOldSpec && <>startNewSpec && <>reconfigure))
+

@@ -1,0 +1,26 @@
+Ejemplo = A1,
+A1 = (u12 -> A2 |
+u14 ->A4),
+A2 = (u21 -> A1),
+A4 = (c45 ->A5),
+A5 = (u55 -> A5).
+
+||Plant = Ejemplo.
+
+controllerSpec Goal = {
+controllable = {c45}
+marking = {u55}
+nonblocking
+}
+
+heuristic ||C = Plant~{Goal}.
+
+||ExpectedC = Expected.
+
+Expected = Q0,
+    Q0	= (u14 -> Q1
+          |u12 -> Q2),
+    Q1	= (c45 -> Q3),
+    Q2	= (u21 -> Q0),
+    Q3	= (u55 -> Q4),
+    Q4	= (u55 -> Q4).

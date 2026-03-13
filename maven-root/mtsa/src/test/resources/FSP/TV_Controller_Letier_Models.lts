@@ -1,0 +1,180 @@
+// Model of a tv controller
+// ************************
+
+// data types
+const N = 2				// nbr of tv channels
+const Default = 1		// default tv channel when tv turned on
+range Channel = 1..N
+
+// agent actions
+set T = {select[c: Channel]} 									// Tuner INPUT actions
+set S = {signal.[c: Channel], signal.static} 					// Tuner OUTPUT actions & Screen INPUT actions
+set I = {tune, end_tune} 										// Tuner OUTPUT actions & TV_Controller INPUT actions
+set D = {display.[c: Channel], display.static, display.blank} 	// Screen OUTPUT actions
+set O = {blank, unblank} 										// TV_Controller OUTPUT actions
+set UserActions = {T}
+set TunerActions = {T, S, I}
+set TunerControllableActions = {S, I}
+set ScreenActions = {S, D, O}
+set ScreenControllableActions = {D}
+set TVControllerActions = {I, O}
+set TVControllableActions = {O}
+set AllDomainActions = {TunerActions, ScreenActions, TVControllerActions, tick}
+set Controllable = {O, tick}
+
+// ==============================================
+// Required in all translations from Goals to LTS
+// ==============================================
+// Start with a tick so 'goals take immediate effect'
+StartWithTick = (tick -> S0),
+	S0 = ({AllDomainActions, tick} -> S0).
+
+/****************************
+Agent: USER
+output: select[Channel]
+*****************************/
+
+// User flooding restriction: Maximum of channel selections per slot of time
+InterleavingCstr_for_UserActions = (tick -> S0),
+	S0 = (tick -> S0 | {UserActions} -> tick -> S0).
+
+NotSelectionWhileTunning_Restrict = (select[2] -> S0),
+S0=(select[1]->NotSelectionWhileTunning_Restrict).
+
+UserNotRegretInfinitely_Restrict = S0,
+S0 = ( AllDomainActions\{select[c: Channel]} -> S0
+     | select[c: Channel] -> S1 ),
+S1 = ( AllDomainActions\{select[c: Channel], display.[c: Channel]} -> S1
+	 | select[c: Channel] -> S2
+	 | display.[c: Channel] -> S0 ),
+S2 = ( arrepenti -> S1 ).
+
+minimal || USER = (InterleavingCstr_for_UserActions || NotSelectionWhileTunning_Restrict).
+// 4 states.
+
+/****************************
+Agent: TUNER
+input: select[Channel]
+output: signal.{static, Channel}, tune, end_tune
+*****************************/
+TUNER_PROCESS = TUNING[Default],
+				TUNING[c: Channel] = ( signal.static -> SignalStatic_Restrict[c]//TUNING[c]
+								 	| signal.[c] -> JUST_TUNED[c]
+								 	| select[c1:Channel] -> if (c1==c) then TUNING[c] else JUST_SELECTED[c1]),
+				SignalStatic_Restrict[c: Channel] = ( signal.[c] -> JUST_TUNED[c]
+								 	| select[c1:Channel] -> if (c1==c) then TUNING[c] else JUST_SELECTED[c1]),
+				JUST_TUNED[c: Channel] = ( end_tune -> TUNED[c]
+								 	| select[c1:Channel] -> if (c1==c) then JUST_TUNED[c] else JUST_SELECTED[c1]),		
+				JUST_SELECTED[c: Channel] = (tune -> TUNING[c] 
+									| select[c1:Channel] -> JUST_SELECTED[c1]),
+				TUNED[c:Channel] = ( signal.[c] -> TUNED[c]
+									| select[c1:Channel] -> if (c1==c) then TUNED[c] else JUST_SELECTED[c1]).
+
+InterleavingCstr_for_TunerActions = (tick -> S0),
+	S0 = (tick -> S0 | {TunerControllableActions} -> tick -> S0). 
+
+minimal ||TUNER = (TUNER_PROCESS || InterleavingCstr_for_TunerActions).
+
+/******************************
+Agent: SCREEN
+input: signal.[Channel], blank, unblank
+output: display.{[Channel], blank, static}
+*******************************/
+SCREEN_PROCESS = BLANK_STATIC,
+				 BLANK[c:Channel] = ( display.blank -> BLANK[c]
+									| unblank -> DISPLAY[c]
+									| blank -> BLANK[c]
+									| signal.[c1:Channel] -> BLANK[c1]
+									| signal.static -> BLANK_STATIC),
+				BLANK_STATIC = ( display.blank -> BLANK_STATIC
+									| unblank -> DISPLAY_STATIC
+									| blank -> BLANK_STATIC
+									| signal.[c:Channel] -> BLANK[c]
+									| signal.static -> BLANK_STATIC),
+				DISPLAY[c:Channel] = (display.[c] -> DISPLAY[c]
+									| blank -> BLANK[c]
+									| unblank -> DISPLAY[c]
+									| signal.[c1:Channel] -> DISPLAY[c1]
+									| signal.static -> DISPLAY_STATIC),
+				DISPLAY_STATIC = (display.static -> DISPLAY_STATIC
+									| blank -> BLANK_STATIC
+									| signal.[c1:Channel] -> DISPLAY[c1]
+									| signal.static -> DISPLAY_STATIC).
+
+InterleavingCstr_for_ScreenActions = (tick -> S0),
+	S0 = (tick -> S0 | {ScreenControllableActions} -> tick -> S0).
+
+minimal ||SCREEN = (SCREEN_PROCESS || InterleavingCstr_for_ScreenActions).
+
+/******************************
+Agent: TV_CONTROLLER
+input: tune, end_tune
+output: blank, unblank
+*******************************/
+
+InterleavingCstr_for_TVControllerActions = (tick -> S0),
+	S0 = (tick -> S0 | {TVControllableActions} -> tick -> S0).
+
+minimal || TV_CONTROLLER_RESTRICT = (InterleavingCstr_for_TVControllerActions).
+
+/***************
+  ENVIRONMENT
+***************/
+minimal || DOM = (USER || TUNER || SCREEN || TV_CONTROLLER_RESTRICT || StartWithTick || UserNotRegretInfinitely_Restrict).
+
+/**************
+	GOALS
+**************/
+
+// Goal: Avoid[NoiseDisplay] (G1)
+assert Avoid_StaticDisplay_Assert = [](!display.static)
+//ltl_property Avoid_StaticDisplay = [] (!display.static)
+fluent DISPLAY_STATIC = <display.static, AllDomainActions\{display.static}>
+ltl_property Avoid_StaticDisplay = [] (!DISPLAY_STATIC)
+|| G1 = Avoid_StaticDisplay. 
+
+// Goal: Achieve [ChannelDisplayed]
+fluent WaitingC1 = <select[1], {select[2], display.[1]}>
+fluent WaitingC2 = <select[2], {select[1], display.[2]}>
+assert G2 = (!WaitingC1 && !WaitingC2)
+
+fluent PendingC1 = <select[1], {display.[c: Channel]}>
+fluent PendingC2 = <select[2], {display.[c: Channel]}>
+
+//assert UserNotRegretInfinitely = !((PendingC1 && WaitingC2)||(PendingC2 && WaitingC1))
+
+fluent Regret = <arrepenti, display.[c: Channel]>
+assert UserNotRegretInfinitely = !Regret
+assert G2_Realizability_Under_A = (([]<>UserNotRegretInfinitely) -> ([]<>G2))
+
+
+/****************
+  TV_CONTROLLER
+****************/
+
+fluent Tick = <tick, AllDomainActions\{tick}>
+assert TimePasses = Tick
+
+controllerSpec SPEC = {
+       safety = {G1}
+       assumption = {UserNotRegretInfinitely}
+       liveness = {TimePasses, G2}
+       controllable = {Controllable}
+}
+
+controller || TV_CONTROLLER = (DOM)~{SPEC}.
+
+|| SYSTEM = (DOM || TV_CONTROLLER).
+
+
+/****************
+     NOTES
+****************/
+// USER and TV_CONTROLLER_RESTRICT -> Required for ticks.
+// Only G1 -> Controller never enables display by never unblanking the Screen.
+// But G2 unrealizable
+//  - User can select the same channel while tunning it [select.1 tick select.1 tick...] -> NotSelectionWhileTunning_Restrict 
+//  - User can change channels undefinetly [select.1 tick select.2 tick...] -> Assumption UserNotRegretInfinitely
+//  - Tuner can only send signal.static [signal.static tick signal.static tick] -> SignalStatic_Restrict
+// Even with the assumptions and restrictions mentioned the controller always force to generate traces satisfying !A by only blanking the screen to make TimePasses.
+//  - Controller can only perform blank [blank blank blank]
