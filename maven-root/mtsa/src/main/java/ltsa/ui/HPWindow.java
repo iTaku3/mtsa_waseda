@@ -1970,14 +1970,15 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     /* AMES: promoted visibility from private to implement lts.LTSOutput */
-
-
+    public boolean do_monitoring = false;
     private CompositeState docompile() {
         resetInput();
         CompositeState cs = null;
         LTSCompiler comp = new LTSCompiler(ltsInputString, ltsOutput, currentDirectory);
         try {
+            do_monitoring = false;
             comp.compile();
+            do_monitoring = comp.do_monitoring; //合成過程のモデルを表示する（controllerSpecに"monitoring"を記載）
             if (!parse(comp.getComposites(), comp.getProcesses(), comp.getExplorers())) {
                 return null;
             }
@@ -2252,6 +2253,7 @@ public class HPWindow extends JFrame implements Runnable {
     /* Stepwise Synthesis */
     private long policyTime_total;
     private long synthesisTime_total;
+    private List<CompactState> all_output_models = new ArrayList<>();
     private void stepwiseControllerSynthesis() {
         policyTime_total = 0;
         synthesisTime_total = 0;
@@ -2272,19 +2274,18 @@ public class HPWindow extends JFrame implements Runnable {
             // ltsOutput.outln("[info] current.machines : " + current.machines);
             // ltsOutput.outln("");
 
-            boolean do_minimise = false; // Option : trueの場合モデル最適化（minimize）を行う．最適化以降で扱う状態空間は小さくなるが，このモデル最適化のプロセス自体が大量のメモリを使用する
-            CompositeState all_models = current; //Compileによって確認されたモデル全てを格納
+            String final_model_name = new String(current.name); //最終合成モデルはこの名前にする
+            List<CompactState> all_models = new ArrayList<>(current.machines); //Compileによって確認されたモデル全てを格納
             List<CompactState> unsynthesized_req_list = new ArrayList<>();
             List<CompactState> unsynthesized_env_list = new ArrayList<>();
+            if (do_monitoring) {all_output_models = new ArrayList<>(current.machines);} //出力用のモデル}
 
             /* 分配則に対応する場合，unsynthesized_req_listに追加するとき，監視対象をモデルで分けて，一つの監視モデルを複数に複製して追加する */
             /* analysisMonitoredModels()内でやった方がいいかも */
-            for (CompactState machine : all_models.machines) {
+            for (CompactState machine : all_models) {
                 machine.initActions();
-                if (machine.name.startsWith("P_")) 
-                    unsynthesized_req_list.add(machine);
-                else 
-                    unsynthesized_env_list.add(machine);
+                if (machine.hasERROR()) unsynthesized_req_list.add(machine);
+                else unsynthesized_env_list.add(machine);
             }
 
             ltsOutput.outln("");
@@ -2301,9 +2302,13 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("");
             ltsOutput.outln("");
 
-
             /* 段階的制御器合成 */
-            stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
+            stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
+            if (do_monitoring) {
+                current.machines.addAll(all_output_models);
+            } else {
+                current.machines.add(current.composition);
+            }
             postState(current);
 
         long endTime = System.currentTimeMillis();
@@ -2321,6 +2326,10 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("     * total          : " + executionTime + " ms");
         ltsOutput.outln("");
         ltsOutput.outln("");
+        if (do_monitoring) {
+            ltsOutput.outln("*** Caution ***");
+            ltsOutput.outln("All intermediate models generated during the synthesis process are recorded. As a result, the Maximum Memory value can become extremely large. For evaluation experiments, please remove the \"monitoring\" option from the \"controllerSpec\".");
+        }
     }
 
 
@@ -2329,9 +2338,9 @@ public class HPWindow extends JFrame implements Runnable {
     
     /* stepwiseSynthesis() */
     // Where used : 
-    // Parameters : do_minimise
+    // Parameters : 
     // Comment    : 段階的に部分合成を適用し制御器を合成する．再帰関数．
-    private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, boolean do_minimise) {
+    private void stepwiseSynthesis(Integer step_num, List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, String final_model_name) {
         long startTime;
         long endTime;
         long policyTime;
@@ -2379,7 +2388,7 @@ public class HPWindow extends JFrame implements Runnable {
 
                 if (unsynthesized_req_list.size()==0 && unsynthesized_env_list.size()==0) {
                     current.machines = new Vector<>(this_step_machines);
-                    current.name = "StepwiseController"; //入力時の名前に変えるべき
+                    current.name = final_model_name; //入力時の名前に変えるべき
                     current.env = null;
                 }
                 else {
@@ -2390,6 +2399,7 @@ public class HPWindow extends JFrame implements Runnable {
 
                 checkMemoryUsage();
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
                 if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
                 checkMemoryUsage();
                 
@@ -2415,13 +2425,15 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("");
             ltsOutput.outln("");
 
-            stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list, do_minimise);
+            stepwiseSynthesis(step_num + 1, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
         }
         else if (unsynthesized_env_list.size() >= 2) {
             current.machines = new Vector<>(unsynthesized_env_list);
             current.name = "StepwiseController"; //入力時の名前に変えるべき
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+
+            boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
             if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
         }
     }
@@ -2558,6 +2570,22 @@ public class HPWindow extends JFrame implements Runnable {
             if (candidate_req.name.equals(req.name))
                 this_step_req_list.add(req);
         }
+    }
+
+    /* checkMinimise() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : minimiseを実施するCompactStateが含まれる場合，trueを返す
+    private boolean checkMinimise(Vector<CompactState> machines, String name, String final_model_name) {
+        if(name.compareTo(final_model_name)==0){
+            return false;
+        }
+        for (CompactState machine : machines) {
+            if (machine.name.startsWith("MINIMISE_")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* findSameStepReq() */

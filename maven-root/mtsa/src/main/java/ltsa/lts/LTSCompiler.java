@@ -37,6 +37,8 @@ public class LTSCompiler {
     private LTSOutput output;
     private String currentDirectory;
     private Symbol current;
+    public  boolean do_minimise = false;
+    public  boolean do_monitoring = false;
 
     static Hashtable<String, ProcessSpec> processes;
     static Hashtable<String, CompactState> compiled;
@@ -323,11 +325,11 @@ public class LTSCompiler {
         }
         /*CompactState compiledProcess;
         Enumeration e = h.elements();
-		while (e.hasMoreElements()) { //***
-			processSpec = (ProcessSpec) e.nextElement();
-			compiledProcess = this.compileSingleProcess(processSpec);
-			compiled.put(compiledProcess.name, compiledProcess);
-		}*/
+        while (e.hasMoreElements()) { //***
+            processSpec = (ProcessSpec) e.nextElement();
+            compiledProcess = this.compileSingleProcess(processSpec);
+            compiled.put(compiledProcess.name, compiledProcess);
+        }*/
         AssertDefinition.compileConstraints(output, compiled);
     }
 
@@ -621,9 +623,9 @@ public class LTSCompiler {
                         next_symbol();
                     }
                     if (current.kind == Symbol.HEURISTIC) {
-    					isHeuristic = true;
-    					next_symbol();
-    				}
+                        isHeuristic = true;
+                        next_symbol();
+                    }
                     if (current.kind == Symbol.MONOLITHIC_DIRECTOR) {
                         isMonolithicDirector = true;
                         next_symbol();
@@ -755,7 +757,7 @@ public class LTSCompiler {
             c.exposeNotHide = (current.kind == Symbol.AT);
             next_symbol();
             c.alphaHidden = labelSet();
-//			this.hideMaybeActions(c.alphaHidden);
+//          this.hideMaybeActions(c.alphaHidden);
         }
 
 
@@ -964,7 +966,7 @@ public class LTSCompiler {
             p.exposeNotHide = (current.kind == Symbol.AT);
             next_symbol();
             p.alphaHidden = labelSet();
-//			this.hideMaybeActions(p.alphaHidden);
+//          this.hideMaybeActions(p.alphaHidden);
         }
 
         if (Symbol.PLING == current.kind) {
@@ -2207,8 +2209,8 @@ public class LTSCompiler {
             if (current.kind == Symbol.DISTURBANCE) {
                 goal.setDisturbanceActions(this.parseActionSet());
             } else if (current.kind == Symbol.MARKING) {
-        		goal.setMarkingDefinitions(this.parseActionSet());
-        	} else if (current.kind == Symbol.PERMISSIVE) {
+                goal.setMarkingDefinitions(this.parseActionSet());
+            } else if (current.kind == Symbol.PERMISSIVE) {
                 goal.setPermissive();
                 next_symbol();
             } else if (current.kind == Symbol.SAFETY) {
@@ -2247,7 +2249,13 @@ public class LTSCompiler {
                 goal.setControllableActionSet(this.parseActionSet());
                 //this.parseControllableActionSet(goal);
             } else if (current.kind == Symbol.BUCHI) {
-        	    goal.setBuchiDefinitions(this.controllerSubGoal());
+                goal.setBuchiDefinitions(this.controllerSubGoal());
+            } else if (current.kind == Symbol.MINIMIZE) {
+                this.do_minimise = true;
+                next_symbol();
+            } else if (current.kind == Symbol.MONITORING) {
+                this.do_monitoring = true;
+                next_symbol();
             } else
                 error("Controller symbol expected");
 
@@ -2467,12 +2475,12 @@ public class LTSCompiler {
         return listOfDefinitions;
     }
     
-	private Vector<String> parseActionSet() {
-		expectBecomes();
-		next_symbol();
-		Vector<String> actions = labelSet().getActions(null);
-		return actions;
-	}
+    private Vector<String> parseActionSet() {
+        expectBecomes();
+        next_symbol();
+        Vector<String> actions = labelSet().getActions(null);
+        return actions;
+    }
 
     private List<Symbol> controllerSubGoal() {
         expectBecomes();
