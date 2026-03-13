@@ -2573,7 +2573,8 @@ public class HPWindow extends JFrame implements Runnable {
         for (CompactState req : unsynthesized_req_list) {
             if (candidate_req.name.equals(req.name)) {
                 this_step_req_list.add(req);
-                ltsOutput.outln("[info] target req : " + req.name + " (cost : " + candidate_req.influence_quantity + " )");
+                ltsOutput.outln("[info] Target Requirement");
+                ltsOutput.outln("     * " + req.name + " (cost : " + candidate_req.influence_quantity + " )");
                 ltsOutput.outln("");
             }
         }
