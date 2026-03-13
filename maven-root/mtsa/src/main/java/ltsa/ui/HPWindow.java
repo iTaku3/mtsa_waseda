@@ -2509,6 +2509,7 @@ public class HPWindow extends JFrame implements Runnable {
         }
 
         // reqを先に分析するとしたら,another_reqのコスト増加量の総和(req.influence_quantity)はいくつか計算
+        ltsOutput.outln("[info] Synthetic Cost (influence quantity)");
         CompactState candidate_req = new CompactState();
         boolean first_req = true;
         for (CompactState req : unsynthesized_req_list) {
@@ -2553,6 +2554,7 @@ public class HPWindow extends JFrame implements Runnable {
                 }
                 req.influence_quantity = req.influence_quantity + (cost-another_req.cost);
             }
+            ltsOutput.outln("     * " + req.name + " : " + req.influence_quantity);
 
             // 影響量（influence_quantity）が最小の要件をcandidate_reqに格納
             if (first_req) {
@@ -2565,10 +2567,15 @@ public class HPWindow extends JFrame implements Runnable {
                 candidate_req.influence_quantity = new Integer(req.influence_quantity);
             }
         }
+        ltsOutput.outln("");
+
         // 一番影響量が小さいモデルをthis_step_req_listに追加
         for (CompactState req : unsynthesized_req_list) {
-            if (candidate_req.name.equals(req.name))
+            if (candidate_req.name.equals(req.name)) {
                 this_step_req_list.add(req);
+                ltsOutput.outln("[info] target req : " + req.name + " (cost : " + candidate_req.influence_quantity + " )");
+                ltsOutput.outln("");
+            }
         }
     }
 
