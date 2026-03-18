@@ -2621,6 +2621,8 @@ public class HPWindow extends JFrame implements Runnable {
     // Comment    : 監視対象モデルの分析，req.ideal_monitoredModelsに格納（unsynthesized_env_listが更新される度に実行必要）
     private void analysisMonitoredModels(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
         ltsOutput.outln("[info] Monitored Models");
+        // すべての req の ideal_monitoredModels を格納するための「ListのList」を宣言
+        // List<List<String>> allIdealMonitoredModels = new ArrayList<>();
         for (CompactState req : unsynthesized_req_list) {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
@@ -2631,7 +2633,17 @@ public class HPWindow extends JFrame implements Runnable {
                         req.ideal_monitoredModels.add(env.name);
             }
             ltsOutput.outln("> " + req.name + " : " + req.ideal_monitoredModels.toString());
+        //     if (req.ideal_monitoredModels != null) {
+        //         allIdealMonitoredModels.add(req.ideal_monitoredModels);
+        //     }
+        //     Set<List<String>> uniqueMonitoredModels = new LinkedHashSet<>(allIdealMonitoredModels);
         }
+        // Set<List<String>> uniqueMonitoredModels = new LinkedHashSet<>(allIdealMonitoredModels);
+        // int groupIndex = 0;
+        // for (List<String> modelGroup : uniqueMonitoredModels) {
+        //     ltsOutput.outln("Group[" + groupIndex + "] : " + modelGroup.toString());
+        //     groupIndex++;
+        // }
         ltsOutput.outln("");
     }
 
@@ -2665,27 +2677,35 @@ public class HPWindow extends JFrame implements Runnable {
                 //重複するモデルを削除
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
-            // // costの算出
-            // req.cost = req.actual_monitoredModels.size();
-            // ltsOutput.outln("> " + req.name + " cost : " + req.cost);
 
-            // --- costの算出（山口の改良点 2026/02/25） ---
-            int sharedActionCount = 0;
-            // reqが監視する実際の環境モデル(または部分制御器)ごとに共有アクション数を計算
-            for (String envName : req.actual_monitoredModels) {
-                CompactState env = findModel(unsynthesized_env_list, envName);
-                if (env != null && env.actions != null && req.actions != null) {
-                    // 積集合(Intersection)を求めて数をカウント
-                    Set<String> intersection = new HashSet<>(req.actions);
-                    intersection.retainAll(env.actions);
-                    sharedActionCount += intersection.size();
+            // 新しいコスト計算
+            // CompactState のリストを作成
+            List<CompactState> targetEnvModels = new ArrayList<>();
+            for (String modelName : req.actual_monitoredModels) {
+                CompactState envObj = findModel(unsynthesized_env_list, modelName);
+                if (envObj != null) {
+                    targetEnvModels.add(envObj);
                 }
             }
-    
-            // 今回は「多いほど優先」したいが、変数名はcostをそのまま利用する
-            req.cost = sharedActionCount; 
-            ltsOutput.outln("> " + req.name + " shared actions (score) : " + req.cost);
-            // ---------------------------------            
+
+            // 環境モデル群における全アクションのトランジション数を集計
+            Map<String, Integer> totalTransitions = countTotalTransitionsPerAction(targetEnvModels);
+
+            // reqが持つアクションの中で、環境側での遷移数が最大のものを探す
+            int maxTransitions = 0;
+            if (req.actions != null) {
+                for (String action : req.actions) {
+                    int transitionsForAction = totalTransitions.getOrDefault(action, 0);
+                    if (transitionsForAction > maxTransitions) {
+                        maxTransitions = transitionsForAction;
+                    }
+                }
+            }
+
+            // スコアをセット
+            req.cost = maxTransitions;
+            ltsOutput.outln("> " + req.name + " max single action transitions (score) : " + req.cost);
+            // ---------------------------------------------   
             
             // costが最大のreqをthis_step_req<CompactState>に格納する（先に最大となったものが格納）
             if (first_req) {
