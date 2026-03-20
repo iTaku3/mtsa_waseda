@@ -2487,13 +2487,39 @@ public class HPWindow extends JFrame implements Runnable {
                 //重複するモデルを削除
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
-            req.cost = req.actual_monitoredModels.size();
+            // req.cost = req.actual_monitoredModels.size();
+            // 新しいコスト計算
+            // CompactState のリストを作成
+            List<CompactState> targetEnvModels = new ArrayList<>();
+            for (String modelName : req.actual_monitoredModels) {
+                CompactState envObj = findModel(unsynthesized_env_list, modelName);
+                if (envObj != null) {
+                    targetEnvModels.add(envObj);
+                }
+            }
+
+            // 環境モデル群における全アクションのトランジション数を集計
+            Map<String, Integer> totalTransitions = countTotalTransitionsPerAction(targetEnvModels);
+
+            // reqが持つアクションの中で、環境側での遷移数が最大のものを探す
+            int maxTransitions = 0;
+            if (req.actions != null) {
+                for (String action : req.actions) {
+                    int transitionsForAction = totalTransitions.getOrDefault(action, 0);
+                    if (transitionsForAction > maxTransitions) {
+                        maxTransitions = transitionsForAction;
+                    }
+                }
+            }
+
+            // スコアをセット
+            req.cost = maxTransitions;
             ltsOutput.outln("     * " + req.name + " : " + req.cost);
         }
         ltsOutput.outln("");
     }
 
-    /* calculationInfluenceQuantity() */
+    /* calculationInfluenceQuantity() */// ←要変更！
     // Where used : -
     // Parameters : -
     // Comment    : 影響量ある要求reqがこのあと合成された際の，他の要求の合成コストの増加量（影響量）を計算し，最も影響量の小さい要求ひとつをremove_req_listに追加する．
