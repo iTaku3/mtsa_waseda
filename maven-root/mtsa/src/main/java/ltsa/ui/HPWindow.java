@@ -2357,10 +2357,10 @@ public class HPWindow extends JFrame implements Runnable {
             
                 // 入力のモデルの実際の監視対象モデルとコストを更新 
                 analysisMonitoredModels(unsynthesized_req_list, unsynthesized_env_list);
-                calculationCost(unsynthesized_req_list, unsynthesized_env_list);
+                calculationCost(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
                 // 各要求ごとに影響量を計算し，一番影響量(influence_quantity)の小さなモデルをthis_step_req_listに格納．
-                calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
+                //calculationInfluenceQuantity(unsynthesized_req_list, unsynthesized_env_list, this_step_req_list);
 
                 // 一番影響量(influence_quantity)の小さなモデルと同プロセスで合成できる要求も分析
                 findSameStepReq(unsynthesized_req_list, this_step_req_list);
@@ -2374,11 +2374,11 @@ public class HPWindow extends JFrame implements Runnable {
                 
                 Vector<CompactState> this_step_machines = new Vector<>();
                 for (CompactState env : unsynthesized_env_list) {
-                    if (this_step_req_list.get(0).tmp_actual_monitoredModels.contains(env.name)) {
+                    if (this_step_req_list.get(0).actual_monitoredModels.contains(env.name)) {
                         this_step_machines.add(env);
                     }
                     else if (env.componentModels != null) {
-                        if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels))
+                        if (checkContainList(this_step_req_list.get(0).actual_monitoredModels, env.componentModels))
                             this_step_machines.add(env);
                     }
                 }
@@ -2400,11 +2400,18 @@ public class HPWindow extends JFrame implements Runnable {
                 checkMemoryUsage();
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
                 boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
-                if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
-                checkMemoryUsage();
-                
+                if (do_minimise) {
+                    TransitionSystemDispatcher.minimise(current, ltsOutput);
+                    // ★追加：部分制御器の場合、次のステップに最小化のフラグを引き継ぐため接頭辞をつける
+                    if (!current.name.equals(final_model_name)) {
+                        current.name = "MINIMISE_" + current.name;
+                        current.composition.name = current.name;
+                    }
+                    checkMemoryUsage();
+                }
+
                 current.composition.initActions();
-                current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
+                current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels);
                 unsynthesized_env_list.add(current.composition);
 
                 // ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
@@ -2429,7 +2436,7 @@ public class HPWindow extends JFrame implements Runnable {
         }
         else if (unsynthesized_env_list.size() >= 2) {
             current.machines = new Vector<>(unsynthesized_env_list);
-            current.name = "StepwiseController"; //入力時の名前に変えるべき
+            current.name = final_model_name; // ★ "StepwiseController" ではなく、最終モデル名に統一する
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
 
@@ -2448,10 +2455,11 @@ public class HPWindow extends JFrame implements Runnable {
             req.ideal_monitoredModels = new ArrayList<>();
             for (CompactState env : unsynthesized_env_list) {
                 if (checkContainList(req.actions,env.actions))
-                    if (env.componentModels!=null)
-                        req.ideal_monitoredModels.addAll(env.componentModels);
-                    else
-                        req.ideal_monitoredModels.add(env.name);
+                    // 部分制御器かのjudge
+                    // if (env.componentModels!=null)
+                    //     req.ideal_monitoredModels.addAll(env.componentModels);
+                    // else
+                    req.ideal_monitoredModels.add(env.name);
             }
             ltsOutput.outln("     * " + req.name + " : " + req.ideal_monitoredModels.toString());
         }
@@ -2462,8 +2470,10 @@ public class HPWindow extends JFrame implements Runnable {
     // Where used : -
     // Parameters : -
     // Comment    : 合成コストの計算を行う．eq.actual_monitoredModelsとreq.costを計算して格納する．PartControllerにはenv.componentModelsに必ず構成要素を格納しておく．
-    private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list) {
+    private void calculationCost(List<CompactState> unsynthesized_req_list, List<CompactState> unsynthesized_env_list, List<CompactState> this_step_req_list) {
        List<List<String>> partControllers = new ArrayList<>();
+       CompactState candidate_req = new CompactState();
+
        ltsOutput.outln("[info] Environment Models");
         for (CompactState env : unsynthesized_env_list) {
             if (env.componentModels!=null) {
@@ -2487,7 +2497,7 @@ public class HPWindow extends JFrame implements Runnable {
                 //重複するモデルを削除
                 req.actual_monitoredModels = new ArrayList<>(new HashSet<>(req.actual_monitoredModels));
             }
-            // req.cost = req.actual_monitoredModels.size();
+            
             // 新しいコスト計算
             // CompactState のリストを作成
             List<CompactState> targetEnvModels = new ArrayList<>();
@@ -2495,28 +2505,68 @@ public class HPWindow extends JFrame implements Runnable {
                 CompactState envObj = findModel(unsynthesized_env_list, modelName);
                 if (envObj != null) {
                     targetEnvModels.add(envObj);
+                    // ltsOutput.outln("     * " + envObj.name);
+                    // ltsOutput.outln("");
                 }
             }
 
             // 環境モデル群における全アクションのトランジション数を集計
             Map<String, Integer> totalTransitions = countTotalTransitionsPerAction(targetEnvModels);
+            // ltsOutput.outln("[debug] Total transitions per action:");
+            // for (Map.Entry<String, Integer> entry : totalTransitions.entrySet()) {
+            //     ltsOutput.outln("     * " + entry.getKey() + " : " + entry.getValue());
+            //     ltsOutput.outln("");
+            // }
 
             // reqが持つアクションの中で、環境側での遷移数が最大のものを探す
             int maxTransitions = 0;
-            if (req.actions != null) {
-                for (String action : req.actions) {
-                    int transitionsForAction = totalTransitions.getOrDefault(action, 0);
-                    if (transitionsForAction > maxTransitions) {
-                        maxTransitions = transitionsForAction;
-                    }
+                // for (String action : req.actions) {
+                //     int transitionsForAction = totalTransitions.getOrDefault(action, 0);
+                //     if (transitionsForAction > maxTransitions) {
+                //         maxTransitions = transitionsForAction;
+                //     }
+                // }
+            for (Map.Entry<String, Integer> te : totalTransitions.entrySet()) {
+                String action = te.getKey();
+                int transitionsForAction = te.getValue() != null ? te.getValue() : 0;
+                if (transitionsForAction > maxTransitions) {
+                    maxTransitions = transitionsForAction;
                 }
             }
 
             // スコアをセット
             req.cost = maxTransitions;
             ltsOutput.outln("     * " + req.name + " : " + req.cost);
+            ltsOutput.outln("");
         }
         ltsOutput.outln("");
+
+        // req.cost が最大の req を candidate_req にする
+        for (CompactState req : unsynthesized_req_list) {
+            if (candidate_req == null || req.cost > candidate_req.cost) {
+                candidate_req = req;
+            }
+        }
+
+        // 一番影響量が小さいモデルをthis_step_req_listに追加
+        CompactState targetReq = null;
+
+        for (CompactState req : unsynthesized_req_list) {
+            if (candidate_req.name.equals(req.name)) {
+                this_step_req_list.add(req);
+                targetReq = req; // 後で削除するために保持
+
+                ltsOutput.outln("[info] Target Requirement");
+                ltsOutput.outln("     * " + req.name + " (cost : " + candidate_req.cost + " )");
+                ltsOutput.outln("");
+                break; // 見つかったら終了（不要な探索防止）
+            }
+        }
+
+        // ループ後に削除
+        if (targetReq != null) {
+            unsynthesized_req_list.remove(targetReq);
+        }
     }
 
     /* calculationInfluenceQuantity() */// ←要変更！
@@ -2604,6 +2654,37 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("");
             }
         }
+    }
+
+    private Map<String, Integer> countTotalTransitionsPerAction(List<CompactState> envModels) {
+        Map<String, Integer> totalCounts = new HashMap<>();
+
+        // リスト内のすべての環境モデルをループ
+        for (CompactState env : envModels) {
+            // 先ほどCompactStateに作ったメソッドで、このモデル単体の遷移数を取得
+            Map<String, Integer> envCounts = env.countTransitionsAction();
+
+            // 単体の遷移数を、合計用のMapに加算していく
+            for (Map.Entry<String, Integer> entry : envCounts.entrySet()) {
+                String actionName = entry.getKey();
+                int count = entry.getValue();
+                
+                // 既に合計Mapに値があればそれに足し、無ければ0に足す
+                totalCounts.put(actionName, totalCounts.getOrDefault(actionName, 1) * count);
+            }
+        }
+        return totalCounts;
+    }
+
+    /* findModel() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : 入力の名前と同じCompactStateを取り出してくる．該当modelがない時，nullとなるため注意．
+    private CompactState findModel(List<CompactState> compactStateList, String model_name) {
+        for (CompactState model : compactStateList) {
+            if (model.name.equals(model_name)) return model;
+        }
+        return null;
     }
 
     /* checkMinimise() */

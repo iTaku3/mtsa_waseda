@@ -1214,6 +1214,22 @@ public class CompactState implements Automata {
     }
     // <<< AMES
 
+
+    public Map<String, Integer> countTransitionsAction() {
+        Map<String, Integer> actionCounts = new HashMap<>();
+
+        for (int i = 0; i < this.maxStates; i++) {
+            if (this.states[i] != null) {
+                for (Enumeration<?> e = this.states[i].elements(); e.hasMoreElements(); ) {
+                    EventState t = (EventState) e.nextElement();
+                    String actionName = this.alphabet[t.event];
+                    actionCounts.put(actionName, actionCounts.getOrDefault(actionName, 0) + 1);
+                }
+            }
+        }
+        return actionCounts;
+    }
+
     @Override
     public String toString() {
         return this.name + " - " + this.getClass();
