@@ -2398,15 +2398,10 @@ public class HPWindow extends JFrame implements Runnable {
                 }
 
                 checkMemoryUsage();
-                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
                 boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
+                TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
                 if (do_minimise) {
                     TransitionSystemDispatcher.minimise(current, ltsOutput);
-                    // ★追加：部分制御器の場合、次のステップに最小化のフラグを引き継ぐため接頭辞をつける
-                    if (!current.name.equals(final_model_name)) {
-                        current.name = "MINIMISE_" + current.name;
-                        current.composition.name = current.name;
-                    }
                     checkMemoryUsage();
                 }
 
@@ -2439,9 +2434,6 @@ public class HPWindow extends JFrame implements Runnable {
             current.name = final_model_name; // ★ "StepwiseController" ではなく、最終モデル名に統一する
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-
-            boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
-            if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
         }
     }
 
