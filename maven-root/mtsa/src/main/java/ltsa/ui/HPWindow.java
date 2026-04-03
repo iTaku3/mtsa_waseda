@@ -2408,6 +2408,7 @@ public class HPWindow extends JFrame implements Runnable {
                 current.composition.initActions();
                 current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels);
                 unsynthesized_env_list.add(current.composition);
+                if (do_monitoring) all_output_models.add(current.composition);
 
                 // ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
 
