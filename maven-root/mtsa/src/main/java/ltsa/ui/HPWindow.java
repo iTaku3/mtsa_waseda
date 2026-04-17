@@ -2089,7 +2089,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] git commit complete!");
         gitPush(current_directoryPath);
         ltsOutput.outln("[info] git push complete!");
-    }    
+    }
 
     // ----------------------------
 
@@ -2401,10 +2401,11 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Composition is Complete!");
-        ltsOutput.outln("[info] Maximum State       : " + maxStates);
-        ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
-        ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
-        ltsOutput.outln("[info] Execution Time (ms) : " + executionTime);
+        ltsOutput.outln("[info] File Name            : " + openFile);
+        ltsOutput.outln("[info] Maximum State        : " + maxStates);
+        ltsOutput.outln("[info] Maximum Transition   : " + maxTransitions);
+        ltsOutput.outln("[info] Maximum Memory (KB)  : " + maxMemoryUsage);
+        ltsOutput.outln("[info] Execution Time (ms)  : " + executionTime);
         ltsOutput.outln("");
     }
 
@@ -2445,6 +2446,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Minimise Composition is Complete!");
+        ltsOutput.outln("[info] File Name           : " + openFile);
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
@@ -2544,6 +2546,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("");
         ltsOutput.outln("[info] Consolidated Stepwise Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] File Name           : " + openFile);
         ltsOutput.outln("[info] Maximum State       : " + maxStates);
         ltsOutput.outln("[info] Maximum Transition  : " + maxTransitions);
         ltsOutput.outln("[info] Maximum Memory (KB) : " + maxMemoryUsage);
@@ -3964,6 +3967,17 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
-//--------------------------------------------------------------------
+    //--------------------------------------------------------------------
 
+    public static HPWindow getInstance() {
+        return instance;
+    }
+
+    public String getOpenFile() {
+        return openFile;
+    }
+
+    public String getCurrentDirectory() {
+        return currentDirectory;
+    }
 }

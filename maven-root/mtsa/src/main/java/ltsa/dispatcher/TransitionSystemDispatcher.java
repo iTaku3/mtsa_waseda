@@ -60,6 +60,15 @@ import java.util.Map.Entry;
 
 import static org.junit.Assert.fail;
 
+import ltsa.ui.HPWindow;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 /**
  * This class consists exclusively of static methods that operate on or return
  * CompactState, CompositeState and MTS.
@@ -1391,6 +1400,51 @@ public class TransitionSystemDispatcher {
         ltsOutput.outln(toPrint);
     }
 
+    private static void copyOpenedFileToDcsLog(boolean controllable, LTSOutput output) {
+        try {
+            HPWindow window = HPWindow.getInstance();
+            if (window == null) {
+                output.outln("[info] HPWindow instance is null. Skip synthesis log copy.");
+                return;
+            }
+
+            String openFile = window.getOpenFile();
+            String currentDirectory = window.getCurrentDirectory();
+            if (openFile == null || openFile.trim().isEmpty() || openFile.equals("*.lts")) {
+                output.outln("[info] No opened file to copy. Skip synthesis log copy.");
+                return;
+            }
+
+            Path sourcePath;
+            if (currentDirectory == null || currentDirectory.trim().isEmpty()) {
+                sourcePath = Paths.get(openFile).toAbsolutePath().normalize();
+            } else {
+                sourcePath = Paths.get(currentDirectory, openFile).toAbsolutePath().normalize();
+            }
+
+            if (!Files.exists(sourcePath)) {
+                output.outln("[info] Source file does not exist. Skip synthesis log copy: " + sourcePath);
+                return;
+            }
+
+            String timestamp = java.time.LocalDateTime.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String result = controllable ? "true" : "false";
+
+            Path logDir = Paths.get(".", "log_synthesis").toAbsolutePath().normalize();
+            Files.createDirectories(logDir);
+
+            Path targetPath = logDir.resolve(timestamp + "_" + result + "_" + openFile).normalize();
+
+            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            output.outln("[info] synthesis log source : " + sourcePath);
+            output.outln("[info] synthesis log target : " + targetPath);
+        } catch (Exception e) {
+            output.outln("[warning] Failed to copy opened file to log_synthesis: " + e.getMessage());
+        }
+    }
+
     /**
      * Checks if the model <code>compositeState</code> satisfies the property
      * <code>ltlProperty</code>. If <code>compositeState</code> is an LTS, then
@@ -1854,7 +1908,6 @@ public class TransitionSystemDispatcher {
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     synthesiseController = null;
                 } else {
-
                     MTSAdapter<StrategyState<Long, Integer>, String> mtsAdapter = new MTSAdapter<>(
                             synthesised);
                     MTS<Long, String> plainController = new GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String>()
@@ -1884,23 +1937,26 @@ public class TransitionSystemDispatcher {
                 CompactState synthesiseController = synthesise(compositeState, compositeState.goal, output);
                 if (synthesiseController != null) {
                     synthesiseController = applyLatencyHeuristic(compositeState, synthesiseController);
-                    // compositeState.setComposition(synthesiseController);
+
                     /* 環境モデルを全て削除して，出力と要求のセット（compositeState.machines）を作成 */
                     List<CompactState> removeMachineList = new ArrayList<>();
                     for (CompactState machine : compositeState.machines) {
-                        if (!machine.name.startsWith("P_"))
+                        if (!machine.name.startsWith("P_")) {
                             removeMachineList.add(machine);
+                        }
                     }
-                    for(CompactState removeMachine : removeMachineList) {
+                    for (CompactState removeMachine : removeMachineList) {
                         compositeState.machines.remove(compositeState.machines.indexOf(removeMachine));
                     }
-                    compositeState.machines.add(0,synthesiseController); //replace environment with controller
+                    compositeState.machines.add(0, synthesiseController); // replace environment with controller
                     compositeState.compose(output);
 
-                } else if (!composition.name.contains(ControlConstants.NO_CONTROLLER)) {
-                    // Issue #71
-                    throw new LTSCompositionException("No controller");
-                    //composition.name = composition.name + ControlConstants.NO_CONTROLLER;
+                } else {
+                    if (!composition.name.contains(ControlConstants.NO_CONTROLLER)) {
+                        composition.name = composition.name + ControlConstants.NO_CONTROLLER;
+                    }
+                    output.outln("[info] Synthesis finished with no controller.");
+                    return;
                 }
             } else {
                 Diagnostics.fatal("The controller must have a goal.");
@@ -1951,16 +2007,8 @@ public class TransitionSystemDispatcher {
     public static CompactState synthesise(CompositeState compositeState, ControllerGoal<String> goal,
                                           LTSOutput output) {
 
-        // ToDani: MTS env =
-        // AutomataToMTS.getInstance().convert(compositeState.composition);
-        // ToDani: LTS controller =
-        // ControlProblemFactory.buildControlProblem(env, goal).solve()
-        // ToDani: return MTSToAutomata.convert(controller);
-
         CompactState c = compositeState.composition;
-
         long initialTime = System.currentTimeMillis();
-
         boolean isMTS = MTSUtils.isMTSRepresentation(c);
 
         if (!isMTS && (c.isNonDeterministic() || c.hasTau())) {
@@ -2012,10 +2060,13 @@ public class TransitionSystemDispatcher {
             }
 
             if (synthesised == null) {
+                copyOpenedFileToDcsLog(false, output);
                 output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                 output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                 return null;
             } else {
+                copyOpenedFileToDcsLog(true, output);
+
                 MTS<Long, String> plainController = new GenericMTSToLongStringMTSConverter<StrategyState<Set<Long>, Integer>, String>()
                         .transform(synthesised);
                 output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
@@ -2043,21 +2094,20 @@ public class TransitionSystemDispatcher {
                 LTS<StrategyState<Long, Integer>, String> synthesisResult = facade.synthesiseController(cp);
                 synthesised = new MTSAdapter<>(synthesisResult);
                 if (synthesisResult == null) {
+                    copyOpenedFileToDcsLog(false, output);
                     output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     return null;
                 } else {
-                    GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String> transformer = new GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String>();
+                    copyOpenedFileToDcsLog(true, output);
+                    GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String> transformer =
+                            new GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String>();
                     MTS<Long, String> plainController = transformer.transform(synthesised);
-
-                    // for
-                    // MDP
-                    // translation
 
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     output.outln("Controller [" + plainController.getStates().size() + "] generated successfully.");
-                    CompactState controller = MTSToAutomataConverter.getInstance().convert(plainController,
-                            compositeState.getName(), isMTS);
+                    CompactState controller = MTSToAutomataConverter.getInstance().convert(
+                            plainController, compositeState.getName(), isMTS);
                     controller.setMtsControlProblemAnswer("ALL");
                     return controller;
                 }
@@ -2066,22 +2116,22 @@ public class TransitionSystemDispatcher {
                 synthesised = facade.synthesiseController(plant, goal);
 
                 if (synthesised == null) {
+                    copyOpenedFileToDcsLog(false, output);
                     output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     return null;
                 } else {
-                    GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String> transformer = new GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String>();
+                    copyOpenedFileToDcsLog(true, output);
+                    GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String> transformer =
+                            new GenericMTSToLongStringMTSConverter<StrategyState<Long, Integer>, String>();
                     MTS<Long, String> plainController = transformer.transform(synthesised);
 
-                    recordControllerStateLabels(transformer.getStateMapping(), facade.getGame(), goal); // needed
-                    // for
-                    // MDP
-                    // translation
+                    recordControllerStateLabels(transformer.getStateMapping(), facade.getGame(), goal);
 
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     output.outln("Controller [" + plainController.getStates().size() + "] generated successfully.");
-                    CompactState controller = MTSToAutomataConverter.getInstance().convert(plainController,
-                            compositeState.getName(), isMTS);
+                    CompactState controller = MTSToAutomataConverter.getInstance().convert(
+                            plainController, compositeState.getName(), isMTS);
                     controller.setMtsControlProblemAnswer("ALL");
                     return controller;
                 }
