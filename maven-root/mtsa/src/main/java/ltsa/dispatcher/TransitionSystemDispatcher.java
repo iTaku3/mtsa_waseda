@@ -1428,7 +1428,7 @@ public class TransitionSystemDispatcher {
             }
 
             String timestamp = java.time.LocalDateTime.now()
-                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
             String result = controllable ? "true" : "false";
 
             Path logDir = Paths.get(".", "log_synthesis").toAbsolutePath().normalize();
@@ -1438,8 +1438,12 @@ public class TransitionSystemDispatcher {
 
             Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-            output.outln("[info] synthesis log source : " + sourcePath);
-            output.outln("[info] synthesis log target : " + targetPath);
+            // output.outln("[info] synthesis log source : " + sourcePath);
+            // output.outln("[info] synthesis log target : " + targetPath);
+
+            // 追加: 保存成功後に git add/commit/push
+            window.gitLogSynthesis();
+
         } catch (Exception e) {
             output.outln("[warning] Failed to copy opened file to log_synthesis: " + e.getMessage());
         }

@@ -2091,6 +2091,34 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] git push complete!");
     }
 
+    public void gitLogSynthesis() {
+        try {
+            String current_directory = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
+            Path repoPath = Paths.get(current_directory);
+
+            runCommand(repoPath, "git", "add", "log_synthesis");
+            ltsOutput.outln("[info] git add log_synthesis complete!");
+
+            try {
+                runCommand(repoPath, "git", "commit", "-m", "\"automatic logging for synthesis\"");
+                ltsOutput.outln("[info] git commit complete!");
+            } catch (Throwable e) {
+                ltsOutput.outln("[info] git commit skipped: " + e.getMessage());
+                return;
+            }
+
+            runCommand(repoPath, "git", "push");
+            ltsOutput.outln("[info] git push complete!");
+        } catch (IOException e) {
+            ltsOutput.outln("[warning] git logging failed (IOException): " + e.getMessage());
+        } catch (InterruptedException e) {
+            ltsOutput.outln("[warning] git logging failed (InterruptedException): " + e.getMessage());
+            Thread.currentThread().interrupt();
+        } catch (Throwable e) {
+            ltsOutput.outln("[warning] git logging failed: " + e.getMessage());
+        }
+    }
+
     // ----------------------------
 
     public static void gitInit(Path directory) throws IOException, InterruptedException {
