@@ -2569,21 +2569,17 @@ public class HPWindow extends JFrame implements Runnable {
                 candidate_req.influence_quantity = new Integer(req.influence_quantity);
             }
             else if (req.influence_quantity == candidate_req.influence_quantity) {
-                // 影響量が同じ場合のタイブレーカー：環境モデルの最大遷移数を比較する
-
-                // reqの最大遷移数を計算
-                int reqMaxTrans = getMaxEnvTransitionCount(req, unsynthesized_env_list);
-                
-                // candidate_reqの最大遷移数を計算
+                // reqの計算
+                int reqMaxTrans = getMaxEnvTransitionCount(req, unsynthesized_env_list);         
+                // candidate_reqの計算
                 CompactState originalCandidate = findModel(unsynthesized_req_list, candidate_req.name);
                 int candidateMaxTrans = getMaxEnvTransitionCount(originalCandidate, unsynthesized_env_list);
-
-                // 最大遷移数が多い方を優先し、新しい候補として上書き
+                // 多い方を優先
                 if (reqMaxTrans > candidateMaxTrans) {
                     candidate_req.name = new String(req.name);
                     candidate_req.influence_quantity = new Integer(req.influence_quantity);
                 } 
-                // それでも同じだった場合は、名前順（アルファベット順）で一意に決める
+                // それでも同じだった場合はアルファベット順
                 else if (reqMaxTrans == candidateMaxTrans && candidate_req.name.compareTo(req.name) > 0) {
                     candidate_req.name = new String(req.name);
                     candidate_req.influence_quantity = new Integer(req.influence_quantity);
@@ -2605,12 +2601,11 @@ public class HPWindow extends JFrame implements Runnable {
 
 
     /**
-     * 要求モデルが監視する環境モデル群の中で、最大となる遷移数を計算して返す
+     * 要求モデルが監視する環境モデル群の中で最大となる遷移数を計算して返す
+     * 従来の実装をメソッドに切り出しただけ
      */
     private int getMaxEnvTransitionCount(CompactState requestModel, List<CompactState> envList) {
         if (requestModel == null || requestModel.actual_monitoredModels == null) return 0;
-
-        // 1. CompactState のリストを作成
         List<CompactState> targetEnvModels = new ArrayList<>();
         for (String modelName : requestModel.actual_monitoredModels) {
             CompactState envObj = findModel(envList, modelName);
@@ -2618,16 +2613,10 @@ public class HPWindow extends JFrame implements Runnable {
                 targetEnvModels.add(envObj);
             }
         }
-
-        // 2. 環境モデル群における全アクションのトランジション数を集計
         Map<String, Integer> totalTransitions = countTotalTransitionsPerAction(targetEnvModels);
-
-        // 3. 遷移数が最大のものを探す
         int maxTransitions = 0;
         for (Map.Entry<String, Integer> te : totalTransitions.entrySet()) {
             String action = te.getKey();
-            
-
             int transitionsForAction = te.getValue() != null ? te.getValue() : 0;
             if (transitionsForAction > maxTransitions) {
                 maxTransitions = transitionsForAction;
