@@ -2251,6 +2251,10 @@ public class HPWindow extends JFrame implements Runnable {
 
     
     /* Stepwise Synthesis */
+    public static boolean no_controller = false;
+    private List<CompactState> error_req_list = new ArrayList<>();
+    private boolean stepwise_synthesis_failed = false;
+
     private long policyTime_total;
     private long synthesisTime_total;
     private List<CompactState> all_output_models = new ArrayList<>();
@@ -2260,6 +2264,11 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+
+        no_controller = false;
+        stepwise_synthesis_failed = false;
+        error_req_list.clear();
+
         ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
             compile();
@@ -2304,6 +2313,11 @@ public class HPWindow extends JFrame implements Runnable {
 
             /* 段階的制御器合成 */
             stepwiseSynthesis(1, unsynthesized_req_list, unsynthesized_env_list, final_model_name);
+
+            if (stepwise_synthesis_failed) {
+                return;
+            }
+
             if (do_monitoring) {
                 current.machines.addAll(all_output_models);
             } else {
@@ -2398,11 +2412,30 @@ public class HPWindow extends JFrame implements Runnable {
                 }
 
                 checkMemoryUsage();
+                no_controller = false;
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+
+                if (no_controller) {
+                    ltsOutput.outln("");
+                    ltsOutput.outln("---------------------------------------------------");
+                    ltsOutput.outln("      Identifying Violated Safety Requirements");
+                    ltsOutput.outln("---------------------------------------------------");
+
+                    Vector<CompactState> failed_machines = new Vector<>(current.machines);
+                    collectErrorRequirements(failed_machines);
+                    if (error_req_list.size() == 1) {
+                        printSingleNoControllerRequirement();
+                    } else {
+                        identifyAndPrintNoControllerRequirement(failed_machines);
+                    }
+                    stepwise_synthesis_failed = true;
+                    return;
+                }
+
                 boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
                 if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
                 checkMemoryUsage();
-                
+
                 current.composition.initActions();
                 current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
                 unsynthesized_env_list.add(current.composition);
@@ -2431,7 +2464,25 @@ public class HPWindow extends JFrame implements Runnable {
             current.machines = new Vector<>(unsynthesized_env_list);
             current.name = "StepwiseController"; //入力時の名前に変えるべき
             current.env = null;
+
+            no_controller = false;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+
+            if (no_controller) {
+                ltsOutput.outln("---------------------------------------------------");
+                ltsOutput.outln("      Identifying Violated Safety Requirements");
+                ltsOutput.outln("---------------------------------------------------");
+
+                Vector<CompactState> failed_machines = new Vector<>(current.machines);
+                collectErrorRequirements(failed_machines);
+                if (error_req_list.size() == 1) {
+                    printSingleNoControllerRequirement();
+                } else {
+                    identifyAndPrintNoControllerRequirement(failed_machines);
+                }
+                stepwise_synthesis_failed = true;
+                return;
+            }
 
             boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
             if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
@@ -2580,6 +2631,193 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
+    /* identifyAndPrintNoControllerRequirement() */
+    // Where used : stepwiseSynthesis()
+    // Parameters : failed_machines - no controller が発生したときに applyComposition に入力されていたモデル集合
+    // Comment    : error_req_list の要求を組合せごとに試し，no controller を生じさせる最小の要求組合せを特定する
+    private void identifyAndPrintNoControllerRequirement(Vector<CompactState> failed_machines) {
+        Vector<CompactState> env_machines = new Vector<>();
+
+        for (CompactState machine : failed_machines) {
+            if (!machine.hasERROR()) {
+                env_machines.add(machine);
+            }
+        }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Identifying requirement combination causing no controller");
+
+        if (env_machines.isEmpty()) {
+            ltsOutput.outln("     * No environment model was found.");
+            ltsOutput.outln("");
+            return;
+        }
+
+        if (error_req_list.isEmpty()) {
+            ltsOutput.outln("     * No requirement model was found.");
+            ltsOutput.outln("");
+            return;
+        }
+
+        String original_name = current.name;
+        Vector<CompactState> original_machines = current.machines;
+        CompactState original_composition = current.composition;
+        CompactState original_env = current.env;
+
+        List<CompactState> candidate_reqs = new ArrayList<>(error_req_list);
+        boolean found = false;
+        List<CompactState> found_combination = new ArrayList<>();
+
+        for (int combination_size = 1; combination_size <= candidate_reqs.size(); combination_size++) {
+            List<List<CompactState>> combinations = new ArrayList<>();
+            generateRequirementCombinations(candidate_reqs, combination_size, 0, new ArrayList<>(), combinations);
+
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Checking combinations of size " + combination_size);
+
+            for (List<CompactState> req_combination : combinations) {
+                boolean result = checkNoControllerForRequirementCombination(env_machines, req_combination);
+
+                if (result) {
+                    found = true;
+                    found_combination = new ArrayList<>(req_combination);
+                    break;
+                }
+            }
+
+            if (found) {
+                break;
+            }
+        }
+
+        ltsOutput.outln("");
+
+        if (found) {
+            ltsOutput.outln("[info] Requirement combination causing no controller");
+            for (CompactState req : found_combination) {
+                ltsOutput.outln("     * " + req.name);
+            }
+        } else {
+            ltsOutput.outln("[info] No requirement combination was identified.");
+            ltsOutput.outln("       Please check whether the environment models or synthesis settings were mutated during diagnosis.");
+        }
+
+        ltsOutput.outln("");
+
+        current.name = original_name;
+        current.machines = original_machines;
+        current.composition = original_composition;
+        current.env = original_env;
+
+        no_controller = true;
+    }
+
+    /* generateRequirementCombinations() */
+    // Where used : identifyAndPrintNoControllerRequirement()
+    // Parameters : 
+    // Comment    : req_list から指定サイズの組合せを生成する
+    private void generateRequirementCombinations(
+            List<CompactState> req_list,
+            int target_size,
+            int start_index,
+            List<CompactState> current_combination,
+            List<List<CompactState>> combinations) {
+
+        if (current_combination.size() == target_size) {
+            combinations.add(new ArrayList<>(current_combination));
+            return;
+        }
+
+        for (int i = start_index; i < req_list.size(); i++) {
+            current_combination.add(req_list.get(i));
+            generateRequirementCombinations(req_list, target_size, i + 1, current_combination, combinations);
+            current_combination.remove(current_combination.size() - 1);
+        }
+    }
+
+    /* checkNoControllerForRequirementCombination() */
+    // Where used : identifyAndPrintNoControllerRequirement()
+    // Parameters : env_machines - no controller が発生した際の環境モデル群
+    //              req_combination - 検査対象の要求組合せ
+    // Comment    : env_machines + req_combination を current.machines として applyComposition し，no controller になるか判定する
+    private boolean checkNoControllerForRequirementCombination(
+            Vector<CompactState> env_machines,
+            List<CompactState> req_combination) {
+
+        Vector<CompactState> test_machines = new Vector<>();
+        test_machines.addAll(env_machines);
+        test_machines.addAll(req_combination);
+        current.machines = test_machines;
+        current.name = "NoControllerCheck_" + convertReqCombinationToName(req_combination);
+        current.env = null;
+        current.composition = null;
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Checking requirement combination");
+        ltsOutput.outln("     * Target Requirements : " + convertReqCombinationToNameList(req_combination));
+        ltsOutput.outln("     * Input Models         : " + convertToNameList(test_machines));
+
+        no_controller = false;
+        try {
+            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+        } catch (LTSCompositionException e) {
+            if ("No controller".equals(e.getMessage())) {
+                no_controller = true;
+            } else {
+                throw e;
+            }
+        }
+        if (no_controller || current.composition == null) {
+            ltsOutput.outln("     * Result               : no controller");
+            return true;
+        } else {
+            ltsOutput.outln("     * Result               : controller exists");
+            return false;
+        }
+    }
+
+    /* convertReqCombinationToNameList() */
+    // Where used : checkNoControllerForRequirementCombination(), identifyAndPrintNoControllerRequirement()
+    // Parameters : req_combination - 要求モデルの組合せ
+    // Comment    : 要求モデルの組合せを名前のリストに変換する
+    private List<String> convertReqCombinationToNameList(List<CompactState> req_combination) {
+        List<String> name_list = new ArrayList<>();
+
+        for (CompactState req : req_combination) {
+            name_list.add(req.name);
+        }
+
+        return name_list;
+    }
+
+    /* convertReqCombinationToName() */
+    // Where used : checkNoControllerForRequirementCombination()
+    // Parameters : req_combination - 要求モデルの組合せ
+    // Comment    : 要求モデルの組合せを current.name 用の文字列に変換する
+    private String convertReqCombinationToName(List<CompactState> req_combination) {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < req_combination.size(); i++) {
+            if (i > 0) {
+                builder.append("_");
+            }
+            builder.append(req_combination.get(i).name);
+        }
+
+        return builder.toString();
+    }
+
+    /* printSingleNoControllerRequirement() */
+    // Where used : stepwiseSynthesis()
+    // Parameters : -
+    // Comment    : error_req_list の要素が1つだけの場合，追加の applyComposition を行わず原因要求として出力する
+    private void printSingleNoControllerRequirement() {
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Requirements causing no controller");
+        ltsOutput.outln("     * " + error_req_list.get(0).name);
+        ltsOutput.outln("");
+    }
+
     /* checkMinimise() */
     // Where used : 
     // Parameters : -
@@ -2596,21 +2834,44 @@ public class HPWindow extends JFrame implements Runnable {
         return false;
     }
 
+    /* collectErrorRequirements() */
+    // Where used : stepwiseSynthesis()
+    // Parameters : machines - no controller が発生したときに applyComposition に入力されていたモデル集合
+    // Comment    : Vector<CompactState>から，違反状態を含むCompactStateを重複なしで取得する．出力は行わない
+    private void collectErrorRequirements(Vector<CompactState> machines) {
+        error_req_list.clear();
+        Set<String> added_names = new HashSet<>();
+
+        for (CompactState machine : machines) {
+            if (machine.hasERROR() && !added_names.contains(machine.name)) {
+                error_req_list.add(machine);
+                added_names.add(machine.name);
+            }
+        }
+    }
+
     /* findSameStepReq() */
     // Where used : 
     // Parameters : -
     // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加．
     private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
         List<CompactState> remove_req_list = new ArrayList<>();
+        CompactState targetReq = this_step_req_list.get(0);
         for (CompactState req : unsynthesized_req_list) {
-            if (checkInList(req.actual_monitoredModels, this_step_req_list.get(0).actual_monitoredModels)) {
-                req.actual_monitoredModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels); //実際に分析する監視対象モデルリストを更新
-                this_step_req_list.add(req); //今回のステップで合成する要求リストに追加
-                remove_req_list.add(req); //unsynthesized_req_listから削除する要素として記録
+            if (req.name.equals(targetReq.name)) {
+                remove_req_list.add(req);
+                continue;
+            }
+
+            if (checkInList(req.actual_monitoredModels, targetReq.actual_monitoredModels)) {
+                req.actual_monitoredModels = new ArrayList<>(targetReq.actual_monitoredModels);
+                this_step_req_list.add(req);
+                remove_req_list.add(req);
             }
         }
-        for (CompactState req : remove_req_list)
-            unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
+        for (CompactState req : remove_req_list) {
+            unsynthesized_req_list.remove(req);
+        }
     }
 
     /* checkContainList() */

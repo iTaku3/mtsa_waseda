@@ -57,6 +57,7 @@ import org.junit.Assert;
 
 import java.util.*;
 import java.util.Map.Entry;
+import ltsa.ui.HPWindow; //add
 
 import static org.junit.Assert.fail;
 
@@ -676,6 +677,7 @@ public class TransitionSystemDispatcher {
             output.outln(statistics.toString());
         } else {
             compositeState.composition = null;
+            HPWindow.no_controller = true;
             output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
             output.outln(statistics.toString());
         }
@@ -834,6 +836,7 @@ public class TransitionSystemDispatcher {
 			output.outln("Controller [" + controller.getStates().size() + "] generated successfully.");
 			output.outln(statistics.toString());
 		} else {
+            HPWindow.no_controller = true;
 			output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
 			output.outln(statistics.toString());
 		}
@@ -1803,6 +1806,7 @@ public class TransitionSystemDispatcher {
 
         // process the output
         if (synthesised == null) {
+            HPWindow.no_controller = true;
             output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
             output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
             return null;
@@ -1850,6 +1854,7 @@ public class TransitionSystemDispatcher {
 
                 // process the output
                 if (synthesised == null) {
+                    HPWindow.no_controller = true;
                     output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     synthesiseController = null;
@@ -1891,16 +1896,17 @@ public class TransitionSystemDispatcher {
                         if (!machine.name.startsWith("P_"))
                             removeMachineList.add(machine);
                     }
-                    for(CompactState removeMachine : removeMachineList) {
+                    for (CompactState removeMachine : removeMachineList) {
                         compositeState.machines.remove(compositeState.machines.indexOf(removeMachine));
                     }
-                    compositeState.machines.add(0,synthesiseController); //replace environment with controller
+                    compositeState.machines.add(0, synthesiseController); //replace environment with controller
                     compositeState.compose(output);
 
                 } else if (!composition.name.contains(ControlConstants.NO_CONTROLLER)) {
-                    // Issue #71
-                    throw new LTSCompositionException("No controller");
-                    //composition.name = composition.name + ControlConstants.NO_CONTROLLER;
+                    HPWindow.no_controller = true;
+                    composition.name = composition.name + ControlConstants.NO_CONTROLLER;
+                    compositeState.composition = null;
+                    return;
                 }
             } else {
                 Diagnostics.fatal("The controller must have a goal.");
@@ -2012,6 +2018,7 @@ public class TransitionSystemDispatcher {
             }
 
             if (synthesised == null) {
+                HPWindow.no_controller = true;
                 output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                 output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                 return null;
@@ -2043,6 +2050,7 @@ public class TransitionSystemDispatcher {
                 LTS<StrategyState<Long, Integer>, String> synthesisResult = facade.synthesiseController(cp);
                 synthesised = new MTSAdapter<>(synthesisResult);
                 if (synthesisResult == null) {
+                    HPWindow.no_controller = true;
                     output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     return null;
@@ -2066,6 +2074,7 @@ public class TransitionSystemDispatcher {
                 synthesised = facade.synthesiseController(plant, goal);
 
                 if (synthesised == null) {
+                    HPWindow.no_controller = true;
                     output.outln("There is no controller for model " + compositeState.name + " for the given setting.");
                     output.outln("Analysis time: " + (System.currentTimeMillis() - initialTime) + "ms.");
                     return null;
