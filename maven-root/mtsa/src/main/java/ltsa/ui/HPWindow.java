@@ -2426,6 +2426,7 @@ public class HPWindow extends JFrame implements Runnable {
                     if (error_req_list.size() == 1) {
                         printSingleNoControllerRequirement();
                     } else {
+                        printCandidateNoControllerRequirements();
                         identifyAndPrintNoControllerRequirement(failed_machines);
                     }
                     stepwise_synthesis_failed = true;
@@ -2478,6 +2479,7 @@ public class HPWindow extends JFrame implements Runnable {
                 if (error_req_list.size() == 1) {
                     printSingleNoControllerRequirement();
                 } else {
+                    printCandidateNoControllerRequirements();
                     identifyAndPrintNoControllerRequirement(failed_machines);
                 }
                 stepwise_synthesis_failed = true;
@@ -2652,7 +2654,6 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("");
             return;
         }
-
         if (error_req_list.isEmpty()) {
             ltsOutput.outln("     * No requirement model was found.");
             ltsOutput.outln("");
@@ -2673,7 +2674,7 @@ public class HPWindow extends JFrame implements Runnable {
             generateRequirementCombinations(candidate_reqs, combination_size, 0, new ArrayList<>(), combinations);
 
             ltsOutput.outln("");
-            ltsOutput.outln("[info] Checking combinations of size " + combination_size);
+            ltsOutput.outln("---- Checking combinations of size " + combination_size +" --------------");
 
             for (List<CompactState> req_combination : combinations) {
                 boolean result = checkNoControllerForRequirementCombination(env_machines, req_combination);
@@ -2693,6 +2694,7 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
 
         if (found) {
+            ltsOutput.outln("");
             ltsOutput.outln("[info] Requirement combination causing no controller");
             for (CompactState req : found_combination) {
                 ltsOutput.outln("     * " + req.name);
@@ -2815,6 +2817,25 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("");
         ltsOutput.outln("[info] Requirements causing no controller");
         ltsOutput.outln("     * " + error_req_list.get(0).name);
+        ltsOutput.outln("");
+    }
+
+    /* printCandidateNoControllerRequirements() */
+    // Where used : stepwiseSynthesis()
+    // Parameters : -
+    // Comment    : error_req_list の要素が1つではない場合，違反する要求の候補集合を出力する
+    private void printCandidateNoControllerRequirements() {
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Candidate requirements causing no controller");
+
+        if (error_req_list.isEmpty()) {
+            ltsOutput.outln("     * No requirement model was found.");
+        } else {
+            for (CompactState req : error_req_list) {
+                ltsOutput.outln("     * " + req.name);
+            }
+        }
+
         ltsOutput.outln("");
     }
 
