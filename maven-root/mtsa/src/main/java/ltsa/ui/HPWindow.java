@@ -2398,7 +2398,7 @@ public class HPWindow extends JFrame implements Runnable {
                 }
 
                 checkMemoryUsage();
-                boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
+                boolean do_minimise = checkMinimise(this_step_req_list.get(0), current.machines, current.name, final_model_name);
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
                 if (do_minimise) {
                     TransitionSystemDispatcher.minimise(current, ltsOutput);
@@ -2436,6 +2436,10 @@ public class HPWindow extends JFrame implements Runnable {
             current.name = final_model_name; // ★ "StepwiseController" ではなく、最終モデル名に統一する
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+            boolean do_minimise = checkMinimise(null, current.machines, current.name, final_model_name);
+            if (do_minimise) {
+                TransitionSystemDispatcher.minimise(current, ltsOutput);
+            }
         }
     }
 
@@ -2570,17 +2574,17 @@ public class HPWindow extends JFrame implements Runnable {
             }
             else if (req.influence_quantity == candidate_req.influence_quantity) {
                 // reqの計算
-                int reqMaxTrans = getMaxEnvTransitionCount(req, unsynthesized_env_list);         
+                int reqMaxTransitionMulti = getMaxEnvTransitionCount(req, unsynthesized_env_list);         
                 // candidate_reqの計算
                 CompactState originalCandidate = findModel(unsynthesized_req_list, candidate_req.name);
-                int candidateMaxTrans = getMaxEnvTransitionCount(originalCandidate, unsynthesized_env_list);
+                int candidateMaxTransitionMulti = getMaxEnvTransitionCount(originalCandidate, unsynthesized_env_list);
                 // 多い方を優先
-                if (reqMaxTrans > candidateMaxTrans) {
+                if (reqMaxTransitionMulti > candidateMaxTransitionMulti) {
                     candidate_req.name = new String(req.name);
                     candidate_req.influence_quantity = new Integer(req.influence_quantity);
                 } 
                 // それでも同じだった場合はアルファベット順
-                else if (reqMaxTrans == candidateMaxTrans && candidate_req.name.compareTo(req.name) > 0) {
+                else if (reqMaxTransitionMulti == candidateMaxTransitionMulti && candidate_req.name.compareTo(req.name) > 0) {
                     candidate_req.name = new String(req.name);
                     candidate_req.influence_quantity = new Integer(req.influence_quantity);
                 }
@@ -2657,19 +2661,65 @@ public class HPWindow extends JFrame implements Runnable {
     }
 
     /* checkMinimise() */
-    // Where used : 
-    // Parameters : -
-    // Comment    : minimiseを実施するCompactStateが含まれる場合，trueを返す
-    private boolean checkMinimise(Vector<CompactState> machines, String name, String final_model_name) {
-        if(name.compareTo(final_model_name)==0){
+    // Where used : stepwiseSynthesis
+    // Parameters : req (今回の要求モデル), currentMachines (今回合成するモデル群)
+    // Comment    : 複雑な環境モデル（EnvScoreが2以上）の数が1つ以下の場合は、冗長性が生まれないため最小化をスキップ(false)
+    private boolean checkMinimise(CompactState req, List<CompactState> currentMachines, String name, String final_model_name) {
+
+        if (name != null && name.equals(final_model_name)) {
             return false;
         }
-        for (CompactState machine : machines) {
-            if (machine.name.startsWith("MINIMISE_")) {
-                return true;
+        // nullチェック
+        if (currentMachines == null || currentMachines.isEmpty()) {
+            return true;
+        }
+
+        int complexEnvCount = 0;
+        boolean hasPartController = false;
+
+        // 各環境モデルに対して EnvScore を計算する
+        for (CompactState env : currentMachines) {
+            // 監視モデルを除外
+            if (env.hasERROR()) {
+                continue;
+            }
+            if (env.name.contains("PartController")) {
+                hasPartController = true;
+            }
+            int envScore = 0;
+            
+            // 環境モデル単体のアクションごとの遷移数を取得
+            Map<String, Integer> envCounts = env.countTransitionsAction();
+            
+            // その環境モデル内での最大遷移数を探し、それを EnvScore とする
+            if (envCounts != null) {
+                for (Integer count : envCounts.values()) {
+                    if (count != null && count > envScore) {
+                        envScore = count;
+                    }
+                }
+            }
+
+            // EnvScore が 2 以上の環境モデルの数をカウント
+            if (envScore >= 2) {
+                complexEnvCount++;
             }
         }
-        return false;
+
+        if (!hasPartController) {
+            complexEnvCount++;
+        }
+
+        // デバッグ出力（不要になったら消してください）
+        ltsOutput.outln("      * Minimise Check: Complex Env Count = " + complexEnvCount);
+
+        // EnvScoreが2以上の環境モデルが1つ以下なら、最小化の効果が薄いためスキップ (false)
+        if (complexEnvCount <= 1) {
+            return false;
+        }
+
+        // 上記以外（複雑なモデルが複数絡む場合）は minimise を実行 (true)
+        return true;
     }
 
     /* findSameStepReq() */
