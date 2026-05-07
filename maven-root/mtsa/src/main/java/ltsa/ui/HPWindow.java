@@ -130,6 +130,7 @@ public class HPWindow extends JFrame implements Runnable {
     JMenuItem build_compose;
     JMenuItem build_minimise;
     JMenuItem build_stepwise;
+    JMenuItem build_resumeController;
     JMenuItem help_about;
     JMenuItem help_version;
     JMenuItem supertrace_options;
@@ -194,6 +195,7 @@ public class HPWindow extends JFrame implements Runnable {
             openFileTool, saveFileTool, compileTool, composeTool,
             minimizeTool,
             stepwiseTool,
+            resumeControllerTool,
             undoTool, redoTool;
 
     public static final Font FIXED = new Font("Monospaced", Font.PLAIN, 12);
@@ -394,6 +396,7 @@ public class HPWindow extends JFrame implements Runnable {
         tools.add(composeTool = createTool("icon/compose.gif", "Compose", new DoAction(DO_doComposition)));
         tools.add(minimizeTool = createTool("icon/minimize.gif", "Minimize", new DoAction(DO_minimiseComposition)));
         tools.add(stepwiseTool = createTool("icon/stepwise.gif", "Stepwise", new DoAction(DO_stepwiseControllerSynthesis)));
+        tools.add(resumeControllerTool = createTool("icon/resume_compose.gif", "ResumeController", new DoAction(DO_resumeControllerSynthesis)));
         // status field used to name the composition we are working on
         targetChoice = new JComboBox();
         targetChoice.setEditable(false);
@@ -663,6 +666,9 @@ public class HPWindow extends JFrame implements Runnable {
         build_stepwise = new JMenuItem("Stepwise");
         build_stepwise.addActionListener(new DoAction(DO_stepwiseControllerSynthesis));
         build.add(build_stepwise);
+        build_resumeController = new JMenuItem("Resume");
+        build_resumeController.addActionListener(new DoAction(DO_resumeControllerSynthesis));
+        build.add(build_resumeController);
     }
 
     private void checkMenu(JMenuBar mb) {
@@ -841,6 +847,7 @@ public class HPWindow extends JFrame implements Runnable {
         build_compose.setEnabled(flag);
         build_minimise.setEnabled(flag);
         build_stepwise.setEnabled(flag);
+        build_resumeController.setEnabled(flag);
         stopTool.setEnabled(true);
         parseTool.setEnabled(flag);
         safetyTool.setEnabled(flag);
@@ -849,6 +856,7 @@ public class HPWindow extends JFrame implements Runnable {
         composeTool.setEnabled(flag);
         minimizeTool.setEnabled(flag);
         stepwiseTool.setEnabled(flag);
+        resumeControllerTool.setEnabled(flag);
 
         file_save.setEnabled(application);
         file_saveAs.setEnabled(application);
@@ -874,6 +882,7 @@ public class HPWindow extends JFrame implements Runnable {
 
     //Stepwise Controller Synthesis
     private final static int DO_stepwiseControllerSynthesis = 101;
+    private final static int DO_resumeControllerSynthesis = 102;
 
     // Dipi
     private final static int DO_PLUS_CR = 11;
@@ -982,6 +991,10 @@ public class HPWindow extends JFrame implements Runnable {
                     showOutput();
                     stepwiseControllerSynthesis();
                     // generateStepwiseContorllerSynthesisProcess();
+                    break;
+                case DO_resumeControllerSynthesis:
+                    showOutput();
+                    resumeControllerSynthesis();
                     break;
                 case DO_progress:
                     showOutput();
@@ -2126,6 +2139,25 @@ public class HPWindow extends JFrame implements Runnable {
     public static int maxStates;
     public static int maxTransitions;
 
+    /* Stepwise Synthesis */
+    public static boolean no_controller = false;
+    private List<CompactState> error_req_list = new ArrayList<>();
+    private boolean stepwise_synthesis_failed = false;
+
+    private long policyTime_total;
+    private long synthesisTime_total;
+    private List<CompactState> all_output_models = new ArrayList<>();
+
+    /* For resumeControllerSynthesis */
+    private boolean resume_available = false;
+    private int resume_step_num = 1;
+    private String resume_final_model_name = null;
+
+    // no controller になる前までに合成済みの PartController
+    private Map<String, CompactState> resume_part_controllers = new LinkedHashMap<>();
+    // 各 PartController が置き換えた入力モデル名
+    private Map<String, List<String>> resume_part_controller_input_names = new LinkedHashMap<>();
+
     public static void checkMemoryUsage() {
         long total = Runtime.getRuntime().totalMemory() / 1000;
         long free = Runtime.getRuntime().freeMemory() /1000;
@@ -2249,16 +2281,18 @@ public class HPWindow extends JFrame implements Runnable {
 
     }
 
-    
-    /* Stepwise Synthesis */
-    public static boolean no_controller = false;
-    private List<CompactState> error_req_list = new ArrayList<>();
-    private boolean stepwise_synthesis_failed = false;
 
-    private long policyTime_total;
-    private long synthesisTime_total;
-    private List<CompactState> all_output_models = new ArrayList<>();
     private void stepwiseControllerSynthesis() {
+        no_controller = false;
+        stepwise_synthesis_failed = false;
+        error_req_list.clear();
+
+        resume_available = false;
+        resume_step_num = 1;
+        resume_final_model_name = null;
+        resume_part_controllers.clear();
+        resume_part_controller_input_names.clear();
+
         policyTime_total = 0;
         synthesisTime_total = 0;
         maxMemoryUsage = 0;
@@ -2422,6 +2456,7 @@ public class HPWindow extends JFrame implements Runnable {
                     ltsOutput.outln("---------------------------------------------------");
 
                     Vector<CompactState> failed_machines = new Vector<>(current.machines);
+                    saveResumeInformation(step_num, final_model_name); // no controller 発生時に resume 可能状態を保存
                     collectErrorRequirements(failed_machines);
                     if (error_req_list.size() == 1) {
                         printSingleNoControllerRequirement();
@@ -2439,6 +2474,14 @@ public class HPWindow extends JFrame implements Runnable {
 
                 current.composition.initActions();
                 current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
+                // no controller になる前までに合成済みの PartController を保存する
+                resume_part_controllers.put(current.composition.name, current.composition);
+                // この PartController が置き換えた入力モデル名を保存する
+                resume_part_controller_input_names.put(
+                        current.composition.name,
+                        convertToNameList(this_step_machines)
+                );
+
                 unsynthesized_env_list.add(current.composition);
 
                 // ltsOutput.outln("[info] " + current.name + ".components : " + current.composition.componentModels.toString());
@@ -2489,6 +2532,147 @@ public class HPWindow extends JFrame implements Runnable {
             boolean do_minimise = checkMinimise(current.machines, current.name, final_model_name);
             if (do_minimise) TransitionSystemDispatcher.minimise(current, ltsOutput);
         }
+    }
+
+    /* resumeControllerSynthesis() */
+    // Where used : DO_resumeControllerSynthesis
+    // Comment    : no controller 直前までに合成済みの PartController を再利用し，残りの合成を再開する
+    private void resumeControllerSynthesis() {
+        ltsOutput.clearOutput();
+
+        if (!resume_available) {
+            ltsOutput.outln("[info] No resume information is available.");
+            ltsOutput.outln("       Please execute Stepwise Controller Synthesis first until a no controller case occurs.");
+            return;
+        }
+
+        policyTime_total = 0;
+        synthesisTime_total = 0;
+        maxMemoryUsage = 0;
+        maxStates = 0;
+        maxTransitions = 0;
+
+        no_controller = false;
+        stepwise_synthesis_failed = false;
+        error_req_list.clear();
+
+        long startTime = System.currentTimeMillis();
+
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("              Resume Controller Synthesis          ");
+        ltsOutput.outln("===================================================");
+
+        // 最新の入力仕様を compile する
+        if (!compile()) {
+            ltsOutput.outln("[info] Compile failed. Resume Controller Synthesis was aborted.");
+            return;
+        }
+
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+
+        List<CompactState> compiled_models = new ArrayList<>(current.machines);
+
+        List<CompactState> unsynthesized_req_list = new ArrayList<>();
+        List<CompactState> unsynthesized_env_list = new ArrayList<>();
+
+        // まず，最新 compile 結果から req/env を作る
+        for (CompactState machine : compiled_models) {
+            machine.initActions();
+
+            if (machine.hasERROR()) {
+                unsynthesized_req_list.add(machine);
+            } else {
+                unsynthesized_env_list.add(machine);
+            }
+        }
+
+        // no controller 前までに合成済みの PartController を再利用する
+        for (String part_controller_name : resume_part_controllers.keySet()) {
+            CompactState part_controller = resume_part_controllers.get(part_controller_name);
+
+            if (part_controller == null) {
+                continue;
+            }
+
+            // PartController が置き換えた env/req を，最新 compile 結果から削除する
+            List<String> replaced_model_names = resume_part_controller_input_names.get(part_controller_name);
+            if (replaced_model_names != null) {
+                removeModelsByName(unsynthesized_req_list, replaced_model_names);
+                removeModelsByName(unsynthesized_env_list, replaced_model_names);
+            }
+
+            // PartController 自体を env として追加する
+            addUniqueCompactStateByName(unsynthesized_env_list, part_controller);
+        }
+
+        ltsOutput.outln("[info] Reused PartControllers");
+        if (resume_part_controllers.isEmpty()) {
+            ltsOutput.outln("     * None");
+        } else {
+            for (String part_controller_name : resume_part_controllers.keySet()) {
+                ltsOutput.outln("     * " + part_controller_name
+                        + " replaces "
+                        + resume_part_controller_input_names.get(part_controller_name));
+            }
+        }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Resume Monitor Models");
+        for (CompactState req : unsynthesized_req_list) {
+            ltsOutput.outln("     * " + req.name + " : " + req.actions.toString());
+        }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Resume Environment Models");
+        for (CompactState env : unsynthesized_env_list) {
+            if (env.componentModels != null) {
+                ltsOutput.outln("     * " + env.name + " : " + env.componentModels.toString());
+            } else {
+                ltsOutput.outln("     * " + env.name + " : " + env.actions.toString());
+            }
+        }
+        ltsOutput.outln("");
+
+        // 残りがない場合
+        if (unsynthesized_req_list.isEmpty() && unsynthesized_env_list.size() < 2) {
+            ltsOutput.outln("[info] There are not enough models to resume synthesis.");
+            return;
+        }
+
+        stepwiseSynthesis(
+                resume_step_num,
+                unsynthesized_req_list,
+                unsynthesized_env_list,
+                resume_final_model_name
+        );
+
+        if (stepwise_synthesis_failed) {
+            return;
+        }
+
+        if (do_monitoring) {
+            current.machines.addAll(all_output_models);
+        } else {
+            current.machines.add(current.composition);
+        }
+
+        postState(current);
+
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Resume Controller Synthesis is Complete!");
+        ltsOutput.outln("[info] Max Space      : " + maxStates);
+        ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+        ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
+        ltsOutput.outln("[info] Execution Time");
+        ltsOutput.outln("     * policy only    : " + policyTime_total + " ms");
+        ltsOutput.outln("     * synthesis only : " + synthesisTime_total + " ms");
+        ltsOutput.outln("     * total          : " + executionTime + " ms");
+        ltsOutput.outln("");
     }
 
     /* analysisMonitoredModels() */
@@ -2756,7 +2940,7 @@ public class HPWindow extends JFrame implements Runnable {
 
         ltsOutput.outln("");
         ltsOutput.outln("[info] Checking requirement combination");
-        ltsOutput.outln("     * Target Requirements : " + convertReqCombinationToNameList(req_combination));
+        ltsOutput.outln("     * Target Requirements  : " + convertReqCombinationToNameList(req_combination));
         ltsOutput.outln("     * Input Models         : " + convertToNameList(test_machines));
 
         no_controller = false;
@@ -2776,6 +2960,21 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("     * Result               : controller exists");
             return false;
         }
+    }
+
+    /* saveResumeInformation() */
+    // Where used : stepwiseSynthesis()
+    // Comment    : no controller 後に resumeControllerSynthesis() を実行できるようにする
+    private void saveResumeInformation(int step_num, String final_model_name) {
+        resume_available = true;
+        resume_step_num = step_num;
+        resume_final_model_name = final_model_name;
+
+        ltsOutput.outln("");
+        ltsOutput.outln("[info] Resume information was saved.");
+        ltsOutput.outln("     * Resume Step        : " + resume_step_num);
+        ltsOutput.outln("     * Reused Controllers : " + resume_part_controllers.keySet());
+        ltsOutput.outln("");
     }
 
     /* convertReqCombinationToNameList() */
@@ -2927,6 +3126,34 @@ public class HPWindow extends JFrame implements Runnable {
             name_list.add(machine.name);
         }
         return name_list;
+    }
+
+    /* removeModelsByName() */
+    // Where used : resumeControllerSynthesis()
+    // Comment    : 指定された名前のモデルをリストから削除する
+    private void removeModelsByName(List<CompactState> models, List<String> remove_names) {
+        Iterator<CompactState> iterator = models.iterator();
+
+        while (iterator.hasNext()) {
+            CompactState model = iterator.next();
+
+            if (remove_names.contains(model.name)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    /* addUniqueCompactStateByName() */
+    // Where used : resumeControllerSynthesis()
+    // Comment    : 同名モデルがすでに存在する場合は追加しない
+    private void addUniqueCompactStateByName(List<CompactState> models, CompactState target_model) {
+        for (CompactState model : models) {
+            if (model.name.equals(target_model.name)) {
+                return;
+            }
+        }
+
+        models.add(target_model);
     }
 
     /**************************************************************************/
