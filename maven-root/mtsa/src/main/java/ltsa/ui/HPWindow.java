@@ -2593,7 +2593,7 @@ public class HPWindow extends JFrame implements Runnable {
                 return true;
             }
         }
-        return false;
+        return true;
     }
 
     /* findSameStepReq() */
