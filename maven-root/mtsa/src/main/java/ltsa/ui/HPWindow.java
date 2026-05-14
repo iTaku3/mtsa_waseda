@@ -2398,7 +2398,7 @@ public class HPWindow extends JFrame implements Runnable {
                 }
 
                 checkMemoryUsage();
-                boolean do_minimise = checkMinimise(this_step_req_list.get(0), current.machines, current.name, final_model_name);
+                boolean do_minimise = checkMinimise(current.composition, current.name, final_model_name);
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
                 if (do_minimise) {
                     TransitionSystemDispatcher.minimise(current, ltsOutput);
@@ -2436,7 +2436,7 @@ public class HPWindow extends JFrame implements Runnable {
             current.name = final_model_name; // ★ "StepwiseController" ではなく、最終モデル名に統一する
             current.env = null;
             TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            boolean do_minimise = checkMinimise(null, current.machines, current.name, final_model_name);
+            boolean do_minimise = checkMinimise(current.composition, current.name, final_model_name);
             if (do_minimise) {
                 TransitionSystemDispatcher.minimise(current, ltsOutput);
             }
@@ -2662,64 +2662,63 @@ public class HPWindow extends JFrame implements Runnable {
 
     /* checkMinimise() */
     // Where used : stepwiseSynthesis
-    // Parameters : req (今回の要求モデル), currentMachines (今回合成するモデル群)
-    // Comment    : 複雑な環境モデル（EnvScoreが2以上）の数が1つ以下の場合は、冗長性が生まれないため最小化をスキップ(false)
-    private boolean checkMinimise(CompactState req, List<CompactState> currentMachines, String name, String final_model_name) {
-
+    // Parameters : composedModel (合成後のLTS), name (現在のモデル名), final_model_name (最終モデル名)
+    // Comment    : (name, to) のペアに1つでも重複があれば true (最小化する)、重複がなければ false (スキップ)
+    private boolean checkMinimise(CompactState composedModel, String name, String final_model_name) {
+        
+        // 最終合成モデル（ファイナルモデル）の場合は、最小化をスキップする (false)
         if (name != null && name.equals(final_model_name)) {
             return false;
         }
+
         // nullチェック
-        if (currentMachines == null || currentMachines.isEmpty()) {
+        if (composedModel == null) {
             return true;
         }
 
-        int complexEnvCount = 0;
-        boolean hasPartController = false;
+        // (name, to) のペアを記録し、重複を検知するためのSet
+        Set<String> seenNameToPairs = new HashSet<>();
 
-        // 各環境モデルに対して EnvScore を計算する
-        for (CompactState env : currentMachines) {
-            // 監視モデルを除外
-            if (env.hasERROR()) {
-                continue;
-            }
-            if (env.name.contains("PartController")) {
-                hasPartController = true;
-            }
-            int envScore = 0;
+        // ====================================================================
+        // パターンA: もし composedModel から Transition のリストを取得できる場合
+        // （例: getTransitions() のような自作メソッドがある場合）
+        // ====================================================================
+        /*
+        List<Transition> transitions = composedModel.getTransitions();
+        for (Transition t : transitions) {
+            // (name, to) を一意に表す文字列キーを作成
+            String pairKey = t.name() + "::" + t.to();
             
-            // 環境モデル単体のアクションごとの遷移数を取得
-            Map<String, Integer> envCounts = env.countTransitionsAction();
-            
-            // その環境モデル内での最大遷移数を探し、それを EnvScore とする
-            if (envCounts != null) {
-                for (Integer count : envCounts.values()) {
-                    if (count != null && count > envScore) {
-                        envScore = count;
-                    }
+            // Set にすでに同じペアが存在していたら add() が false を返す
+            if (!seenNameToPairs.add(pairKey)) {
+                return true; // 重複あり！最小化の効果が見込めるため実行する
+            }
+        }
+        */
+
+        // ====================================================================
+        // パターンB: CompactState の標準的な内部構造を直接回す場合（推奨・高速）
+        // ====================================================================
+        for (int from = 0; from < composedModel.maxStates; from++) {
+            EventState ev = composedModel.states[from];
+            while (ev != null) {
+                int to = ev.getNext();
+                String actionName = composedModel.alphabet[ev.getEvent()];
+                
+                // (name, to) を一意に表す文字列キーを作成
+                String pairKey = actionName + "::" + to;
+                
+                // Set にすでに同じペアが存在していたら add() が false を返す
+                if (!seenNameToPairs.add(pairKey)) {
+                    return true; // 重複あり！最小化の効果が見込めるため実行する
                 }
-            }
-
-            // EnvScore が 2 以上の環境モデルの数をカウント
-            if (envScore >= 2) {
-                complexEnvCount++;
+                
+                ev = ev.getList(); // 次の遷移へ
             }
         }
 
-        if (!hasPartController) {
-            complexEnvCount++;
-        }
-
-        // デバッグ出力（不要になったら消してください）
-        ltsOutput.outln("      * Minimise Check: Complex Env Count = " + complexEnvCount);
-
-        // EnvScoreが2以上の環境モデルが1つ以下なら、最小化の効果が薄いためスキップ (false)
-        if (complexEnvCount <= 1) {
-            return false;
-        }
-
-        // 上記以外（複雑なモデルが複数絡む場合）は minimise を実行 (true)
-        return true;
+        // 全ての遷移をチェックして重複が1つもなければ、最小化スキップ
+        return false;
     }
 
     /* findSameStepReq() */

@@ -1,4 +1,6 @@
 package ltsa.ui;
+import java.util.HashSet;
+import java.util.Set;
 
 import MTSTools.ac.ic.doc.commons.relations.Pair;
 import MTSTools.ac.ic.doc.mtstools.model.MTS;
