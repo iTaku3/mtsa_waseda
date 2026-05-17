@@ -2666,7 +2666,7 @@ public class HPWindow extends JFrame implements Runnable {
     // Comment    : (name, to) のペアに1つでも重複があれば true (最小化する)、重複がなければ false (スキップ)
     private boolean checkMinimise(CompactState composedModel, String name, String final_model_name) {
         
-        // 最終合成モデル（ファイナルモデル）の場合は、最小化をスキップする (false)
+        // 最後の場合はfalse
         if (name != null && name.equals(final_model_name)) {
             return false;
         }
@@ -2679,26 +2679,7 @@ public class HPWindow extends JFrame implements Runnable {
         // (name, to) のペアを記録し、重複を検知するためのSet
         Set<String> seenNameToPairs = new HashSet<>();
 
-        // ====================================================================
-        // パターンA: もし composedModel から Transition のリストを取得できる場合
-        // （例: getTransitions() のような自作メソッドがある場合）
-        // ====================================================================
-        /*
-        List<Transition> transitions = composedModel.getTransitions();
-        for (Transition t : transitions) {
-            // (name, to) を一意に表す文字列キーを作成
-            String pairKey = t.name() + "::" + t.to();
-            
-            // Set にすでに同じペアが存在していたら add() が false を返す
-            if (!seenNameToPairs.add(pairKey)) {
-                return true; // 重複あり！最小化の効果が見込めるため実行する
-            }
-        }
-        */
-
-        // ====================================================================
-        // パターンB: CompactState の標準的な内部構造を直接回す場合（推奨・高速）
-        // ====================================================================
+        
         for (int from = 0; from < composedModel.maxStates; from++) {
             EventState ev = composedModel.states[from];
             while (ev != null) {
