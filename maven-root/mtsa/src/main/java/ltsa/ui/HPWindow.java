@@ -2398,15 +2398,15 @@ public class HPWindow extends JFrame implements Runnable {
                 }
 
                 checkMemoryUsage();
-                boolean do_minimise = checkMinimise(current.composition, current.name, final_model_name);
                 TransitionSystemDispatcher.applyComposition(current, ltsOutput); //合成
+                boolean do_minimise = checkMinimise(current.composition, current.name, final_model_name);
                 if (do_minimise) {
                     TransitionSystemDispatcher.minimise(current, ltsOutput);
                     checkMemoryUsage();
                 }
 
                 current.composition.initActions();
-                current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels);
+                current.composition.componentModels = new ArrayList<>(this_step_req_list.get(0).tmp_actual_monitoredModels);
                 unsynthesized_env_list.add(current.composition);
                 if (do_monitoring) all_output_models.add(current.composition);
 
@@ -2699,18 +2699,34 @@ public class HPWindow extends JFrame implements Runnable {
     /* findSameStepReq() */
     // Where used : 
     // Parameters : -
-    // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加．
+    // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，this_step_req_listに追加する．
+    //              ただし，calculationInfluenceQuantity()で既に追加済みの要求は重複追加しない．
     private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
         List<CompactState> remove_req_list = new ArrayList<>();
+
+        if (this_step_req_list == null || this_step_req_list.size() == 0) {
+            return;
+        }
+
+        CompactState targetReq = this_step_req_list.get(0);
+        List<String> targetMonitoredModels = targetReq.actual_monitoredModels;
+
         for (CompactState req : unsynthesized_req_list) {
-            if (checkInList(req.actual_monitoredModels, this_step_req_list.get(0).actual_monitoredModels)) {
-                req.actual_monitoredModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels); //実際に分析する監視対象モデルリストを更新
-                this_step_req_list.add(req); //今回のステップで合成する要求リストに追加
-                remove_req_list.add(req); //unsynthesized_req_listから削除する要素として記録
+
+            // calculationInfluenceQuantity() で既に this_step_req_list に追加済みの要求はスキップ
+            if (this_step_req_list.contains(req)) {
+                remove_req_list.add(req);
+                continue;
+            }
+
+            if (checkInList(req.actual_monitoredModels, targetMonitoredModels)) {
+                req.actual_monitoredModels = new ArrayList<>(targetMonitoredModels);
+                this_step_req_list.add(req);
+                remove_req_list.add(req);
             }
         }
-        for (CompactState req : remove_req_list)
-            unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
+
+        unsynthesized_req_list.removeAll(remove_req_list);
     }
 
     /* checkContainList() */
