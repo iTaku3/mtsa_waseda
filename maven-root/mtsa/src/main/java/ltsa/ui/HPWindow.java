@@ -2374,11 +2374,11 @@ public class HPWindow extends JFrame implements Runnable {
                 
                 Vector<CompactState> this_step_machines = new Vector<>();
                 for (CompactState env : unsynthesized_env_list) {
-                    if (this_step_req_list.get(0).actual_monitoredModels.contains(env.name)) {
+                    if (this_step_req_list.get(0).tmp_actual_monitoredModels.contains(env.name)) {
                         this_step_machines.add(env);
                     }
                     else if (env.componentModels != null) {
-                        if (checkContainList(this_step_req_list.get(0).actual_monitoredModels, env.componentModels))
+                        if (checkContainList(this_step_req_list.get(0).tmp_actual_monitoredModels, env.componentModels))
                             this_step_machines.add(env);
                     }
                 }
@@ -2454,9 +2454,9 @@ public class HPWindow extends JFrame implements Runnable {
             for (CompactState env : unsynthesized_env_list) {
                 if (checkContainList(req.actions,env.actions))
                     // 部分制御器かのjudge
-                    // if (env.componentModels!=null)
-                    //     req.ideal_monitoredModels.addAll(env.componentModels);
-                    // else
+                    if (env.componentModels!=null)
+                        req.ideal_monitoredModels.addAll(env.componentModels);
+                    else
                     req.ideal_monitoredModels.add(env.name);
             }
             ltsOutput.outln("     * " + req.name + " : " + req.ideal_monitoredModels.toString());
@@ -2671,29 +2671,23 @@ public class HPWindow extends JFrame implements Runnable {
             return false;
         }
 
-        // nullチェック
         if (composedModel == null) {
             return true;
         }
 
         // (name, to) のペアを記録し、重複を検知するためのSet
-        Set<String> seenNameToPairs = new HashSet<>();
-
-        
+        Set<String> seenNameToPairs = new HashSet<>();   
         for (int from = 0; from < composedModel.maxStates; from++) {
             EventState ev = composedModel.states[from];
             while (ev != null) {
                 int to = ev.getNext();
-                String actionName = composedModel.alphabet[ev.getEvent()];
-                
-                // (name, to) を一意に表す文字列キーを作成
-                String pairKey = actionName + "::" + to;
-                
-                // Set にすでに同じペアが存在していたら add() が false を返す
+                String actionName = composedModel.alphabet[ev.getEvent()];        
+                // (name, to) を一意に表すキーを作成
+                String pairKey = actionName + "::" + to;       
+                // Setにすでに同じペアが存在していたら add() がfalseを返す
                 if (!seenNameToPairs.add(pairKey)) {
-                    return true; // 重複あり！最小化の効果が見込めるため実行する
+                    return true; // 最小化の効果が見込めるため実行する
                 }
-                
                 ev = ev.getList(); // 次の遷移へ
             }
         }
