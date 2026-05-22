@@ -1,0 +1,98 @@
+// =========================================================
+// 入退室管理システム (Secure Access System) - 3段階合成版
+// Step 1: true, Step 2: false, Step 3: false
+// =========================================================
+
+set ControllableActions = {card, finger, allow, open, enter, close, log}
+
+// -------------------------
+// 1. 環境モデル (Environment Models)
+// -------------------------
+// [Step 1 用] 認証
+Auth = (card -> CARD_WAIT | finger -> FINGER_WAIT),
+CARD_WAIT = (allow -> Auth),
+FINGER_WAIT = (allow -> Auth).
+
+// [Step 1 用] ドア
+Door = (open -> close -> Door).
+
+// [Step 2 用] センサー (入室検知)
+Sensor = (enter -> Sensor).
+
+// [Step 3 用] ログ
+Logger = (log -> Logger).
+
+
+// -------------------------
+// 2. 要求モデル (Specification)
+// -------------------------
+// 【Step 1 要求】 allow の後にのみ open を許可
+fluent TIMING_OPEN = <allow, close> initially 0
+ltl_property P_OPEN = [](!TIMING_OPEN -> !open)
+ltl_property P_AUTH = [](TIMING_OPEN -> !{card, finger})
+
+// 【Step 2 要求】 open の後にのみ enter し、enter の後にのみ close する
+fluent TIMING_ENTER = <open, close> initially 0
+//fluent TIMING_CLOSE = <enter, open> initially 0
+ltl_property P_ENTER = [](!TIMING_ENTER -> !enter)
+//ltl_property P_CLOSE = [](!TIMING_CLOSE -> !close)
+
+// 【Step 3 要求】 close の後にのみ log を許可し、log するまで次の認証をさせない
+fluent TIMING_LOG = <close, {card, finger}> initially 0
+fluent WAITING_LOG = <close, log>
+ltl_property P_LOG = [](!TIMING_LOG -> !log)
+ltl_property P_FORCE_LOG = [](WAITING_LOG -> !{card, finger})
+
+
+// -------------------------
+// 3. コントローラ仕様 (Controller Specs)
+// -------------------------
+controllerSpec PartSpec1 = {
+    safety = {P_OPEN, P_AUTH}
+    controllable = {ControllableActions}
+}
+
+controllerSpec PartSpec2 = {
+    safety = {P_ENTER, 
+			  //P_CLOSE
+}
+    controllable = {ControllableActions}
+}
+
+controllerSpec FinalSpec = {
+    safety = {P_LOG, P_FORCE_LOG}
+    controllable = {ControllableActions}
+}
+ 
+controllerSpec ControllerSpec = {
+    safety = {P_OPEN, P_AUTH, P_ENTER, 
+			  //P_CLOSE, 
+			  P_LOG, P_FORCE_LOG}
+    controllable = {ControllableActions}
+}
+
+
+// -------------------------
+// 4. 合成ステップ (Stepwise Synthesis)
+// -------------------------
+
+// 【第1段階】: checkMinimise = true
+// Auth内の card と finger のルートが allow で合流するため重複が発生。
+// ここで最小化が実行され、冗長性が潰されます。
+||PartEnv1 = (Auth || Door).
+controller ||PartController1 = (PartEnv1)~{PartSpec1}.
+
+// 【第2段階】: checkMinimise = false
+// 最小化されたモデルに、入室(enter)という直列な動きを足すだけなので重複なし。
+// 無駄な計算として判定され、スキップ(false)されます。
+||PartEnv2 = (PartController1 || Sensor).
+controller ||PartController2 = (PartEnv2)~{PartSpec2}.
+
+// 【第3段階】: checkMinimise = false
+// 最終モデル判定によりスキップされます。
+||FinalEnv = (PartController2 || Logger).
+controller ||FinalController = (FinalEnv)~{FinalSpec}.
+
+controller ||Controller = (Auth || Door || Sensor || Logger)~{ControllerSpec}.
+
+

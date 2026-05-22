@@ -1,0 +1,104 @@
+// =========================================================
+// スマート金庫 (Smart Safe Box) - 最小化判定デモ用モデル
+// =========================================================
+
+set ControllableActions = {inputPin, verify, openDoor, closeDoor, openA, closeA, openB, closeB, timeout, logEvent}
+
+// -------------------------
+// 1. 環境モデル (Environment Models)
+// -------------------------
+
+// [Step 1 用] メインシステム
+Keypad = (inputPin -> verify -> Keypad).
+MainDoor = (openDoor -> closeDoor -> MainDoor).
+
+// [Step 2 用] 内部ボックス（タイムアウトで初期状態=IDLEに合流する）
+SubBoxA = IDLE,
+IDLE = (openA -> OPENED | timeout -> IDLE),
+OPENED = (closeA -> IDLE | timeout -> IDLE).
+
+SubBoxB = IDLE,
+IDLE = (openB -> OPENED | timeout -> IDLE),
+OPENED = (closeB -> IDLE | timeout -> IDLE).
+
+// [Step 3 用] 最終ログ
+Logger = (logEvent -> Logger).
+
+
+Part1 = (inputPin -> verify -> openDoor -> closeDoor -> Part1).
+
+
+// -------------------------
+// 2. 要求モデル (Specification)
+// -------------------------
+
+// [Step 1 要求]: 厳密な順番で動作させる (直線的なループになる)
+// 1. 各アクションが「今実行してよい状態か？」を表すフラグ（Fluent）を定義する
+// 最初は inputPin だけが許可されているため「initially 1」をつける
+fluent PHASE_INPUT  = <verify, closeDoor> initially 0
+fluent PHASE_VERIFY = <openDoor, inputPin> initially 1
+fluent PHASE_OPEN   = <closeDoor, verify> initially 1
+fluent PHASE_CLOSE  = <inputPin, openDoor> initially 1
+
+// 2. 「各アクションは、自分のフェーズの時にしか発生してはならない」というLTL制約
+ltl_property P_INPUT = [](PHASE_INPUT -> !inputPin)
+ltl_property P_VERIFY = [](PHASE_VERIFY -> !verify)
+ltl_property P_OPEN = [](PHASE_OPEN -> !openDoor)
+ltl_property P_CLOSE = [](PHASE_CLOSE -> !closeDoor)
+
+// [Step 2 要求]: サブボックス操作とタイムアウトは、メインドアが開いている時のみ可能
+fluent MAIN_OPEN = <openDoor, closeDoor>
+ltl_property P_SUB_ACTIONS = []({openA, closeA, openB, closeB, timeout} -> MAIN_OPEN)
+
+// [Step 3 要求]: タイムアウトが発生したらログを残す（簡単な安全要求）
+ltl_property P_LOG = [](timeout -> X(logEvent))
+
+
+// -------------------------
+// 3. コントローラ仕様 (Controller Specs)
+// -------------------------
+
+controllerSpec PartSpec1 = {
+    safety = {P_INPUT, P_VERIFY, P_OPEN, P_CLOSE}
+    controllable = {ControllableActions}
+}
+
+controllerSpec PartSpec2 = {
+    safety = {P_SUB_ACTIONS}
+    controllable = {ControllableActions}
+}
+
+controllerSpec FinalSpec = {
+    safety = {P_LOG}
+    controllable = {ControllableActions}
+}
+
+controllerSpec SpecificationAll =
+{
+	safety       = {P_INPUT, P_VERIFY, P_OPEN, P_CLOSE, P_SUB_ACTIONS, P_LOG}
+	controllable = {ControllableActions}
+}
+
+// -------------------------
+// 4. 合成ステップ (Stepwise Synthesis)
+// -------------------------
+
+// 【第1段階】: 直線的な制御器の合成
+// → LTSは単純なループになり、合流(重複)がないため Minimise = false
+||PartEnv1 = (Keypad || MainDoor).
+controller ||PartController1 = (PartEnv1)~{PartSpec1}.
+
+// 【第2段階】: 並行動作とタイムアウト(合流)の合成
+// → 複数の状態から timeout で一斉に初期状態へ戻るため、重複が発生して Minimise = true
+||PartEnv2 = (Part1 || SubBoxA || SubBoxB).
+controller ||PartController2 = (PartEnv2)~{PartSpec2}.
+
+// 【第3段階】: 最終コントローラの合成
+// → 最終モデルの判定により Minimise = false
+||FinalEnv = (PartController2 || Logger).
+controller ||FinalController = (FinalEnv)~{FinalSpec}.
+
+controller ||Controller = (Keypad || MainDoor || SubBoxA || SubBoxB || Logger)~{SpecificationAll}.
+
+
+controller ||AutoPartController1 = (SubBoxA || SubBoxB || Logger)~{FinalSpec}.

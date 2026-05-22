@@ -1,0 +1,121 @@
+// =========================================================
+// 入退室管理システム (Secure Access System)
+// 新・最小化判定デモ用モデル (Step 1: true, Step 2: false)
+// =========================================================
+
+set ControllableActions = {card, finger, allow, open, close, log}
+
+// -------------------------
+// 1. 環境モデル (Environment Models)
+// -------------------------
+
+// [Step 0 用] 認証: カードか指紋で認証し、allow(許可)を発行
+// ※わざと状態を分けて、allowでの「合流（重複）」を発生させます
+Auth = (card -> CARD_WAIT | finger -> FINGER_WAIT),
+CARD_WAIT = (allow -> Auth),
+FINGER_WAIT = (allow -> Auth).
+
+
+// Auth = (allow -> Auth | deny -> Auth).
+// Auth = (allow -> Auth).
+// Card = (card -> Card).
+// Finger = (finger -> Finger).
+
+// [Step 1 用] ドア: 開いて閉じるだけの一本道
+Door = (open -> close -> Door).
+
+// [Step 2 用] センサー (入室検知)
+Sensor = (enter -> Sensor).
+
+// [Step 3 用] ログ: 記録するだけ
+Logger = (log -> Logger).
+
+
+Part1 = (card -> allow -> Part1 | finger -> allow -> Part1).
+
+// -------------------------
+// 2. 要求モデル (Specification)
+// -------------------------
+// Fluentではなく property を使うことで、シーケンス（順番）を綺麗に強制できます
+
+// [Step 0 要求] 認証の基本的な動きを保証する
+property P_AUTH = (card -> allow -> P_AUTH | finger -> allow -> P_AUTH).
+fluent TIMING_CARD = <allow, finger> initially 1
+fluent TIMING_FINGER = <allow, card> initially 1
+ltl_property P_CARD = [](!TIMING_CARD -> !card)
+ltl_property P_FINGER = [](!TIMING_FINGER -> !finger)
+
+
+// [Step 1 要求] 認証後にドアを開閉する一連の順序を強制する
+property P_SEQ = (card -> allow -> open -> close -> P_SEQ
+                | finger -> allow -> open -> close -> P_SEQ).
+fluent TIMING_OPEN = <allow, close> initially 0
+ltl_property P_OPEN = [](!TIMING_OPEN -> !open)
+
+// 【Step 2 要求】 open の後にのみ enter し、enter の後にのみ close する
+fluent TIMING_ENTER = <open, close> initially 0
+fluent TIMING_CLOSE = <enter, open> initially 0
+ltl_property P_ENTER = [](!TIMING_ENTER -> !enter)
+ltl_property P_CLOSE = [](!TIMING_CLOSE -> !close)
+
+// [Step 3 要求] 閉じた後に必ずログを記録する
+//property P_LOG = (card -> allow -> open -> close -> log -> P_LOG
+//                | finger -> allow -> open -> close -> log -> P_LOG).
+fluent TIMING_LOG = <close, {card, finger}> initially 0
+ltl_property P_LOG = [](!TIMING_LOG -> !log)
+
+
+// -------------------------
+// 3. コントローラ仕様 (Controller Specs)
+// -------------------------
+
+controllerSpec PartSpec1 = {
+    safety = {P_OPEN}
+    controllable = {ControllableActions}
+}
+
+controllerSpec PartSpec2 = {
+    safety = {P_ENTER, P_CLOSE}
+    controllable = {ControllableActions}
+}
+
+controllerSpec FinalSpec = {
+    safety = {P_LOG}
+    controllable = {ControllableActions}
+}
+
+controllerSpec ControllerSpec = {
+    safety = {P_OPEN, P_ENTER, P_CLOSE, P_LOG}
+    controllable = {ControllableActions}
+}
+
+controllerSpec ControllerSpec2 = {
+    safety = {P_CARD,P_FINGER, P_OPEN}
+    controllable = {ControllableActions}
+}
+
+
+// -------------------------
+// 4. 合成ステップ (Stepwise Synthesis)
+// -------------------------
+
+// 【第1段階】: checkMinimise = true
+// Authモデル内で CARD_WAIT と FINGER_WAIT の両方から allow で合流するため、
+// (allow, 0) の重複が検知され、最小化が実行されます。
+||PartEnv1 = (Auth || Card || Finger).
+controller ||PartController1 = (PartEnv1)~{PartSpec1}.
+
+// 【第2段階】: checkMinimise = false
+// すでに最小化された PartController1 に対して、ドアの一本道の動きを足します。
+// 途中で合流（重複）するルートが存在しないため、最小化は賢くスキップされます。
+||PartEnv2 = (Part1 || Door).
+controller ||PartController2 = (PartEnv2)~{PartSpec2}.
+
+// 【第3段階】: checkMinimise = false
+// 最終モデル判定によりスキップされます。
+||FinalEnv = (PartController2 || Logger).
+controller ||FinalController = (FinalEnv)~{FinalSpec}.
+
+controller ||Controller = (Auth || Door || Sensor || Logger)~{ControllerSpec}.
+
+controller ||Controller2 = (Auth || Door)~{ControllerSpec2}.
