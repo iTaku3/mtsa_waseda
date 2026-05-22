@@ -2566,6 +2566,23 @@ public class HPWindow extends JFrame implements Runnable {
                 candidate_req.name = new String(req.name);
                 candidate_req.influence_quantity = new Integer(req.influence_quantity);
             }
+            else if (req.influence_quantity == candidate_req.influence_quantity) {
+                // reqの計算
+                int reqMaxTransitionMulti = getMaxEnvTransitionCount(req, unsynthesized_env_list);         
+                // candidate_reqの計算
+                CompactState originalCandidate = findModel(unsynthesized_req_list, candidate_req.name);
+                int candidateMaxTransitionMulti = getMaxEnvTransitionCount(originalCandidate, unsynthesized_env_list);
+                // 多い方を優先
+                if (reqMaxTransitionMulti > candidateMaxTransitionMulti) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                } 
+                // それでも同じだった場合はアルファベット順
+                else if (reqMaxTransitionMulti == candidateMaxTransitionMulti && candidate_req.name.compareTo(req.name) > 0) {
+                    candidate_req.name = new String(req.name);
+                    candidate_req.influence_quantity = new Integer(req.influence_quantity);
+                }
+            }
         }
         ltsOutput.outln("");
 
