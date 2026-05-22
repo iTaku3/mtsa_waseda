@@ -2580,6 +2580,62 @@ public class HPWindow extends JFrame implements Runnable {
         }
     }
 
+    /**
+     * 要求モデルが監視する環境モデル群の中で最大となる遷移数を計算して返す
+     * 従来の実装をメソッドに切り出しただけ
+     */
+    private int getMaxEnvTransitionCount(CompactState requestModel, List<CompactState> envList) {
+        if (requestModel == null || requestModel.actual_monitoredModels == null) return 0;
+        List<CompactState> targetEnvModels = new ArrayList<>();
+        for (String modelName : requestModel.actual_monitoredModels) {
+            CompactState envObj = findModel(envList, modelName);
+            if (envObj != null) {
+                targetEnvModels.add(envObj);
+            }
+        }
+        Map<String, Integer> totalTransitions = countTotalTransitionsPerAction(targetEnvModels);
+        int maxTransitions = 0;
+        for (Map.Entry<String, Integer> te : totalTransitions.entrySet()) {
+            String action = te.getKey();
+            int transitionsForAction = te.getValue() != null ? te.getValue() : 0;
+            if (transitionsForAction > maxTransitions) {
+                maxTransitions = transitionsForAction;
+            }
+        }
+        return maxTransitions;
+    }
+
+    private Map<String, Integer> countTotalTransitionsPerAction(List<CompactState> envModels) {
+        Map<String, Integer> totalCounts = new HashMap<>();
+
+        // リスト内のすべての環境モデルをループ
+        for (CompactState env : envModels) {
+            // 先ほどCompactStateに作ったメソッドで、このモデル単体の遷移数を取得
+            Map<String, Integer> envCounts = env.countTransitionsAction();
+
+            // 単体の遷移数を、合計用のMapに加算していく
+            for (Map.Entry<String, Integer> entry : envCounts.entrySet()) {
+                String actionName = entry.getKey();
+                int count = entry.getValue();
+                
+                // 既に合計Mapに値があればそれに足し、無ければ0に足す
+                totalCounts.put(actionName, totalCounts.getOrDefault(actionName, 1) * count);
+            }
+        }
+        return totalCounts;
+    }
+
+    /* findModel() */
+    // Where used : 
+    // Parameters : -
+    // Comment    : 入力の名前と同じCompactStateを取り出してくる．該当modelがない時，nullとなるため注意．
+    private CompactState findModel(List<CompactState> compactStateList, String model_name) {
+        for (CompactState model : compactStateList) {
+            if (model.name.equals(model_name)) return model;
+        }
+        return null;
+    }
+
     /* checkMinimise() */
     // Where used : 
     // Parameters : -
@@ -2599,18 +2655,34 @@ public class HPWindow extends JFrame implements Runnable {
     /* findSameStepReq() */
     // Where used : 
     // Parameters : -
-    // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，remove_req_listに追加．
+    // Comment    : 同じプロセス（同じ分析対象）で処理できる要求を見つけ，this_step_req_listに追加する．
+    //              ただし，calculationInfluenceQuantity()で既に追加済みの要求は重複追加しない．
     private void findSameStepReq(List<CompactState> unsynthesized_req_list, List<CompactState> this_step_req_list) {
         List<CompactState> remove_req_list = new ArrayList<>();
+
+        if (this_step_req_list == null || this_step_req_list.size() == 0) {
+            return;
+        }
+
+        CompactState targetReq = this_step_req_list.get(0);
+        List<String> targetMonitoredModels = targetReq.actual_monitoredModels;
+
         for (CompactState req : unsynthesized_req_list) {
-            if (checkInList(req.actual_monitoredModels, this_step_req_list.get(0).actual_monitoredModels)) {
-                req.actual_monitoredModels = new ArrayList<>(this_step_req_list.get(0).actual_monitoredModels); //実際に分析する監視対象モデルリストを更新
-                this_step_req_list.add(req); //今回のステップで合成する要求リストに追加
-                remove_req_list.add(req); //unsynthesized_req_listから削除する要素として記録
+
+            // calculationInfluenceQuantity() で既に this_step_req_list に追加済みの要求はスキップ
+            if (this_step_req_list.contains(req)) {
+                remove_req_list.add(req);
+                continue;
+            }
+
+            if (checkInList(req.actual_monitoredModels, targetMonitoredModels)) {
+                req.actual_monitoredModels = new ArrayList<>(targetMonitoredModels);
+                this_step_req_list.add(req);
+                remove_req_list.add(req);
             }
         }
-        for (CompactState req : remove_req_list)
-            unsynthesized_req_list.remove(unsynthesized_req_list.indexOf(req)); // unsynthesized_req_listから削除
+
+        unsynthesized_req_list.removeAll(remove_req_list);
     }
 
     /* checkContainList() */
