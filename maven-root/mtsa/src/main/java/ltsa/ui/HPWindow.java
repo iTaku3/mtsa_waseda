@@ -2299,6 +2299,8 @@ public class HPWindow extends JFrame implements Runnable {
         List<List<Long>> compair_unresume_time_list = new ArrayList<>();
         List<List<String>> compair_resume_env_list = new ArrayList<>();
         List<List<Long>>   compair_resume_time_list = new ArrayList<>();
+        List<List<String>> compair_all_env_list = new ArrayList<>();
+        List<List<Long>> compair_all_time_list = new ArrayList<>();
 
         /* 前準備（監視モデル"req"と監視対象モデル"env"で分離） */
         /* コメント：分配則を考慮した時，analysisMonitoredModels()内でやった方がいいかも */
@@ -2569,6 +2571,10 @@ public class HPWindow extends JFrame implements Runnable {
                     proposalResumableTimeByBits.put((BitSet) key.clone(), proposal_resumable_time_list.get(i));
                 }
             }
+            // 提案手法 method1 の全パターン時間をまとめる
+            Map<BitSet, Long> proposalAllTimeByBits = new HashMap<>();
+            proposalAllTimeByBits.putAll(proposalUnresumableTimeByBits);
+            proposalAllTimeByBits.putAll(proposalResumableTimeByBits);
 
             int n = old_env_list.size();
             // 1 〜 (2^n) まで回す（空集合を除く）
@@ -2732,6 +2738,20 @@ public class HPWindow extends JFrame implements Runnable {
                         }
                     }
                 }
+                // 全Changed Environmentパターンについて methodX -> method1 の比較情報を記録
+                if (presynthesis_method != 1 && !proposalAllTimeByBits.isEmpty()) {
+                    BitSet key = toBitSet(change_env_list, envIndexMap);
+                    Long proposalTime = proposalAllTimeByBits.get(key);
+
+                    if (proposalTime != null) {
+                        List<Long> time_list = new ArrayList<>(2);
+                        time_list.add(executionTime); // method2 or method3
+                        time_list.add(proposalTime);  // method1
+
+                        compair_all_env_list.add(new ArrayList<>(change_env_list));
+                        compair_all_time_list.add(time_list);
+                    }
+                }
             }
 
             ltsOutput.outln("");
@@ -2787,37 +2807,88 @@ public class HPWindow extends JFrame implements Runnable {
                 proposal_resumable_env_list = new ArrayList<>(resumable_env_list);
                 proposal_resumable_time_list = new ArrayList<>(resume_time_list);
             }
-            else if (proposal_unresumable_env_list != null && !proposal_unresumable_env_list.isEmpty()) {
+            else if (
+                (proposal_unresumable_env_list != null && !proposal_unresumable_env_list.isEmpty()) ||
+                (proposal_resumable_env_list != null && !proposal_resumable_env_list.isEmpty()) ) {
+
                 ltsOutput.outln("");
                 ltsOutput.outln("===================================================");
                 ltsOutput.outln("              Composition Infomation               ");
                 ltsOutput.outln("===================================================");
                 ltsOutput.outln("");
+
+                // 全Changed Environmentパターンの比較
+                ltsOutput.outln("[info] Compare Execution Time [all patterns]");
+                ltsOutput.outln("     * [Changed Environment] : method"+ presynthesis_method +" time (ms) -> method1 time (ms)");
+
+                double allOldTime_sum = 0.0;
+                double allNewTime_sum = 0.0;
+
+                for (int i = 0; i < compair_all_env_list.size(); i++) {
+                    double oldTime = compair_all_time_list.get(i).get(0);
+                    double newTime = compair_all_time_list.get(i).get(1);
+                    double reduction = (oldTime == 0.0) ? 0.0 : -(1.0 - (newTime / oldTime)) * 100.0;
+
+                    ltsOutput.outln(
+                        "     * " + compair_all_env_list.get(i) + " : "
+                        + (long)oldTime + " -> " + (long)newTime
+                        + " (" + String.format("%.2f", reduction) + "%)"
+                    );
+
+                    allOldTime_sum += oldTime;
+                    allNewTime_sum += newTime;
+                }
+
+                if (!compair_all_env_list.isEmpty()) {
+                    int num_of_all_pattern = compair_all_env_list.size();
+                    double avgAllOld = allOldTime_sum / num_of_all_pattern;
+                    double avgAllNew = allNewTime_sum / num_of_all_pattern;
+                    double avgAllReduction = (avgAllOld == 0.0) ? 0.0 : -(1.0 - (avgAllNew / avgAllOld)) * 100.0;
+
+                    ltsOutput.outln("     * average old (ms)                : " + String.format("%.2f", avgAllOld));
+                    ltsOutput.outln("     * average new (ms)                : " + String.format("%.2f", avgAllNew));
+                    ltsOutput.outln("     * reduction (%)                   : " + String.format("%.2f", avgAllReduction));
+                }
+                else {
+                    ltsOutput.outln("     * No comparable pattern.");
+                }
+                ltsOutput.outln("");
+
+
                 // 比較手法が有効な場合（提案手法が再利用できなかった場合）
                 double oldTime_sum = 0.0;
                 double newTime_sum = 0.0;
                 ltsOutput.outln("[info] Compare Execution Time [proposal is NOT effective]");
                 ltsOutput.outln("     * [Changed Environment] : method"+ presynthesis_method +" time (ms) -> method1 time (ms)");
+
                 for (int i = 0; i < compair_unresume_env_list.size(); i++) {
                     double oldTime = compair_unresume_time_list.get(i).get(0);
                     double newTime = compair_unresume_time_list.get(i).get(1);
-                    double reduction = -(1.0 - (newTime / oldTime)) * 100.0;
+                    double reduction = (oldTime == 0.0) ? 0.0 : -(1.0 - (newTime / oldTime)) * 100.0;
+
                     ltsOutput.outln(
                         "     * " + compair_unresume_env_list.get(i) + " : "
                         + (long)oldTime + " -> " + (long)newTime
                         + " (" + String.format("%.2f", reduction) + "%)"
                     );
+
                     oldTime_sum += oldTime;
                     newTime_sum += newTime;
                 }
 
-                int num_of_target_pattern = compair_unresume_env_list.size();
-                double avgOld = oldTime_sum / num_of_target_pattern;
-                double avgNew = newTime_sum / num_of_target_pattern;
-                double avgReduction = -(1.0 - (avgNew / avgOld)) * 100.0;
-                ltsOutput.outln("     * average old (ms)                : " + String.format("%.2f", avgOld));
-                ltsOutput.outln("     * average new (ms)                : " + String.format("%.2f", avgNew));
-                ltsOutput.outln("     * reduction (%)                   : " + String.format("%.2f", avgReduction));
+                if (!compair_unresume_env_list.isEmpty()) {
+                    int num_of_target_pattern = compair_unresume_env_list.size();
+                    double avgOld = oldTime_sum / num_of_target_pattern;
+                    double avgNew = newTime_sum / num_of_target_pattern;
+                    double avgReduction = (avgOld == 0.0) ? 0.0 : -(1.0 - (avgNew / avgOld)) * 100.0;
+
+                    ltsOutput.outln("     * average old (ms)                : " + String.format("%.2f", avgOld));
+                    ltsOutput.outln("     * average new (ms)                : " + String.format("%.2f", avgNew));
+                    ltsOutput.outln("     * reduction (%)                   : " + String.format("%.2f", avgReduction));
+                }
+                else {
+                    ltsOutput.outln("     * No comparable pattern.");
+                }
                 ltsOutput.outln("");
 
 
@@ -2830,8 +2901,6 @@ public class HPWindow extends JFrame implements Runnable {
                 for (int i = 0; i < compair_resume_env_list.size(); i++) {
                     double oldTime = compair_resume_time_list.get(i).get(0);
                     double newTime = compair_resume_time_list.get(i).get(1);
-
-                    // oldTime==0 の場合の保険（基本起きない想定だが）
                     double reduction = (oldTime == 0.0) ? 0.0 : -(1.0 - (newTime / oldTime)) * 100.0;
 
                     ltsOutput.outln(
@@ -2839,18 +2908,24 @@ public class HPWindow extends JFrame implements Runnable {
                         + (long)oldTime + " -> " + (long)newTime
                         + " (" + String.format("%.2f", reduction) + "%)"
                     );
+
                     oldTime_sum += oldTime;
                     newTime_sum += newTime;
                 }
 
-                num_of_target_pattern = compair_resume_env_list.size();
-                avgOld = oldTime_sum / num_of_target_pattern;
-                avgNew = newTime_sum / num_of_target_pattern;
-                avgReduction = (avgOld == 0.0) ? 0.0 : -(1.0 - (avgNew / avgOld)) * 100.0;
+                if (!compair_resume_env_list.isEmpty()) {
+                    int num_of_target_pattern = compair_resume_env_list.size();
+                    double avgOld = oldTime_sum / num_of_target_pattern;
+                    double avgNew = newTime_sum / num_of_target_pattern;
+                    double avgReduction = (avgOld == 0.0) ? 0.0 : -(1.0 - (avgNew / avgOld)) * 100.0;
 
-                ltsOutput.outln("     * average old (ms)                : " + String.format("%.2f", avgOld));
-                ltsOutput.outln("     * average new (ms)                : " + String.format("%.2f", avgNew));
-                ltsOutput.outln("     * reduction (%)                   : " + String.format("%.2f", avgReduction));
+                    ltsOutput.outln("     * average old (ms)                : " + String.format("%.2f", avgOld));
+                    ltsOutput.outln("     * average new (ms)                : " + String.format("%.2f", avgNew));
+                    ltsOutput.outln("     * reduction (%)                   : " + String.format("%.2f", avgReduction));
+                }
+                else {
+                    ltsOutput.outln("     * No comparable pattern.");
+                }
                 ltsOutput.outln("");
 
                 // 全体情報
