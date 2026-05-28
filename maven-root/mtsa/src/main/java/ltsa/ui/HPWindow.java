@@ -2162,10 +2162,13 @@ public class HPWindow extends JFrame implements Runnable {
     private long diagnosis_start_time = 0;
     private long diagnosis_total_time = 0;
     private long diagnosis_max_memory_usage = 0;
+    private long diagnosis_base_memory_usage = 0;
 
     private Map<Integer, Integer> diagnosis_size_apply_composition_count = new LinkedHashMap<>();
     private Map<Integer, Long> diagnosis_size_execution_time = new LinkedHashMap<>();
     private Map<Integer, Long> diagnosis_size_max_memory_usage = new LinkedHashMap<>();
+    private Map<Integer, Long> diagnosis_size_base_memory_usage = new LinkedHashMap<>();
+    private Map<Integer, Long> diagnosis_size_memory_usage = new LinkedHashMap<>();
 
     /* For resumeControllerSynthesis */
     private boolean resume_available = false;
@@ -2195,22 +2198,42 @@ public class HPWindow extends JFrame implements Runnable {
 
     private void checkDiagnosisMemoryUsage() {
         long used = getCurrentMemoryUsageKB();
+        long diagnosis_used = used - diagnosis_base_memory_usage;
 
-        if (used > diagnosis_max_memory_usage) {
-            diagnosis_max_memory_usage = used;
+        if (diagnosis_used < 0) {
+            diagnosis_used = 0;
+        }
+
+        if (diagnosis_used > diagnosis_max_memory_usage) {
+            diagnosis_max_memory_usage = diagnosis_used;
         }
     }
 
     private void checkDiagnosisMemoryUsageForSize(int combination_size) {
         long used = getCurrentMemoryUsageKB();
-
-        Long current_max = diagnosis_size_max_memory_usage.get(combination_size);
-        if (current_max == null || used > current_max) {
-            diagnosis_size_max_memory_usage.put(combination_size, used);
+        Long size_base = diagnosis_size_base_memory_usage.get(combination_size);
+        if (size_base == null) {
+            size_base = used;
+            diagnosis_size_base_memory_usage.put(combination_size, size_base);
         }
 
-        if (used > diagnosis_max_memory_usage) {
-            diagnosis_max_memory_usage = used;
+        long size_used = used - size_base;
+        if (size_used < 0) {
+            size_used = 0;
+        }
+
+        Long current_size_max = diagnosis_size_memory_usage.get(combination_size);
+        if (current_size_max == null || size_used > current_size_max) {
+            diagnosis_size_memory_usage.put(combination_size, size_used);
+        }
+
+        long diagnosis_used = used - diagnosis_base_memory_usage;
+        if (diagnosis_used < 0) {
+            diagnosis_used = 0;
+        }
+
+        if (diagnosis_used > diagnosis_max_memory_usage) {
+            diagnosis_max_memory_usage = diagnosis_used;
         }
     }
 
@@ -2228,51 +2251,55 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+
+        no_controller = false;
+        error_req_list.clear();
+        resetReusablePartControllersForCurrentRun();
+
         ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
 
-            compile();
-            ltsOutput.outln("Compile is Complete!");
-            ltsOutput.outln("");
-            ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("                    Composition                    ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            postState(current);
+        if (!compile() || current == null) {
+            ltsOutput.outln("[info] Compile failed. Composition was aborted.");
+            return;
+        }
 
-            int[] current_states = new int[current.machines.size() + 1];
-            for (int i = 0; i < current.machines.size() + 1; i++)
-                current_states[i] = 0;
-            layouts.setCurrentState(current_states);
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("                    Composition                    ");
+        ltsOutput.outln("===================================================");
+
+        Vector<CompactState> failed_machines = new Vector<>(current.machines);
+
+        no_controller = false;
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+
+        if (handleNoControllerAfterComposition(failed_machines)) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+
+            ltsOutput.outln("");
+            ltsOutput.outln("[info] Composition was aborted because no controller was found.");
+            ltsOutput.outln("[info] Max Space      : " + maxStates);
+            ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+            ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
+            ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
+            ltsOutput.outln("");
+            return;
+        }
+
+        postState(current);
+
+        int[] current_states = new int[current.machines.size() + 1];
+        for (int i = 0; i < current.machines.size() + 1; i++) {
+            current_states[i] = 0;
+        }
+        layouts.setCurrentState(current_states);
 
         long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms
-
-        /* When reusing other results */
-        // ltsOutput.clearOutput();
-        // compileIfChange();
-        // if (current != null) {
-        //     try {
-        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-                
-        //     } catch (LTSCompositionException e) {
-        //         return;
-        //     }
-            
-        //     boolean isControllable = current.composition != null;
-        //     if (!isControllable) {
-        //         return;
-        //         //throw new LTSException("Composition not controllable.");
-                
-        //     }
-            
-        //     postState(current);
-        //     int[] current_states = new int[current.machines.size() + 1];
-        //     for (int i = 0; i < current.machines.size() + 1; i++)
-        //         current_states[i] = 0;
-        //     layouts.setCurrentState(current_states);
-        // }
+        long executionTime = endTime - startTime; // ms
 
         ltsOutput.outln("");
         ltsOutput.outln("");
@@ -2290,32 +2317,50 @@ public class HPWindow extends JFrame implements Runnable {
         maxMemoryUsage = 0;
         maxStates = 0;
         maxTransitions = 0;
+
+        no_controller = false;
+        error_req_list.clear();
+        resetReusablePartControllersForCurrentRun();
+
         ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
 
-            compile();
-            ltsOutput.outln("Compile is Complete!");
+        if (!compile() || current == null) {
+            ltsOutput.outln("[info] Compile failed. Minimise Composition was aborted.");
+            return;
+        }
+
+        ltsOutput.outln("Compile is Complete!");
+        ltsOutput.outln("");
+        ltsOutput.outln("");
+        ltsOutput.outln("===================================================");
+        ltsOutput.outln("               Composition + Minimise              ");
+        ltsOutput.outln("===================================================");
+
+        Vector<CompactState> failed_machines = new Vector<>(current.machines);
+
+        no_controller = false;
+        TransitionSystemDispatcher.applyComposition(current, ltsOutput);
+
+        if (handleNoControllerAfterComposition(failed_machines)) {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+
             ltsOutput.outln("");
+            ltsOutput.outln("[info] Minimise Composition was aborted because no controller was found.");
+            ltsOutput.outln("[info] Max Space      : " + maxStates);
+            ltsOutput.outln("[info] Max Transition : " + maxTransitions);
+            ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
+            ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
             ltsOutput.outln("");
-            ltsOutput.outln("===================================================");
-            ltsOutput.outln("               Composition + Minimise              ");
-            ltsOutput.outln("===================================================");
-            TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-            TransitionSystemDispatcher.minimise(current, ltsOutput);
-            postState(current);
+            return;
+        }
+
+        TransitionSystemDispatcher.minimise(current, ltsOutput);
+        postState(current);
 
         long endTime = System.currentTimeMillis();
-        long executionTime = endTime - startTime; //ms
-
-        /* When reusing other results */
-        // ltsOutput.clearOutput();
-        // compileIfChange();
-        // if (compileIfChange() && current != null) {
-        //     if (current.composition == null)
-        //         TransitionSystemDispatcher.applyComposition(current, ltsOutput);
-        //     TransitionSystemDispatcher.minimise(current, ltsOutput);
-        //     postState(current);
-        // }
+        long executionTime = endTime - startTime; // ms
 
         ltsOutput.outln("");
         ltsOutput.outln("");
@@ -2325,7 +2370,6 @@ public class HPWindow extends JFrame implements Runnable {
         ltsOutput.outln("[info] Max Memory     : " + maxMemoryUsage + " MB");
         ltsOutput.outln("[info] Execution Time : " + executionTime + " ms");
         ltsOutput.outln("");
-
     }
 
 
@@ -2333,12 +2377,6 @@ public class HPWindow extends JFrame implements Runnable {
         no_controller = false;
         stepwise_synthesis_failed = false;
         error_req_list.clear();
-
-        resume_available = false;
-        resume_step_num = 1;
-        resume_final_model_name = null;
-        resume_part_controllers.clear();
-        resume_part_controller_input_names.clear();
 
         policyTime_total = 0;
         synthesisTime_total = 0;
@@ -2357,6 +2395,7 @@ public class HPWindow extends JFrame implements Runnable {
         no_controller = false;
         stepwise_synthesis_failed = false;
         error_req_list.clear();
+        resetReusablePartControllersForCurrentRun();
 
         ltsOutput.clearOutput();
         long startTime = System.currentTimeMillis();
@@ -2892,6 +2931,7 @@ public class HPWindow extends JFrame implements Runnable {
     private void identifyAndPrintNoControllerRequirement(Vector<CompactState> failed_machines) {
         resetDiagnosisStatistics();
         diagnosis_start_time = System.currentTimeMillis();
+        diagnosis_base_memory_usage = getCurrentMemoryUsageKB();
         checkDiagnosisMemoryUsage();
 
         Vector<CompactState> env_machines = new Vector<>();
@@ -2928,6 +2968,33 @@ public class HPWindow extends JFrame implements Runnable {
         CompactState original_env = current.env;
 
         List<CompactState> candidate_reqs = new ArrayList<>(error_req_list);
+
+        // 要求組合せの検査順序を要求名の A-Z 順で固定する
+        Collections.sort(candidate_reqs, new Comparator<CompactState>() {
+            @Override
+            public int compare(CompactState req1, CompactState req2) {
+                if (req1 == null && req2 == null) {
+                    return 0;
+                }
+                if (req1 == null) {
+                    return 1;
+                }
+                if (req2 == null) {
+                    return -1;
+                }
+                if (req1.name == null && req2.name == null) {
+                    return 0;
+                }
+                if (req1.name == null) {
+                    return 1;
+                }
+                if (req2.name == null) {
+                    return -1;
+                }
+                return req1.name.compareTo(req2.name);
+            }
+        });
+
         boolean found = false;
         List<CompactState> found_combination = new ArrayList<>();
 
@@ -2937,8 +3004,10 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("---- Checking combinations of size " + combination_size + " --------------");
 
             long size_start_time = System.currentTimeMillis();
+            long size_base_memory = getCurrentMemoryUsageKB();
             diagnosis_size_apply_composition_count.put(combination_size, 0);
-            diagnosis_size_max_memory_usage.put(combination_size, getCurrentMemoryUsageKB());
+            diagnosis_size_base_memory_usage.put(combination_size, size_base_memory);
+            diagnosis_size_memory_usage.put(combination_size, 0L);
 
             for (List<CompactState> req_combination : combinations) {
                 boolean result = checkNoControllerForRequirementCombination(
@@ -2962,8 +3031,8 @@ public class HPWindow extends JFrame implements Runnable {
             ltsOutput.outln("[info] Combination size " + combination_size + " statistics");
             ltsOutput.outln("     * applyComposition count : "
                     + diagnosis_size_apply_composition_count.get(combination_size));
-            ltsOutput.outln("     * max memory usage(KB)   : "
-                    + diagnosis_size_max_memory_usage.get(combination_size));
+            ltsOutput.outln("     * memory usage(KB)       : "
+                    + diagnosis_size_memory_usage.get(combination_size));
             ltsOutput.outln("     * execution time(ms)     : "
                     + diagnosis_size_execution_time.get(combination_size));
             ltsOutput.outln("");
@@ -3087,7 +3156,7 @@ public class HPWindow extends JFrame implements Runnable {
         checkDiagnosisMemoryUsageForSize(combination_size);
 
         ltsOutput.outln("     * Diagnosis Time(ms)     : " + check_execution_time);
-        ltsOutput.outln("     * Diagnosis Memory(KB)   : " + diagnosis_size_max_memory_usage.get(combination_size));
+        ltsOutput.outln("     * Diagnosis Memory(KB)   : " + diagnosis_size_memory_usage.get(combination_size));
 
         if (no_controller || current.composition == null) {
             ltsOutput.outln("     * Result               : no controller");
@@ -3151,6 +3220,7 @@ public class HPWindow extends JFrame implements Runnable {
     private void printSingleNoControllerRequirement() {
         resetDiagnosisStatistics();
         diagnosis_start_time = System.currentTimeMillis();
+        diagnosis_base_memory_usage = getCurrentMemoryUsageKB();
         checkDiagnosisMemoryUsage();
 
         diagnosis_total_time = System.currentTimeMillis() - diagnosis_start_time;
@@ -3207,6 +3277,34 @@ public class HPWindow extends JFrame implements Runnable {
         return false;
     }
 
+    /* handleNoControllerAfterComposition() */
+    // Where used : doComposition(), minimiseComposition()
+    // Parameters : failed_machines - no controller が発生したときに applyComposition に入力されていたモデル集合
+    // Return     : no controller が発生した場合 true，そうでなければ false
+    // Comment    : 通常の Composition / Minimise Composition において no controller が発生した場合，
+    //              原因となる要求の候補を収集し，最小の要求組合せを特定する
+    private boolean handleNoControllerAfterComposition(Vector<CompactState> failed_machines) {
+        if (!no_controller && current.composition != null) {
+            return false;
+        }
+
+        ltsOutput.outln("");
+        ltsOutput.outln("---------------------------------------------------");
+        ltsOutput.outln("      Identifying Violated Safety Requirements");
+        ltsOutput.outln("---------------------------------------------------");
+
+        collectErrorRequirements(failed_machines);
+
+        if (error_req_list.size() == 1) {
+            printSingleNoControllerRequirement();
+        } else {
+            printCandidateNoControllerRequirements();
+            identifyAndPrintNoControllerRequirement(failed_machines);
+        }
+
+        return true;
+    }
+
     /* collectErrorRequirements() */
     // Where used : stepwiseSynthesis()
     // Parameters : machines - no controller が発生したときに applyComposition に入力されていたモデル集合
@@ -3252,10 +3350,13 @@ public class HPWindow extends JFrame implements Runnable {
         diagnosis_start_time = 0;
         diagnosis_total_time = 0;
         diagnosis_max_memory_usage = 0;
+        diagnosis_base_memory_usage = 0;
 
         diagnosis_size_apply_composition_count.clear();
         diagnosis_size_execution_time.clear();
         diagnosis_size_max_memory_usage.clear();
+        diagnosis_size_base_memory_usage.clear();
+        diagnosis_size_memory_usage.clear();
     }
 
     private void printDiagnosisStatistics() {
@@ -3274,8 +3375,8 @@ public class HPWindow extends JFrame implements Runnable {
                 long time = diagnosis_size_execution_time.get(combination_size);
 
                 long memory = 0;
-                if (diagnosis_size_max_memory_usage.containsKey(combination_size)) {
-                    memory = diagnosis_size_max_memory_usage.get(combination_size);
+                if (diagnosis_size_memory_usage.containsKey(combination_size)) {
+                    memory = diagnosis_size_memory_usage.get(combination_size);
                 }
 
                 ltsOutput.outln("     * size " + combination_size
@@ -3284,6 +3385,7 @@ public class HPWindow extends JFrame implements Runnable {
                         + ", Memory Usage(KB) = " + memory);
             }
         }
+
         ltsOutput.outln("");
         ltsOutput.outln("     * Total");
         ltsOutput.outln("     * Synthesis Count     : " + diagnosis_apply_composition_count);
@@ -3417,6 +3519,17 @@ public class HPWindow extends JFrame implements Runnable {
                 ltsOutput.outln("");
             }
         }
+    }
+
+    /* resetReusablePartControllersForCurrentRun() */
+    // Where used : doComposition(), minimiseComposition(), stepwiseControllerSynthesis()
+    // Comment    : 各実行ごとに Reusable PartControllers を初期化する
+    private void resetReusablePartControllersForCurrentRun() {
+        resume_available = false;
+        resume_step_num = 1;
+        resume_final_model_name = null;
+        resume_part_controllers.clear();
+        resume_part_controller_input_names.clear();
     }
 
     /* removeModelsByName() */
