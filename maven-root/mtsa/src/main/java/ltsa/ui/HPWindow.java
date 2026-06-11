@@ -2284,8 +2284,26 @@ public class HPWindow extends JFrame implements Runnable {
             /* analysisMonitoredModels()内でやった方がいいかも */
             for (CompactState machine : all_models) {
                 machine.initActions();
-                if (machine.hasERROR()) unsynthesized_req_list.add(machine);
-                else unsynthesized_env_list.add(machine);
+                if (machine.hasERROR()) {
+                    unsynthesized_req_list.add(machine);
+                } else {
+                    if (checkMinimise(machine, null, null)) {
+                        // 一時的なCompositeState(tempCS)を作って最小化をかける
+                        Vector<CompactState> tempVec = new Vector<>();
+                        tempVec.add(machine.myclone()); // new ではなく myclone() を使用して複製
+                        CompositeState tempCS = new CompositeState(tempVec);
+                        tempCS.name = machine.name;
+                        // 1つのモデルでも一度 applyComposition を通すことで、内部の tempCS.composition にLTSをセットさせる
+                        TransitionSystemDispatcher.applyComposition(tempCS, ltsOutput);                        
+                        // 最小化を実行
+                        TransitionSystemDispatcher.minimise(tempCS, ltsOutput);           
+                        tempCS.composition.initActions();
+                        // 最小化されたモデル（tempCS.composition）をリストに追加
+                        unsynthesized_env_list.add(tempCS.composition);
+                    } else {
+                        unsynthesized_env_list.add(machine);
+                    }
+                }
             }
 
             ltsOutput.outln("");
@@ -2660,39 +2678,82 @@ public class HPWindow extends JFrame implements Runnable {
         return null;
     }
 
+    // /* checkMinimise() */
+    // // Where used : stepwiseSynthesis
+    // // Parameters : composedModel (合成後のLTS), name (現在のモデル名), final_model_name (最終モデル名)
+    // // Comment    : (name, to) のペアに1つでも重複があれば true (最小化する)、重複がなければ false (スキップ)
+    // private boolean checkMinimise(CompactState composedModel, String name, String final_model_name) {
+        
+    //     // 最後の場合はfalse
+    //     if (name != null && name.equals(final_model_name)) {
+    //         return false;
+    //     }
+
+    //     // if (composedModel == null) {
+    //     //     return true;
+    //     // }
+
+    //     // (name, to) のペアを記録し、重複を検知するためのSet
+    //     Set<String> seenNameToPairs = new HashSet<>();   
+    //     for (int from = 0; from < composedModel.maxStates; from++) {
+    //         EventState ev = composedModel.states[from];
+    //         while (ev != null) {
+    //             int to = ev.getNext();
+    //             String actionName = composedModel.alphabet[ev.getEvent()];        
+    //             // (name, to) を一意に表すキーを作成
+    //             String pairKey = actionName + "::" + to;       
+    //             // Setにすでに同じペアが存在していたら add() がfalseを返す
+    //             if (!seenNameToPairs.add(pairKey)) {
+    //                 return true; // 最小化の効果が見込めるため実行する
+    //             }
+    //             ev = ev.getList(); // 次の遷移へ
+    //         }
+    //     }
+
+    //     // 全ての遷移をチェックして重複が1つもなければ、最小化スキップ
+    //     return false;
+    // }
+
     /* checkMinimise() */
     // Where used : stepwiseSynthesis
     // Parameters : composedModel (合成後のLTS), name (現在のモデル名), final_model_name (最終モデル名)
-    // Comment    : (name, to) のペアに1つでも重複があれば true (最小化する)、重複がなければ false (スキップ)
+    // Comment    : 遷移元状態(from)の持つ「全ての遷移の集合(シグネチャ)」が完全に一致する別状態が存在する場合のみ true
     private boolean checkMinimise(CompactState composedModel, String name, String final_model_name) {
         
-        // 最後の場合はfalse
         if (name != null && name.equals(final_model_name)) {
             return false;
         }
 
         if (composedModel == null) {
-            return true;
+            return false;
         }
 
-        // (name, to) のペアを記録し、重複を検知するためのSet
-        Set<String> seenNameToPairs = new HashSet<>();   
+        // 状態が持つ「全遷移の集合（シグネチャ）」を記録し、完全一致を検知するためのSet
+        Set<Set<String>> seenSignatures = new HashSet<>();
+
         for (int from = 0; from < composedModel.maxStates; from++) {
+            Set<String> signature = new HashSet<>();
             EventState ev = composedModel.states[from];
+            
+            // 該当状態からのすべての遷移(name, to)をシグネチャとして収集
             while (ev != null) {
                 int to = ev.getNext();
-                String actionName = composedModel.alphabet[ev.getEvent()];        
-                // (name, to) を一意に表すキーを作成
-                String pairKey = actionName + "::" + to;       
-                // Setにすでに同じペアが存在していたら add() がfalseを返す
-                if (!seenNameToPairs.add(pairKey)) {
-                    return true; // 最小化の効果が見込めるため実行する
-                }
-                ev = ev.getList(); // 次の遷移へ
+                String actionName = composedModel.alphabet[ev.getEvent()];
+                signature.add(actionName + "::" + to);
+                ev = ev.getList();
+            }
+
+            // 遷移を持たない状態（終端状態など）は判定から除外
+            if (signature.isEmpty()) {
+                continue;
+            }
+
+            // すでに「全く同じ遷移の組み合わせ」を持つ状態が存在していれば true (最小化実行)
+            if (!seenSignatures.add(signature)) {
+                return true;
             }
         }
 
-        // 全ての遷移をチェックして重複が1つもなければ、最小化スキップ
         return false;
     }
 
