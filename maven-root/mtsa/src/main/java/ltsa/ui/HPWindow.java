@@ -2285,7 +2285,20 @@ public class HPWindow extends JFrame implements Runnable {
             for (CompactState machine : all_models) {
                 machine.initActions();
                 if (machine.hasERROR()) unsynthesized_req_list.add(machine);
-                else unsynthesized_env_list.add(machine);
+                else {
+                    // 一時的なCompositeState(tempCS)を作って最小化をかける
+                    Vector<CompactState> tempVec = new Vector<>();
+                    tempVec.add(machine.myclone()); // new ではなく myclone() を使用して複製
+                    CompositeState tempCS = new CompositeState(tempVec);
+                    tempCS.name = machine.name;
+                    // 1つのモデルでも一度 applyComposition を通すことで、内部の tempCS.composition にLTSをセットさせる
+                    TransitionSystemDispatcher.applyComposition(tempCS, ltsOutput);                        
+                    // 最小化を実行
+                    TransitionSystemDispatcher.minimise(tempCS, ltsOutput);           
+                    tempCS.composition.initActions();
+                    // 最小化されたモデル（tempCS.composition）をリストに追加
+                    unsynthesized_env_list.add(tempCS.composition);
+                }
             }
 
             ltsOutput.outln("");
