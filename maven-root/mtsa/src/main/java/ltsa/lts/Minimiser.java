@@ -214,20 +214,22 @@ public class Minimiser {
         m.maxStates = newtoold.size();
         m.alphabet = machine.alphabet;
         m.states = new EventState[m.maxStates];
-        if (machine.endseq<0) 
+        if (machine.endseq<0)
           m.endseq = machine.endseq;
-        else {
+        else
           m.endseq = ((Integer)oldtonew.get(new Integer(machine.endseq))).intValue();
-          /* remove marking transition */
-          m.states[m.endseq] 
-             = EventState.remove(m.states[m.endseq],new EventState(m.alphabet.length,m.endseq));
-        }
-          
+
         for (int i = 0; i<machine.maxStates; i++) {
             int newi = ((Integer)oldtonew.get(new Integer(i))).intValue();
             EventState tmp = EventStateUtils.renumberStates(machine.states[i],oldtonew);
             m.states[newi] = EventStateUtils.union(m.states[newi],tmp);
         }
+
+        if (machine.endseq>=0)
+          /* remove marking transition - must run after transitions are copied in above,
+             otherwise m.states[m.endseq] is still null and this is a no-op */
+          m.states[m.endseq]
+             = EventState.remove(m.states[m.endseq],new EventState(m.alphabet.length,m.endseq));
 
         for (int i = 0; i<m.maxStates; i++)   // remove reflexive tau
             m.states[i] = EventState.remove(m.states[i],new EventState(Declaration.TAU,i));
